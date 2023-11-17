@@ -32,8 +32,9 @@ jobs:
         dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore MDK-Packages.sln
-#    - name: Build
-#      run: dotnet build MDK-Packages.sln --no-restore
+    
+    - name: Build
+      run: dotnet build MDK-Packages.sln --no-restore
 
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack MDK-Packages.sln --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
