@@ -2,14 +2,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.ModAnalyzers", "Mdk.ModAnalyzers\Mdk.ModAnalyzers.csproj", "{6C0B9AD4-FD0A-4458-9E0A-8707BB1EB9D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.PbAnalyzers", "Mdk.PbAnalyzers\Mdk.PbAnalyzers.csproj", "{75C96511-55F0-4331-A0E3-50571681AB91}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.References", "Mdk.References\Mdk.References.csproj", "{F91DCDD7-FD47-4C8D-880C-987CF1A3B4E5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared Files", "Shared Files", "{27348582-EB83-4DC3-8A08-79B907759F09}"
 	ProjectSection(SolutionItems) = preProject
 		malware256.png = malware256.png
-		PacketVersion.txt = PacketVersion.txt
+		PackageVersion.txt = PackageVersion.txt
 	EndProjectSection
 EndProject
 Global
@@ -22,10 +20,6 @@ Global
 		{6C0B9AD4-FD0A-4458-9E0A-8707BB1EB9D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C0B9AD4-FD0A-4458-9E0A-8707BB1EB9D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C0B9AD4-FD0A-4458-9E0A-8707BB1EB9D2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{75C96511-55F0-4331-A0E3-50571681AB91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{75C96511-55F0-4331-A0E3-50571681AB91}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{75C96511-55F0-4331-A0E3-50571681AB91}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{75C96511-55F0-4331-A0E3-50571681AB91}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F91DCDD7-FD47-4C8D-880C-987CF1A3B4E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F91DCDD7-FD47-4C8D-880C-987CF1A3B4E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F91DCDD7-FD47-4C8D-880C-987CF1A3B4E5}.Release|Any CPU.ActiveCfg = Release|Any CPU

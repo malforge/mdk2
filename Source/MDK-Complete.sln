@@ -11,7 +11,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared Files", "Shared Files", "{27348582-EB83-4DC3-8A08-79B907759F09}"
 	ProjectSection(SolutionItems) = preProject
 		malware256.png = malware256.png
-		PacketVersion.txt = PacketVersion.txt
+		PacketVersion.txt = PackageVersion.txt
 	EndProjectSection
 EndProject
 Global
