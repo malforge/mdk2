@@ -5,7 +5,7 @@
         <SpaceEngineersBinCopyLocal>false</SpaceEngineersBinCopyLocal>
     </PropertyGroup>
 
-    <UsingTask TaskName="SpaceEngineersFinder" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Mal.Mdk2.References.dll"/>
+    <UsingTask TaskName="SpaceEngineersFinder" AssemblyFile="$(MSBuildThisFileDirectory)..\tools\netstandard2.0\Mal.Mdk2.References.dll"/>
 
     <Target Name="SpaceEngineers" BeforeTargets="BeforeResolveReferences">
         <SpaceEngineersFinder Interactive="$(IsIDEBuild)">

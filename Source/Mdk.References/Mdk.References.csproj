@@ -35,5 +35,6 @@
         <None Include="..\malware256.png" Pack="true" PackagePath="" />
         <None Include="readme.md" Pack="true" PackagePath="" />
         <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build" />
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="tools/dotnet/cs" Visible="false"/>
     </ItemGroup>
 </Project>
