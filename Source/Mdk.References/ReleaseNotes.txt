@@ -1,0 +1,5 @@
+v.2.0.15
+ - Version Parity
+
+v.1.0.0
+ - Initial release

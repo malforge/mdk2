@@ -1,0 +1,81 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <IsIDEBuild Condition="'$(BuildingInsideVisualStudio)' == 'true' Or '$(BuildingByReSharper)' == 'true'">True</IsIDEBuild>
+        <IsIDEBuild Condition="'$(IsIDEBuild)' == ''">False</IsIDEBuild>
+        <SpaceEngineersBinCopyLocal>false</SpaceEngineersBinCopyLocal>
+    </PropertyGroup>
+
+    <UsingTask TaskName="SpaceEngineersFinder" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\Mal.Mdk2.References.dll"/>
+
+    <Target Name="SpaceEngineers" BeforeTargets="BeforeResolveReferences">
+        <SpaceEngineersFinder Interactive="$(IsIDEBuild)">
+            <Output PropertyName="SpaceEngineersBinPath" TaskParameter="BinaryPath"/>
+            <Output PropertyName="SpaceEngineersDataPath" TaskParameter="DataPath"/>
+        </SpaceEngineersFinder>
+        
+        <Message Importance="high" Text="Loading Space Engineers assemblies from $(SpaceEngineersBinPath)" />
+        
+        <ItemGroup>
+            <Reference Include="System.Collections.Immutable">
+                <HintPath>$(SpaceEngineersBinPath)\System.Collections.Immutable.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="Sandbox.Common">
+                <HintPath>$(SpaceEngineersBinPath)\Sandbox.Common.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="Sandbox.Game">
+                <HintPath>$(SpaceEngineersBinPath)\Sandbox.Game.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="Sandbox.Graphics">
+                <HintPath>$(SpaceEngineersBinPath)\Sandbox.Graphics.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="SpaceEngineers.Game">
+                <HintPath>$(SpaceEngineersBinPath)\SpaceEngineers.Game.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="SpaceEngineers.ObjectBuilders">
+                <HintPath>$(SpaceEngineersBinPath)\SpaceEngineers.ObjectBuilders.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Audio">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Audio.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Game">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Game.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Input">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Input.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Library">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Library.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Math">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Math.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Render">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Render.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Render11">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Render11.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+            <Reference Include="VRage.Scripting">
+                <HintPath>$(SpaceEngineersBinPath)\VRage.Scripting.dll</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+        </ItemGroup>
+    </Target>
+</Project>

@@ -1,0 +1,14 @@
+v.2.1.3
+ - _Someone_ left in a debugger call...
+
+v.2.1.2
+ - New whitelist cache was actually _not_ embedded...
+ - Fixed <Mdk-IgnorePaths> not actually working for multipaths because ; is a reserved character
+
+V.2.1.1
+ - Fixed bad default ignore path 
+
+V.2.1.0
+ - Nuget Rename (I am _so_ sorry, it had to be done, won't happen again, I promise)
+ - Added support for <Mdk-IgnorePaths> (see readme for instructions)
+ - Updated whitelist cache

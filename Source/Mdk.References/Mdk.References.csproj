@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+
+        <IncludeBuildOutput>true</IncludeBuildOutput>
+        <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../PacketVersion.txt"))</Version>
+        <Title>MDK2 Assembly References</Title>
+        <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/description.txt"))</Description>
+        <Copyright>2023 Morten "Malware" Aune Lyrstad</Copyright>
+        <PackageIcon>malware256.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>Mal.Mdk2.References</PackageId>
+        <AssemblyName>Mal.Mdk2.References</AssemblyName>
+        <RootNamespace>Mdk2.References</RootNamespace>
+        <Authors>Morten "Malware" Aune Lyrstad</Authors>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Build.Framework" Version="17.7.2" />
+      <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.7.2" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <None Include="..\malware256.png" Pack="true" PackagePath="" />
+        <None Include="readme.md" Pack="true" PackagePath="" />
+        <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build" />
+    </ItemGroup>
+</Project>

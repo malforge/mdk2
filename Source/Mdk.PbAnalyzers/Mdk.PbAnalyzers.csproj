@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../PacketVersion.txt"))</Version>
+        <Title>MDK2 Pb Analyzers</Title>
+        <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/description.txt"))</Description>
+        <Copyright>2023 Morten "Malware" Aune Lyrstad</Copyright>
+        <PackageIcon>malware256.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>Mal.Mdk2.PbAnalyzers</PackageId>
+        <AssemblyName>Mal.Mdk2.PbAnalyzers</AssemblyName>
+        <RootNamespace>Mdk2.PbAnalyzers</RootNamespace>
+        <Authors>Morten "Malware" Aune Lyrstad</Authors>
+        <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.11.0" PrivateAssets="all"/>
+        <PackageReference Update="NETStandard.Library" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="7.0.0" PrivateAssets="All"
+                          IncludeInPackage="true"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\malware256.png" Pack="true" PackagePath=""/>
+        <None Include="readme.md" Pack="true" PackagePath=""/>
+        <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath=""/>
+        <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build"/>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="pbwhitelist.cache"/>
+        <EmbeddedResource Include="pbwhitelist.cache">
+            <LogicalName>pbwhitelist.cache</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <Target Name="AddNuGetDlls" BeforeTargets="_GetPackageFiles">
+        <!-- Merge the collection of PackageReference and Assemblies using the NuGetPackageId key.
+             This produces a new list containing the DLL path and the "IncludeInPackage" metadata-->
+        <JoinItems Left="@(ResolvedCompileFileDefinitions)" LeftKey="NuGetPackageId" LeftMetadata="*"
+                   Right="@(PackageReference)" RightKey="" RightMetadata="*"
+                   ItemSpecToUse="Left">
+            <Output TaskParameter="JoinResult" ItemName="_PackagesToPack"/>
+        </JoinItems>
+
+        <ItemGroup>
+            <!-- Remove NETStandard DLLs -->
+            <_PackagesToPack Remove="@(_PackagesToPack)" Condition="%(NuGetPackageId) == 'NETStandard.Library'"/>
+            <_PackagesToPack Remove="@(_PackagesToPack)" Condition="%(_PackagesToPack.IncludeInPackage) != 'true'"/>
+        </ItemGroup>
+
+        <Message Importance="High" Text="Adding DLLs from the following packages: @(_PackagesToPack->'%(NuGetPackageId)')"/>
+
+        <ItemGroup>
+            <!-- Update the collection of items to pack with the DLLs from the NuGet packages -->
+            <None Include="@(_PackagesToPack)"
+                  Pack="true"
+                  PackagePath="analyzers/dotnet/cs"
+                  Visible="false"/>
+
+            <!-- Add the DLL produced by the current project to the NuGet package -->
+            <None Include="$(OutputPath)\$(AssemblyName).dll"
+                  Pack="true"
+                  PackagePath="analyzers/dotnet/cs"
+                  Visible="false"/>
+        </ItemGroup>
+    </Target>
+
+</Project>

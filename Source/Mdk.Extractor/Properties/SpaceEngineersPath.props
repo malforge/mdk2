@@ -1,0 +1,7 @@
+﻿<Project>
+    <PropertyGroup>
+        <!-- Change the paths below to match your Space Engineers installation. -->
+        <SpaceEngineersBinPath>D:\Steam\steamapps\common\SpaceEngineers\Bin64</SpaceEngineersBinPath>
+        <SpaceEngineersLocalModPath>$(AppData)|\SpaceEngineers\Mods</SpaceEngineersLocalModPath>
+    </PropertyGroup>
+</Project>
