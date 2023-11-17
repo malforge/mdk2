@@ -2,7 +2,7 @@
     <PropertyGroup>
         <IsIDEBuild Condition="'$(BuildingInsideVisualStudio)' == 'true' Or '$(BuildingByReSharper)' == 'true'">True</IsIDEBuild>
         <IsIDEBuild Condition="'$(IsIDEBuild)' == ''">False</IsIDEBuild>
-        <SpaceEngineersBinCopyLocal>false</SpaceEngineersBinCopyLocal>
+        <SpaceEngineersBinCopyLocal Condition="'$(SpaceEngineersBinCopyLocal)' == ''">false</SpaceEngineersBinCopyLocal>
     </PropertyGroup>
 
     <UsingTask TaskName="SpaceEngineersFinder" AssemblyFile="$(MSBuildThisFileDirectory)..\tools\netstandard2.0\cs\Mal.Mdk2.References.dll"/>
