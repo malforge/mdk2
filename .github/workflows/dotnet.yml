@@ -10,6 +10,9 @@ on:
 #  pull_request:
 #    branches: [ "main" ]
 
+env:
+  NuGetDirectory: ${{ github.workspace }}/nuget
+  
 jobs:
   build:
 
@@ -33,7 +36,7 @@ jobs:
 #      run: dotnet build MDK-Packages.sln --no-restore
 
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
-    - run: dotnet pack MDK-Packages.sln --no-restore --configuration Release --output "${{ env.NUGETDIRECTORY }}"
+    - run: dotnet pack MDK-Packages.sln --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
 
     # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v3
