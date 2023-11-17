@@ -15,10 +15,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    environment: 
-      name: deploy
-      url: ${{ steps.deploy.outputs.url }}
-      
+    environment: Deploy
+
     defaults:
       run:
         working-directory: ./Source
