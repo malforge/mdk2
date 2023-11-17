@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <IncludeBuildOutput>true</IncludeBuildOutput>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../PackageVersion.txt"))$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/alphaversion.txt"))</Version>
         <Title>MDK2 Assembly References</Title>
         <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/description.txt"))</Description>
