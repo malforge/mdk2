@@ -39,24 +39,23 @@ jobs:
 
     - uses: actions/upload-artifact@v3
       with:
-        name: Mdk.ModAnalyzers bin
-        # if-no-files-found: error
+        name: bin
         retention-days: 7
-        path: Mdk.ModAnalyzers/bin/Release/
+        path: "*/bin/Release/"
 
-    - uses: actions/upload-artifact@v3
-      with:
-        name: Mdk.PbAnalyzers bin
-        # if-no-files-found: error
-        retention-days: 7
-        path: Mdk.PbAnalyzers/bin/Release/
+    #- uses: actions/upload-artifact@v3
+      #with:
+        #name: Mdk.PbAnalyzers bin
+        ## if-no-files-found: error
+        #retention-days: 7
+        #path: Mdk.PbAnalyzers/bin/Release/
 
-    - uses: actions/upload-artifact@v3
-      with:
-        name: Mdk.References bin
-        # if-no-files-found: error
-        retention-days: 7
-        path: Mdk.PbAnalyzers/bin/Release/
+    #- uses: actions/upload-artifact@v3
+      #with:
+        #name: Mdk.References bin
+        ## if-no-files-found: error
+        #retention-days: 7
+        #path: Mdk.PbAnalyzers/bin/Release/
 
     - name: Pack nugets
       run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
