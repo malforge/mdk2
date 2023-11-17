@@ -37,6 +37,13 @@ jobs:
     - name: Build solution
       run: dotnet build MDK-Packages.sln
 
+    - uses: actions/upload-artifact@v3
+      with:
+        name: bin
+        if-no-files-found: error
+        retention-days: 7
+        path: bin/Release
+
     - name: Pack nugets
       run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
 
