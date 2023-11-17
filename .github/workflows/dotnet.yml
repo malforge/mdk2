@@ -9,10 +9,6 @@ on:
 env:
   NuGetDirectory: ${{ github.workspace }}/nuget
 
-defaults:
-  run:
-    shell: pwsh
-  
 jobs:
   build:
 
@@ -23,6 +19,7 @@ jobs:
     defaults:
       run:
         working-directory: ./Source
+        shell: pwsh
         
     steps:
     - uses: actions/checkout@v3
