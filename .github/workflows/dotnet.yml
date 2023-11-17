@@ -31,13 +31,15 @@ jobs:
       with:
         dotnet-version: 8.x
         
-#    - name: Restore dependencies
-#      run: dotnet restore MDK-Packages.sln
+    - name: Restore dependencies
+      run: dotnet restore MDK-Packages.sln
 
-    # Create the NuGet package in the folder from the environment variable NuGetDirectory
-    - run: dotnet pack MDK-Packages.sln --configuration Release --output "${{ env.NuGetDirectory }}" --verbosity detailed
+    - name: Build solution
+      run: dotnet build MDK-Packages.sln
 
-    # Publish the NuGet package as an artifact, so they can be used in the following jobs
+    - name: Pack nugets
+      run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
+
     - uses: actions/upload-artifact@v3
       with:
         name: nuget
