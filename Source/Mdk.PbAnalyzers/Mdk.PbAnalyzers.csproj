@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IncludeBuildOutput>false</IncludeBuildOutput>
-        <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../PackageVersion.txt"))$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/alphaversion.txt"))</Version>
+        <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
         <Title>MDK2 Pb Analyzers</Title>
         <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/description.txt"))</Description>
         <Copyright>2023 Morten "Malware" Aune Lyrstad</Copyright>
