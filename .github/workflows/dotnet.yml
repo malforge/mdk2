@@ -5,10 +5,6 @@ name: Build and Deploy
 
 on:
   workflow_dispatch:
-#  push:
-#    branches: [ "main" ]
-#  pull_request:
-#    branches: [ "main" ]
 
 env:
   NuGetDirectory: ${{ github.workspace }}/nuget
@@ -36,26 +32,6 @@ jobs:
 
     - name: Build solution
       run: dotnet build MDK-Packages.sln --configuration Release
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: bin
-        retention-days: 7
-        path: "*/bin/Release/"
-
-    #- uses: actions/upload-artifact@v3
-      #with:
-        #name: Mdk.PbAnalyzers bin
-        ## if-no-files-found: error
-        #retention-days: 7
-        #path: Mdk.PbAnalyzers/bin/Release/
-
-    #- uses: actions/upload-artifact@v3
-      #with:
-        #name: Mdk.References bin
-        ## if-no-files-found: error
-        #retention-days: 7
-        #path: Mdk.PbAnalyzers/bin/Release/
 
     - name: Pack nugets
       run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
