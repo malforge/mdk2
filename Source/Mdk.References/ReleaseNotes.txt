@@ -1,3 +1,9 @@
+v.2.1.6
+ - Fixed bad heading in the readme.md
+
+v.2.1.5
+ - Fixed SpaceEngineersBinCopyLocal not working
+
 v.2.1.4
  - Legal crap, version parity
 
