@@ -32,6 +32,7 @@
         <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath=""/>
         <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build"/>
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+        <None Include="lib\**\*.*" Pack="True" PackagePath="lib" />
     </ItemGroup>
 
     <ItemGroup>

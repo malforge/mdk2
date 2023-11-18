@@ -1,3 +1,6 @@
+v.2.1.7
+ - Fixed harmless warnings
+
 v.2.1.6
  - Fixed bad heading in the readme.md
 
