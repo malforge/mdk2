@@ -46,7 +46,7 @@ jobs:
 
     - uses: actions/upload-artifact@v3
       with:
-        name: nuget
+        name: BuildOutput
         #if-no-files-found: error
         retention-days: 7
         path: "**/bin/Release/*.*"
