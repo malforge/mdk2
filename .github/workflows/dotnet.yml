@@ -58,7 +58,7 @@ jobs:
     - name: Collect NuGet packages
       run: |
         New-Item -ItemType Directory -Force -Path ${{ env.NuGetDirectory }}
-        $files = Get-ChildItem -Path . -Filter *.nuget -Recurse
+        $files = Get-ChildItem -Path . -Filter *.nupkg -Recurse
         Write-Host "Found files: $files"
         foreach ($file in $files) {
           Write-Host "Copying file: $file"
