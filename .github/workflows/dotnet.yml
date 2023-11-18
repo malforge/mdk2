@@ -51,8 +51,13 @@ jobs:
         retention-days: 7
         path: "**/bin/Release/*.*"
 
-    - name: Pack nugets
-      run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
+    - name: Collect NuGet packages
+      run: |
+        New-Item -ItemType Directory -Force -Path path\to\target-folder
+        Get-ChildItem -Path **\Release\*.nuget -Recurse | Copy-Item -Destination ${{ env.NuGetDirectory }}
+        
+#    - name: Pack nugets
+#      run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
 
     - uses: actions/upload-artifact@v3
       with:
