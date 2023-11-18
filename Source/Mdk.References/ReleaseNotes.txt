@@ -1,3 +1,7 @@
+v.2.1.8
+ - Added missing assembly
+ - Attempt at fixing strange integer overflow error
+
 v.2.1.7
  - Fixed harmless warnings
 

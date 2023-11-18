@@ -9,7 +9,7 @@ namespace Mdk2.References.Utility
 {
     public static class RegistryReader
     {
-        static readonly IntPtr HkeyCurrentUser = (IntPtr)0x80000001;
+        static readonly IntPtr HkeyCurrentUser = new IntPtr(-2147483647L);
 
         public static string GetSteamPath() => GetValue(@"Software\Valve\Steam", "SteamPath");
 
