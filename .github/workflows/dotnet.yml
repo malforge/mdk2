@@ -53,7 +53,7 @@ jobs:
 
     - name: Collect NuGet packages
       run: |
-        New-Item -ItemType Directory -Force -Path path\to\target-folder
+        New-Item -ItemType Directory -Force -Path ${{ env.NuGetDirectory }}
         Get-ChildItem -Path **\Release\*.nuget -Recurse | Copy-Item -Destination ${{ env.NuGetDirectory }}
         
 #    - name: Pack nugets
