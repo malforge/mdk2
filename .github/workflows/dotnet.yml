@@ -10,7 +10,7 @@ on:
         description: 'Publish to NuGet (yes/no)'
         required: true
         default: 'yes'
-  pull_request:
+  push:
     branches: 
       - main
     paths:
