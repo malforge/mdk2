@@ -51,10 +51,19 @@ jobs:
         retention-days: 7
         path: "**/bin/Release/*.*"
 
+#    - name: Collect NuGet packages
+#      run: |
+#        New-Item -ItemType Directory -Force -Path ${{ env.NuGetDirectory }}
+#        Get-ChildItem -Path . -Filter *.nuget -Recurse | Copy-Item -Destination ${{ env.NuGetDirectory }}
     - name: Collect NuGet packages
       run: |
         New-Item -ItemType Directory -Force -Path ${{ env.NuGetDirectory }}
-        Get-ChildItem -Path . -Filter *.nuget -Recurse | Copy-Item -Destination ${{ env.NuGetDirectory }}
+        $files = Get-ChildItem -Path . -Filter *.nuget -Recurse
+        Write-Host "Found files: $files"
+        foreach ($file in $files) {
+          Write-Host "Copying file: $file"
+          Copy-Item -Path $file.FullName -Destination ${{ env.NuGetDirectory }}
+        }
         
 #    - name: Pack nugets
 #      run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
