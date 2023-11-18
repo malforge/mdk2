@@ -6,7 +6,8 @@ name: Build and Deploy
 on:
   workflow_dispatch:
   pull_request:
-    branches: main
+    branches: 
+      - main
     paths:
       - 'Source/**/PackageVersion.txt'
       
