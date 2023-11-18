@@ -10,10 +10,6 @@ on:
         description: 'Publish to NuGet (y/n)'
         required: true
         default: 'y'
-      uploadBuildOutput:
-        description: 'Upload build output artefact (y/n)'
-        required: true
-        default: 'n'
   push:
     branches: 
       - main
@@ -51,7 +47,6 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: BuildOutput
-        if: ${{ github.event.inputs.uploadBuildOutput == 'y' }}
         retention-days: 7
         path: "**/bin/Release/*.*"
 
