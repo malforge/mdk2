@@ -5,6 +5,11 @@ name: Build and Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      publishToNuGet:
+        description: 'Publish to NuGet (true/false)'
+        required: true
+        default: 'false'
   pull_request:
     branches: 
       - main
@@ -39,6 +44,13 @@ jobs:
     - name: Build solution
       run: dotnet build MDK-Packages.sln --configuration Release
 
+    - uses: actions/upload-artifact@v3
+      with:
+        name: nuget
+        #if-no-files-found: error
+        retention-days: 7
+        path: "**/bin/Release/*.*
+
     - name: Pack nugets
       run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
 
@@ -53,6 +65,7 @@ jobs:
       # Use --skip-duplicate to prevent errors if a package with the same version already exists.
       # If you retry a failed workflow, already published packages will be skipped without error.
     - name: Publish NuGet packages
+      if: ${{ github.event.inputs.publishToNuGet == 'true' }}
       run: |
         foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
           dotnet nuget push $file --api-key "${{ secrets.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
