@@ -54,7 +54,7 @@ jobs:
     - name: Collect NuGet packages
       run: |
         New-Item -ItemType Directory -Force -Path ${{ env.NuGetDirectory }}
-        Get-ChildItem -Path **\Release\*.nuget -Recurse | Copy-Item -Destination ${{ env.NuGetDirectory }}
+        Get-ChildItem -Path *.nuget -Recurse | Copy-Item -Destination ${{ env.NuGetDirectory }}
         
 #    - name: Pack nugets
 #      run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
