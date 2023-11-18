@@ -49,7 +49,7 @@ jobs:
         name: nuget
         #if-no-files-found: error
         retention-days: 7
-        path: "**/bin/Release/*.*
+        path: "**/bin/Release/*.*"
 
     - name: Pack nugets
       run: dotnet pack MDK-Packages.sln --no-build --no-restore --configuration Release --output "${{ env.NuGetDirectory }}"
