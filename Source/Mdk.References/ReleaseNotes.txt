@@ -1,3 +1,6 @@
+v.2.1.9
+ - Package didn't work properly in Visual Studio 
+
 v.2.1.8
  - Added missing assembly
  - Attempt at fixing strange integer overflow error
