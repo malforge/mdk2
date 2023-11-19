@@ -1,3 +1,5 @@
+Note: It does seem like VS2022 is required for stable performance. However this is unconfirmed.
+
 The game Space Engineers (by Keen Software House, no affiliation) supports scripting and modding using the C# language. This package aims to automatically detect the location of the Space Engineers installation, and referencing the assembly DLLs required to write scripts and mods.
 
 ---
