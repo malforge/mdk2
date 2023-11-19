@@ -2,6 +2,8 @@
 
 ---
 
+### Note: It does seem like VS2022 is required for stable performance. However this is unconfirmed.
+
 The game [Space Engineers](https://store.steampowered.com/app/244850/Space_Engineers/)
 (by [Keen Software House](https://www.keenswh.com/), no affiliation) supports 
 scripting and modding using the C# language. This package aims to automatically detect
