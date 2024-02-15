@@ -17,6 +17,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Reference Include="Sandbox.Game">
+            <HintPath>$(SpaceEngineersBinPath)\SpaceEngineers.exe</HintPath>
+            <Private>$(SpaceEngineersBinCopyLocal)</Private>
+        </Reference>
+    </ItemGroup>
+    
+    <ItemGroup>
       <None Update="steam_appid.txt">
         <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
@@ -35,6 +42,10 @@
         <AutoGen>True</AutoGen>
         <DependentUpon>Resources.resx</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Mal.Mdk2.References" Version="2.1.9" />
     </ItemGroup>
 
     <Import Project="Properties\SpaceEngineersPath.props"/>

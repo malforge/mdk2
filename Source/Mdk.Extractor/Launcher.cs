@@ -21,7 +21,7 @@ namespace Mdk.Extractor
             MyFileSystem.ExePath = Path;
             MyFileSystem.RootPath = System.IO.Path.GetFullPath(System.IO.Path.Combine(Path, ".."));
 
-            MyPlugins.RegisterUserAssemblyFiles(new List<string> { name });
+            MyPlugins.RegisterUserAssemblyFiles([name]);
             MyProgram.Main(args);
         }
     }
