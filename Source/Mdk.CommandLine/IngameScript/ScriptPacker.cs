@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Api;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
@@ -99,10 +98,21 @@ public class ScriptPacker
         var preprocessors = await Task.WhenAll(LoadPreprocessors());
         var combiner = await LoadCombinerAsync();
         var postprocessors = await Task.WhenAll(LoadPostprocessors());
+        var composer = await LoadComposerAsync();
+        var postCompositionProcessors = await Task.WhenAll(LoadPostCompositionProcessors());
+        var producer = await LoadProducerAsync();
+
         console.Trace("There are:")
             .Trace($"  {allDocuments.Count} documents")
             .Trace($"  {preprocessors.Length} preprocessors")
-            .Trace($"  {postprocessors.Length} postprocessors");
+            .TraceIf(preprocessors.Length > 0, $"    {string.Join("\n    ", preprocessors.Select(p => p.GetType().Name))}")
+            .Trace($"  combiner {combiner.GetType().Name}")
+            .Trace($"  {postprocessors.Length} postprocessors")
+            .TraceIf(postprocessors.Length > 0, $"    {string.Join("\n    ", postprocessors.Select(p => p.GetType().Name))}")
+            .Trace($"  composer {composer.GetType().Name}")
+            .Trace($"  {postCompositionProcessors.Length} post-composition processors")
+            .TraceIf(postCompositionProcessors.Length > 0, $"    {string.Join("\n    ", postCompositionProcessors.Select(p => p.GetType().Name))}")
+            .Trace($"  producer {producer.GetType().Name}");
 
         var syntaxTrees = (await Task.WhenAll(allDocuments.Select(d => d.GetSyntaxTreeAsync()))).Cast<CSharpSyntaxTree>().ToImmutableArray();
 
@@ -113,15 +123,25 @@ public class ScriptPacker
             return tree;
         }
 
-        console.Trace("Preprocessing syntax trees");
-        syntaxTrees = (await Task.WhenAll(syntaxTrees.Select(preprocessSyntaxTree))).ToImmutableArray();
+        if (preprocessors.Length > 0)
+        {
+            console.Trace("Preprocessing syntax trees");
+            syntaxTrees = (await Task.WhenAll(syntaxTrees.Select(preprocessSyntaxTree))).ToImmutableArray();
+        }
+        else
+            console.Trace("No preprocessors found.");
 
         console.Trace("Combining syntax trees");
         var combinedSyntaxTree = await combiner.CombineAsync(syntaxTrees, metadata);
 
-        console.Trace("Postprocessing syntax tree");
-        foreach (var postprocessor in postprocessors)
-            combinedSyntaxTree = await postprocessor.ProcessAsync(combinedSyntaxTree, metadata);
+        if (postprocessors.Length > 0)
+        {
+            console.Trace("Postprocessing syntax tree");
+            foreach (var postprocessor in postprocessors)
+                combinedSyntaxTree = await postprocessor.ProcessAsync(combinedSyntaxTree, metadata);
+        }
+        else
+            console.Trace("No postprocessors found.");
 
         console.Trace("Verifying that nothing went wrong");
         compilation = compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(combinedSyntaxTree);
@@ -133,34 +153,23 @@ public class ScriptPacker
             throw new CommandLineException(-2, "Failed to compile the project.");
         }
 
-        var final = new StringBuilder(combinedSyntaxTree.ToString());
+        console.Trace("Composing the final script");
+        var final = await composer.ComposeAsync(combinedSyntaxTree, console, metadata);
 
-        await OutputScriptAsync(project, console, final, readmeDocument, thumbnailDocument);
+        if (postCompositionProcessors.Length > 0)
+        {
+            console.Trace("Post-composing the final script");
+            foreach (var postCompositionProcessor in postCompositionProcessors)
+                final = await postCompositionProcessor.ProcessAsync(final, metadata);
+        }
+        else
+            console.Trace("No post-composition processors found.");
 
-        return true;
-    }
-
-    static async Task OutputScriptAsync(Project project, IConsole console, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument)
-    {
-        console.Trace("Writing the combined syntax tree to a file");
         var outputDirectory = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(project.FilePath)!, "IngameScripts", "local"));
         outputDirectory.Create();
-        var outputPath = Path.Combine(outputDirectory.FullName, "script.cs");
-        var buffer = new StringBuilder();
-        if (readmeDocument != null)
-        {
-            var readmeText = await readmeDocument.GetTextAsync();
-            buffer.Append("// " + string.Join("\n// ", readmeText.Lines.Select(l => l.ToString()))).Append('\n');
-        }
-        buffer.Append(script.ToString().Replace(Environment.NewLine, "\n"));
-        await File.WriteAllTextAsync(outputPath, buffer.ToString());
-        console.Trace($"The combined syntax tree was written to {outputPath}");
-        if (thumbnailDocument != null)
-        {
-            var thumbnailPath = Path.Combine(outputDirectory.FullName, "thumb.png");
-            File.Copy(thumbnailDocument.FilePath!, thumbnailPath, true);
-            console.Trace($"The thumbnail was written to {thumbnailPath}");
-        }
+        await producer.ProduceAsync(outputDirectory, console, final, readmeDocument, thumbnailDocument, metadata);
+
+        return true;
     }
 
     async Task<(Project, CSharpCompilation)> CompileAndValidateProjectAsync(Project project)
@@ -227,6 +236,15 @@ public class ScriptPacker
     {
         yield return Task.FromResult<IScriptPostprocessor>(new PartialMerger());
     }
+
+    Task<IScriptComposer> LoadComposerAsync() => Task.FromResult<IScriptComposer>(new ScriptComposer());
+
+    IEnumerable<Task<IScriptPostCompositionProcessor>> LoadPostCompositionProcessors()
+    {
+        yield break;
+    }
+
+    Task<IScriptProducer> LoadProducerAsync() => Task.FromResult<IScriptProducer>(new ScriptProducer());
 
     async Task<bool> PackLegacyProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
     {
