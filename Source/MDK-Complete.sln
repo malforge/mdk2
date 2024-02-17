@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mod Project Template", "Mod
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.SEMod", "Mod Project Template\Mal.SEMod\Mal.SEMod.csproj", "{94FC7271-B163-4EAA-82CA-7FC72729EA5E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.CommandLine", "Mdk.CommandLine\Mdk.CommandLine.csproj", "{F7565D42-C026-4F9C-9402-15121253D2E0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{94FC7271-B163-4EAA-82CA-7FC72729EA5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94FC7271-B163-4EAA-82CA-7FC72729EA5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94FC7271-B163-4EAA-82CA-7FC72729EA5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7565D42-C026-4F9C-9402-15121253D2E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7565D42-C026-4F9C-9402-15121253D2E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7565D42-C026-4F9C-9402-15121253D2E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7565D42-C026-4F9C-9402-15121253D2E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{94FC7271-B163-4EAA-82CA-7FC72729EA5E} = {FA1CF8AE-DA15-47A4-8426-C505A2827045}

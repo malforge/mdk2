@@ -73,7 +73,7 @@ namespace Mdk2.PbAnalyzers
         void LoadEmbeddedWhitelist()
         {
             string[] lines;
-            using (var stream = GetType().Assembly.GetManifestResourceStream("Mdk2.Analyzers.pbwhitelist.cache"))
+            using (var stream = GetType().Assembly.GetManifestResourceStream("pbwhitelist.cache"))
             {
                 using (var reader = new StreamReader(stream ?? throw new InvalidOperationException("Error loading embedded whitelist cache")))
                     lines = reader.ReadToEnd().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
