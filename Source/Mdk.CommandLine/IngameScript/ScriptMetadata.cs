@@ -11,21 +11,21 @@ namespace Mdk.CommandLine.IngameScript;
 public class ScriptProjectMetadata
 {
     public required Version MdkProjectVersion { get; init; }
+    public required string ProjectDirectory { get; init; }
     public MinifierLevel Minify { get; init; }
     public ImmutableArray<FileSystemInfo> Ignores { get; init; }
     public bool TrimTypes { get; init; }
     public int IndentSize { get; init; } = 4;
-    
-    public ScriptProjectMetadata WithAdditionalIgnore(FileSystemInfo ignore)
-    {
-        return new ScriptProjectMetadata
+
+    public ScriptProjectMetadata WithAdditionalIgnore(FileSystemInfo ignore) =>
+        new()
         {
             MdkProjectVersion = MdkProjectVersion,
+            ProjectDirectory = ProjectDirectory,
             Minify = Minify,
-            Ignores = Ignores.IsDefault? ImmutableArray.Create(ignore) : Ignores.Add(ignore),
+            Ignores = Ignores.IsDefault ? ImmutableArray.Create(ignore) : Ignores.Add(ignore),
             TrimTypes = TrimTypes
         };
-    }
 
     public static async Task<ScriptProjectMetadata?> LoadAsync(Project project)
     {
@@ -50,6 +50,7 @@ public class ScriptProjectMetadata
 
         return new ScriptProjectMetadata
         {
+            ProjectDirectory = rootPath,
             MdkProjectVersion = mdkVersion,
             TrimTypes = mdkTrimTypes,
             Minify = mdkMinify,

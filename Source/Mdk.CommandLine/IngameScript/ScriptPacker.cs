@@ -28,7 +28,7 @@ public class ScriptPacker
         {
             console.Trace($"Packing a single project: {projectPath}");
             var project = await workspace.OpenProjectAsync(projectPath);
-            if (!await PackProject(project, console))
+            if (!await PackProjectAsync(project, console))
                 throw new CommandLineException(-1, "The project is not recognized as an MDK project.");
 
             console.Print("The project was successfully packed.");
@@ -37,7 +37,7 @@ public class ScriptPacker
         {
             console.Trace("Packaging a solution: " + projectPath);
             var solution = await workspace.OpenSolutionAsync(projectPath);
-            var packedProjects = await PackSolution(solution, console);
+            var packedProjects = await PackSolutionAsync(solution, console);
             switch (packedProjects)
             {
                 case 0:
@@ -54,9 +54,31 @@ public class ScriptPacker
             throw new CommandLineException(-1, "Unknown file type.");
     }
 
-    async Task<int> PackSolution(Solution solution, IConsole console) => 0;
+    /// <summary>
+    ///     Pack an entire solution.
+    /// </summary>
+    /// <param name="solution"></param>
+    /// <param name="console"></param>
+    /// <returns></returns>
+    public async Task<int> PackSolutionAsync(Solution solution, IConsole console)
+    {
+        var packedProjects = 0;
+        foreach (var project in solution.Projects)
+        {
+            if (await PackProjectAsync(project, console))
+                packedProjects++;
+        }
+        return packedProjects;
+    }
 
-    async Task<bool> PackProject(Project project, IConsole console)
+    /// <summary>
+    ///     Pack an individual project.
+    /// </summary>
+    /// <param name="project"></param>
+    /// <param name="console"></param>
+    /// <returns></returns>
+    /// <exception cref="CommandLineException"></exception>
+    public async Task<bool> PackProjectAsync(Project project, IConsole console)
     {
         var metadata = await ScriptProjectMetadata.LoadAsync(project);
 
@@ -121,8 +143,7 @@ public class ScriptPacker
         await VerifyAsync(console, scriptDocument);
         var final = await ComposeAsync(scriptDocument, composer, console, metadata);
         final = await PostProcessComposition(final, postCompositionProcessors, console, metadata);
-        outputDirectory.Create();
-        await producer.ProduceAsync(outputDirectory, console, final, readmeDocument, thumbnailDocument, metadata);
+        await ProduceAsync(project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, console, metadata);
 
         return true;
     }
@@ -229,6 +250,15 @@ public class ScriptPacker
         return final;
     }
 
+    static async Task ProduceAsync(string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IConsole console, ScriptProjectMetadata metadata)
+    {
+        console.Trace($"Producing into {outputDirectory.FullName}");
+        outputDirectory.Create();
+        await producer.ProduceAsync(outputDirectory, console, final, readmeDocument, thumbnailDocument, metadata);
+        // get path relative to the project
+        var displayPath = Path.GetRelativePath(metadata.ProjectDirectory, outputDirectory.FullName);
+        console.Print($"{projectName} => {displayPath}");
+    }
 
     static bool ShouldInclude(Document document, ScriptProjectMetadata metadata)
     {
