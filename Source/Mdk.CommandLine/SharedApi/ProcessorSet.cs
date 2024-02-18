@@ -13,7 +13,7 @@ namespace Mdk.CommandLine.SharedApi;
 /// <typeparam name="T"></typeparam>
 public class ProcessorSet<T> : IReadOnlyList<T> where T : class
 {
-    readonly List<Processor> _processors = new();
+    readonly List<Processor> _processors;
 
     public ProcessorSet(params Type[] types) : this((IEnumerable<Type>)types) { }
 
@@ -24,8 +24,22 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
     /// <param name="types"></param>
     public ProcessorSet(IEnumerable<Type> types)
     {
-        _processors.AddRange(types.Select(Processor.Create));
-        SortAndValidate();
+        var processors = types.Select(Processor.Create).ToList();
+        foreach (var processor in processors)
+        {
+            foreach (var runBefore in processor.RunBefore)
+            {
+                var before = runBefore;
+                var targetIndex = processors.FindIndex(p => p.Type == before);
+                if (targetIndex == -1)
+                    throw new InvalidOperationException($"Processor {processor.Type.FullName} has a dependency on {runBefore.FullName}, which does not exist.");
+                var target = processors[targetIndex];
+                target = target.WithAdditionalRunAfter(processor.Type);
+                processors[targetIndex] = target;
+            }
+        }
+        
+        _processors = SortAndValidate(processors);
     }
 
     /// <inheritdoc />
@@ -44,35 +58,34 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
     /// <param name="index"></param>
     public T this[int index] => _processors[index].Instance;
 
-    void SortAndValidate()
+
+    static List<Processor> SortAndValidate(List<Processor> processors)
     {
         var sorted = new List<Processor>();
-        var remaining = new List<Processor>(_processors);
+        var remaining = new List<Processor>(processors);
+        var dependencyMap = processors.ToDictionary(p => p.Type, p => p.RunAfter.ToHashSet());
 
         while (remaining.Count > 0)
         {
-            var added = false;
-            for (var i = 0; i < remaining.Count; i++)
+            bool added = false;
+            foreach (var processor in remaining.ToList()) // ToList to avoid collection modification issues
             {
-                var processor = remaining[i];
-                if (sorted.Any(p => processor.RunAfter.Contains(p.Type)))
-                    continue;
-
-                if (processor.RunBefore.Any(p => sorted.Any(s => s.Type == p)))
-                    continue;
-
-                sorted.Add(processor);
-                remaining.RemoveAt(i);
-                added = true;
-                break;
+                if (!dependencyMap[processor.Type].Except(sorted.Select(s => s.Type)).Any())
+                {
+                    sorted.Add(processor);
+                    remaining.Remove(processor);
+                    added = true;
+                    break; // Exit the loop since we've made a change
+                }
             }
 
             if (!added)
+            {
                 throw new InvalidOperationException("Failed to sort processors. There is a circular dependency.");
+            }
         }
 
-        _processors.Clear();
-        _processors.AddRange(sorted);
+        return sorted;
     }
 
     readonly struct Processor
@@ -113,6 +126,12 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
             RunBefore = runBefore;
             Instance = instance;
             Type = type;
+        }
+        
+        public Processor WithAdditionalRunAfter(Type type)
+        {
+            var newRunAfter = RunAfter.Add(type);
+            return new Processor(newRunAfter, RunBefore, Instance, Type);
         }
     }
 }

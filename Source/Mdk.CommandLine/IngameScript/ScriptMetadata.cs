@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
@@ -12,22 +13,38 @@ public class ScriptProjectMetadata
 {
     public required Version MdkProjectVersion { get; init; }
     public required string ProjectDirectory { get; init; }
+    public required string OutputDirectory { get; init; }
     public MinifierLevel Minify { get; init; }
     public ImmutableArray<FileSystemInfo> Ignores { get; init; }
     public bool TrimTypes { get; init; }
     public int IndentSize { get; init; } = 4;
+    public required IReadOnlyDictionary<string, string> Macros { get; init; }
 
     public ScriptProjectMetadata WithAdditionalIgnore(FileSystemInfo ignore) =>
         new()
         {
             MdkProjectVersion = MdkProjectVersion,
             ProjectDirectory = ProjectDirectory,
+            OutputDirectory = OutputDirectory,
             Minify = Minify,
             Ignores = Ignores.IsDefault ? ImmutableArray.Create(ignore) : Ignores.Add(ignore),
-            TrimTypes = TrimTypes
+            TrimTypes = TrimTypes,
+            Macros = Macros
+        };
+    
+    public ScriptProjectMetadata WithOutputDirectory(string outputDirectory) =>
+        new()
+        {
+            MdkProjectVersion = MdkProjectVersion,
+            ProjectDirectory = ProjectDirectory,
+            OutputDirectory = outputDirectory,
+            Minify = Minify,
+            Ignores = Ignores,
+            TrimTypes = TrimTypes,
+            Macros = Macros
         };
 
-    public static async Task<ScriptProjectMetadata?> LoadAsync(Project project)
+    public static async Task<ScriptProjectMetadata?> LoadAsync(Project project, IReadOnlyDictionary<string, string>? macros = null)
     {
         if (project.FilePath == null) return null;
         var rootPath = Path.GetDirectoryName(project.FilePath)!;
@@ -48,13 +65,20 @@ public class ScriptProjectMetadata
         var mdkIgnores = (propertyGroup?.Element(ns + "MDKIgnore")?.Elements(ns + "Folder").Select(e => getDirectoryInfo(e.Value)) ?? Enumerable.Empty<FileSystemInfo>())
             .Concat(propertyGroup?.Element(ns + "MDKIgnore")?.Elements(ns + "File").Select(e => getFileInfo(e.Value)) ?? Enumerable.Empty<FileSystemInfo>()).ToImmutableArray();
 
+        var finalMacros = macros != null ? new Dictionary<string, string>(macros, StringComparer.InvariantCultureIgnoreCase) : new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+        finalMacros["$MDK_DATETIME$"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        finalMacros["$MDK_DATE$"] = DateTime.Now.ToString("yyyy-MM-dd");
+        finalMacros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
+        
         return new ScriptProjectMetadata
         {
             ProjectDirectory = rootPath,
+            OutputDirectory = Path.Combine(rootPath, "IngameScripts", "local"),
             MdkProjectVersion = mdkVersion,
             TrimTypes = mdkTrimTypes,
             Minify = mdkMinify,
-            Ignores = mdkIgnores
+            Ignores = mdkIgnores,
+            Macros = finalMacros.AsReadOnly()
         };
 
         FileSystemInfo getDirectoryInfo(string path)

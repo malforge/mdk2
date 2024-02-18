@@ -24,6 +24,8 @@ public class PackScriptCommand : Command
         var minifier = MinifierLevel.None;
         var trimUnusedTypes = false;
         string? projectFile = null;
+        string? output = null;
+        bool toClipboard = false;
 
         while (arguments.Count > 0)
         {
@@ -37,6 +39,14 @@ public class PackScriptCommand : Command
                 case "-trim":
                     trimUnusedTypes = true;
                     break;
+                case "-toclipboard":
+                    toClipboard = true;
+                    break;
+                case "-output":
+                    if (!arguments.TryDequeue(out var outputValue)) throw new CommandLineException(-1, "No output file specified.");
+                    if (output != null) throw new CommandLineException(-1, "Only one output path can be specified.");
+                    output = outputValue;
+                    break;
                 default:
                     if (projectFile != null) throw new CommandLineException(-1, "Only one project file can be specified.");
                     projectFile = arg;
@@ -46,11 +56,18 @@ public class PackScriptCommand : Command
 
         if (projectFile == null) throw new CommandLineException(-1, "No project file specified.");
 
+        if (string.Equals(output, "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            
+        }
+        
         return new PackOptions
         {
             MinifierLevel = minifier,
             TrimUnusedTypes = trimUnusedTypes,
-            ProjectFile = projectFile
+            ProjectFile = projectFile,
+            Output = output,
+            ToClipboard = toClipboard
         };
     }
 

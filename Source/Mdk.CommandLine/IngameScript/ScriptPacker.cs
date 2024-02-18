@@ -14,8 +14,18 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace Mdk.CommandLine.IngameScript;
 
+/// <summary>
+///     Processes an MDK project and produces a single script file, which is made compatible with the
+///     Space Engineers Programmable Block.
+/// </summary>
 public class ScriptPacker
 {
+    /// <summary>
+    ///     Perform packing operation(s) based on the provided options.
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="console"></param>
+    /// <exception cref="CommandLineException"></exception>
     public async Task PackAsync(PackOptions options, IConsole console)
     {
         if (!MSBuildLocator.IsRegistered) MSBuildLocator.RegisterDefaults();
@@ -28,7 +38,7 @@ public class ScriptPacker
         {
             console.Trace($"Packing a single project: {projectPath}");
             var project = await workspace.OpenProjectAsync(projectPath);
-            if (!await PackProjectAsync(project, console))
+            if (!await PackProjectAsync(options, project, console))
                 throw new CommandLineException(-1, "The project is not recognized as an MDK project.");
 
             console.Print("The project was successfully packed.");
@@ -37,7 +47,7 @@ public class ScriptPacker
         {
             console.Trace("Packaging a solution: " + projectPath);
             var solution = await workspace.OpenSolutionAsync(projectPath);
-            var packedProjects = await PackSolutionAsync(solution, console);
+            var packedProjects = await PackSolutionAsync(options, solution, console);
             switch (packedProjects)
             {
                 case 0:
@@ -57,15 +67,16 @@ public class ScriptPacker
     /// <summary>
     ///     Pack an entire solution.
     /// </summary>
+    /// <param name="options"></param>
     /// <param name="solution"></param>
     /// <param name="console"></param>
     /// <returns></returns>
-    public async Task<int> PackSolutionAsync(Solution solution, IConsole console)
+    public async Task<int> PackSolutionAsync(PackOptions options, Solution solution, IConsole console)
     {
         var packedProjects = 0;
         foreach (var project in solution.Projects)
         {
-            if (await PackProjectAsync(project, console))
+            if (await PackProjectAsync(options, project, console))
                 packedProjects++;
         }
         return packedProjects;
@@ -74,11 +85,12 @@ public class ScriptPacker
     /// <summary>
     ///     Pack an individual project.
     /// </summary>
+    /// <param name="options"></param>
     /// <param name="project"></param>
     /// <param name="console"></param>
     /// <returns></returns>
     /// <exception cref="CommandLineException"></exception>
-    public async Task<bool> PackProjectAsync(Project project, IConsole console)
+    public async Task<bool> PackProjectAsync(PackOptions options, Project project, IConsole console)
     {
         var metadata = await ScriptProjectMetadata.LoadAsync(project);
 
@@ -91,16 +103,38 @@ public class ScriptPacker
                 throw new CommandLineException(-1, "The project is not recognized as an MDK project.");
             case < 2:
                 console.Trace("Detected a legacy project.");
-                return await PackLegacyProjectAsync(project, metadata, console);
+                return await PackLegacyProjectAsync(options, project, metadata, console);
             default:
                 console.Trace("Detected a modern project.");
-                return await PackProjectAsync(project, metadata, console);
+                return await PackProjectAsync(options, project, metadata, console);
         }
     }
 
-    async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
+    async Task<bool> PackProjectAsync(PackOptions options, Project project, ScriptProjectMetadata metadata, IConsole console)
     {
-        var outputDirectory = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(project.FilePath)!, "IngameScripts", "local"));
+        if (options.Output != null)
+        {
+            if (string.Equals(options.Output, "auto", StringComparison.OrdinalIgnoreCase))
+            {
+                console.Trace("Determining the output directory automatically...");
+                if (!OperatingSystem.IsWindows())
+                    throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
+                var se = new SpaceEngineers();
+                var output = se.GetDataPath("IngameScripts", "local");
+                if (string.IsNullOrEmpty(output))
+                    throw new CommandLineException(-1, "Failed to determine the output directory.");
+                metadata = metadata.WithOutputDirectory(output);
+                console.Trace("Output directory: " + output);
+            }
+            else
+                metadata = metadata.WithOutputDirectory(options.Output);
+        }
+        if (options.ToClipboard && !OperatingSystem.IsWindows())
+            throw new CommandLineException(-1, "The clipboard option is only supported on Windows.");
+        
+        var outputPath = Path.Combine(metadata.OutputDirectory, project.Name);
+        var outputDirectory = new DirectoryInfo(outputPath);
+
         project = await CompileAndValidateProjectAsync(project);
 
         project.TryGetDocument("instructions.readme", out var readmeDocument);
@@ -145,6 +179,12 @@ public class ScriptPacker
         final = await PostProcessComposition(final, postCompositionProcessors, console, metadata);
         await ProduceAsync(project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, console, metadata);
 
+        if (OperatingSystem.IsWindows() && options.ToClipboard)
+        {
+            console.Trace("Copying the final script to the clipboard...");
+            await Clipboard.PutAsync(final.ToString());
+        }
+
         return true;
     }
 
@@ -181,7 +221,10 @@ public class ScriptPacker
         async Task<Document> preprocessSyntaxTree(Document document)
         {
             foreach (var preprocessor in preprocessors)
+            {
+                console.Trace($"Running {nameof(preprocessor)} " + preprocessor.GetType().Name);
                 document = await preprocessor.ProcessAsync(document, metadata);
+            }
             return document;
         }
 
@@ -197,7 +240,7 @@ public class ScriptPacker
 
     static async Task<Document> CombineAsync(Project project, IScriptCombiner combiner, ImmutableArray<Document> allDocuments, DirectoryInfo outputDirectory, IConsole console, ScriptProjectMetadata metadata)
     {
-        console.Trace("Combining syntax trees");
+        console.Trace($"Running combiner {combiner.GetType().Name}");
         var scriptDocument = (await combiner.CombineAsync(project, allDocuments, metadata))
             .WithName("script.cs")
             .WithFilePath(Path.Combine(outputDirectory.FullName, "script.cs"));
@@ -210,7 +253,10 @@ public class ScriptPacker
         {
             console.Trace("Postprocessing syntax tree");
             foreach (var postprocessor in postprocessors)
+            {
+                console.Trace($"Running postprocessor {postprocessor.GetType().Name}");
                 scriptDocument = await postprocessor.ProcessAsync(scriptDocument, metadata);
+            }
         }
         else
             console.Trace("No postprocessors found.");
@@ -232,7 +278,7 @@ public class ScriptPacker
 
     static async Task<StringBuilder> ComposeAsync(Document scriptDocument, IScriptComposer composer, IConsole console, ScriptProjectMetadata metadata)
     {
-        console.Trace("Composing the final script");
+        console.Trace($"Running composer {composer.GetType().Name}");
         var final = await composer.ComposeAsync(scriptDocument, console, metadata);
         return final;
     }
@@ -243,7 +289,10 @@ public class ScriptPacker
         {
             console.Trace("Post-composing the final script");
             foreach (var postCompositionProcessor in postCompositionProcessors)
+            {
+                console.Trace($"Running post-composition processor {postCompositionProcessor.GetType().Name}");
                 final = await postCompositionProcessor.ProcessAsync(final, metadata);
+            }
         }
         else
             console.Trace("No post-composition processors found.");
@@ -252,6 +301,7 @@ public class ScriptPacker
 
     static async Task ProduceAsync(string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IConsole console, ScriptProjectMetadata metadata)
     {
+        console.Trace($"Running producer {producer.GetType().Name}");
         console.Trace($"Producing into {outputDirectory.FullName}");
         outputDirectory.Create();
         await producer.ProduceAsync(outputDirectory, console, final, readmeDocument, thumbnailDocument, metadata);
@@ -285,19 +335,19 @@ public class ScriptPacker
         return true;
     }
 
-    async Task<bool> PackLegacyProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
+    async Task<bool> PackLegacyProjectAsync(PackOptions options, Project project, ScriptProjectMetadata metadata, IConsole console)
     {
         var root = new DirectoryInfo(Path.GetDirectoryName(project.FilePath!)!);
         metadata = metadata.WithAdditionalIgnore(new DirectoryInfo(Path.Combine(root.FullName, "obj")));
 
-        return await PackProjectAsync(project, metadata, console);
+        return await PackProjectAsync(options, project, metadata, console);
     }
 
     static class ProcessorTypes
     {
-        public static readonly Type[] Preprocessors = { typeof(DeleteNamespaces) };
+        public static readonly Type[] Preprocessors = [typeof(DeleteNamespaces)];
         public static readonly Type Combiner = typeof(ScriptCombiner);
-        public static readonly Type[] Postprocessors = { typeof(PartialMerger) };
+        public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(Annotator)];
         public static readonly Type Composer = typeof(ScriptComposer);
         public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
         public static readonly Type Producer = typeof(ScriptProducer);
