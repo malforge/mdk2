@@ -12,5 +12,5 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 public class ScriptComposer : IScriptComposer
 {
     /// <inheritdoc />
-    public Task<StringBuilder> ComposeAsync(CSharpSyntaxTree syntaxTree, IConsole console, ScriptProjectMetadata metadata) => Task.FromResult(new StringBuilder(syntaxTree.ToString()));
+    public Task<StringBuilder> ComposeAsync(CSharpCompilation compilation, CSharpSyntaxTree syntaxTree, IConsole console, ScriptProjectMetadata metadata) => Task.FromResult(new StringBuilder(syntaxTree.ToString()));
 }

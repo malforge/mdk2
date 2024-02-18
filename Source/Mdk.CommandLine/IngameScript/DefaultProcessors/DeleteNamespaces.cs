@@ -20,7 +20,7 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 public class DeleteNamespaces : IScriptPreprocessor
 {
     /// <inheritdoc />
-    public async Task<CSharpSyntaxTree> ProcessAsync(CSharpSyntaxTree syntaxTree, ScriptProjectMetadata metadata)
+    public async Task<CSharpSyntaxTree> ProcessAsync(CSharpCompilation compilation, CSharpSyntaxTree syntaxTree, ScriptProjectMetadata metadata)
     {
         CSharpSyntaxNode root = await syntaxTree.GetRootAsync(), originalRoot = root;
         var namespaceDeclarations = root.DescendantNodes().OfType<NamespaceDeclarationSyntax>().ToArray();

@@ -13,9 +13,10 @@ public interface IScriptComposer
     /// <summary>
     ///     Composes the final script from the syntax tree.
     /// </summary>
+    /// <param name="compilation">Compilation information for the script.</param>
     /// <param name="syntaxTree">The syntax tree to compose the script from.</param>
     /// <param name="console">A console to output messages to.</param>
     /// <param name="metadata">The metadata for the script project.</param>
     /// <returns></returns>
-    Task<StringBuilder> ComposeAsync(CSharpSyntaxTree syntaxTree, IConsole console, ScriptProjectMetadata metadata);
+    Task<StringBuilder> ComposeAsync(CSharpCompilation compilation, CSharpSyntaxTree syntaxTree, IConsole console, ScriptProjectMetadata metadata);
 }

@@ -119,7 +119,7 @@ public class ScriptPacker
         async Task<CSharpSyntaxTree> preprocessSyntaxTree(CSharpSyntaxTree tree)
         {
             foreach (var preprocessor in preprocessors)
-                tree = await preprocessor.ProcessAsync(tree, metadata);
+                tree = await preprocessor.ProcessAsync(compilation, tree, metadata);
             return tree;
         }
 
@@ -133,18 +133,22 @@ public class ScriptPacker
 
         console.Trace("Combining syntax trees");
         var combinedSyntaxTree = await combiner.CombineAsync(syntaxTrees, metadata);
+        
+        // create a new document for the combined syntax tree
+        var combinedDocument = project.AddDocument("combined.cs", await combinedSyntaxTree.GetRootAsync());
 
+        compilation = compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(combinedSyntaxTree);
+        
         if (postprocessors.Length > 0)
         {
             console.Trace("Postprocessing syntax tree");
             foreach (var postprocessor in postprocessors)
-                combinedSyntaxTree = await postprocessor.ProcessAsync(combinedSyntaxTree, metadata);
+                (combinedSyntaxTree, compilation) = await postprocessor.ProcessAsync(compilation, combinedSyntaxTree, metadata);
         }
         else
             console.Trace("No postprocessors found.");
 
         console.Trace("Verifying that nothing went wrong");
-        compilation = compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(combinedSyntaxTree);
         var diagnostics = compilation.GetDiagnostics();
         if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
         {
@@ -154,7 +158,7 @@ public class ScriptPacker
         }
 
         console.Trace("Composing the final script");
-        var final = await composer.ComposeAsync(combinedSyntaxTree, console, metadata);
+        var final = await composer.ComposeAsync(compilation, combinedSyntaxTree, console, metadata);
 
         if (postCompositionProcessors.Length > 0)
         {
