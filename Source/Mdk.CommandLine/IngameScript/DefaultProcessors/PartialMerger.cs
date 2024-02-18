@@ -32,6 +32,7 @@ public class PartialMerger : IScriptPostprocessor
             if (parts.Count <= 1)
                 continue;
             var allBaseLists = parts.SelectMany(t => t.ChildNodes().OfType<BaseListSyntax>()).ToList();
+            var allModifiers = parts.SelectMany(t => t.Modifiers).Select(m => m.ValueText).Distinct().Where(m => m != "partial").ToList();
             
             var allSymbols = allBaseLists
                 .SelectMany(b => b.Types)
@@ -43,6 +44,7 @@ public class PartialMerger : IScriptPostprocessor
                 .ToList();
 
             var separatedSyntaxList = new SeparatedSyntaxList<BaseTypeSyntax>();
+            var finalModifiers = SyntaxFactory.TokenList(allModifiers.Select(m => SyntaxFactory.ParseToken(m)));
             foreach (var symbol in allSymbols)
             {
                 var typeName = SyntaxFactory.ParseTypeName(symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
@@ -58,8 +60,9 @@ public class PartialMerger : IScriptPostprocessor
                 {
                     var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
                     var newType = classDeclarationSyntax
-                        .WithBaseList(finalBaseList).NormalizeWhitespace()
-                        .WithModifiers(SyntaxFactory.TokenList(classDeclarationSyntax.Modifiers.Where(m => m.ValueText != "partial")))
+                        .WithBaseList(finalBaseList)
+                        .WithModifiers(finalModifiers)
+                        .NormalizeWhitespace()
                         .WithMembers(SyntaxFactory.List(allMembers));
                     
                     if (newType.GetTrailingTrivia().All(t => t.IsKind(SyntaxKind.EndOfLineTrivia)))

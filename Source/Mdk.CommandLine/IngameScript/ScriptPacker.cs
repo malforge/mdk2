@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Api;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
@@ -79,7 +79,7 @@ public class ScriptPacker
     async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
     {
         var outputDirectory = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(project.FilePath)!, "IngameScripts", "local"));
-        (project, var compilation) = await CompileAndValidateProjectAsync(project);
+        project = await CompileAndValidateProjectAsync(project);
 
         project.TryGetDocument("instructions.readme", out var readmeDocument);
         if (readmeDocument != null)
@@ -96,87 +96,38 @@ public class ScriptPacker
 
         var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
 
-        var preprocessors = await Task.WhenAll(LoadPreprocessors());
-        var combiner = await LoadCombinerAsync();
-        var postprocessors = await Task.WhenAll(LoadPostprocessors());
-        var composer = await LoadComposerAsync();
-        var postCompositionProcessors = await Task.WhenAll(LoadPostCompositionProcessors());
-        var producer = await LoadProducerAsync();
+        var preprocessors = new ProcessorSet<IScriptPreprocessor>(ProcessorTypes.Preprocessors);
+        var combiner = (IScriptCombiner)(Activator.CreateInstance(ProcessorTypes.Combiner) ?? throw new InvalidOperationException("Failed to create an instance of the combiner."));
+        var postprocessors = new ProcessorSet<IScriptPostprocessor>(ProcessorTypes.Postprocessors);
+        var composer = (IScriptComposer)(Activator.CreateInstance(ProcessorTypes.Composer) ?? throw new InvalidOperationException("Failed to create an instance of the composer."));
+        var postCompositionProcessors = new ProcessorSet<IScriptPostCompositionProcessor>(ProcessorTypes.PostCompositionProcessors);
+        var producer = (IScriptProducer)(Activator.CreateInstance(ProcessorTypes.Producer) ?? throw new InvalidOperationException("Failed to create an instance of the producer."));
 
         console.Trace("There are:")
             .Trace($"  {allDocuments.Length} documents")
-            .Trace($"  {preprocessors.Length} preprocessors")
-            .TraceIf(preprocessors.Length > 0, $"    {string.Join("\n    ", preprocessors.Select(p => p.GetType().Name))}")
+            .Trace($"  {preprocessors.Count} preprocessors")
+            .TraceIf(preprocessors.Count > 0, $"    {string.Join("\n    ", preprocessors.Select(p => p.GetType().Name))}")
             .Trace($"  combiner {combiner.GetType().Name}")
-            .Trace($"  {postprocessors.Length} postprocessors")
-            .TraceIf(postprocessors.Length > 0, $"    {string.Join("\n    ", postprocessors.Select(p => p.GetType().Name))}")
+            .Trace($"  {postprocessors.Count} postprocessors")
+            .TraceIf(postprocessors.Count > 0, $"    {string.Join("\n    ", postprocessors.Select(p => p.GetType().Name))}")
             .Trace($"  composer {composer.GetType().Name}")
-            .Trace($"  {postCompositionProcessors.Length} post-composition processors")
-            .TraceIf(postCompositionProcessors.Length > 0, $"    {string.Join("\n    ", postCompositionProcessors.Select(p => p.GetType().Name))}")
+            .Trace($"  {postCompositionProcessors.Count} post-composition processors")
+            .TraceIf(postCompositionProcessors.Count > 0, $"    {string.Join("\n    ", postCompositionProcessors.Select(p => p.GetType().Name))}")
             .Trace($"  producer {producer.GetType().Name}");
-        
-        async Task<Document> preprocessSyntaxTree(Document document)
-        {
-            foreach (var preprocessor in preprocessors)
-            {
-                document = await preprocessor.ProcessAsync(document, metadata);
-                compilation = await document.Project.GetCompilationAsync() as CSharpCompilation ?? throw new CommandLineException(-1, "Failed to compile the project.");
-            }
-            return document;
-        }
 
-        if (preprocessors.Length > 0)
-        {
-            console.Trace("Preprocessing syntax trees");
-            allDocuments = (await Task.WhenAll(allDocuments.Select(preprocessSyntaxTree))).ToImmutableArray();
-        }
-        else
-            console.Trace("No preprocessors found.");
-
-        console.Trace("Combining syntax trees");
-        var scriptDocument = (await combiner.CombineAsync(project, allDocuments, metadata))
-            .WithName("script.cs")
-            .WithFilePath(Path.Combine(outputDirectory.FullName, "script.cs"));
-
-        compilation = await scriptDocument.Project.GetCSharpCompilationAsync() ?? throw new CommandLineException(-1, "Failed to compile the project.");
-        
-        if (postprocessors.Length > 0)
-        {
-            console.Trace("Postprocessing syntax tree");
-            foreach (var postprocessor in postprocessors)
-                scriptDocument = await postprocessor.ProcessAsync(scriptDocument, metadata);
-        }
-        else
-            console.Trace("No postprocessors found.");
-
-        console.Trace("Verifying that nothing went wrong");
-        var diagnostics = compilation.GetDiagnostics();
-        if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
-        {
-            foreach (var diagnostic in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
-                console.Print(diagnostic.ToString());
-            throw new CommandLineException(-2, "Failed to compile the project.");
-        }
-
-        console.Trace("Composing the final script");
-        var final = await composer.ComposeAsync(scriptDocument, console, metadata);
-
-        if (postCompositionProcessors.Length > 0)
-        {
-            console.Trace("Post-composing the final script");
-            foreach (var postCompositionProcessor in postCompositionProcessors)
-                final = await postCompositionProcessor.ProcessAsync(final, metadata);
-        }
-        else
-            console.Trace("No post-composition processors found.");
-
+        allDocuments = await PreprocessAsync(allDocuments, preprocessors, console, metadata);
+        var scriptDocument = await CombineAsync(project, combiner, allDocuments, outputDirectory, console, metadata);
+        scriptDocument = await PostProcessAsync(scriptDocument, postprocessors, console, metadata);
+        await VerifyAsync(console, scriptDocument);
+        var final = await ComposeAsync(scriptDocument, composer, console, metadata);
+        final = await PostProcessComposition(final, postCompositionProcessors, console, metadata);
         outputDirectory.Create();
         await producer.ProduceAsync(outputDirectory, console, final, readmeDocument, thumbnailDocument, metadata);
 
         return true;
     }
 
-    async Task<(Project, CSharpCompilation)> CompileAndValidateProjectAsync(Project project)
+    async Task<Project> CompileAndValidateProjectAsync(Project project)
     {
         foreach (var document in project.Documents)
         {
@@ -197,12 +148,87 @@ public class ScriptPacker
         var diagnostics = compilation.GetDiagnostics();
 
         if (!diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
-            return (project, compilation);
+            return project;
 
         foreach (var diagnostic in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
             Console.WriteLine(diagnostic);
         throw new CommandLineException(-2, "Failed to compile the project.");
     }
+
+    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IScriptPreprocessor> preprocessors, IConsole console, ScriptProjectMetadata metadata)
+    {
+        async Task<Document> preprocessSyntaxTree(Document document)
+        {
+            foreach (var preprocessor in preprocessors)
+                document = await preprocessor.ProcessAsync(document, metadata);
+            return document;
+        }
+
+        if (preprocessors.Count > 0)
+        {
+            console.Trace("Preprocessing syntax trees");
+            allDocuments = (await Task.WhenAll(allDocuments.Select(preprocessSyntaxTree))).ToImmutableArray();
+        }
+        else
+            console.Trace("No preprocessors found.");
+        return allDocuments;
+    }
+
+    static async Task<Document> CombineAsync(Project project, IScriptCombiner combiner, ImmutableArray<Document> allDocuments, DirectoryInfo outputDirectory, IConsole console, ScriptProjectMetadata metadata)
+    {
+        console.Trace("Combining syntax trees");
+        var scriptDocument = (await combiner.CombineAsync(project, allDocuments, metadata))
+            .WithName("script.cs")
+            .WithFilePath(Path.Combine(outputDirectory.FullName, "script.cs"));
+        return scriptDocument;
+    }
+
+    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IScriptPostprocessor> postprocessors, IConsole console, ScriptProjectMetadata metadata)
+    {
+        if (postprocessors.Count > 0)
+        {
+            console.Trace("Postprocessing syntax tree");
+            foreach (var postprocessor in postprocessors)
+                scriptDocument = await postprocessor.ProcessAsync(scriptDocument, metadata);
+        }
+        else
+            console.Trace("No postprocessors found.");
+        return scriptDocument;
+    }
+
+    static async Task VerifyAsync(IConsole console, TextDocument scriptDocument)
+    {
+        console.Trace("Verifying that nothing went wrong");
+        var compilation = await scriptDocument.Project.GetCSharpCompilationAsync() ?? throw new CommandLineException(-1, "Failed to compile the project.");
+        var diagnostics = compilation.GetDiagnostics();
+        if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
+        {
+            foreach (var diagnostic in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
+                console.Print(diagnostic.ToString());
+            throw new CommandLineException(-2, "Failed to compile the project.");
+        }
+    }
+
+    static async Task<StringBuilder> ComposeAsync(Document scriptDocument, IScriptComposer composer, IConsole console, ScriptProjectMetadata metadata)
+    {
+        console.Trace("Composing the final script");
+        var final = await composer.ComposeAsync(scriptDocument, console, metadata);
+        return final;
+    }
+
+    static async Task<StringBuilder> PostProcessComposition(StringBuilder final, ProcessorSet<IScriptPostCompositionProcessor> postCompositionProcessors, IConsole console, ScriptProjectMetadata metadata)
+    {
+        if (postCompositionProcessors.Count > 0)
+        {
+            console.Trace("Post-composing the final script");
+            foreach (var postCompositionProcessor in postCompositionProcessors)
+                final = await postCompositionProcessor.ProcessAsync(final, metadata);
+        }
+        else
+            console.Trace("No post-composition processors found.");
+        return final;
+    }
+
 
     static bool ShouldInclude(Document document, ScriptProjectMetadata metadata)
     {
@@ -229,32 +255,21 @@ public class ScriptPacker
         return true;
     }
 
-    Task<IScriptCombiner> LoadCombinerAsync() => Task.FromResult<IScriptCombiner>(new ScriptCombiner());
-
-    IEnumerable<Task<IScriptPreprocessor>> LoadPreprocessors()
-    {
-        yield return Task.FromResult<IScriptPreprocessor>(new DeleteNamespaces());
-    }
-
-    IEnumerable<Task<IScriptPostprocessor>> LoadPostprocessors()
-    {
-        yield return Task.FromResult<IScriptPostprocessor>(new PartialMerger());
-    }
-
-    Task<IScriptComposer> LoadComposerAsync() => Task.FromResult<IScriptComposer>(new ScriptComposer());
-
-    IEnumerable<Task<IScriptPostCompositionProcessor>> LoadPostCompositionProcessors()
-    {
-        yield break;
-    }
-
-    Task<IScriptProducer> LoadProducerAsync() => Task.FromResult<IScriptProducer>(new ScriptProducer());
-
     async Task<bool> PackLegacyProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
     {
         var root = new DirectoryInfo(Path.GetDirectoryName(project.FilePath!)!);
         metadata = metadata.WithAdditionalIgnore(new DirectoryInfo(Path.Combine(root.FullName, "obj")));
 
         return await PackProjectAsync(project, metadata, console);
+    }
+
+    static class ProcessorTypes
+    {
+        public static readonly Type[] Preprocessors = { typeof(DeleteNamespaces) };
+        public static readonly Type Combiner = typeof(ScriptCombiner);
+        public static readonly Type[] Postprocessors = { typeof(PartialMerger) };
+        public static readonly Type Composer = typeof(ScriptComposer);
+        public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
+        public static readonly Type Producer = typeof(ScriptProducer);
     }
 }
