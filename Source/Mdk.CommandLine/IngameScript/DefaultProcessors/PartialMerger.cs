@@ -14,15 +14,19 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 /// </summary>
 public class PartialMerger : IScriptPostprocessor
 {
-    public async Task<(CSharpSyntaxTree, CSharpCompilation)> ProcessAsync(CSharpCompilation compilation, CSharpSyntaxTree syntaxTree, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
     {
+        var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
+        if (syntaxTree == null)
+            return document;
+
         while (true)
         {
-            var root = await syntaxTree.GetRootAsync();
+            var editor = await DocumentEditor.CreateAsync(document);
+            var root = editor.GetChangedRoot();
             var current = root.DescendantNodes().FirstOrDefault(t => t is TypeDeclarationSyntax { Modifiers: { } modifiers } && modifiers.Any(m => m.ValueText == "partial"));
             if (current == null)
-                return (syntaxTree, compilation);
-            var semanticModel = compilation.GetSemanticModel(syntaxTree);
+                return document;
             var partialIdentifier = FullIdentifierOf((TypeDeclarationSyntax)current);
             var parts = root.DescendantNodes().OfType<TypeDeclarationSyntax>().Where(t => FullIdentifierOf(t) == partialIdentifier).ToList();
             if (parts.Count <= 1)
@@ -31,31 +35,25 @@ public class PartialMerger : IScriptPostprocessor
             
             var allSymbols = allBaseLists
                 .SelectMany(b => b.Types)
-                .Select(t => semanticModel.GetSymbolInfo(t.Type).Symbol)
+                .Select(t => editor.SemanticModel.GetSymbolInfo(t.Type).Symbol)
                 .OfType<ITypeSymbol>()
                 .Distinct<ITypeSymbol>(SymbolEqualityComparer.Default)
                 .OrderByDescending(s => s.TypeKind == TypeKind.Class)
                 .ThenBy(s => s.Name)
                 .ToList();
 
-            // Step 3: Create new BaseListSyntax with the final result
             var separatedSyntaxList = new SeparatedSyntaxList<BaseTypeSyntax>();
             foreach (var symbol in allSymbols)
             {
-                // Assuming fully qualified names for simplicity; adjust as needed for your context
                 var typeName = SyntaxFactory.ParseTypeName(symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
                 var baseType = SyntaxFactory.SimpleBaseType(typeName);
 
                 separatedSyntaxList = separatedSyntaxList.Add(baseType);
             }
 
-            // Create the new BaseListSyntax
             var finalBaseList = SyntaxFactory.BaseList(separatedSyntaxList);
             switch (current)
             {
-                // case ClassDeclarationSyntax when classes.Count > 1:
-                //     throw new InvalidOperationException("Cannot derive a single class from multiple partial classes.");
-
                 case ClassDeclarationSyntax classDeclarationSyntax:
                 {
                     var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
@@ -63,58 +61,47 @@ public class PartialMerger : IScriptPostprocessor
                         .WithBaseList(finalBaseList).NormalizeWhitespace()
                         .WithModifiers(SyntaxFactory.TokenList(classDeclarationSyntax.Modifiers.Where(m => m.ValueText != "partial")))
                         .WithMembers(SyntaxFactory.List(allMembers));
+                    
+                    if (newType.GetTrailingTrivia().All(t => t.IsKind(SyntaxKind.EndOfLineTrivia)))
+                        newType = newType.WithTrailingTrivia(newType.GetTrailingTrivia().Add(SyntaxFactory.EndOfLine(Environment.NewLine)));
 
+                    editor.ReplaceNode(current, newType);
+                    foreach (var node in parts.Skip(1))
+                        editor.RemoveNode(node);
                     
-                    var newRoot = root.TrackNodes(parts);
-                        
-                    current = newRoot.GetCurrentNode(current)!;
-                    parts = parts.Select(p => newRoot.GetCurrentNode(p)).ToList();
-                    
-                    newRoot = newRoot.ReplaceNode(current, newType)
-                        .RemoveNodes(parts.Skip(1), SyntaxRemoveOptions.KeepNoTrivia)!;
-                    
-                    // current = newRoot.GetCurrentNode(current)!;
-                    // newRoot = newRoot.ReplaceNode(current, newType);
-                    
-                    // var newRoot = root.ReplaceNode(current, newType)
-                    //     .RemoveNodes(parts, SyntaxRemoveOptions.KeepNoTrivia)!;
-                    var newSyntaxTree = (CSharpSyntaxTree)syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options);
-                    compilation = compilation.ReplaceSyntaxTree(syntaxTree, newSyntaxTree);
-                    syntaxTree = newSyntaxTree;
+                    document = editor.GetChangedDocument();
                     break;
                 }
 
                 case InterfaceDeclarationSyntax interfaceDeclarationSyntax:
                 {
                     var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
-
                     var newType = interfaceDeclarationSyntax
-                        .WithBaseList(finalBaseList)
+                        .WithBaseList(finalBaseList).NormalizeWhitespace()
                         .WithModifiers(SyntaxFactory.TokenList(interfaceDeclarationSyntax.Modifiers.Where(m => m.ValueText != "partial")))
                         .WithMembers(SyntaxFactory.List(allMembers));
 
-                    var newRoot = root.ReplaceNode(current, newType)
-                        .RemoveNodes(parts, SyntaxRemoveOptions.KeepNoTrivia)!;
-                    var newSyntaxTree = (CSharpSyntaxTree)syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options);
-                    compilation = compilation.ReplaceSyntaxTree(syntaxTree, newSyntaxTree);
-                    syntaxTree = newSyntaxTree;
+                    editor.ReplaceNode(current, newType);
+                    foreach (var node in parts.Skip(1))
+                        editor.RemoveNode(node);
+                    
+                    document = editor.GetChangedDocument();
                     break;
                 }
 
                 case StructDeclarationSyntax structDeclarationSyntax:
                 {
                     var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
-
                     var newType = structDeclarationSyntax
-                        .WithBaseList(finalBaseList)
+                        .WithBaseList(finalBaseList).NormalizeWhitespace()
                         .WithModifiers(SyntaxFactory.TokenList(structDeclarationSyntax.Modifiers.Where(m => m.ValueText != "partial")))
                         .WithMembers(SyntaxFactory.List(allMembers));
 
-                    var newRoot = root.ReplaceNode(current, newType)
-                        .RemoveNodes(parts, SyntaxRemoveOptions.KeepNoTrivia)!;
-                    var newSyntaxTree = (CSharpSyntaxTree)syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options);
-                    compilation = compilation.ReplaceSyntaxTree(syntaxTree, newSyntaxTree);
-                    syntaxTree = newSyntaxTree;
+                    editor.ReplaceNode(current, newType);
+                    foreach (var node in parts.Skip(1))
+                        editor.RemoveNode(node);
+                    
+                    document = editor.GetChangedDocument();
                     break;
                 }
 

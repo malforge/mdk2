@@ -78,6 +78,7 @@ public class ScriptPacker
 
     async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
     {
+        var outputDirectory = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(project.FilePath)!, "IngameScripts", "local"));
         (project, var compilation) = await CompileAndValidateProjectAsync(project);
 
         project.TryGetDocument("instructions.readme", out var readmeDocument);
@@ -93,7 +94,7 @@ public class ScriptPacker
             return ShouldInclude(arg, metadata);
         }
 
-        var allDocuments = project.Documents.Where(isNotIgnored).ToList();
+        var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
 
         var preprocessors = await Task.WhenAll(LoadPreprocessors());
         var combiner = await LoadCombinerAsync();
@@ -103,7 +104,7 @@ public class ScriptPacker
         var producer = await LoadProducerAsync();
 
         console.Trace("There are:")
-            .Trace($"  {allDocuments.Count} documents")
+            .Trace($"  {allDocuments.Length} documents")
             .Trace($"  {preprocessors.Length} preprocessors")
             .TraceIf(preprocessors.Length > 0, $"    {string.Join("\n    ", preprocessors.Select(p => p.GetType().Name))}")
             .Trace($"  combiner {combiner.GetType().Name}")
@@ -113,37 +114,37 @@ public class ScriptPacker
             .Trace($"  {postCompositionProcessors.Length} post-composition processors")
             .TraceIf(postCompositionProcessors.Length > 0, $"    {string.Join("\n    ", postCompositionProcessors.Select(p => p.GetType().Name))}")
             .Trace($"  producer {producer.GetType().Name}");
-
-        var syntaxTrees = (await Task.WhenAll(allDocuments.Select(d => d.GetSyntaxTreeAsync()))).Cast<CSharpSyntaxTree>().ToImmutableArray();
-
-        async Task<CSharpSyntaxTree> preprocessSyntaxTree(CSharpSyntaxTree tree)
+        
+        async Task<Document> preprocessSyntaxTree(Document document)
         {
             foreach (var preprocessor in preprocessors)
-                tree = await preprocessor.ProcessAsync(compilation, tree, metadata);
-            return tree;
+            {
+                document = await preprocessor.ProcessAsync(document, metadata);
+                compilation = await document.Project.GetCompilationAsync() as CSharpCompilation ?? throw new CommandLineException(-1, "Failed to compile the project.");
+            }
+            return document;
         }
 
         if (preprocessors.Length > 0)
         {
             console.Trace("Preprocessing syntax trees");
-            syntaxTrees = (await Task.WhenAll(syntaxTrees.Select(preprocessSyntaxTree))).ToImmutableArray();
+            allDocuments = (await Task.WhenAll(allDocuments.Select(preprocessSyntaxTree))).ToImmutableArray();
         }
         else
             console.Trace("No preprocessors found.");
 
         console.Trace("Combining syntax trees");
-        var combinedSyntaxTree = await combiner.CombineAsync(syntaxTrees, metadata);
-        
-        // create a new document for the combined syntax tree
-        var combinedDocument = project.AddDocument("combined.cs", await combinedSyntaxTree.GetRootAsync());
+        var scriptDocument = (await combiner.CombineAsync(project, allDocuments, metadata))
+            .WithName("script.cs")
+            .WithFilePath(Path.Combine(outputDirectory.FullName, "script.cs"));
 
-        compilation = compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(combinedSyntaxTree);
+        compilation = await scriptDocument.Project.GetCSharpCompilationAsync() ?? throw new CommandLineException(-1, "Failed to compile the project.");
         
         if (postprocessors.Length > 0)
         {
             console.Trace("Postprocessing syntax tree");
             foreach (var postprocessor in postprocessors)
-                (combinedSyntaxTree, compilation) = await postprocessor.ProcessAsync(compilation, combinedSyntaxTree, metadata);
+                scriptDocument = await postprocessor.ProcessAsync(scriptDocument, metadata);
         }
         else
             console.Trace("No postprocessors found.");
@@ -158,7 +159,7 @@ public class ScriptPacker
         }
 
         console.Trace("Composing the final script");
-        var final = await composer.ComposeAsync(compilation, combinedSyntaxTree, console, metadata);
+        var final = await composer.ComposeAsync(scriptDocument, console, metadata);
 
         if (postCompositionProcessors.Length > 0)
         {
@@ -169,7 +170,6 @@ public class ScriptPacker
         else
             console.Trace("No post-composition processors found.");
 
-        var outputDirectory = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(project.FilePath)!, "IngameScripts", "local"));
         outputDirectory.Create();
         await producer.ProduceAsync(outputDirectory, console, final, readmeDocument, thumbnailDocument, metadata);
 

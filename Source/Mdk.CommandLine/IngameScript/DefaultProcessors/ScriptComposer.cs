@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Api;
 using Mdk.CommandLine.SharedApi;
-using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 
@@ -12,5 +12,11 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 public class ScriptComposer : IScriptComposer
 {
     /// <inheritdoc />
-    public Task<StringBuilder> ComposeAsync(CSharpCompilation compilation, CSharpSyntaxTree syntaxTree, IConsole console, ScriptProjectMetadata metadata) => Task.FromResult(new StringBuilder(syntaxTree.ToString()));
+    public async Task<StringBuilder> ComposeAsync(Document document, IConsole console, ScriptProjectMetadata metadata)
+    {
+        var builder = new StringBuilder();
+        var root = await document.GetSyntaxRootAsync();
+        builder.Append(root?.ToFullString());
+        return builder;
+    }
 }

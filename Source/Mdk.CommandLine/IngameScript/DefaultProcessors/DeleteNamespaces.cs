@@ -20,8 +20,11 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 public class DeleteNamespaces : IScriptPreprocessor
 {
     /// <inheritdoc />
-    public async Task<CSharpSyntaxTree> ProcessAsync(CSharpCompilation compilation, CSharpSyntaxTree syntaxTree, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
     {
+        var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
+        if (syntaxTree == null)
+            return document;
         CSharpSyntaxNode root = await syntaxTree.GetRootAsync(), originalRoot = root;
         var namespaceDeclarations = root.DescendantNodes().OfType<NamespaceDeclarationSyntax>().ToArray();
         while (namespaceDeclarations.Length > 0)
@@ -35,11 +38,9 @@ public class DeleteNamespaces : IScriptPreprocessor
             namespaceDeclarations = root.DescendantNodes().OfType<NamespaceDeclarationSyntax>().ToArray();
         }
         
-        if (root == originalRoot)
-            return syntaxTree;
-        return (CSharpSyntaxTree)CSharpSyntaxTree.Create(root);
+        return root == originalRoot ? document : document.WithSyntaxRoot(root);
     }
-    
+
     private static async Task<MemberDeclarationSyntax> UnindentAsync(SyntaxNode typeDeclaration, int indentation)
     {
         var text = await typeDeclaration.SyntaxTree.GetTextAsync();

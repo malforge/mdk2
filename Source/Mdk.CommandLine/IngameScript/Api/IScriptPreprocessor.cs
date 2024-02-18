@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Api;
 
@@ -11,9 +11,8 @@ public interface IScriptPreprocessor
     /// <summary>
     /// Processes the syntax tree of an individual code file before it is combined.
     /// </summary>
-    /// <param name="compilation">Compilation information for the script.</param>
-    /// <param name="syntaxTree">The syntax tree of the code file to process.</param>
+    /// <param name="document">The document to process.</param>
     /// <param name="metadata">Information about the project being processed.</param>
     /// <returns></returns>
-    Task<CSharpSyntaxTree> ProcessAsync(CSharpCompilation compilation, CSharpSyntaxTree syntaxTree, ScriptProjectMetadata metadata);
+    Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata);
 }

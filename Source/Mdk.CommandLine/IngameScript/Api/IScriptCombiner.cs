@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Api;
 
@@ -13,8 +13,9 @@ public interface IScriptCombiner
     /// <summary>
     ///     Combines the specified documents into a single syntax tree.
     /// </summary>
-    /// <param name="syntaxTree">The syntax trees to combine.</param>
+    /// <param name="project">The project the documents are part of.</param>
+    /// <param name="documents">The documents to process.</param>
     /// <param name="metadata">Information about the project being processed.</param>
     /// <returns></returns>
-    Task<CSharpSyntaxTree> CombineAsync(IReadOnlyList<CSharpSyntaxTree> syntaxTree, ScriptProjectMetadata metadata);
+    Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, ScriptProjectMetadata metadata);
 }

@@ -2,7 +2,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Mdk.CommandLine;
 
@@ -54,4 +56,11 @@ public static class ProjectExtensions
         document = project.Documents.FirstOrDefault(isMatch) ?? project.AdditionalDocuments.FirstOrDefault(isMatch);
         return document != null;
     }
+
+    /// <summary>
+    /// Gets the <see cref="CSharpCompilation" /> for the project.
+    /// </summary>
+    /// <param name="project"></param>
+    /// <returns></returns>
+    public static async Task<CSharpCompilation?> GetCSharpCompilationAsync(this Project project) => (CSharpCompilation?)await project.GetCompilationAsync();
 }
