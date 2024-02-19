@@ -33,7 +33,7 @@ public class PartialMerger : IScriptPostprocessor
                 continue;
             var allBaseLists = parts.SelectMany(t => t.ChildNodes().OfType<BaseListSyntax>()).ToList();
             var allModifiers = parts.SelectMany(t => t.Modifiers).Select(m => m.ValueText).Distinct().Where(m => m != "partial").ToList();
-            
+
             var allSymbols = allBaseLists
                 .SelectMany(b => b.Types)
                 .Select(t => editor.SemanticModel.GetSymbolInfo(t.Type).Symbol)
@@ -59,19 +59,21 @@ public class PartialMerger : IScriptPostprocessor
                 case ClassDeclarationSyntax classDeclarationSyntax:
                 {
                     var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
-                    var newType = classDeclarationSyntax
-                        .WithBaseList(finalBaseList)
+                    var newType = classDeclarationSyntax;
+                    if (finalBaseList.Types.Count > 0)
+                        newType = newType.WithBaseList(finalBaseList);
+                    newType = newType
                         .WithModifiers(finalModifiers)
                         .NormalizeWhitespace()
                         .WithMembers(SyntaxFactory.List(allMembers));
-                    
+
                     if (newType.GetTrailingTrivia().All(t => t.IsKind(SyntaxKind.EndOfLineTrivia)))
                         newType = newType.WithTrailingTrivia(newType.GetTrailingTrivia().Add(SyntaxFactory.EndOfLine(Environment.NewLine)));
 
                     editor.ReplaceNode(current, newType);
                     foreach (var node in parts.Skip(1))
                         editor.RemoveNode(node);
-                    
+
                     document = editor.GetChangedDocument();
                     break;
                 }
@@ -79,15 +81,18 @@ public class PartialMerger : IScriptPostprocessor
                 case InterfaceDeclarationSyntax interfaceDeclarationSyntax:
                 {
                     var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
-                    var newType = interfaceDeclarationSyntax
-                        .WithBaseList(finalBaseList).NormalizeWhitespace()
-                        .WithModifiers(SyntaxFactory.TokenList(interfaceDeclarationSyntax.Modifiers.Where(m => m.ValueText != "partial")))
+                    var newType = interfaceDeclarationSyntax;
+                    if (finalBaseList.Types.Count > 0)
+                        newType = newType.WithBaseList(finalBaseList);
+                    newType = newType
+                        .WithModifiers(finalModifiers)
+                        .NormalizeWhitespace()
                         .WithMembers(SyntaxFactory.List(allMembers));
 
                     editor.ReplaceNode(current, newType);
                     foreach (var node in parts.Skip(1))
                         editor.RemoveNode(node);
-                    
+
                     document = editor.GetChangedDocument();
                     break;
                 }
@@ -95,15 +100,18 @@ public class PartialMerger : IScriptPostprocessor
                 case StructDeclarationSyntax structDeclarationSyntax:
                 {
                     var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
-                    var newType = structDeclarationSyntax
-                        .WithBaseList(finalBaseList).NormalizeWhitespace()
-                        .WithModifiers(SyntaxFactory.TokenList(structDeclarationSyntax.Modifiers.Where(m => m.ValueText != "partial")))
+                    var newType = structDeclarationSyntax;
+                    if (finalBaseList.Types.Count > 0)
+                        newType = newType.WithBaseList(finalBaseList);
+                    newType = newType
+                        .WithModifiers(finalModifiers)
+                        .NormalizeWhitespace()
                         .WithMembers(SyntaxFactory.List(allMembers));
 
                     editor.ReplaceNode(current, newType);
                     foreach (var node in parts.Skip(1))
                         editor.RemoveNode(node);
-                    
+
                     document = editor.GetChangedDocument();
                     break;
                 }

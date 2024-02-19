@@ -347,7 +347,7 @@ public class ScriptPacker
     {
         public static readonly Type[] Preprocessors = [typeof(DeleteNamespaces)];
         public static readonly Type Combiner = typeof(ScriptCombiner);
-        public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(Annotator)];
+        public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(Annotator), typeof(TypeSorter)];
         public static readonly Type Composer = typeof(ScriptComposer);
         public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
         public static readonly Type Producer = typeof(ScriptProducer);

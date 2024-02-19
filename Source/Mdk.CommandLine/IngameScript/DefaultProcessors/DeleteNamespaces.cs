@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Api;
@@ -30,33 +29,45 @@ public class DeleteNamespaces : IScriptPreprocessor
         while (namespaceDeclarations.Length > 0)
         {
             var current = namespaceDeclarations[0];
-            
-            var unindentedMembers = await Task.WhenAll(current.Members.Select(m => UnindentAsync(m, metadata.IndentSize))); 
-            
+
+            var unindentedMembers = await Task.WhenAll(current.Members.Select(m => UnindentAsync(m, metadata.IndentSize)));
+
             var newRoot = root.ReplaceNode(current, unindentedMembers);
             root = newRoot;
             namespaceDeclarations = root.DescendantNodes().OfType<NamespaceDeclarationSyntax>().ToArray();
         }
-        
+
         return root == originalRoot ? document : document.WithSyntaxRoot(root);
     }
 
-    private static async Task<MemberDeclarationSyntax> UnindentAsync(SyntaxNode typeDeclaration, int indentation)
+    static async Task<MemberDeclarationSyntax> UnindentAsync(SyntaxNode typeDeclaration, int indentation)
     {
         var text = await typeDeclaration.SyntaxTree.GetTextAsync();
-        var buffer = new StringBuilder((int)(text.Length * 0.5));
+        var buffer = new StringBuilder((int)(text.Length * 1.5));
         var span = typeDeclaration.Span;
-        var startOfLine = text.Lines.GetLineFromPosition(span.Start).Start;
-        var endOfLine = text.Lines.GetLineFromPosition(span.End).End;
+
+        var startOfLine = span.Start;
+        while (startOfLine > 0 && text[startOfLine - 1] != '\n' && char.IsWhiteSpace(text[startOfLine - 1]))
+            startOfLine--;
+
+        var endOfLine = span.End;
+        while (endOfLine < text.Length && text[endOfLine] != '\n' && char.IsWhiteSpace(text[endOfLine]))
+            endOfLine++;
+        
+        var needsEndOfLine = endOfLine < text.Length && text[endOfLine] == '\n';
+
         var alteredSpan = new TextSpan(startOfLine, endOfLine - startOfLine);
-        buffer.AppendLine(text.ToString(alteredSpan));
+        
+        buffer.Append(text.ToString(alteredSpan).TrimEnd());
+        if (needsEndOfLine)
+            buffer.Append('\n');
         ConvertTabsToSpaces(buffer, indentation);
         Unindent(buffer, indentation);
 
         return (MemberDeclarationSyntax)(await CSharpSyntaxTree.ParseText(buffer.ToString()).GetRootAsync()).ChildNodes().First();
     }
 
-    private static void Unindent(StringBuilder buffer, int indentation)
+    static void Unindent(StringBuilder buffer, int indentation)
     {
         var indentString = new string(' ', indentation);
         if (!IsIndented(buffer, indentString))
@@ -86,7 +97,7 @@ public class DeleteNamespaces : IScriptPreprocessor
         }
     }
 
-    private static bool IsIndented(StringBuilder buffer, string indentString)
+    static bool IsIndented(StringBuilder buffer, string indentString)
     {
         var startOfLine = 0;
         var endOfLine = buffer.FindNewLine(0);
@@ -108,15 +119,17 @@ public class DeleteNamespaces : IScriptPreprocessor
         return true;
     }
 
-    private static bool IsLineWhitespace(StringBuilder buffer, int startOfLine, int endOfLine)
+    static bool IsLineWhitespace(StringBuilder buffer, int startOfLine, int endOfLine)
     {
         for (var i = startOfLine; i < endOfLine; i++)
+        {
             if (!char.IsWhiteSpace(buffer[i]))
                 return false;
+        }
         return true;
     }
 
-    private static void ConvertTabsToSpaces(StringBuilder buffer, int indentation)
+    static void ConvertTabsToSpaces(StringBuilder buffer, int indentation)
     {
         var chIndex = 0;
         for (var i = 0; i < buffer.Length; i++)

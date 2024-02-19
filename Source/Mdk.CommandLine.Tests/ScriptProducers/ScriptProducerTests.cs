@@ -1,0 +1,1 @@
+﻿// Can't really test the producer because it writes to disk.
