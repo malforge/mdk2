@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace MDK.CommandLine.Tests.ScriptCombiners;
 
 [TestFixture]
-public class ScriptCombinerTests
+public class CombinerTests
 {
     [Test]
     public async Task CombineAsync_With5DocumentsWithVariousUsingDeclarations_CombinesAndUnifiesUsingDeclarations()
@@ -53,7 +53,7 @@ public class ScriptCombinerTests
             
             """);
         project = document5.Project;
-        var combiner = new ScriptCombiner();
+        var combiner = new Combiner();
         var metadata = new ScriptProjectMetadata
         {
             MdkProjectVersion = new Version(2, 0, 0),

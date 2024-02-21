@@ -9,7 +9,7 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 /// <summary>
 ///     The default script composer.
 /// </summary>
-public class ScriptComposer : IScriptComposer
+public class Composer : IScriptComposer
 {
     /// <inheritdoc />
     public async Task<StringBuilder> ComposeAsync(Document document, IConsole console, ScriptProjectMetadata metadata)

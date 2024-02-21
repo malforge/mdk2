@@ -12,7 +12,7 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 /// <summary>
 ///     The default script producer.
 /// </summary>
-public class ScriptProducer : IScriptProducer
+public class Producer : IScriptProducer
 {
     /// <inheritdoc />
     public async Task ProduceAsync(DirectoryInfo outputDirectory, IConsole console, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, ScriptProjectMetadata metadata)

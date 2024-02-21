@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace MDK.CommandLine.Tests.ScriptComposers;
 
 [TestFixture]
-public class ScriptComposerTests
+public class ComposerTests
 {
     [Test]
     public async Task ComposeAsync_WithContent_ReturnsDocumentAsString()
@@ -27,7 +27,7 @@ public class ScriptComposerTests
 
             """);
 
-        var composer = new ScriptComposer();
+        var composer = new Composer();
         var metadata = new ScriptProjectMetadata
         {
             MdkProjectVersion = new Version(2, 0, 0),

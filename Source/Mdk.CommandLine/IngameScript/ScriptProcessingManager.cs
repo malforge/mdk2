@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Immutable;
 using Mdk.CommandLine.IngameScript.Api;
+using Mdk.CommandLine.IngameScript.DefaultProcessors;
 using Mdk.CommandLine.SharedApi;
 
-namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
+namespace Mdk.CommandLine.IngameScript;
 
 /// <summary>
 ///     A manager for all the processing steps required to pack a script.
 /// </summary>
-public class ProcessingManager
+public class ScriptProcessingManager
 {
     /// <summary>
     ///     A list of preprocessors to run before the script is combined, in workflow order.
@@ -41,7 +42,7 @@ public class ProcessingManager
     public required IScriptProducer? Producer { get; init; }
 
     /// <summary>
-    ///     Begin construction of a new <see cref="ProcessingManager" />. Contains the defaults, and as such
+    ///     Begin construction of a new <see cref="ScriptProcessingManager" />. Contains the defaults, and as such
     ///     can either be used as-is, or modified to suit the needs of the user.
     /// </summary>
     /// <returns>A new <see cref="ProcessingManagerBuilder" />.</returns>
@@ -57,38 +58,38 @@ public class ProcessingManager
         };
 
     /// <summary>
-    ///     A builder for a <see cref="ProcessingManager" />.
+    ///     A builder for a <see cref="ScriptProcessingManager" />.
     /// </summary>
     public readonly struct ProcessingManagerBuilder
     {
         /// <summary>
-        ///     A list of types to use as preprocessors (see <see cref="ProcessingManager.Preprocessors" />).
+        ///     A list of types to use as preprocessors (see <see cref="ScriptProcessingManager.Preprocessors" />).
         /// </summary>
         public ImmutableArray<Type> Preprocessors { get; init; }
 
         /// <summary>
-        ///     A type to use as a combiner (see <see cref="ProcessingManager.Combiner" />).
+        ///     A type to use as a combiner (see <see cref="ScriptProcessingManager.Combiner" />).
         /// </summary>
         public Type? Combiner { get; init; }
 
         /// <summary>
-        ///     A list of types to use as postprocessors (see <see cref="ProcessingManager.Postprocessors" />).
+        ///     A list of types to use as postprocessors (see <see cref="ScriptProcessingManager.Postprocessors" />).
         /// </summary>
         public ImmutableArray<Type> Postprocessors { get; init; }
 
         /// <summary>
-        ///     A type to use as a composer (see <see cref="ProcessingManager.Composer" />).
+        ///     A type to use as a composer (see <see cref="ScriptProcessingManager.Composer" />).
         /// </summary>
         public Type? Composer { get; init; }
 
         /// <summary>
         ///     A list of types to use as post-composition processors (see
-        ///     <see cref="ProcessingManager.PostCompositionProcessors" />).
+        ///     <see cref="ScriptProcessingManager.PostCompositionProcessors" />).
         /// </summary>
         public ImmutableArray<Type> PostCompositionProcessors { get; init; }
 
         /// <summary>
-        ///     A type to use as a producer (see <see cref="ProcessingManager.Producer" />).
+        ///     A type to use as a producer (see <see cref="ScriptProcessingManager.Producer" />).
         /// </summary>
         public Type? Producer { get; init; }
 
@@ -216,11 +217,11 @@ public class ProcessingManager
         }
 
         /// <summary>
-        ///     Build the <see cref="ProcessingManager" />.
+        ///     Build the <see cref="ScriptProcessingManager" />.
         /// </summary>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public ProcessingManager Build()
+        public ScriptProcessingManager Build()
         {
             if (Combiner == null)
                 throw new InvalidOperationException("Combiner must be specified.");
@@ -229,7 +230,7 @@ public class ProcessingManager
             if (Producer == null)
                 throw new InvalidOperationException("Producer must be specified.");
 
-            return new ProcessingManager
+            return new ScriptProcessingManager
             {
                 Preprocessors = new ProcessorSet<IScriptPreprocessor>(Preprocessors),
                 Combiner = (IScriptCombiner?)Activator.CreateInstance(Combiner) ?? throw new InvalidOperationException("Combiner could not be created."),
@@ -244,10 +245,10 @@ public class ProcessingManager
     static class DefaultProcessorTypes
     {
         public static readonly Type[] Preprocessors = [typeof(DeleteNamespaces)];
-        public static readonly Type Combiner = typeof(ScriptCombiner);
+        public static readonly Type Combiner = typeof(Combiner);
         public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(Annotator), typeof(TypeSorter)];
-        public static readonly Type Composer = typeof(ScriptComposer);
+        public static readonly Type Composer = typeof(Composer);
         public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
-        public static readonly Type Producer = typeof(ScriptProducer);
+        public static readonly Type Producer = typeof(Producer);
     }
 }

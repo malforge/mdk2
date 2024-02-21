@@ -19,7 +19,7 @@ public class PackScriptCommand : Command
         var options = ReadOptions(arguments);
         if (options.ListProcessors)
         {
-            var managerBuilder = ProcessingManager.Create();
+            var managerBuilder = ScriptProcessingManager.Create();
             console.Print("- Default processors -");
             console.Print("Preprocessors:");
             if (managerBuilder.Preprocessors.Length == 0)

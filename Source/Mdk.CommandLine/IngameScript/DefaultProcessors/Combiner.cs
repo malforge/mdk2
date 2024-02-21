@@ -16,7 +16,7 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 ///     This combiner will combine all the syntax trees into a single syntax tree, removing the namespace and unindenting
 ///     the code to compensate.
 /// </remarks>
-public class ScriptCombiner : IScriptCombiner
+public class Combiner : IScriptCombiner
 {
     /// <inheritdoc />
     public async Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, ScriptProjectMetadata metadata)
