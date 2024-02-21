@@ -38,7 +38,12 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
                 processors[targetIndex] = target;
             }
         }
-        
+
+        _processors = SortAndValidate(processors);
+    }
+
+    ProcessorSet(List<Processor> processors)
+    {
         _processors = SortAndValidate(processors);
     }
 
@@ -58,6 +63,51 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
     /// <param name="index"></param>
     public T this[int index] => _processors[index].Instance;
 
+    /// <summary>
+    ///     Combine the current set with the specified types (in random order).
+    ///     The processors will be sorted by their dependencies.
+    /// </summary>
+    /// <param name="types">The types to combine with the current set.</param>
+    /// <returns>A new <see cref="ProcessorSet{T}" /> containing the combined processors, sorted by their dependencies.</returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public ProcessorSet<T> CombineWith(params Type[] types) => CombineWith((IEnumerable<Type>)types);
+
+    /// <summary>
+    ///     Combine the current set with the specified types (in random order).
+    /// </summary>
+    /// <param name="types">The types to combine with the current set.</param>
+    /// <returns>A new <see cref="ProcessorSet{T}" /> containing the combined processors, sorted by their dependencies.</returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public ProcessorSet<T> CombineWith(IEnumerable<Type> types)
+    {
+        var processors = types.Select(Processor.Create).ToList();
+        foreach (var processor in processors)
+        {
+            foreach (var runBefore in processor.RunBefore)
+            {
+                var before = runBefore;
+                var targetIndex = processors.FindIndex(p => p.Type == before);
+                if (targetIndex == -1)
+                    throw new InvalidOperationException($"Processor {processor.Type.FullName} has a dependency on {runBefore.FullName}, which does not exist.");
+                var target = processors[targetIndex];
+                target = target.WithAdditionalRunAfter(processor.Type);
+                processors[targetIndex] = target;
+            }
+        }
+
+        return new ProcessorSet<T>(_processors.Concat(processors).ToList());
+    }
+    
+    /// <summary>
+    ///    Combine the current set with the specified set.
+    ///    The processors will be sorted by their dependencies.
+    /// </summary>
+    /// <param name="other">The set to combine with the current set.</param>
+    /// <returns>A new <see cref="ProcessorSet{T}" /> containing the combined processors, sorted by their dependencies.</returns>
+    public ProcessorSet<T> CombineWith(ProcessorSet<T> other)
+    {
+        return new ProcessorSet<T>(_processors.Concat(other._processors).ToList());
+    }
 
     static List<Processor> SortAndValidate(List<Processor> processors)
     {
@@ -67,7 +117,7 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
 
         while (remaining.Count > 0)
         {
-            bool added = false;
+            var added = false;
             foreach (var processor in remaining.ToList()) // ToList to avoid collection modification issues
             {
                 if (!dependencyMap[processor.Type].Except(sorted.Select(s => s.Type)).Any())
@@ -80,9 +130,7 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
             }
 
             if (!added)
-            {
                 throw new InvalidOperationException("Failed to sort processors. There is a circular dependency.");
-            }
         }
 
         return sorted;
@@ -127,7 +175,7 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
             Instance = instance;
             Type = type;
         }
-        
+
         public Processor WithAdditionalRunAfter(Type type)
         {
             var newRunAfter = RunAfter.Add(type);

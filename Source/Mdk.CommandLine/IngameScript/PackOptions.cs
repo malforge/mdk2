@@ -7,4 +7,5 @@ public readonly struct PackOptions
     public required string? ProjectFile { get; init; }
     public string? Output { get; init; }
     public bool ToClipboard { get; init; }
+    public bool ListProcessors { get; init; }
 }
