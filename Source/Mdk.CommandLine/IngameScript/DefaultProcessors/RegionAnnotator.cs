@@ -10,8 +10,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 
-[RunAfter(typeof(PartialMerger))]
-public partial class Annotator : IScriptPostprocessor
+[RunBefore(typeof(PartialMerger))]
+public partial class RegionAnnotator : IScriptPostprocessor
 {
     public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
     {

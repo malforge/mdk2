@@ -35,7 +35,7 @@ public class ComposerTests
             OutputDirectory = @"A:\Fake\Path\Output",
             Macros = new Dictionary<string, string>()
         };
-        var expected = "class Program1 {}\n\nclass Program2 {}\n\n";
+        var expected = "class Program1\n{}\n\nclass Program2\n{}\n";
         var console = A.Fake<IConsole>();
 
         // Act
