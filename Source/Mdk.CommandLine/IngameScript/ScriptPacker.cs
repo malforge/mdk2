@@ -152,13 +152,15 @@ public class ScriptPacker
 
         var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
 
-        var preprocessors = new ProcessorSet<IScriptPreprocessor>(ProcessorTypes.Preprocessors);
-        var combiner = (IScriptCombiner)(Activator.CreateInstance(ProcessorTypes.Combiner) ?? throw new InvalidOperationException("Failed to create an instance of the combiner."));
-        var postprocessors = new ProcessorSet<IScriptPostprocessor>(ProcessorTypes.Postprocessors);
-        var composer = (IScriptComposer)(Activator.CreateInstance(ProcessorTypes.Composer) ?? throw new InvalidOperationException("Failed to create an instance of the composer."));
-        var postCompositionProcessors = new ProcessorSet<IScriptPostCompositionProcessor>(ProcessorTypes.PostCompositionProcessors);
-        var producer = (IScriptProducer)(Activator.CreateInstance(ProcessorTypes.Producer) ?? throw new InvalidOperationException("Failed to create an instance of the producer."));
+        var manager = ScriptProcessingManager.Create().Build();
 
+        var preprocessors = manager.Preprocessors;
+        var combiner = manager.Combiner;
+        var postprocessors = manager.Postprocessors;
+        var composer = manager.Composer;
+        var postCompositionProcessors = manager.PostCompositionProcessors;
+        var producer = manager.Producer;
+        
         console.Trace("There are:")
             .Trace($"  {allDocuments.Length} documents")
             .Trace($"  {preprocessors.Count} preprocessors")
@@ -343,13 +345,13 @@ public class ScriptPacker
         return await PackProjectAsync(options, project, metadata, console);
     }
 
-    static class ProcessorTypes
-    {
-        public static readonly Type[] Preprocessors = [typeof(DeleteNamespaces)];
-        public static readonly Type Combiner = typeof(Combiner);
-        public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(RegionAnnotator), typeof(TypeSorter)];
-        public static readonly Type Composer = typeof(Composer);
-        public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
-        public static readonly Type Producer = typeof(Producer);
-    }
+    // static class ProcessorTypes
+    // {
+    //     public static readonly Type[] Preprocessors = [typeof(DeleteNamespaces)];
+    //     public static readonly Type Combiner = typeof(Combiner);
+    //     public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(RegionAnnotator), typeof(TypeSorter)];
+    //     public static readonly Type Composer = typeof(Composer);
+    //     public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
+    //     public static readonly Type Producer = typeof(Producer);
+    // }
 }

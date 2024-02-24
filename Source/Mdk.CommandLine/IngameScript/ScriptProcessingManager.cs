@@ -19,7 +19,7 @@ public class ScriptProcessingManager
     /// <summary>
     ///     A combiner to combine the script into a single document.
     /// </summary>
-    public required IScriptCombiner? Combiner { get; init; }
+    public required IScriptCombiner Combiner { get; init; }
 
     /// <summary>
     ///     A list of postprocessors to run after the script is combined, in workflow order.
@@ -29,7 +29,7 @@ public class ScriptProcessingManager
     /// <summary>
     ///     A composer to compose the final script.
     /// </summary>
-    public required IScriptComposer? Composer { get; init; }
+    public required IScriptComposer Composer { get; init; }
 
     /// <summary>
     ///     A list of post-composition processors to run after the script is composed, in workflow order.
@@ -39,7 +39,7 @@ public class ScriptProcessingManager
     /// <summary>
     ///     A producer to produce the files for the script, in the desired output folder.
     /// </summary>
-    public required IScriptProducer? Producer { get; init; }
+    public required IScriptProducer Producer { get; init; }
 
     /// <summary>
     ///     Begin construction of a new <see cref="ScriptProcessingManager" />. Contains the defaults, and as such
