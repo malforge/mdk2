@@ -9,7 +9,7 @@ namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 /// <summary>
 ///     Annotates the Program class and its Main and Save methods with a protected symbol annotation.
 /// </summary>
-[RunAfter(typeof(PartialMerger))]
+[RunAfter<PartialMerger>]
 public class SymbolProtectionAnnotator : IScriptPostprocessor
 {
     /// <summary>
@@ -29,11 +29,11 @@ public class SymbolProtectionAnnotator : IScriptPostprocessor
         var root = await document.GetSyntaxRootAsync();
         if (root == null)
             return document;
+        
         // Find the Program class declaration
-        var programClass = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault(c => c.Identifier.Text == "Program");
+        var programClass = root.ChildNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault(c => c.Identifier.Text == "Program");
         if (programClass == null)
             return document;
-
         var newProgramClass = programClass.WithIdentifier(programClass.Identifier.WithAdditionalAnnotations(ProtectedSymbolAnnotation)).WithAdditionalAnnotations(ProtectedSymbolAnnotation);
 
         // Find and annotate the Main methods

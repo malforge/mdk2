@@ -1,4 +1,5 @@
-﻿using FakeItEasy;
+﻿using System.Collections.Immutable;
+using FakeItEasy;
 using FluentAssertions;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
@@ -19,11 +20,38 @@ public class ComposerTests
         var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
         var document = project.AddDocument("TestDocument",
             """
-            class Program1
-            {}
-
-            class Program2
-            {}
+            using System;
+            using System.Collections.Generic;
+            using System.Linq;
+            public class SomeClass
+            {
+                public void SomeMethod()
+                {
+                    Console.WriteLine(""Hello, World!"");
+                }
+            }
+            public class Program: MyGridProgram
+            {
+                public Program()
+                {
+                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                }
+            
+                public void Main(string argument, UpdateType updateSource)
+                {
+                    var someClass = new SomeClass();
+                    someClass.SomeMethod();
+                    var someOtherClass = new SomeOtherClass();
+                    someOtherClass.SomeOtherMethod();
+                }
+            }
+            class SomeOtherClass
+            {
+                public void SomeOtherMethod()
+                {
+                    Console.WriteLine(""Goodbye, World!"");
+                }
+            }
 
             """);
 
@@ -33,15 +61,47 @@ public class ComposerTests
             MdkProjectVersion = new Version(2, 0, 0),
             ProjectDirectory = @"A:\Fake\Path",
             OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = new Dictionary<string, string>()
+            Macros = ImmutableDictionary<string, string>.Empty,
+            PreprocessorMacros = ImmutableHashSet.Create<string>()
         };
-        var expected = "class Program1\n{}\n\nclass Program2\n{}\n";
+        var expected = """
+                       public Program()
+                       {
+                           Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                       }
+
+                       public void Main(string argument, UpdateType updateSource)
+                       {
+                           var someClass = new SomeClass();
+                           someClass.SomeMethod();
+                           var someOtherClass = new SomeOtherClass();
+                           someOtherClass.SomeOtherMethod();
+                       }
+                       }
+                       public class SomeClass
+                       {
+                           public void SomeMethod()
+                           {
+                               Console.WriteLine(""Hello, World!"");
+                           }
+                       }
+                       class SomeOtherClass
+                       {
+                           public void SomeOtherMethod()
+                           {
+                               Console.WriteLine(""Goodbye, World!"");
+                           }
+                       }
+
+                       """;
         var console = A.Fake<IConsole>();
 
         // Act
         var result = await composer.ComposeAsync(document, console, metadata);
 
         // Assert
-        result.ToString().Replace("\r\n", "\n").Should().Be(expected.Replace("\r\n", "\n"));
+        var str = result.ToString();
+        str.Should().Be(expected.Replace("\r\n", "\n"));
+        str.Should().NotContain("\r\n");
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Editing;
 
 namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 
-[RunAfter(typeof(PartialMerger))]
+[RunAfter<PartialMerger>]
 public class TypeSorter: IScriptPostprocessor
 {
     public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)

@@ -222,7 +222,7 @@ public class ScriptPacker
         {
             foreach (var preprocessor in preprocessors)
             {
-                console.Trace($"Running {nameof(preprocessor)} " + preprocessor.GetType().Name);
+                console.Trace($"Running {nameof(preprocessor)} {preprocessor.GetType().Name} on {document.Name}");
                 document = await preprocessor.ProcessAsync(document, metadata);
             }
             return document;

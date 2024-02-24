@@ -1,53 +1,30 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Mdk.CommandLine.IngameScript;
 
-internal readonly struct TextPtr(SourceText text, TextSpan span, int position)
+readonly struct TextPtr(SourceText text, TextSpan span, int position = -1)
 {
     public readonly SourceText Text = text;
     public readonly TextSpan Span = span;
-    public readonly int Position = Math.Clamp(position, span.Start - 1, span.End);
+    public readonly int Position = position >= 0? Math.Clamp(position, span.Start - 1, span.End) : span.Start;
 
-    public static implicit operator int(TextPtr ptr)
-    {
-        return ptr.Position;
-    }
+    public static implicit operator int(TextPtr ptr) => ptr.Position;
 
-    public static TextPtr operator +(TextPtr ptr, int offset)
-    {
-        return new TextPtr(ptr.Text, ptr.Span, ptr.Position + offset);
-    }
+    public static TextPtr operator +(TextPtr ptr, int offset) => new(ptr.Text, ptr.Span, ptr.Position + offset);
 
-    public static TextPtr operator -(TextPtr ptr, int offset)
-    {
-        return new TextPtr(ptr.Text, ptr.Span, ptr.Position - offset);
-    }
+    public static TextPtr operator -(TextPtr ptr, int offset) => new(ptr.Text, ptr.Span, ptr.Position - offset);
 
-    public static TextPtr operator ++(TextPtr ptr)
-    {
-        return new TextPtr(ptr.Text, ptr.Span, ptr.Position + 1);
-    }
+    public static TextPtr operator ++(TextPtr ptr) => new(ptr.Text, ptr.Span, ptr.Position + 1);
 
-    public static TextPtr operator --(TextPtr ptr)
-    {
-        return new TextPtr(ptr.Text, ptr.Span, ptr.Position - 1);
-    }
+    public static TextPtr operator --(TextPtr ptr) => new(ptr.Text, ptr.Span, ptr.Position - 1);
 
-    public bool IsOutOfBounds()
-    {
-        return Position < Span.Start || Position >= Span.End;
-    }
+    public bool IsOutOfBounds() => Position < Span.Start || Position >= Span.End;
 
-    public bool IsBeforeStart()
-    {
-        return Position < Span.Start;
-    }
+    public bool IsBeforeStart() => Position < Span.Start;
 
-    public bool IsAfterEnd()
-    {
-        return Position >= Span.End;
-    }
+    public bool IsAfterEnd() => Position >= Span.End;
 
     public char this[int offset]
     {
@@ -60,6 +37,26 @@ internal readonly struct TextPtr(SourceText text, TextSpan span, int position)
         }
     }
 
+    public bool Is(string value)
+    {
+        if (IsOutOfBounds())
+            return false;
+        if (!StartsWith(value))
+            return false;
+        var end = this + value.Length;
+        return end.IsAtWordBoundary();
+    }
+    
+    public bool IsIgnoreCase(string value)
+    {
+        if (IsOutOfBounds())
+            return false;
+        if (!StartsWithIgnoreCase(value))
+            return false;
+        var end = this + value.Length;
+        return end.IsAtWordBoundary();
+    }
+    
     public bool StartsWith(string value)
     {
         if (IsOutOfBounds())
@@ -67,8 +64,10 @@ internal readonly struct TextPtr(SourceText text, TextSpan span, int position)
         if (value.Length > Span.End - Position)
             return false;
         for (var i = Position; i < Position + value.Length; i++)
+        {
             if (Text[i] != value[i - Position])
                 return false;
+        }
         return true;
     }
 
@@ -79,15 +78,14 @@ internal readonly struct TextPtr(SourceText text, TextSpan span, int position)
         if (value.Length > Span.End - Position)
             return false;
         for (var i = Position; i < Position + value.Length; i++)
+        {
             if (char.ToUpperInvariant(Text[i]) != char.ToUpperInvariant(value[i - Position]))
                 return false;
+        }
         return true;
     }
 
-    public bool IsAtNewLine()
-    {
-        return StartsWith("\r\n") || this[0] == '\n';
-    }
+    public bool IsAtNewLine() => StartsWith("\r\n") || this[0] == '\n';
 
     public TextPtr SkipNewLine()
     {
@@ -96,5 +94,58 @@ internal readonly struct TextPtr(SourceText text, TextSpan span, int position)
         if (this[0] == '\n')
             return this + 1;
         return this;
+    }
+
+    public TextPtr SkipWhitespace(bool skipNewLines = false)
+    {
+        var ptr = this;
+        while (ptr.IsAtWhitespace(skipNewLines))
+            ptr++;
+        return ptr;
+    }
+
+    public bool IsAtWhitespace(bool includeNewlines = false) => (!IsOutOfBounds() && char.IsWhiteSpace(this[0])) || (includeNewlines && IsAtNewLine());
+
+    public TextPtr Advance(int n) => this + n;
+
+    public bool Is(char ch) => this[0] == ch;
+
+    public bool TryReadWord([MaybeNullWhen(false)] out string word, out TextPtr end)
+    {
+        var start = this;
+        if (start.IsOutOfBounds())
+        {
+            word = null;
+            end = start;
+            return false;
+        }
+        end = start;
+        if (!char.IsLetter(start[0]) && start[0] != '_')
+        {
+            word = null;
+            return false;
+        }
+        end++;
+        while (!end.IsOutOfBounds() && (char.IsLetterOrDigit(end[0]) || end[0] == '_'))
+            end++;
+        word = Text.ToString(new TextSpan(start.Position, end.Position - start.Position));
+        return true;
+    }
+
+    public bool IsAtWordBoundary()
+    {
+        if (IsOutOfBounds())
+            return true;
+
+        var currentIsLetterOrDigit = char.IsLetterOrDigit(this[0]);
+        var previousIsLetterOrDigit = char.IsLetterOrDigit(this[-1]);
+        return currentIsLetterOrDigit != previousIsLetterOrDigit;
+    }
+
+    public override string ToString()
+    {
+        if (IsOutOfBounds())
+            return "<out of bounds>";
+        return Text.ToString(new TextSpan(Position, Math.Min(10, Span.End - Position)));
     }
 }

@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Collections.Immutable;
+using FluentAssertions;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.Api;
 using Microsoft.CodeAnalysis;
@@ -21,7 +22,8 @@ public abstract class ScriptPostProcessorTests<T> where T : class, IScriptPostpr
             MdkProjectVersion = new Version(2, 0, 0),
             ProjectDirectory = @"A:\Fake\Path",
             OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = new Dictionary<string, string>()
+            Macros = ImmutableDictionary<string, string>.Empty,
+            PreprocessorMacros = ImmutableHashSet.Create<string>()
         };
 
         // Act

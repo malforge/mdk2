@@ -7,3 +7,5 @@ public class RunBeforeAttribute(Type type) : Attribute
 {
     public Type Type { get; } = type;
 }
+
+public class RunBeforeAttribute<T>() : RunBeforeAttribute(typeof(T));

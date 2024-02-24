@@ -25,8 +25,9 @@ public class ProcessorSet<T> : IReadOnlyList<T> where T : class
     public ProcessorSet(IEnumerable<Type> types)
     {
         var processors = types.Select(Processor.Create).ToList();
-        foreach (var processor in processors)
+        for (var index = 0; index < processors.Count; index++)
         {
+            var processor = processors[index];
             foreach (var runBefore in processor.RunBefore)
             {
                 var before = runBefore;

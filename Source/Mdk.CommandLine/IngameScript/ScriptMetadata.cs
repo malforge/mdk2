@@ -18,7 +18,8 @@ public class ScriptProjectMetadata
     public ImmutableArray<FileSystemInfo> Ignores { get; init; }
     public bool TrimTypes { get; init; }
     public int IndentSize { get; init; } = 4;
-    public required IReadOnlyDictionary<string, string> Macros { get; init; }
+    public required ImmutableDictionary<string, string> Macros { get; init; }
+    public ImmutableHashSet<string>? PreprocessorMacros { get; init; }
 
     public ScriptProjectMetadata WithAdditionalIgnore(FileSystemInfo ignore) =>
         new()
@@ -31,7 +32,7 @@ public class ScriptProjectMetadata
             TrimTypes = TrimTypes,
             Macros = Macros
         };
-    
+
     public ScriptProjectMetadata WithOutputDirectory(string outputDirectory) =>
         new()
         {
@@ -69,7 +70,7 @@ public class ScriptProjectMetadata
         finalMacros["$MDK_DATETIME$"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
         finalMacros["$MDK_DATE$"] = DateTime.Now.ToString("yyyy-MM-dd");
         finalMacros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
-        
+
         return new ScriptProjectMetadata
         {
             ProjectDirectory = rootPath,
@@ -78,7 +79,7 @@ public class ScriptProjectMetadata
             TrimTypes = mdkTrimTypes,
             Minify = mdkMinify,
             Ignores = mdkIgnores,
-            Macros = finalMacros.AsReadOnly()
+            Macros = finalMacros.ToImmutableDictionary()
         };
 
         FileSystemInfo getDirectoryInfo(string path)

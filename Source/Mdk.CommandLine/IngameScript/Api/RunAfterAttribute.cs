@@ -7,3 +7,5 @@ public class RunAfterAttribute(Type type) : Attribute
 {
     public Type Type { get; } = type;
 }
+
+public class RunAfterAttribute<T>() : RunAfterAttribute(typeof(T));

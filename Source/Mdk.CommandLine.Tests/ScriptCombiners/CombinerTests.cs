@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Collections.Immutable;
+using FluentAssertions;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
 using Microsoft.CodeAnalysis;
@@ -59,7 +60,8 @@ public class CombinerTests
             MdkProjectVersion = new Version(2, 0, 0),
             ProjectDirectory = @"A:\Fake\Path",
             OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = new Dictionary<string, string>()
+            Macros = ImmutableDictionary<string, string>.Empty,
+            PreprocessorMacros = ImmutableHashSet.Create<string>()
         };
 
         // Act

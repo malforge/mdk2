@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Mdk.CommandLine.IngameScript.DefaultProcessors;
 
-[RunBefore(typeof(PartialMerger))]
+[RunBefore<PartialMerger>]
 public partial class RegionAnnotator : IScriptPostprocessor
 {
     public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)

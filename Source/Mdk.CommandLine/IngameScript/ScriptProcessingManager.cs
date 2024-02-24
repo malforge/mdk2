@@ -244,7 +244,7 @@ public class ScriptProcessingManager
 
     static class DefaultProcessorTypes
     {
-        public static readonly Type[] Preprocessors = [typeof(DeleteNamespaces)];
+        public static readonly Type[] Preprocessors = [typeof(PreprocessorConditionals), typeof(DeleteNamespaces)];
         public static readonly Type Combiner = typeof(Combiner);
         public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(RegionAnnotator), typeof(TypeSorter), typeof(SymbolProtectionAnnotator)];
         public static readonly Type Composer = typeof(Composer);
