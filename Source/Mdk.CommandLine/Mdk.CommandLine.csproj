@@ -5,7 +5,13 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AssemblyName>mdk</AssemblyName>
-        <Version>2.0.0-alpha1</Version>
+        <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <Title>MDK2 CLI</Title>
+        <Authors>Morten "Malware" Aune Lyrstad</Authors>
+        <Description>This is part of the MDK2 project.</Description>
+        <Copyright>Morten "Malware" Aune Lyrstad</Copyright>
+        <PackageProjectUrl>2023 Morten "Malware" Aune Lyrstad</PackageProjectUrl>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,10 +19,6 @@
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.8.0" />
       <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Mdk.PbAnalyzers\Mdk.PbAnalyzers.csproj" />
     </ItemGroup>
 
 </Project>

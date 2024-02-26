@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared Files", "Shared File
 		PackageVersion.txt = PackageVersion.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.PbPackager", "Mdk.PbPackager\Mdk.PbPackager.csproj", "{46E1381C-2518-498B-853A-12B1AD647A3D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,11 @@ Global
 		{F91DCDD7-FD47-4C8D-880C-987CF1A3B4E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F91DCDD7-FD47-4C8D-880C-987CF1A3B4E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F91DCDD7-FD47-4C8D-880C-987CF1A3B4E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46E1381C-2518-498B-853A-12B1AD647A3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46E1381C-2518-498B-853A-12B1AD647A3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46E1381C-2518-498B-853A-12B1AD647A3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46E1381C-2518-498B-853A-12B1AD647A3D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal

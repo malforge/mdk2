@@ -1,0 +1,3 @@
+﻿v.2.0.0-alpha1
+ - Emergency publish of a very early build due to the problems with MDK1 and the new version of Visual Studio 2022.
+ - This version is highly untested, and is missing the minifier.

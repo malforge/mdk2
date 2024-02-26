@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <PropertyGroup>
+        <Mdk-Minifier>none</Mdk-Minifier>
+        <Mdk-Trim>off</Mdk-Trim>
+        <Mdk-Clipboard>off</Mdk-Clipboard>
+        <Mdk-Output>auto</Mdk-Output>
+    </PropertyGroup>
+
+    <Target Name="MdkPackPrepare">
+        <PropertyGroup>
+            <MdkArguments>pack-script &quot;$(MSBuildProjectFullPath)&quot; -minifier $(Mdk-Minifier) -output &quot;$(Mdk-Output)&quot;</MdkArguments>
+        </PropertyGroup>
+
+        <PropertyGroup Condition="'$(Mdk-Trim)' == 'on'">
+            <MdkArguments>$(MdkArguments) -trim"</MdkArguments>
+        </PropertyGroup>
+
+        <PropertyGroup Condition="'$(Mdk-Clipboard)' == 'on'">
+            <MdkArguments>$(MdkArguments) -toclipboard"</MdkArguments>
+        </PropertyGroup>
+    </Target>
+
+    <Target Name="MdkPack" DependsOnTargets="MdkPackPrepare" BeforeTargets="Build">
+        <Exec Command="$(MSBuildThisFileDirectory)..\tools\mdk.exe $(MdkArguments)" />
+    </Target>
+
+</Project>

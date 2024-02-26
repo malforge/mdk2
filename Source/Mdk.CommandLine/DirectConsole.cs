@@ -29,7 +29,16 @@ public class DirectConsole : IConsole
             return this;
         }
 
-        var maxWidth = Console.WindowWidth;
+        int maxWidth;
+        try
+        {
+            maxWidth = Console.WindowWidth;
+        }
+        catch (System.IO.IOException)
+        {
+             maxWidth = 0;
+        }        
+        
         if (maxWidth == 0)
         {
             Console.WriteLine(message);

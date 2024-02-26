@@ -23,10 +23,10 @@ public class Combiner : IScriptCombiner
     {
         var trees = await Task.WhenAll(documents.Select(d => d.GetSyntaxTreeAsync()));
 
-        var namespaceUsings = trees.SelectMany(t => t.GetRoot().DescendantNodes().OfType<UsingDirectiveSyntax>())
+        var namespaceUsings = trees.SelectMany(t => t?.GetRoot().DescendantNodes().OfType<UsingDirectiveSyntax>() ?? Enumerable.Empty<UsingDirectiveSyntax>())
             .GroupBy(u => u.Name?.ToString()).Select(g => g.First()).ToArray();
 
-        var typeDeclarations = trees.SelectMany(t => t.GetRoot().DescendantNodes().OfType<MemberDeclarationSyntax>())
+        var typeDeclarations = trees.SelectMany(t => t?.GetRoot().DescendantNodes().OfType<MemberDeclarationSyntax>() ?? Enumerable.Empty<MemberDeclarationSyntax>())
             .Where(t => t is not NamespaceDeclarationSyntax && t.Parent is CompilationUnitSyntax or NamespaceDeclarationSyntax)
             .ToArray();
 

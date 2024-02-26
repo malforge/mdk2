@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+#pragma warning disable CS0028
 
 namespace Mdk.Extractor;
 
