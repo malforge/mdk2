@@ -1,28 +1,33 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
     <PropertyGroup>
-        <Mdk-Minifier>none</Mdk-Minifier>
-        <Mdk-Trim>off</Mdk-Trim>
-        <Mdk-Clipboard>off</Mdk-Clipboard>
-        <Mdk-Output>auto</Mdk-Output>
+        <MdkMinifier>none</MdkMinifier>
+        <MdkTrim>off</MdkTrim>
+        <MdkClipboard>off</MdkClipboard>
+        <MdkOutput>auto</MdkOutput>
+        <MdkArguments />
     </PropertyGroup>
 
     <Target Name="MdkPackPrepare">
         <PropertyGroup>
-            <MdkArguments>pack-script &quot;$(MSBuildProjectFullPath)&quot; -minifier $(Mdk-Minifier) -output &quot;$(Mdk-Output)&quot;</MdkArguments>
+            <MdkArgumentsList>pack-script &quot;$(MSBuildProjectFullPath)&quot; -minifier $(MdkMinifier) -output &quot;$(MdkOutput)&quot;</MdkArgumentsList>
         </PropertyGroup>
 
-        <PropertyGroup Condition="'$(Mdk-Trim)' == 'on'">
-            <MdkArguments>$(MdkArguments) -trim"</MdkArguments>
+        <PropertyGroup Condition="'$(MdkTrim)' == 'on'">
+            <MdkArgumentsList>$(MdkArgumentsList) -trim"</MdkArgumentsList>
         </PropertyGroup>
 
-        <PropertyGroup Condition="'$(Mdk-Clipboard)' == 'on'">
-            <MdkArguments>$(MdkArguments) -toclipboard"</MdkArguments>
+        <PropertyGroup Condition="'$(MdkClipboard)' == 'on'">
+            <MdkArgumentsList>$(MdkArgumentsList) -toclipboard"</MdkArgumentsList>
+        </PropertyGroup>
+        
+        <PropertyGroup>
+            <MdkArgumentsList>$(MdkArgumentsList) $(MdkArguments)</MdkArgumentsList>
         </PropertyGroup>
     </Target>
 
     <Target Name="MdkPack" DependsOnTargets="MdkPackPrepare" BeforeTargets="Build">
-        <Exec Command="$(MSBuildThisFileDirectory)..\tools\mdk.exe $(MdkArguments)" />
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; $(MdkArgumentsList)" />
     </Target>
 
 </Project>
