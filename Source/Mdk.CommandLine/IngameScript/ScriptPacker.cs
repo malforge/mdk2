@@ -95,7 +95,20 @@ public class ScriptPacker
         var metadata = ScriptProjectMetadata.ForOptions(options, new Version(2, 0, 0));
         var legacyMetadata = await ScriptProjectMetadata.LoadLegacyAsync(project);
         if (legacyMetadata != null)
+        {
+            console.Trace("Loaded legacy metadata:")
+                .Trace(legacyMetadata.ToString());
+        }
+        
+        console.Trace("Using the following metadata:")
+            .Trace(metadata.ToString());
+
+        if (legacyMetadata != null)
+        {
             metadata = legacyMetadata.ApplyOther(metadata);
+            console.Trace("Merged with legacy metadata:")
+                .Trace(metadata.ToString());
+        }
 
         metadata = metadata.WithAdditionalMacros(new Dictionary<string, string>
             {
@@ -103,7 +116,7 @@ public class ScriptPacker
                 ["$MDK_DATE$"] = DateTime.Now.ToString("yyyy-MM-dd"),
                 ["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm")
             })
-            .Close();
+            .Close(resolveAutoOutputDirectory);
 
         switch (metadata.MdkProjectVersion.Major)
         {
@@ -116,11 +129,8 @@ public class ScriptPacker
                 console.Trace("Detected a modern project.");
                 return await PackProjectAsync(project, metadata, console);
         }
-    }
 
-    async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
-    {
-        if (string.Equals(metadata.OutputDirectory, "auto", StringComparison.OrdinalIgnoreCase))
+        string resolveAutoOutputDirectory()
         {
             console.Trace("Determining the output directory automatically...");
             if (!OperatingSystem.IsWindows())
@@ -129,10 +139,13 @@ public class ScriptPacker
             var output = se.GetDataPath("IngameScripts", "local");
             if (string.IsNullOrEmpty(output))
                 throw new CommandLineException(-1, "Failed to determine the output directory.");
-            metadata = metadata.WithOutputDirectory(output);
             console.Trace("Output directory: " + output);
+            return output;
         }
+    }
 
+    async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
+    {
         if (metadata.ToClipboard && !OperatingSystem.IsWindows())
             throw new CommandLineException(-1, "The clipboard option is only supported on Windows.");
 

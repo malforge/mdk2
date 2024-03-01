@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Commands;
 using Mdk.CommandLine.Commands.Help;
@@ -36,7 +37,7 @@ public static class Program
         try
         {
             var (logFile, enableTrace) = GetLogOptions(arguments);
-
+            
             if (!arguments.TryDequeue(out var commandName))
                 commandName = "help";
 
@@ -51,6 +52,12 @@ public static class Program
                 };
             }
 
+            // Trace the informational version of the application
+            var informationalVersionAttribute = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            if (informationalVersionAttribute != null)
+                console.Trace($"MDK Command Line Tool v{informationalVersionAttribute.InformationalVersion}")
+                    .Trace();
+            
             if (!Commands.TryGetValue(commandName, out var command))
             {
                 console.Print($"Unknown command: {commandName}")
