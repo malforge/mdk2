@@ -3,8 +3,9 @@
     <PropertyGroup>
         <MdkMinifier>none</MdkMinifier>
         <MdkTrim>off</MdkTrim>
-        <MdkClipboard>off</MdkClipboard>
+        <MdkInteractive>on</MdkInteractive>
         <MdkOutput>auto</MdkOutput>
+        <MdkBuildConfiguration>Release</MdkBuildConfiguration>
         <MdkArguments />
     </PropertyGroup>
 
@@ -14,20 +15,24 @@
         </PropertyGroup>
 
         <PropertyGroup Condition="'$(MdkTrim)' == 'on'">
-            <MdkArgumentsList>$(MdkArgumentsList) -trim"</MdkArgumentsList>
+            <MdkArgumentsList>$(MdkArgumentsList) -trim</MdkArgumentsList>
         </PropertyGroup>
 
-        <PropertyGroup Condition="'$(MdkClipboard)' == 'on'">
-            <MdkArgumentsList>$(MdkArgumentsList) -toclipboard"</MdkArgumentsList>
+        <PropertyGroup Condition="'$(MdkInteractive)' == 'on'">
+            <MdkArgumentsList>$(MdkArgumentsList) -interactive</MdkArgumentsList>
         </PropertyGroup>
         
         <PropertyGroup>
             <MdkArgumentsList>$(MdkArgumentsList) $(MdkArguments)</MdkArgumentsList>
         </PropertyGroup>
     </Target>
-
-    <Target Name="MdkPack" DependsOnTargets="MdkPackPrepare" BeforeTargets="Build">
+    
+    <Target Name="MdkPack" DependsOnTargets="MdkPackPrepare" AfterTargets="Build" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
         <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; $(MdkArgumentsList)" />
     </Target>
+    
+    <Target Name="MdkDidNotPack" DependsOnTargets="MdkPackPrepare" AfterTargets="Build" Condition="'$(Configuration)' != '$(MdkBuildConfiguration)' And '$(MdkBuildConfiguration)' != 'all'">
+        <Exec Command="echo MDK did not pack, because the current configuration is '$(Configuration)', not '$(MdkBuildConfiguration)'." />
+    </Target>   
 
 </Project>

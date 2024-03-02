@@ -172,6 +172,11 @@ public class ScriptPacker
 
         var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
 
+        if (metadata.Minify != MinifierLevel.None)
+            console.Print($"Minifying is requested, but not supported yet. Ignoring the minifier level {metadata.Minify}.");
+        if (metadata.TrimTypes)
+            console.Print("Trimming unused types is requested, but not supported yet. Ignoring the option.");
+        
         var manager = ScriptProcessingManager.Create().Build();
 
         var preprocessors = manager.Preprocessors;
