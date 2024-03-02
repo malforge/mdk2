@@ -101,14 +101,18 @@ public class SymbolProtectionAnnotatorTests : ScriptPostProcessorTests<RegionAnn
             """);
         
         var processor = new SymbolProtectionAnnotator();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>()
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+            new PackOptions
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Interactive = false,
+                ListProcessors = false
+            },
+            new Version(2, 0, 0)
+        ).Close();
         
         // Act
         var result = processor.ProcessAsync(document, metadata).Result;

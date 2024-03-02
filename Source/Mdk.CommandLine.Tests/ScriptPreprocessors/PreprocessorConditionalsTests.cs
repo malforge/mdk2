@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
@@ -8,6 +8,7 @@ using NUnit.Framework;
 namespace MDK.CommandLine.Tests.ScriptPreprocessors;
 
 [TestFixture]
+[SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
 public class PreprocessorConditionalsTests : ScriptPreprocessorTests<PreprocessorConditionals>
 {
     [Test]
@@ -32,14 +33,18 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>()
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+            new PackOptions
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Interactive = false,
+                ListProcessors = false
+            },
+            new Version(2, 0, 0)
+        ).Close();
 
         // Act
         var result = await processor.ProcessAsync(document, metadata);
@@ -82,14 +87,19 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>("DEBUG")
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+                new PackOptions
+                {
+                    MinifierLevel = MinifierLevel.None,
+                    TrimUnusedTypes = false,
+                    ProjectFile = @"A:\Fake\Path\Project.csproj",
+                    Output = @"A:\Fake\Path\Output",
+                    Interactive = false,
+                    ListProcessors = false
+                },
+                new Version(2, 0, 0)
+            ).WithAdditionalPreprocessorMacros(new[] { "DEBUG" })
+            .Close();
 
         // Act
         var result = await processor.ProcessAsync(document, metadata);
@@ -134,14 +144,18 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>()
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+            new PackOptions
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Interactive = false,
+                ListProcessors = false
+            },
+            new Version(2, 0, 0)
+        ).Close();
 
         // Act
         var result = await processor.ProcessAsync(document, metadata);
@@ -184,14 +198,18 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>()
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+            new PackOptions
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Interactive = false,
+                ListProcessors = false
+            },
+            new Version(2, 0, 0)
+        ).Close();
 
         // Act
         var result = await processor.ProcessAsync(document, metadata);
@@ -237,14 +255,18 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>()
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+            new PackOptions
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Interactive = false,
+                ListProcessors = false
+            },
+            new Version(2, 0, 0)
+        ).Close();
 
         // Act
         var result = await processor.ProcessAsync(document, metadata);
@@ -286,14 +308,18 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>()
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+                new PackOptions
+                {
+                    MinifierLevel = MinifierLevel.None,
+                    TrimUnusedTypes = false,
+                    ProjectFile = @"A:\Fake\Path\Project.csproj",
+                    Output = @"A:\Fake\Path\Output",
+                    Interactive = false,
+                    ListProcessors = false
+                },
+                new Version(2, 0, 0)
+            ).Close();
 
         // Act
         var result = await processor.ProcessAsync(document, metadata);
@@ -303,6 +329,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
     }
 
     [Test]
+    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
     public async Task ProcessAsync_WithExpressionConditionals_ShouldAlterDocument()
     {
         // Arrange
@@ -324,15 +351,21 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>("DEBUG", "TEST2")
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+                new PackOptions
+                {
+                    MinifierLevel = MinifierLevel.None,
+                    TrimUnusedTypes = false,
+                    ProjectFile = @"A:\Fake\Path\Project.csproj",
+                    Output = @"A:\Fake\Path\Output",
+                    Interactive = false,
+                    ListProcessors = false
+                },
+                new Version(2, 0, 0)
+            ).WithAdditionalPreprocessorMacros(new[] { "DEBUG", "TEST2" })
+            .Close();
 
+        
         // Act
         var result = await processor.ProcessAsync(document, metadata);
 

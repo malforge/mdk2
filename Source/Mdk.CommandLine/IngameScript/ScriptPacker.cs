@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Api;
-using Mdk.CommandLine.IngameScript.DefaultProcessors;
+using Mdk.CommandLine.Interactive;
 using Mdk.CommandLine.SharedApi;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
@@ -92,10 +94,31 @@ public class ScriptPacker
     /// <exception cref="CommandLineException"></exception>
     public async Task<bool> PackProjectAsync(PackOptions options, Project project, IConsole console)
     {
-        var metadata = await ScriptProjectMetadata.LoadAsync(project);
+        var metadata = ScriptProjectMetadata.ForOptions(options, new Version(2, 0, 0));
+        var legacyMetadata = await ScriptProjectMetadata.LoadLegacyAsync(project);
+        if (legacyMetadata != null)
+        {
+            console.Trace("Loaded legacy metadata:")
+                .Trace(legacyMetadata.ToString());
+        }
 
-        if (metadata == null)
-            return false;
+        console.Trace("Using the following metadata:")
+            .Trace(metadata.ToString());
+
+        if (legacyMetadata != null)
+        {
+            metadata = legacyMetadata.ApplyOther(metadata);
+            console.Trace("Merged with legacy metadata:")
+                .Trace(metadata.ToString());
+        }
+
+        metadata = metadata.WithAdditionalMacros(new Dictionary<string, string>
+            {
+                ["$MDK_DATETIME$"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                ["$MDK_DATE$"] = DateTime.Now.ToString("yyyy-MM-dd"),
+                ["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm")
+            })
+            .Close(resolveAutoOutputDirectory);
 
         switch (metadata.MdkProjectVersion.Major)
         {
@@ -103,35 +126,32 @@ public class ScriptPacker
                 throw new CommandLineException(-1, "The project is not recognized as an MDK project.");
             case < 2:
                 console.Trace("Detected a legacy project.");
-                return await PackLegacyProjectAsync(options, project, metadata, console);
+                return await PackLegacyProjectAsync(project, metadata, console);
             default:
                 console.Trace("Detected a modern project.");
-                return await PackProjectAsync(options, project, metadata, console);
+                return await PackProjectAsync(project, metadata, console);
+        }
+
+        string resolveAutoOutputDirectory()
+        {
+            console.Trace("Determining the output directory automatically...");
+            if (!OperatingSystem.IsWindows())
+                throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
+            var se = new SpaceEngineers();
+            var output = se.GetDataPath("IngameScripts", "local");
+            if (string.IsNullOrEmpty(output))
+                throw new CommandLineException(-1, "Failed to determine the output directory.");
+            console.Trace("Output directory: " + output);
+            return output;
         }
     }
 
-    async Task<bool> PackProjectAsync(PackOptions options, Project project, ScriptProjectMetadata metadata, IConsole console)
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
+    async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
     {
-        if (options.Output != null)
-        {
-            if (string.Equals(options.Output, "auto", StringComparison.OrdinalIgnoreCase))
-            {
-                console.Trace("Determining the output directory automatically...");
-                if (!OperatingSystem.IsWindows())
-                    throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
-                var se = new SpaceEngineers();
-                var output = se.GetDataPath("IngameScripts", "local");
-                if (string.IsNullOrEmpty(output))
-                    throw new CommandLineException(-1, "Failed to determine the output directory.");
-                metadata = metadata.WithOutputDirectory(output);
-                console.Trace("Output directory: " + output);
-            }
-            else
-                metadata = metadata.WithOutputDirectory(options.Output);
-        }
-        if (options.ToClipboard && !OperatingSystem.IsWindows())
-            throw new CommandLineException(-1, "The clipboard option is only supported on Windows.");
-        
+        if (metadata.Interactive && !OperatingSystem.IsWindows())
+            throw new CommandLineException(-1, "The interactive option is only supported on Windows.");
+
         var outputPath = Path.Combine(metadata.OutputDirectory, project.Name);
         var outputDirectory = new DirectoryInfo(outputPath);
 
@@ -152,6 +172,11 @@ public class ScriptPacker
 
         var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
 
+        if (metadata.Minify != MinifierLevel.None)
+            console.Print($"Minifying is requested, but not supported yet. Ignoring the minifier level {metadata.Minify}.");
+        if (metadata.TrimTypes)
+            console.Print("Trimming unused types is requested, but not supported yet. Ignoring the option.");
+        
         var manager = ScriptProcessingManager.Create().Build();
 
         var preprocessors = manager.Preprocessors;
@@ -160,7 +185,7 @@ public class ScriptPacker
         var composer = manager.Composer;
         var postCompositionProcessors = manager.PostCompositionProcessors;
         var producer = manager.Producer;
-        
+
         console.Trace("There are:")
             .Trace($"  {allDocuments.Length} documents")
             .Trace($"  {preprocessors.Count} preprocessors")
@@ -181,10 +206,26 @@ public class ScriptPacker
         final = await PostProcessComposition(final, postCompositionProcessors, console, metadata);
         await ProduceAsync(project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, console, metadata);
 
-        if (OperatingSystem.IsWindows() && options.ToClipboard)
+        if (OperatingSystem.IsWindows() && metadata.Interactive)
         {
-            console.Trace("Copying the final script to the clipboard...");
-            await Clipboard.PutAsync(final.ToString());
+            var finalText = final.ToString();
+            bool onShowFolder(ToastHyperlink _)
+            {
+                System.Diagnostics.Process.Start("explorer.exe", outputDirectory.FullName);
+                return true;
+            }
+
+            bool onCopyToClipboard(ToastHyperlink _)
+            {
+                Clipboard.PutAsync(finalText).ConfigureAwait(false);
+                return true;
+            }
+
+            await ToastWindow.ShowAsync("Your scripts have been successfully deployed.", 
+                new ToastHyperlink("Show Me",
+                    onShowFolder), 
+                new ToastHyperlink("Copy script to the clipboard",
+                    onCopyToClipboard));
         }
 
         return true;
@@ -337,21 +378,11 @@ public class ScriptPacker
         return true;
     }
 
-    async Task<bool> PackLegacyProjectAsync(PackOptions options, Project project, ScriptProjectMetadata metadata, IConsole console)
+    async Task<bool> PackLegacyProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
     {
         var root = new DirectoryInfo(Path.GetDirectoryName(project.FilePath!)!);
         metadata = metadata.WithAdditionalIgnore(new DirectoryInfo(Path.Combine(root.FullName, "obj")));
 
-        return await PackProjectAsync(options, project, metadata, console);
+        return await PackProjectAsync(project, metadata, console);
     }
-
-    // static class ProcessorTypes
-    // {
-    //     public static readonly Type[] Preprocessors = [typeof(DeleteNamespaces)];
-    //     public static readonly Type Combiner = typeof(Combiner);
-    //     public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(RegionAnnotator), typeof(TypeSorter)];
-    //     public static readonly Type Composer = typeof(Composer);
-    //     public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
-    //     public static readonly Type Producer = typeof(Producer);
-    // }
 }

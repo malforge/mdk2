@@ -63,7 +63,7 @@ public class PackScriptCommand : Command
         var trimUnusedTypes = false;
         string? projectFile = null;
         string? output = null;
-        var toClipboard = false;
+        var interactive = false;
         var listProcessors = false;
 
         while (arguments.Count > 0)
@@ -78,8 +78,8 @@ public class PackScriptCommand : Command
                 case "-trim":
                     trimUnusedTypes = true;
                     break;
-                case "-toclipboard":
-                    toClipboard = true;
+                case "-interactive":
+                    interactive = true;
                     break;
                 case "-output":
                     if (!arguments.TryDequeue(out var outputValue)) throw new CommandLineException(-1, "No output file specified.");
@@ -104,7 +104,7 @@ public class PackScriptCommand : Command
             TrimUnusedTypes = trimUnusedTypes,
             ProjectFile = projectFile,
             Output = output,
-            ToClipboard = toClipboard,
+            Interactive = interactive,
             ListProcessors = listProcessors
         };
     }
@@ -116,7 +116,7 @@ public class PackScriptCommand : Command
             .Print("Options:")
             .Print("  -minifier <name>  Specifies the minifier to use. See below for valid names.")
             .Print("  -trim             Trims unused types from the output.")
-            .Print("  -toclipboard      Copies the output to the clipboard instead of writing to a file.")
+            .Print("  -interactive      Runs the tool in interactive mode, showing UI where necessary.")
             .Print("  -output <folder>  Specifies the output folder. If not specified, the output will be written to the project directory.")
             .Print("  -listprocessors   Lists all default processors and their descriptions.")
             .Print()

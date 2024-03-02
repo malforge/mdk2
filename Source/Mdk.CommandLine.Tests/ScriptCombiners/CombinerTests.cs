@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
 using Microsoft.CodeAnalysis;
@@ -21,7 +20,7 @@ public class CombinerTests
             """
             using System;
             class Program {}
-            
+
             """);
         project = document1.Project;
         var document2 = project.AddDocument("TestDocument2",
@@ -29,14 +28,14 @@ public class CombinerTests
             using System;
             using System.Collections.Generic;
             class OtherClass {}
-            
+
             """);
         project = document2.Project;
         var document3 = project.AddDocument("TestDocument3",
             """
             using System.Linq;
             class AnotherClass {}
-            
+
             """);
         project = document3.Project;
         var document4 = project.AddDocument("TestDocument4",
@@ -44,25 +43,29 @@ public class CombinerTests
             using System.Text;
             using System.Collections.Generic;
             class YetAnotherClass {}
-            
+
             """);
         project = document4.Project;
         var document5 = project.AddDocument("TestDocument5",
             """
             using System.Threading.Tasks;
             class AndAnotherClass {}
-            
+
             """);
         project = document5.Project;
         var combiner = new Combiner();
-        var metadata = new ScriptProjectMetadata
-        {
-            MdkProjectVersion = new Version(2, 0, 0),
-            ProjectDirectory = @"A:\Fake\Path",
-            OutputDirectory = @"A:\Fake\Path\Output",
-            Macros = ImmutableDictionary<string, string>.Empty,
-            PreprocessorMacros = ImmutableHashSet.Create<string>()
-        };
+        var metadata = ScriptProjectMetadata.ForOptions(
+            new PackOptions
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Interactive = false,
+                ListProcessors = false
+            },
+            new Version(2, 0, 0)
+        ).Close();
 
         // Act
         var result = await combiner.CombineAsync(project, new[] { document1, document2, document3, document4, document5 }, metadata);
