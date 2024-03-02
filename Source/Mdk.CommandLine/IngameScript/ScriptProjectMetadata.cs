@@ -256,7 +256,7 @@ public class ScriptProjectMetadata
             null,
             null,
             null,
-            null
+            true
         );
 
         FileSystemInfo getDirectoryInfo(string path)
