@@ -63,7 +63,7 @@ public class ComposerTests
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)

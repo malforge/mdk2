@@ -17,7 +17,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "ThisOutput",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         var otherMetadata = ScriptProjectMetadata.ForOptions(new PackOptions
@@ -26,7 +26,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "OtherOutput",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         
@@ -47,7 +47,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "ThisOutput",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         var otherMetadata = ScriptProjectMetadata.ForOptions(new PackOptions
@@ -56,7 +56,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "auto",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         
@@ -77,7 +77,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = null,
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         var otherMetadata = ScriptProjectMetadata.ForOptions(new PackOptions
@@ -86,7 +86,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "auto",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         
@@ -107,7 +107,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "ThisOutput",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         var otherMetadata = ScriptProjectMetadata.ForOptions(new PackOptions
@@ -116,7 +116,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = null,
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         
@@ -137,7 +137,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "auto",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         
@@ -160,7 +160,7 @@ public class ScriptProjectMetadataTests
             TrimUnusedTypes = false,
             ProjectFile = "ThisProject.csproj",
             Output = "ThisOutput",
-            ToClipboard = false,
+            Interactive = false,
             ListProcessors = false
         }, new Version(2, 0, 0));
         

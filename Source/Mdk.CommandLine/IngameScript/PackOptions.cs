@@ -6,6 +6,6 @@ public readonly struct PackOptions
     public bool TrimUnusedTypes { get; init; }
     public required string? ProjectFile { get; init; }
     public string? Output { get; init; }
-    public bool ToClipboard { get; init; }
+    public bool Interactive { get; init; }
     public bool ListProcessors { get; init; }
 }

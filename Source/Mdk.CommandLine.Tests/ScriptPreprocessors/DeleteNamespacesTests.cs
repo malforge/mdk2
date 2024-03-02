@@ -25,7 +25,7 @@ public class DeleteNamespacesTests: ScriptPreprocessorTests<DeleteNamespaces>
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)
@@ -53,7 +53,7 @@ public class DeleteNamespacesTests: ScriptPreprocessorTests<DeleteNamespaces>
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)
@@ -90,7 +90,7 @@ public class DeleteNamespacesTests: ScriptPreprocessorTests<DeleteNamespaces>
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)

@@ -34,7 +34,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)
@@ -81,7 +81,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)
@@ -127,7 +127,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)
@@ -177,7 +177,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                ToClipboard = false,
+                Interactive = false,
                 ListProcessors = false
             },
             new Version(2, 0, 0)

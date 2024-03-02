@@ -24,11 +24,11 @@ public class ScriptProjectMetadata
     readonly string? _outputDirectory;
     readonly ImmutableHashSet<string>? _preprocessorMacros;
     readonly string? _projectFileName;
-    readonly bool? _toClipboard;
+    readonly bool? _interactive;
     readonly bool? _trimTypes;
     string? _projectDirectory;
 
-    ScriptProjectMetadata(Version? mdkProjectVersion, string? projectFileName, string? outputDirectory, MinifierLevel? minify, ImmutableList<FileSystemInfo>? ignores, bool? trimTypes, int? indentSize, ImmutableDictionary<string, string>? macros, ImmutableHashSet<string>? preprocessorMacros, bool? toClipboard)
+    ScriptProjectMetadata(Version? mdkProjectVersion, string? projectFileName, string? outputDirectory, MinifierLevel? minify, ImmutableList<FileSystemInfo>? ignores, bool? trimTypes, int? indentSize, ImmutableDictionary<string, string>? macros, ImmutableHashSet<string>? preprocessorMacros, bool? interactive)
     {
         _projectFileName = projectFileName;
         _projectDirectory = Path.GetDirectoryName(projectFileName);
@@ -40,7 +40,7 @@ public class ScriptProjectMetadata
         _indentSize = indentSize;
         _macros = macros;
         _preprocessorMacros = preprocessorMacros;
-        _toClipboard = toClipboard;
+        _interactive = interactive;
     }
 
     /// <summary>
@@ -98,10 +98,10 @@ public class ScriptProjectMetadata
     public ImmutableHashSet<string> PreprocessorMacros => _preprocessorMacros ?? throw new InvalidOperationException("Preprocessor macros not set");
 
     /// <summary>
-    ///     Whether to copy the packed script to the clipboard.
+    ///     Whether to run the tool in interactive mode.
     /// </summary>
     /// <exception cref="InvalidOperationException"></exception>
-    public bool ToClipboard => _toClipboard ?? throw new InvalidOperationException("To clipboard not set");
+    public bool Interactive => _interactive ?? throw new InvalidOperationException("Interactive not set");
 
     /// <summary>
     ///     The directory containing the project file.
@@ -122,7 +122,7 @@ public class ScriptProjectMetadata
     /// <param name="ignore"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithAdditionalIgnore(FileSystemInfo ignore) =>
-        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores == null ? ImmutableList.Create(ignore) : _ignores.Add(ignore), _trimTypes, _indentSize, _macros, _preprocessorMacros, _toClipboard);
+        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores == null ? ImmutableList.Create(ignore) : _ignores.Add(ignore), _trimTypes, _indentSize, _macros, _preprocessorMacros, _interactive);
 
     /// <summary>
     ///     Change the output directory for the metadata.
@@ -130,7 +130,7 @@ public class ScriptProjectMetadata
     /// <param name="outputDirectory"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithOutputDirectory(string outputDirectory) =>
-        new(_mdkProjectVersion, _projectFileName, outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros, _toClipboard);
+        new(_mdkProjectVersion, _projectFileName, outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros, _interactive);
 
     /// <summary>
     ///     Add additional macros to the metadata.
@@ -138,7 +138,7 @@ public class ScriptProjectMetadata
     /// <param name="macros"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithAdditionalMacros(IDictionary<string, string> macros) =>
-        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros == null ? macros.ToImmutableDictionary() : _macros.AddRange(macros), _preprocessorMacros, _toClipboard);
+        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros == null ? macros.ToImmutableDictionary() : _macros.AddRange(macros), _preprocessorMacros, _interactive);
 
     /// <summary>
     ///     Add additional preprocessor macros to the metadata.
@@ -146,7 +146,7 @@ public class ScriptProjectMetadata
     /// <param name="preprocessorMacros"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithAdditionalPreprocessorMacros(IEnumerable<string> preprocessorMacros) =>
-        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros == null ? preprocessorMacros.ToImmutableHashSet() : _preprocessorMacros.Union(preprocessorMacros), _toClipboard);
+        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros == null ? preprocessorMacros.ToImmutableHashSet() : _preprocessorMacros.Union(preprocessorMacros), _interactive);
 
     /// <summary>
     ///     Apply the other metadata to this metadata, overwriting any set values with the other's values, or combining them
@@ -175,7 +175,7 @@ public class ScriptProjectMetadata
             other._indentSize ?? _indentSize,
             _macros == null ? other._macros : other._macros == null ? _macros : _macros.AddRange(other._macros),
             _preprocessorMacros == null ? other._preprocessorMacros : other._preprocessorMacros == null ? _preprocessorMacros : _preprocessorMacros.Union(other._preprocessorMacros),
-            other._toClipboard ?? _toClipboard
+            other._interactive ?? _interactive
         );
     }
 
@@ -199,7 +199,7 @@ public class ScriptProjectMetadata
             _indentSize ?? 4,
             _macros ?? ImmutableDictionary<string, string>.Empty,
             _preprocessorMacros ?? ImmutableHashSet<string>.Empty,
-            _toClipboard ?? false
+            _interactive ?? false
         );
     }
 
@@ -290,7 +290,7 @@ public class ScriptProjectMetadata
             null,
             null,
             null,
-            options.ToClipboard
+            options.Interactive
         );
 
     /// <summary>
@@ -318,8 +318,8 @@ public class ScriptProjectMetadata
             builder.AppendLine($"Macros: {string.Join(", ", _macros.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
         if (_preprocessorMacros is { Count: > 0 })
             builder.AppendLine($"Preprocessor Macros: {string.Join(", ", _preprocessorMacros)}");
-        if (_toClipboard != null && _toClipboard.Value)
-            builder.AppendLine($"To Clipboard: {_toClipboard}");
+        if (_interactive != null && _interactive.Value)
+            builder.AppendLine($"Interactive: {_interactive}");
         return builder.ToString();
     }
 

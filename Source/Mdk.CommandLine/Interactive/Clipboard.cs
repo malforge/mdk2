@@ -4,7 +4,7 @@ using System.Runtime.Versioning;
 using System.Threading.Tasks;
 // ReSharper disable InconsistentNaming
 
-namespace Mdk.CommandLine;
+namespace Mdk.CommandLine.Interactive;
 
 [SupportedOSPlatform("windows")]
 public static class Clipboard
@@ -34,6 +34,11 @@ public static class Clipboard
     [return: MarshalAs(UnmanagedType.Bool)]
     static extern bool GlobalUnlock(IntPtr hMem);
 
+    /// <summary>
+    /// Put the specified text on the clipboard.
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
     public static Task<bool> PutAsync(string text) =>
         // Try for a maximum of 5 seconds
         Task.Run(() =>

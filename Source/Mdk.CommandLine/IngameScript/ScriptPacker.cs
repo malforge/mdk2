@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Api;
+using Mdk.CommandLine.Interactive;
 using Mdk.CommandLine.SharedApi;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
@@ -99,7 +101,7 @@ public class ScriptPacker
             console.Trace("Loaded legacy metadata:")
                 .Trace(legacyMetadata.ToString());
         }
-        
+
         console.Trace("Using the following metadata:")
             .Trace(metadata.ToString());
 
@@ -144,10 +146,11 @@ public class ScriptPacker
         }
     }
 
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
     async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console)
     {
-        if (metadata.ToClipboard && !OperatingSystem.IsWindows())
-            throw new CommandLineException(-1, "The clipboard option is only supported on Windows.");
+        if (metadata.Interactive && !OperatingSystem.IsWindows())
+            throw new CommandLineException(-1, "The interactive option is only supported on Windows.");
 
         var outputPath = Path.Combine(metadata.OutputDirectory, project.Name);
         var outputDirectory = new DirectoryInfo(outputPath);
@@ -198,10 +201,26 @@ public class ScriptPacker
         final = await PostProcessComposition(final, postCompositionProcessors, console, metadata);
         await ProduceAsync(project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, console, metadata);
 
-        if (OperatingSystem.IsWindows() && metadata.ToClipboard)
+        if (OperatingSystem.IsWindows() && metadata.Interactive)
         {
-            console.Trace("Copying the final script to the clipboard...");
-            await Clipboard.PutAsync(final.ToString());
+            var finalText = final.ToString();
+            bool onShowFolder(ToastHyperlink _)
+            {
+                System.Diagnostics.Process.Start("explorer.exe", outputDirectory.FullName);
+                return true;
+            }
+
+            bool onCopyToClipboard(ToastHyperlink _)
+            {
+                Clipboard.PutAsync(finalText).ConfigureAwait(false);
+                return true;
+            }
+
+            await ToastWindow.ShowAsync("Your scripts have been successfully deployed.", 
+                new ToastHyperlink("Show Me",
+                    onShowFolder), 
+                new ToastHyperlink("Copy script to the clipboard",
+                    onCopyToClipboard));
         }
 
         return true;
