@@ -10,13 +10,21 @@ namespace Mdk.Notification.Windows;
 public partial class App
 {
     const int EmptyGracePeriod = 1000;
+    InterConnect? _interconnect;
+
+    /// <inheritdoc />
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _interconnect?.Dispose();
+        base.OnExit(e);
+    }
 
     async void OnIsEmptyChanged(object? sender, EventArgs e)
     {
-        if (!Toast.IsEmpty)
+        if (!Toast.Instance.IsEmpty)
             return;
         await Task.Delay(EmptyGracePeriod);
-        if (Toast.IsEmpty)
+        if (Toast.Instance.IsEmpty)
             Shutdown();
     }
 
@@ -31,10 +39,16 @@ public partial class App
             return;
         }
 
+        _interconnect = new InterConnect();
+        _interconnect.MessageReceived += (_, args) => OnInterConnectMessageReceived(args.Message);
+        _interconnect.Submit(scriptFolder);
+    }
+
+    void ShowToastForFolder(string scriptFolder)
+    {
         if (!Directory.Exists(scriptFolder))
         {
             MessageBox.Show(Notification.Windows.Resources.App_OnStartup_ScriptFolderDoesNotExist);
-            Shutdown();
             return;
         }
 
@@ -42,10 +56,10 @@ public partial class App
         if (!File.Exists(scriptFileName))
         {
             MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoScriptFile);
-            Shutdown();
             return;
         }
         // var thumb = Path.Combine(scriptFolder, "thumb.png");
+
 
         string content;
         try
@@ -55,13 +69,13 @@ public partial class App
         catch (Exception exception)
         {
             MessageBox.Show(string.Format(Notification.Windows.Resources.App_OnStartup_ErrorReadingScript, exception.Message));
-            Shutdown();
             return;
         }
 
-        Toast.IsEmptyChanged += OnIsEmptyChanged;
+        Toast.Instance.IsEmptyChanged += OnIsEmptyChanged;
 
-        Toast.Show(Notification.Windows.Resources.App_OnStartup_ScriptDeployed,
+        Toast.Instance.Show(Notification.Windows.Resources.App_OnStartup_ScriptDeployed,
+            0,
             new ToastAction
             {
                 Text = Notification.Windows.Resources.App_OnStartup_ShowMe,
@@ -76,12 +90,14 @@ public partial class App
             });
     }
 
+    void OnInterConnectMessageReceived(string folder) => ShowToastForFolder(folder);
+
     void OnCopyToClipboardClicked(string content)
     {
         try
         {
             Clipboard.SetText(content);
-            Toast.Show(Notification.Windows.Resources.App_OnCopyToClipboardClicked_CopiedToClipboard, 2000);
+            Toast.Instance.Show(Notification.Windows.Resources.App_OnCopyToClipboardClicked_CopiedToClipboard, 2000);
         }
         catch (Exception exception)
         {
@@ -93,7 +109,7 @@ public partial class App
     {
         try
         {
-            Process.Start(new ProcessStartInfo()
+            Process.Start(new ProcessStartInfo
             {
                 FileName = scriptFolder,
                 UseShellExecute = true

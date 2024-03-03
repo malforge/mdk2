@@ -10,15 +10,15 @@ namespace Mdk.Notification.Windows;
 public class Toast
 {
     const int DefaultTimeout = 30000;
-    static readonly Toast Instance = new();
+    public static readonly Toast Instance = new();
 
     readonly Task _currentTask = Task.CompletedTask;
     readonly List<ToastWindow> _liveNotifications = new();
 
     /// <summary>
-    /// Determines whether or not there are any active notifications.
+    ///     Determines whether or not there are any active notifications.
     /// </summary>
-    public static bool IsEmpty => Instance._liveNotifications.Count == 0;
+    public bool IsEmpty => _liveNotifications.Count == 0;
 
     /// <summary>
     ///     Shows a toast notification with the specified message and actions.
@@ -26,14 +26,14 @@ public class Toast
     /// <param name="message"></param>
     /// <param name="actions"></param>
     /// <param name="timeout"></param>
-    public static void Show(string message, IReadOnlyList<ToastAction>? actions = null, int timeout = DefaultTimeout) => Instance.ShowOne(message, actions, timeout);
+    public void Show(string message, IReadOnlyList<ToastAction>? actions = null, int timeout = DefaultTimeout) => _currentTask.ContinueWith(_ => ShowOneAsync(message, actions, timeout), TaskScheduler.FromCurrentSynchronizationContext());
 
     /// <summary>
     ///     Shows a toast notification with the specified message and actions.
     /// </summary>
     /// <param name="message">The message to display in the notification.</param>
     /// <param name="actions">Actions the user can take on the notification.</param>
-    public static void Show(string message, params ToastAction[] actions) => Show(message, DefaultTimeout, actions);
+    public void Show(string message, params ToastAction[] actions) => Show(message, DefaultTimeout, actions);
 
     /// <summary>
     ///     Shows a toast notification with the specified message and actions.
@@ -41,14 +41,12 @@ public class Toast
     /// <param name="message">The message to display in the notification.</param>
     /// <param name="timeout">A timeout in milliseconds after which the notification will automatically close.</param>
     /// <param name="actions">Actions the user can take on the notification.</param>
-    public static void Show(string message, int timeout, params ToastAction[] actions) => Show(message, actions, timeout);
+    public void Show(string message, int timeout, params ToastAction[] actions) => Show(message, actions, timeout);
 
     /// <summary>
-    /// Called when the <see cref="IsEmpty"/> property changes.
+    ///     Called when the <see cref="IsEmpty" /> property changes.
     /// </summary>
-    public static event EventHandler? IsEmptyChanged;
-
-    void ShowOne(string message, IReadOnlyList<ToastAction>? actions, int timeout) => _currentTask.ContinueWith(_ => ShowOneAsync(message, actions, timeout), TaskScheduler.FromCurrentSynchronizationContext());
+    public event EventHandler? IsEmptyChanged;
 
     async Task ShowOneAsync(string message, IReadOnlyList<ToastAction>? actions, int timeout)
     {
