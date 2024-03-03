@@ -57,6 +57,16 @@ public class Composer : IScriptComposer
             {
                 builder.Append(member.ToFullString());
             }
+            for (var i = builder.Length - 1; i >= 0; i--)
+            {
+                if (builder[i] == '}')
+                {
+                    builder.Length = i;
+                    break;
+                }
+                if (!char.IsWhiteSpace(builder[i]))
+                    break;
+            }
         }
     }
 

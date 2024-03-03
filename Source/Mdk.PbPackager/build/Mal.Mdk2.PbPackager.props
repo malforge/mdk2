@@ -5,7 +5,7 @@
         <MdkTrim>off</MdkTrim>
         <MdkInteractive>on</MdkInteractive>
         <MdkOutput>auto</MdkOutput>
-        <MdkBuildConfiguration>Release</MdkBuildConfiguration>
+        <MdkBuildConfiguration>all</MdkBuildConfiguration>
         <MdkArguments />
     </PropertyGroup>
 
