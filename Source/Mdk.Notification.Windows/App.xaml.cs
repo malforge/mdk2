@@ -9,8 +9,10 @@ public partial class App
 {
     const int EmptyGracePeriod = 1000;
 
-    async void OnNotificationsEmptied(object? sender, EventArgs e)
+    async void OnIsEmptyChanged(object? sender, EventArgs e)
     {
+        if (!Toast.IsEmpty)
+            return;
         await Task.Delay(EmptyGracePeriod);
         if (Toast.IsEmpty)
             Shutdown();
@@ -18,7 +20,7 @@ public partial class App
 
     void App_OnStartup(object sender, StartupEventArgs e)
     {
-        Toast.Emptied += OnNotificationsEmptied;
+        Toast.IsEmptyChanged += OnIsEmptyChanged;
 
         Toast.Show("Hello, world!",
             5000,

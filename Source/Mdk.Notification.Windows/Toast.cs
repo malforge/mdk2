@@ -15,6 +15,9 @@ public class Toast
     readonly Task _currentTask = Task.CompletedTask;
     readonly List<ToastWindow> _liveNotifications = new();
 
+    /// <summary>
+    /// Determines whether or not there are any active notifications.
+    /// </summary>
     public static bool IsEmpty => Instance._liveNotifications.Count == 0;
 
     /// <summary>
@@ -40,7 +43,10 @@ public class Toast
     /// <param name="actions">Actions the user can take on the notification.</param>
     public static void Show(string message, int timeout, params ToastAction[] actions) => Show(message, actions, timeout);
 
-    public static event EventHandler? Emptied;
+    /// <summary>
+    /// Called when the <see cref="IsEmpty"/> property changes.
+    /// </summary>
+    public static event EventHandler? IsEmptyChanged;
 
     void ShowOne(string message, IReadOnlyList<ToastAction>? actions, int timeout) => _currentTask.ContinueWith(_ => ShowOneAsync(message, actions, timeout), TaskScheduler.FromCurrentSynchronizationContext());
 
@@ -76,7 +82,7 @@ public class Toast
             _currentTask.ContinueWith(_ => RearrangeAsync(), TaskScheduler.FromCurrentSynchronizationContext());
 
             if (_liveNotifications.Count == 0)
-                Emptied?.Invoke(this, EventArgs.Empty);
+                IsEmptyChanged?.Invoke(this, EventArgs.Empty);
         }
 
         notification.Closing += onNotificationOnClosing;
@@ -96,6 +102,8 @@ public class Toast
         notification.Top = bottom - notification.Height - 10;
         notification.Left = (SystemParameters.WorkArea.Width - notification.Width) / 2;
         _liveNotifications.Add(notification);
+        if (_liveNotifications.Count == 1)
+            IsEmptyChanged?.Invoke(this, EventArgs.Empty);
         await notification.SlideInFromBelowAsync();
         if (timeout > 0)
         {
