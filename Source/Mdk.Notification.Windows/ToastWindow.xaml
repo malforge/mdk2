@@ -1,0 +1,42 @@
+﻿<Window x:Class="Mdk.Notification.Windows.ToastWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:l="clr-namespace:Mdk.Notification.Windows"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Title="MainWindow"
+        Background="Transparent"
+        AllowsTransparency="True"
+        WindowStartupLocation="Manual"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        Height="0"
+        Margin="10"
+        d:DataContext="{d:DesignInstance l:ToastViewModel}">
+    <Border
+        HorizontalAlignment="Left"
+        VerticalAlignment="Top"
+        Background="{StaticResource brushes/infobackground}" CornerRadius="12" Padding="16,4,4,4">
+        <StackPanel Orientation="Horizontal">
+            <Label Content="{Binding Message, Mode=OneTime}" />
+            <ItemsControl ItemsSource="{Binding Actions}" Margin="16,0,0,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <l:Hyperlink Content="{Binding Text}" Click="Hyperlink_OnClick" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Style="{StaticResource buttons/close}" Margin="16,0,0,0" VerticalAlignment="Center"
+                    HorizontalAlignment="Center" Click="CloseButton_OnClick" />
+        </StackPanel>
+    </Border>
+</Window>
