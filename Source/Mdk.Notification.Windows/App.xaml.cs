@@ -100,7 +100,6 @@ public partial class App
         Toast.Instance.IsEmptyChanged += OnIsEmptyChanged;
 
         Toast.Instance.Show(string.Format(Notification.Windows.Resources.App_OnStartup_ScriptDeployed, projectName),
-            0,
             new ToastAction
             {
                 Text = Notification.Windows.Resources.App_OnStartup_ShowMe,

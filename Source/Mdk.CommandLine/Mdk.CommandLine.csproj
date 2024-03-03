@@ -15,6 +15,11 @@
         <PackageProjectUrl>2023 Morten "Malware" Aune Lyrstad</PackageProjectUrl>
     </PropertyGroup>
 
+    <Target Name="BuildMdk" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release --self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>
+        <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify-win.exe" DestinationFolder="$(OutputPath)"/>
+    </Target>
+    
     <ItemGroup>
       <PackageReference Include="Microsoft.Build.Locator" Version="1.7.1" />
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />

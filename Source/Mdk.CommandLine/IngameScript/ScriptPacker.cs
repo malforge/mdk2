@@ -208,10 +208,14 @@ public class ScriptPacker
 
         if (OperatingSystem.IsWindows() && metadata.Interactive)
         {
-            if (!File.Exists("mdknotify-win"))
+            // Search for the mdknotify-win executable in the same directory as the script packer
+            var directory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule!.FileName)!;
+            var notifierExe = Path.Combine(directory, "mdknotify-win.exe");
+            if (!File.Exists(notifierExe))
             {
                 console.Print("mdknotify-win is not found.");
-                return false;
+                // Is not a critical error
+                return true;
             }
             try
             {
@@ -219,7 +223,7 @@ public class ScriptPacker
                 {
                     StartInfo =
                     {
-                        FileName = "mdknotify-win",
+                        FileName = notifierExe,
                         Arguments = $"script \"{project.Name}\" \"{outputDirectory.FullName}\"",
                         UseShellExecute = false,
                         CreateNoWindow = true

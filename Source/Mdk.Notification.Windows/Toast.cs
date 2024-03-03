@@ -9,7 +9,7 @@ namespace Mdk.Notification.Windows;
 /// </summary>
 public class Toast
 {
-    const int DefaultTimeout = 30000;
+    const int DefaultTimeout = 15000;
     public static readonly Toast Instance = new();
 
     readonly Task _currentTask = Task.CompletedTask;
