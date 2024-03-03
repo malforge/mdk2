@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Windows;
 
 namespace Mdk.Notification.Windows;
 
@@ -20,33 +22,86 @@ public partial class App
 
     void App_OnStartup(object sender, StartupEventArgs e)
     {
+        List<string> arguments = [..e.Args];
+
+        if (!arguments.TryDequeue(out var scriptFolder))
+        {
+            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoScriptFolderProvided);
+            Shutdown();
+            return;
+        }
+
+        if (!Directory.Exists(scriptFolder))
+        {
+            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_ScriptFolderDoesNotExist);
+            Shutdown();
+            return;
+        }
+
+        var scriptFileName = Path.Combine(scriptFolder, "script.cs");
+        if (!File.Exists(scriptFileName))
+        {
+            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoScriptFile);
+            Shutdown();
+            return;
+        }
+        // var thumb = Path.Combine(scriptFolder, "thumb.png");
+
+        string content;
+        try
+        {
+            content = File.ReadAllText(scriptFileName);
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show(string.Format(Notification.Windows.Resources.App_OnStartup_ErrorReadingScript, exception.Message));
+            Shutdown();
+            return;
+        }
+
         Toast.IsEmptyChanged += OnIsEmptyChanged;
 
-        Toast.Show("Hello, world!",
-            5000,
+        Toast.Show(Notification.Windows.Resources.App_OnStartup_ScriptDeployed,
             new ToastAction
             {
-                Text = "Click me!",
-                Action = () => MessageBox.Show("You clicked me!")
+                Text = Notification.Windows.Resources.App_OnStartup_ShowMe,
+                Action = () => OnShowMeClicked(scriptFolder),
+                IsClosingAction = true
             },
             new ToastAction
             {
-                Text = "Click me too!",
-                Action = () => MessageBox.Show("You clicked me too!"),
+                Text = Notification.Windows.Resources.App_OnStartup_CopyToClipboard,
+                Action = () => OnCopyToClipboardClicked(content),
                 IsClosingAction = true
             });
-        Toast.Show("Hello, world!",
-            5000,
-            new ToastAction
+    }
+
+    void OnCopyToClipboardClicked(string content)
+    {
+        try
+        {
+            Clipboard.SetText(content);
+            Toast.Show(Notification.Windows.Resources.App_OnCopyToClipboardClicked_CopiedToClipboard, 2000);
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show(string.Format(Notification.Windows.Resources.App_OnCopyToClipboardClicked_CopyToClipboardError, exception.Message));
+        }
+    }
+
+    void OnShowMeClicked(string scriptFolder)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo()
             {
-                Text = "Click me!",
-                Action = () => MessageBox.Show("You clicked me!")
-            },
-            new ToastAction
-            {
-                Text = "Click me too!",
-                Action = () => MessageBox.Show("You clicked me too!"),
-                IsClosingAction = true
+                FileName = scriptFolder,
+                UseShellExecute = true
             });
+        }
+        catch (Exception exception)
+        {
+            MessageBox.Show(string.Format(Notification.Windows.Resources.App_OnShowMeClicked_ShowMeError, exception.Message));
+        }
     }
 }
