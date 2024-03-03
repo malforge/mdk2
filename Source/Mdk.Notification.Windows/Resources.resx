@@ -19,7 +19,8 @@
         <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
     </resheader>
     <data name="App_OnStartup_NoScriptFolderProvided" xml:space="preserve">
-        <value>No script folder was provided.</value>
+        <value>No script folder was provided.
+Expected: script [project name] [script folder]</value>
     </data>
     <data name="App_OnStartup_ScriptFolderDoesNotExist" xml:space="preserve">
         <value>The provided script folder does not exist.</value>
@@ -31,7 +32,7 @@
         <value>An error occurred while reading the script file: {0}</value>
     </data>
     <data name="App_OnStartup_ScriptDeployed" xml:space="preserve">
-        <value>Your script has been successfully deployed.</value>
+        <value>Your script "{0}" has been successfully deployed.</value>
     </data>
     <data name="App_OnStartup_ShowMe" xml:space="preserve">
         <value>Show Me</value>
@@ -47,5 +48,13 @@
     </data>
     <data name="App_OnShowMeClicked_ShowMeError" xml:space="preserve">
         <value>An error occurred while opening the script folder: {0}</value>
+    </data>
+    <data name="App_OnStartup_InvalidType" xml:space="preserve">
+        <value>Invalid type
+Expected: script [project name] [script folder]</value>
+    </data>
+    <data name="App_OnStartup_NoProjectNameProvided" xml:space="preserve">
+        <value>No project name provided.
+Expected: script [project name] [script folder]</value>
     </data>
 </root>

@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Api;
-using Mdk.CommandLine.Interactive;
 using Mdk.CommandLine.SharedApi;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
@@ -208,24 +208,31 @@ public class ScriptPacker
 
         if (OperatingSystem.IsWindows() && metadata.Interactive)
         {
-            var finalText = final.ToString();
-            bool onShowFolder(ToastHyperlink _)
+            if (!File.Exists("mdknotify-win"))
             {
-                System.Diagnostics.Process.Start("explorer.exe", outputDirectory.FullName);
-                return true;
+                console.Print("mdknotify-win is not found.");
+                return false;
             }
-
-            bool onCopyToClipboard(ToastHyperlink _)
+            try
             {
-                Clipboard.PutAsync(finalText).ConfigureAwait(false);
-                return true;
+                var notify = new Process
+                {
+                    StartInfo =
+                    {
+                        FileName = "mdknotify-win",
+                        Arguments = $"script \"{project.Name}\" \"{outputDirectory.FullName}\"",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                notify.Start();
             }
-
-            await ToastWindow.ShowAsync("Your scripts have been successfully deployed.", 
-                new ToastHyperlink("Show Me",
-                    onShowFolder), 
-                new ToastHyperlink("Copy script to the clipboard",
-                    onCopyToClipboard));
+            catch (Exception e)
+            {
+                console.Print("Failed to run mdknotify-win.");
+                console.Print(e.ToString());
+                return false;
+            }
         }
 
         return true;

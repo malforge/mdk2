@@ -105,6 +105,26 @@ namespace Mdk.Notification.Windows {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid type
+        ///Expected: script [project name] [script folder].
+        /// </summary>
+        internal static string App_OnStartup_InvalidType {
+            get {
+                return ResourceManager.GetString("App_OnStartup_InvalidType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No project name provided.
+        ///Expected: script [project name] [script folder].
+        /// </summary>
+        internal static string App_OnStartup_NoProjectNameProvided {
+            get {
+                return ResourceManager.GetString("App_OnStartup_NoProjectNameProvided", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The given folder does not contain a script file..
         /// </summary>
         internal static string App_OnStartup_NoScriptFile {
@@ -114,7 +134,8 @@ namespace Mdk.Notification.Windows {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No script folder was provided..
+        ///   Looks up a localized string similar to No script folder was provided.
+        ///Expected: script [project name] [script folder].
         /// </summary>
         internal static string App_OnStartup_NoScriptFolderProvided {
             get {
@@ -123,7 +144,7 @@ namespace Mdk.Notification.Windows {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Your script has been successfully deployed..
+        ///   Looks up a localized string similar to Your script &quot;{0}&quot; has been successfully deployed..
         /// </summary>
         internal static string App_OnStartup_ScriptDeployed {
             get {

@@ -32,6 +32,20 @@ public partial class App
     {
         List<string> arguments = [..e.Args];
 
+        if (!arguments.TryDequeue(out var type) || !string.Equals(type, "script", StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_InvalidType);
+            Shutdown();
+            return;
+        }
+
+        if (!arguments.TryDequeue(out var projectName))
+        {
+            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoProjectNameProvided);
+            Shutdown();
+            return;
+        }
+        
         if (!arguments.TryDequeue(out var scriptFolder))
         {
             MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoScriptFolderProvided);
@@ -41,11 +55,23 @@ public partial class App
 
         _interconnect = new InterConnect();
         _interconnect.MessageReceived += (_, args) => OnInterConnectMessageReceived(args.Message);
-        _interconnect.Submit(scriptFolder);
+        _interconnect.Submit(string.Join("\0", "script", projectName, scriptFolder));
+        if (_interconnect.IsAlreadyRunning())
+            Shutdown();
     }
 
-    void ShowToastForFolder(string scriptFolder)
+    void ShowToast(string arguments)
     {
+        var parameters = arguments.Split('\0');
+        if (parameters.Length != 3 || !string.Equals(parameters[0], "script", StringComparison.OrdinalIgnoreCase))
+        {
+            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_InvalidType);
+            return;
+        }
+        
+        var projectName = parameters[1];
+        var scriptFolder = parameters[2];
+        
         if (!Directory.Exists(scriptFolder))
         {
             MessageBox.Show(Notification.Windows.Resources.App_OnStartup_ScriptFolderDoesNotExist);
@@ -60,7 +86,6 @@ public partial class App
         }
         // var thumb = Path.Combine(scriptFolder, "thumb.png");
 
-
         string content;
         try
         {
@@ -74,7 +99,7 @@ public partial class App
 
         Toast.Instance.IsEmptyChanged += OnIsEmptyChanged;
 
-        Toast.Instance.Show(Notification.Windows.Resources.App_OnStartup_ScriptDeployed,
+        Toast.Instance.Show(string.Format(Notification.Windows.Resources.App_OnStartup_ScriptDeployed, projectName),
             0,
             new ToastAction
             {
@@ -90,7 +115,7 @@ public partial class App
             });
     }
 
-    void OnInterConnectMessageReceived(string folder) => ShowToastForFolder(folder);
+    void OnInterConnectMessageReceived(string folder) => ShowToast(folder);
 
     void OnCopyToClipboardClicked(string content)
     {

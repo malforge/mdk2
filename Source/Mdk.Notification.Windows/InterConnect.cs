@@ -117,7 +117,7 @@ public class InterConnect : IDisposable
                 await using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.UTF8);
                 var folder = await reader.ReadLineAsync(cancellationToken);
-                if (folder == null || !Directory.Exists(folder))
+                if (folder == null)
                     return;
                 Application.Current.Dispatcher.Invoke(() => OnMessageReceived(folder));
             }
