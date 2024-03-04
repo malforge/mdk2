@@ -29,8 +29,8 @@ public class PartialMerger : IScriptPostprocessor
                 return document;
             var partialIdentifier = FullIdentifierOf((TypeDeclarationSyntax)current);
             var parts = root.DescendantNodes().OfType<TypeDeclarationSyntax>().Where(t => FullIdentifierOf(t) == partialIdentifier).ToList();
-            if (parts.Count <= 1)
-                continue;
+            // if (parts.Count < 1)
+            //     continue;
             var allBaseLists = parts.SelectMany(t => t.ChildNodes().OfType<BaseListSyntax>()).ToList();
             var allModifiers = parts.SelectMany(t => t.Modifiers).Select(m => m.ValueText).Distinct().Where(m => m != "partial").ToList();
 
