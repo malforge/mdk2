@@ -30,7 +30,13 @@ public class ScriptPacker
     /// <exception cref="CommandLineException"></exception>
     public async Task PackAsync(PackOptions options, IConsole console)
     {
-        if (!MSBuildLocator.IsRegistered) MSBuildLocator.RegisterDefaults();
+        if (!MSBuildLocator.IsRegistered)
+        {
+            var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToArray();
+            foreach (var instance in msbuildInstances)
+                console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
+            MSBuildLocator.RegisterInstance(msbuildInstances.First());
+        }
         using var workspace = MSBuildWorkspace.Create();
 
         var projectPath = options.ProjectFile;
