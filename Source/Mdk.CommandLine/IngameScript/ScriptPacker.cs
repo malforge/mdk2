@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Mdk.CommandLine.Commands.PackScript;
 using Mdk.CommandLine.IngameScript.Api;
 using Mdk.CommandLine.SharedApi;
 using Microsoft.Build.Locator;
@@ -28,7 +29,7 @@ public class ScriptPacker
     /// <param name="options"></param>
     /// <param name="console"></param>
     /// <exception cref="CommandLineException"></exception>
-    public async Task PackAsync(PackOptions options, IConsole console)
+    public async Task PackAsync(PackScriptParameters options, IConsole console)
     {
         if (!MSBuildLocator.IsRegistered) MSBuildLocator.RegisterDefaults();
         using var workspace = MSBuildWorkspace.Create();
@@ -73,7 +74,7 @@ public class ScriptPacker
     /// <param name="solution"></param>
     /// <param name="console"></param>
     /// <returns></returns>
-    public async Task<int> PackSolutionAsync(PackOptions options, Solution solution, IConsole console)
+    public async Task<int> PackSolutionAsync(PackScriptParameters options, Solution solution, IConsole console)
     {
         var packedProjects = 0;
         foreach (var project in solution.Projects)
@@ -92,7 +93,7 @@ public class ScriptPacker
     /// <param name="console"></param>
     /// <returns></returns>
     /// <exception cref="CommandLineException"></exception>
-    public async Task<bool> PackProjectAsync(PackOptions options, Project project, IConsole console)
+    public async Task<bool> PackProjectAsync(PackScriptParameters options, Project project, IConsole console)
     {
         var metadata = ScriptProjectMetadata.ForOptions(options, new Version(2, 0, 0));
         var legacyMetadata = await ScriptProjectMetadata.LoadLegacyAsync(project);

@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Mdk.CommandLine.Commands.PackScript;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
 using Microsoft.CodeAnalysis;
@@ -55,14 +56,13 @@ public class CombinerTests
         project = document5.Project;
         var combiner = new Combiner();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackOptions
+            new PackScriptParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                Interactive = false,
-                ListProcessors = false
+                Interactive = false
             },
             new Version(2, 0, 0)
         ).Close();

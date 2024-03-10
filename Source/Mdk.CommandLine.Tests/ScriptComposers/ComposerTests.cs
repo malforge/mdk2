@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
 using FluentAssertions;
+using Mdk.CommandLine.Commands.PackScript;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
 using Mdk.CommandLine.SharedApi;
@@ -57,14 +58,13 @@ public class ComposerTests
 
         var composer = new Composer();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackOptions
+            new PackScriptParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                Interactive = false,
-                ListProcessors = false
+                Interactive = false
             },
             new Version(2, 0, 0)
         ).Close();
@@ -96,7 +96,6 @@ public class ComposerTests
                            {
                                Console.WriteLine(""Goodbye, World!"");
                            }
-                       }
 
                        """;
         var console = A.Fake<IConsole>();

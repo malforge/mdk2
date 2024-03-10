@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Mdk.CommandLine.Commands.PackScript;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript;
@@ -279,7 +280,7 @@ public class ScriptProjectMetadata
     /// <param name="mdkVersion"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static ScriptProjectMetadata ForOptions(PackOptions options, Version mdkVersion) =>
+    public static ScriptProjectMetadata ForOptions(PackScriptParameters options, Version mdkVersion) =>
         new(
             mdkVersion,
             options.ProjectFile ?? throw new InvalidOperationException("No project file specified"),

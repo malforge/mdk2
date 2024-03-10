@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using FluentAssertions;
+using Mdk.CommandLine.Commands.PackScript;
 using Mdk.CommandLine.IngameScript;
 using Mdk.CommandLine.IngameScript.DefaultProcessors;
 using Microsoft.CodeAnalysis;
@@ -20,14 +21,13 @@ public class TypeSorterTests : ScriptPostProcessorTests<TypeSorter>
         var document = project.AddDocument("TestDocument", "class Program {}");
         var processor = new TypeSorter();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackOptions
+            new PackScriptParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                Interactive = false,
-                ListProcessors = false
+                Interactive = false
             },
             new Version(2, 0, 0)
         ).Close();
@@ -48,14 +48,13 @@ public class TypeSorterTests : ScriptPostProcessorTests<TypeSorter>
         var document = project.AddDocument("TestDocument", "class A {} class Program {} class B {}");
         var processor = new TypeSorter();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackOptions
+            new PackScriptParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output",
-                Interactive = false,
-                ListProcessors = false
+                Interactive = false
             },
             new Version(2, 0, 0)
         ).Close();
