@@ -12,3 +12,5 @@
 /dataSources/
 /dataSources.local.xml
 /copilot/chatSessions/
+# GitHub Copilot persisted chat sessions
+/copilot/chatSessions
