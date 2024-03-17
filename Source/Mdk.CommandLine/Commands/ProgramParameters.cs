@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Commands.Help;
-using Mdk.CommandLine.Commands.PackScript;
-using Mdk.CommandLine.Commands.RestoreScript;
+using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.Commands.Restore;
 using Mdk.CommandLine.SharedApi;
 using Mdk.CommandLine.Utility;
 
@@ -34,12 +34,17 @@ public class ProgramParameters : Parameters
     ///     Whether to enable trace logging.
     /// </summary>
     public bool Trace { get; set; }
+    
+    /// <summary>
+    /// Whether to use interactive prompts through the external UI app - if available.
+    /// </summary>
+    public bool Interactive { get; set; }
 
     bool TryLoadVerb(string verb, Queue<string> queue, [MaybeNullWhen(true)] out string failureReason)
     {
         if (string.Equals(verb, "pack-script", StringComparison.OrdinalIgnoreCase))
         {
-            var p = new PackScriptParameters();
+            var p = new PackParameters();
             if (!p.TryLoad(this, queue, out failureReason))
                 return false;
             Verb = verb;
@@ -49,7 +54,7 @@ public class ProgramParameters : Parameters
 
         if (string.Equals(verb, "restore-script", StringComparison.OrdinalIgnoreCase))
         {
-            var p = new RestoreScriptParameters();
+            var p = new RestoreParameters();
             if (!p.TryLoad(this, queue, out failureReason))
                 return false;
             Verb = verb;
@@ -93,6 +98,12 @@ public class ProgramParameters : Parameters
                 p.Trace = true;
                 continue;
             }
+            
+            if (args.TryDequeue("-interactive"))
+            {
+                p.Interactive = true;
+                continue;
+            }
 
             if (TryLoadVerb(args.Dequeue(), args, out failureReason))
                 continue;
@@ -134,10 +145,12 @@ public class ProgramParameters : Parameters
     ///     Executes the command.
     /// </summary>
     /// <param name="console"></param>
+    /// <param name="httpClient"></param>
+    /// <param name="interaction"></param>
     /// <returns></returns>
-    public async Task ExecuteAsync(IConsole console)
+    public async Task ExecuteAsync(IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
         var verb = VerbParameters ?? throw new InvalidOperationException("Verb parameters are not set.");
-        await verb.ExecuteAsync(console);
+        await verb.ExecuteAsync(console, httpClient, interaction);
     }
 }

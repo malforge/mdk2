@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Mdk.CommandLine;
+using Mdk.CommandLine.Utility;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.IniParser;

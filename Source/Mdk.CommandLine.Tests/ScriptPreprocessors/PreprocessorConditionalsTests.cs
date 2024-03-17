@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
-using Mdk.CommandLine.Commands.PackScript;
-using Mdk.CommandLine.IngameScript;
-using Mdk.CommandLine.IngameScript.DefaultProcessors;
+using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.IngameScript.Pack;
+using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -35,13 +35,12 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """);
         var processor = new PreprocessorConditionals();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output",
-                Interactive = false
+                Output = @"A:\Fake\Path\Output"
             },
             new Version(2, 0, 0)
         ).Close();
@@ -53,16 +52,16 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-            using System;
+                using System;
 
-            public class Program
-            {
-                public void Main()
+                public class Program
                 {
-                    var y = 2;
+                    public void Main()
+                    {
+                        var y = 2;
+                    }
                 }
-            }
-            """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -88,13 +87,12 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """);
         var processor = new PreprocessorConditionals();
         var metadata = ScriptProjectMetadata.ForOptions(
-                new PackScriptParameters
+                new PackParameters
                 {
                     MinifierLevel = MinifierLevel.None,
                     TrimUnusedTypes = false,
                     ProjectFile = @"A:\Fake\Path\Project.csproj",
-                    Output = @"A:\Fake\Path\Output",
-                    Interactive = false
+                    Output = @"A:\Fake\Path\Output"
                 },
                 new Version(2, 0, 0)
             ).WithAdditionalPreprocessorMacros(new[] { "DEBUG" })
@@ -107,17 +105,17 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-            using System;
+                using System;
 
-            public class Program
-            {
-                public void Main()
+                public class Program
                 {
-                    var x = 1;
-                    var y = 2;
+                    public void Main()
+                    {
+                        var x = 1;
+                        var y = 2;
+                    }
                 }
-            }
-            """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -144,13 +142,12 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """);
         var processor = new PreprocessorConditionals();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output",
-                Interactive = false
+                Output = @"A:\Fake\Path\Output"
             },
             new Version(2, 0, 0)
         ).Close();
@@ -162,16 +159,16 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-            using System;
+                using System;
 
-            public class Program
-            {
-                public void Main()
+                public class Program
                 {
-                    var y = 2;
+                    public void Main()
+                    {
+                        var y = 2;
+                    }
                 }
-            }
-            """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -197,13 +194,12 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """);
         var processor = new PreprocessorConditionals();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output",
-                Interactive = false
+                Output = @"A:\Fake\Path\Output"
             },
             new Version(2, 0, 0)
         ).Close();
@@ -215,17 +211,17 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-            using System;
+                using System;
 
-            public class Program
-            {
-                public void Main()
+                public class Program
                 {
-                    var x = 1;
-                    var y = 2;
+                    public void Main()
+                    {
+                        var x = 1;
+                        var y = 2;
+                    }
                 }
-            }
-            """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -253,13 +249,12 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """);
         var processor = new PreprocessorConditionals();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output",
-                Interactive = false
+                Output = @"A:\Fake\Path\Output"
             },
             new Version(2, 0, 0)
         ).Close();
@@ -271,17 +266,17 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-            using System;
+                using System;
 
-            public class Program
-            {
-                public void Main()
+                public class Program
                 {
-                    var x = 1;
-                    var z = 3;
+                    public void Main()
+                    {
+                        var x = 1;
+                        var z = 3;
+                    }
                 }
-            }
-            """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -305,16 +300,15 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """);
         var processor = new PreprocessorConditionals();
         var metadata = ScriptProjectMetadata.ForOptions(
-                new PackScriptParameters
-                {
-                    MinifierLevel = MinifierLevel.None,
-                    TrimUnusedTypes = false,
-                    ProjectFile = @"A:\Fake\Path\Project.csproj",
-                    Output = @"A:\Fake\Path\Output",
-                    Interactive = false
-                },
-                new Version(2, 0, 0)
-            ).Close();
+            new PackParameters
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            },
+            new Version(2, 0, 0)
+        ).Close();
 
         // Act
         var result = await processor.ProcessAsync(document, metadata);
@@ -347,19 +341,18 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """);
         var processor = new PreprocessorConditionals();
         var metadata = ScriptProjectMetadata.ForOptions(
-                new PackScriptParameters
+                new PackParameters
                 {
                     MinifierLevel = MinifierLevel.None,
                     TrimUnusedTypes = false,
                     ProjectFile = @"A:\Fake\Path\Project.csproj",
-                    Output = @"A:\Fake\Path\Output",
-                    Interactive = false
+                    Output = @"A:\Fake\Path\Output"
                 },
                 new Version(2, 0, 0)
             ).WithAdditionalPreprocessorMacros(new[] { "DEBUG", "TEST2" })
             .Close();
 
-        
+
         // Act
         var result = await processor.ProcessAsync(document, metadata);
 
@@ -367,16 +360,16 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-            using System;
+                using System;
 
-            public class Program
-            {
-                public void Main()
+                public class Program
                 {
-                    var x = 1;
-                    var y = 2;
+                    public void Main()
+                    {
+                        var x = 1;
+                        var y = 2;
+                    }
                 }
-            }
-            """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n"));
     }
 }

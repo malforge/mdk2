@@ -66,6 +66,13 @@ public abstract class VerbParameters : Parameters
             failureReason = null;
             return true;
         }
+        
+        if (args.TryDequeue("-interactive"))
+        {
+            Global!.Interactive = true;
+            failureReason = null;
+            return true;
+        }
 
         failureReason = null;
         return true;
@@ -75,6 +82,8 @@ public abstract class VerbParameters : Parameters
     ///     Executes the command.
     /// </summary>
     /// <param name="console"></param>
+    /// <param name="httpClient"></param>
+    /// <param name="interaction"></param>
     /// <returns></returns>
-    public abstract Task ExecuteAsync(IConsole console);
+    public abstract Task ExecuteAsync(IConsole console, IHttpClient httpClient, IInteraction interaction);
 }

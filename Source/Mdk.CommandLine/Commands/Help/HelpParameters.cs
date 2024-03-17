@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading.Tasks;
-using Mdk.CommandLine.Commands.PackScript;
-using Mdk.CommandLine.Commands.RestoreScript;
+using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.Commands.Restore;
 using Mdk.CommandLine.SharedApi;
 using Mdk.CommandLine.Utility;
 
@@ -66,7 +66,7 @@ public class HelpParameters : VerbParameters
             .Print("  The verb to display help for.");
 
     /// <inheritdoc />
-    public override Task ExecuteAsync(IConsole console)
+    public override Task ExecuteAsync(IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
         string header;
         var version = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
@@ -85,12 +85,12 @@ public class HelpParameters : VerbParameters
 
         if (string.Equals(Verb, "pack-script", StringComparison.OrdinalIgnoreCase))
         {
-            var verbParameters = new PackScriptParameters();
+            var verbParameters = new PackParameters();
             verbParameters.Help(console);
         }
         else if (string.Equals(Verb, "restore-script", StringComparison.OrdinalIgnoreCase))
         {
-            var verbParameters = new RestoreScriptParameters();
+            var verbParameters = new RestoreParameters();
             verbParameters.Help(console);
         }
         else

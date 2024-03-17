@@ -4,13 +4,32 @@ using System.Reflection;
 namespace Mdk.CommandLine;
 
 public readonly struct SemanticVersion(int major, int minor, int patch, string? preRelease = null, string? buildMetadata = null)
-    : IComparable<SemanticVersion>, IFormattable
+    : IComparable<SemanticVersion>, IFormattable, IEquatable<SemanticVersion>
 {
+    public bool Equals(SemanticVersion other) => CompareTo(other) == 0;
+
+    public override bool Equals(object? obj) => obj is SemanticVersion other && Equals(other);
+
+    public override int GetHashCode() => HashCode.Combine(Major, Minor, Patch, PreRelease, BuildMetadata);
+
+    public static readonly SemanticVersion Empty = new();
+
+    public static bool operator <(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) < 0;
+    public static bool operator >(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) > 0;
+    public static bool operator <=(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) <= 0;
+    public static bool operator >=(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) >= 0;
+    public static bool operator ==(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) == 0;
+    public static bool operator !=(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) != 0;
+
     public int Major { get; } = major;
     public int Minor { get; } = minor;
     public int Patch { get; } = patch;
     public string? PreRelease { get; } = preRelease;
     public string? BuildMetadata { get; } = buildMetadata;
+
+    public bool IsEmpty() => Major == 0 && Minor == 0 && Patch == 0 && PreRelease == null && BuildMetadata == null;
+
+    public bool IsPrerelease() => PreRelease != null;
 
     public override string ToString() => ToString("V", null);
 
@@ -41,13 +60,13 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
             throw new ArgumentException("The assembly informational version is not a valid semantic version.");
         return semanticVersion;
     }
-    
+
     public static SemanticVersion FromAssemblyVersion(Assembly assembly)
     {
         var version = assembly.GetName().Version;
         if (version == null)
             throw new ArgumentException("The assembly does not have a version.");
-        return new SemanticVersion(version.Major, version.Minor, version.Build, null, null);
+        return new SemanticVersion(version.Major, version.Minor, version.Build);
     }
 
     public static bool TryParse(string input, out SemanticVersion version)
@@ -86,7 +105,7 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
             return patchComparison;
         var preRelease = PreRelease ?? string.Empty;
         var otherPreRelease = other.PreRelease ?? string.Empty;
-        
+
         if (char.IsDigit(preRelease[^1]) && char.IsDigit(otherPreRelease[^1]))
         {
             var preReleaseNumber = 0;

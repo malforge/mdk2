@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Commands;
 using Mdk.CommandLine.SharedApi;
@@ -45,9 +44,11 @@ public static class Program
             return -1;
         }
         console = CreateConsole(parameters);
+        var interaction = new Interaction(console, parameters.Interactive);
+        using var httpClient = new WebHttpClient();
         try
         {
-            await parameters.ExecuteAsync(console);
+            await parameters.ExecuteAsync(console, httpClient, interaction);
             return 0;
         }
         catch (CommandLineException e)

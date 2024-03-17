@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
-using Mdk.CommandLine.Commands.PackScript;
-using Mdk.CommandLine.IngameScript;
+using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.IngameScript.Pack;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.ScriptProjectMetadatas;
@@ -13,23 +13,21 @@ public class ScriptProjectMetadataTests
     {
         // Arrange
         var thisMetadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "ThisOutput",
-                Interactive = false
+                Output = "ThisOutput"
             },
             new Version(2, 0, 0));
         var otherMetadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "OtherOutput",
-                Interactive = false
+                Output = "OtherOutput"
             },
             new Version(2, 0, 0));
 
@@ -45,23 +43,21 @@ public class ScriptProjectMetadataTests
     {
         // Arrange
         var thisMetadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "ThisOutput",
-                Interactive = false
+                Output = "ThisOutput"
             },
             new Version(2, 0, 0));
         var otherMetadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "auto",
-                Interactive = false
+                Output = "auto"
             },
             new Version(2, 0, 0));
 
@@ -77,22 +73,20 @@ public class ScriptProjectMetadataTests
     {
         // Arrange
         var thisMetadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = null,
-                Interactive = false
+                Output = null
             },
             new Version(2, 0, 0));
-        var otherMetadata = ScriptProjectMetadata.ForOptions(new PackScriptParameters
+        var otherMetadata = ScriptProjectMetadata.ForOptions(new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "auto",
-                Interactive = false
+                Output = "auto"
             },
             new Version(2, 0, 0));
 
@@ -108,22 +102,20 @@ public class ScriptProjectMetadataTests
     {
         // Arrange
         var thisMetadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "ThisOutput",
-                Interactive = false
+                Output = "ThisOutput"
             },
             new Version(2, 0, 0));
-        var otherMetadata = ScriptProjectMetadata.ForOptions(new PackScriptParameters
+        var otherMetadata = ScriptProjectMetadata.ForOptions(new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = null,
-                Interactive = false
+                Output = null
             },
             new Version(2, 0, 0));
 
@@ -139,13 +131,12 @@ public class ScriptProjectMetadataTests
     {
         // Arrange
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "auto",
-                Interactive = false
+                Output = "auto"
             },
             new Version(2, 0, 0));
 
@@ -166,13 +157,12 @@ public class ScriptProjectMetadataTests
     {
         // Arrange
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = "ThisProject.csproj",
-                Output = "ThisOutput",
-                Interactive = false
+                Output = "ThisOutput"
             },
             new Version(2, 0, 0));
 

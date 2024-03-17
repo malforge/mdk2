@@ -1,9 +1,8 @@
-﻿using System.Collections.Immutable;
-using FakeItEasy;
+﻿using FakeItEasy;
 using FluentAssertions;
-using Mdk.CommandLine.Commands.PackScript;
-using Mdk.CommandLine.IngameScript;
-using Mdk.CommandLine.IngameScript.DefaultProcessors;
+using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.IngameScript.Pack;
+using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
@@ -58,13 +57,12 @@ public class ComposerTests
 
         var composer = new Composer();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output",
-                Interactive = false
+                Output = @"A:\Fake\Path\Output"
             },
             new Version(2, 0, 0)
         ).Close();

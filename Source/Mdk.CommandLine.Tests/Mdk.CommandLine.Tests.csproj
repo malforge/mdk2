@@ -21,5 +21,10 @@
     <ItemGroup>
       <ProjectReference Include="..\Mdk.CommandLine\Mdk.CommandLine.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <Compile Remove="TestData\**" />
+        <None Include="TestData\**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
 
 </Project>

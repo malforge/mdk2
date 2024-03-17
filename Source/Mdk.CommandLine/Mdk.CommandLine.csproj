@@ -11,8 +11,7 @@
         <Title>MDK2 CLI</Title>
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <Description>This is part of the MDK2 project.</Description>
-        <Copyright>Morten "Malware" Aune Lyrstad</Copyright>
-        <PackageProjectUrl>2023 Morten "Malware" Aune Lyrstad</PackageProjectUrl>
+        <Copyright>2024 Morten "Malware" Aune Lyrstad</Copyright>
     </PropertyGroup>
 
     <Target Name="BuildMdk" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
@@ -24,7 +23,13 @@
       <PackageReference Include="Microsoft.Build.Locator" Version="1.7.1" />
       <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.8.0" />
+      <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
+      <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="Project\" />
     </ItemGroup>
 
 </Project>

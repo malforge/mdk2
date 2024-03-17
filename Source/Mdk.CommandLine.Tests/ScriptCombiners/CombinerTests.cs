@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
-using Mdk.CommandLine.Commands.PackScript;
-using Mdk.CommandLine.IngameScript;
-using Mdk.CommandLine.IngameScript.DefaultProcessors;
+using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.IngameScript.Pack;
+using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -56,13 +56,12 @@ public class CombinerTests
         project = document5.Project;
         var combiner = new Combiner();
         var metadata = ScriptProjectMetadata.ForOptions(
-            new PackScriptParameters
+            new PackParameters
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output",
-                Interactive = false
+                Output = @"A:\Fake\Path\Output"
             },
             new Version(2, 0, 0)
         ).Close();
