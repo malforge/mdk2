@@ -18,6 +18,11 @@ public class PackParameters : VerbParameters
     /// </summary>
     public string? ProjectFile { get; set; }
 
+    // /// <summary>
+    // /// An optional path to the game's bin folder.
+    // /// </summary>
+    // public string? GameBin { get; set; }
+    
     /// <summary>
     ///     An optional output folder to write to. May be "auto" to auto-detect the output folder from Steam.
     /// </summary>
@@ -58,6 +63,7 @@ public class PackParameters : VerbParameters
                 p.TrimUnusedTypes = true;
                 continue;
             }
+            
             if (args.TryDequeue("-output"))
             {
                 if (!args.TryDequeue(out var output))
@@ -68,7 +74,18 @@ public class PackParameters : VerbParameters
                 p.Output = string.Equals(output, "auto") ? null : output;
                 continue;
             }
-
+            
+            // if (args.TryDequeue("-gamebin"))
+            // {
+            //     if (!args.TryDequeue(out var gameBin))
+            //     {
+            //         failureReason = "No game bin folder specified.";
+            //         return false;
+            //     }
+            //     p.GameBin = gameBin;
+            //     continue;
+            // }
+            //
             if (p.ProjectFile is not null)
             {
                 failureReason = "Only one project file can be specified.";
@@ -106,8 +123,10 @@ public class PackParameters : VerbParameters
             .Print("  -minifier <level>  Set the minifier level.")
             .Print("                      - none, strip-comments, lite, full")
             .Print("  -trim              Trim unused types.")
+            // .Print("  -gamebin <path>    Path to the game's bin folder.")
+            // .Print("                      \"auto\" to auto-detect the bin folder from Steam (default).")
             .Print("  -output <path>     Write the output to the specified folder.")
-            .Print("                      \"auto\" to auto-detect the output folder from Steam.")
+            .Print("                      \"auto\" to auto-detect the output folder from Steam (default).")
             .Print("  -interactive       Prompt for confirmation before packing the script.")
             .Print("  -log <file>        Log to the specified file.")
             .Print("  -trace             Enable trace logging.")

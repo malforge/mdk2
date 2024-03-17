@@ -16,7 +16,7 @@ public class XElementExtensionsTests
         var element = XElement.Parse(xml);
 
         // Act
-        var result = element.Element("child", "grandchild");
+        var result = element.Element("", "child", "grandchild");
 
         // Assert
         result.Should().NotBeNull();
@@ -31,7 +31,7 @@ public class XElementExtensionsTests
         var element = XElement.Parse(xml);
 
         // Act
-        var result = element.Elements("child", "grandchild").ToList();
+        var result = element.Elements("", "child", "grandchild").ToList();
 
         // Assert
         result.Should().NotBeEmpty();
@@ -47,7 +47,7 @@ public class XElementExtensionsTests
         var element = XElement.Parse(xml);
 
         // Act
-        var result = element.Element("child", "grandchild");
+        var result = element.Element("", "child", "grandchild");
 
         // Assert
         result.Should().NotBeNull();
@@ -62,7 +62,7 @@ public class XElementExtensionsTests
         var element = XElement.Parse(xml);
 
         // Act
-        var result = element.Elements("child", "grandchild").ToList();
+        var result = element.Elements("", "child", "grandchild").ToList();
 
         // Assert
         result.Should().NotBeEmpty();
@@ -78,7 +78,7 @@ public class XElementExtensionsTests
         var element = XElement.Parse(xml);
 
         // Act
-        var result = element.Element("child", "grandchild");
+        var result = element.Element("", "child", "grandchild");
 
         // Assert
         result.Should().BeNull();
@@ -92,7 +92,7 @@ public class XElementExtensionsTests
         var element = XElement.Parse(xml);
 
         // Act
-        var result = element.Elements("child", "grandchild").ToList();
+        var result = element.Elements("", "child", "grandchild").ToList();
 
         // Assert
         result.Should().BeEmpty();

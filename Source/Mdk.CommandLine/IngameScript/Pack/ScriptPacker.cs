@@ -104,22 +104,8 @@ public class ScriptPacker
     public async Task<bool> PackProjectAsync(PackParameters options, Project project, IConsole console, IInteraction interaction)
     {
         var metadata = ScriptProjectMetadata.ForOptions(options, new Version(2, 0, 0));
-        var legacyMetadata = await ScriptProjectMetadata.LoadLegacyAsync(project);
-        if (legacyMetadata != null)
-        {
-            console.Trace("Loaded legacy metadata:")
-                .Trace(legacyMetadata.ToString());
-        }
-
         console.Trace("Using the following metadata:")
             .Trace(metadata.ToString());
-
-        if (legacyMetadata != null)
-        {
-            metadata = legacyMetadata.ApplyOther(metadata);
-            console.Trace("Merged with legacy metadata:")
-                .Trace(metadata.ToString());
-        }
 
         metadata = metadata.WithAdditionalMacros(new Dictionary<string, string>
             {

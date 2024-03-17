@@ -140,17 +140,4 @@ public class ProgramParameters : Parameters
             .Print("Use 'mdk help <verb>' for more information about a verb.")
             .Print("  Example: mdk help pack-script");
     }
-
-    /// <summary>
-    ///     Executes the command.
-    /// </summary>
-    /// <param name="console"></param>
-    /// <param name="httpClient"></param>
-    /// <param name="interaction"></param>
-    /// <returns></returns>
-    public async Task ExecuteAsync(IConsole console, IHttpClient httpClient, IInteraction interaction)
-    {
-        var verb = VerbParameters ?? throw new InvalidOperationException("Verb parameters are not set.");
-        await verb.ExecuteAsync(console, httpClient, interaction);
-    }
 }

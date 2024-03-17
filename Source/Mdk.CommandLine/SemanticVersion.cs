@@ -103,8 +103,15 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
         var patchComparison = Patch.CompareTo(other.Patch);
         if (patchComparison != 0)
             return patchComparison;
-        var preRelease = PreRelease ?? string.Empty;
-        var otherPreRelease = other.PreRelease ?? string.Empty;
+        if (PreRelease is null && other.PreRelease is null)
+            return 0;
+        if (other.PreRelease is null)
+            return -1;
+        if (PreRelease is null)
+            return 1;
+        
+        var preRelease = PreRelease;
+        var otherPreRelease = other.PreRelease;
 
         if (char.IsDigit(preRelease[^1]) && char.IsDigit(otherPreRelease[^1]))
         {

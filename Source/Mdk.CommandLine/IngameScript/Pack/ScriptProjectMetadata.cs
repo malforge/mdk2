@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using Mdk.CommandLine.Commands.Pack;
 using Mdk.CommandLine.Utility;
-using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Mdk.CommandLine.IngameScript.Pack;
@@ -25,7 +21,9 @@ public class ScriptProjectMetadata
     readonly bool? _interactive;
     readonly ImmutableDictionary<string, string>? _macros;
     readonly Version? _mdkProjectVersion;
+    readonly MdkProjectType? _projectType;
     readonly MinifierLevel? _minify;
+    // readonly string? _gameBin;
     readonly string? _outputDirectory;
     readonly ImmutableHashSet<string>? _preprocessorMacros;
     readonly string? _projectFileName;
@@ -33,11 +31,13 @@ public class ScriptProjectMetadata
     string? _projectDirectory;
     readonly Matcher? _matcher;
 
-    ScriptProjectMetadata(Version? mdkProjectVersion, string? projectFileName, string? outputDirectory, MinifierLevel? minify, ImmutableList<string>? ignores, bool? trimTypes, int? indentSize, ImmutableDictionary<string, string>? macros, ImmutableHashSet<string>? preprocessorMacros, bool? interactive, bool isClosed = false)
+    ScriptProjectMetadata(Version? mdkProjectVersion, MdkProjectType? projectType, string? projectFileName, /*string? gameBin, */string? outputDirectory, MinifierLevel? minify, ImmutableList<string>? ignores, bool? trimTypes, int? indentSize, ImmutableDictionary<string, string>? macros, ImmutableHashSet<string>? preprocessorMacros, bool? interactive, bool isClosed = false)
     {
         _projectFileName = projectFileName;
         _projectDirectory = Path.GetDirectoryName(projectFileName);
         _mdkProjectVersion = mdkProjectVersion;
+        _projectType = projectType;
+        // _gameBin = gameBin;
         _outputDirectory = outputDirectory;
         _minify = minify;
         _ignores = ignores;
@@ -137,7 +137,7 @@ public class ScriptProjectMetadata
     /// <param name="ignore"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithAdditionalIgnore(string ignore) =>
-        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores == null ? ImmutableList.Create(ignore) : _ignores.Add(ignore), _trimTypes, _indentSize, _macros, _preprocessorMacros, _interactive);
+        new(_mdkProjectVersion, _projectType, _projectFileName, /*_gameBin, */_outputDirectory, _minify, _ignores == null ? ImmutableList.Create(ignore) : _ignores.Add(ignore), _trimTypes, _indentSize, _macros, _preprocessorMacros, _interactive);
 
     // /// <summary>
     // ///     Add additional ignores to the metadata.
@@ -153,7 +153,7 @@ public class ScriptProjectMetadata
     /// <param name="outputDirectory"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithOutputDirectory(string outputDirectory) =>
-        new(_mdkProjectVersion, _projectFileName, outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros, _interactive);
+        new(_mdkProjectVersion, _projectType, _projectFileName, /*_gameBin, */outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros, _interactive);
 
     /// <summary>
     ///     Add additional macros to the metadata.
@@ -161,7 +161,7 @@ public class ScriptProjectMetadata
     /// <param name="macros"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithAdditionalMacros(IDictionary<string, string> macros) =>
-        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros == null ? macros.ToImmutableDictionary() : _macros.AddRange(macros), _preprocessorMacros, _interactive);
+        new(_mdkProjectVersion, _projectType, _projectFileName, /*_gameBin, */_outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros == null ? macros.ToImmutableDictionary() : _macros.AddRange(macros), _preprocessorMacros, _interactive);
 
     /// <summary>
     ///     Add additional preprocessor macros to the metadata.
@@ -169,7 +169,7 @@ public class ScriptProjectMetadata
     /// <param name="preprocessorMacros"></param>
     /// <returns></returns>
     public ScriptProjectMetadata WithAdditionalPreprocessorMacros(IEnumerable<string> preprocessorMacros) =>
-        new(_mdkProjectVersion, _projectFileName, _outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros == null ? preprocessorMacros.ToImmutableHashSet() : _preprocessorMacros.Union(preprocessorMacros), _interactive);
+        new(_mdkProjectVersion, _projectType, _projectFileName, /*_gameBin, */_outputDirectory, _minify, _ignores, _trimTypes, _indentSize, _macros, _preprocessorMacros == null ? preprocessorMacros.ToImmutableHashSet() : _preprocessorMacros.Union(preprocessorMacros), _interactive);
 
     /// <summary>
     ///     Apply the other metadata to this metadata, overwriting any set values with the other's values, or combining them
@@ -189,8 +189,11 @@ public class ScriptProjectMetadata
         else
             outputDirectory = other._outputDirectory;
 
-        return new ScriptProjectMetadata(other._mdkProjectVersion,
-            other._projectFileName,
+        return new ScriptProjectMetadata(
+            other._mdkProjectVersion,
+            other._projectType ?? _projectType,
+            other._projectFileName ?? _projectFileName,
+            // other._gameBin ?? _gameBin,
             outputDirectory,
             other._minify ?? _minify,
             _ignores == null ? other._ignores : other._ignores == null ? _ignores : _ignores.AddRange(other._ignores),
@@ -212,10 +215,15 @@ public class ScriptProjectMetadata
         var outputDirectory = _outputDirectory ?? "auto";
         if (string.Equals(outputDirectory, "auto", StringComparison.OrdinalIgnoreCase))
             outputDirectory = resolveAutoOutputDirectory?.Invoke() ?? Path.Combine(ProjectDirectory, "IngameScripts", "local");
+        // var gameBinDirectory = _gameBin ?? "auto";
+        // if (string.Equals(gameBinDirectory, "auto", StringComparison.OrdinalIgnoreCase))
+        //     gameBinDirectory = Path.Combine(ProjectDirectory, "GameBin");
 
         return new ScriptProjectMetadata(
             _mdkProjectVersion,
+            _projectType ?? throw new InvalidOperationException("Project type not set"),
             Path.GetFullPath(_projectFileName ?? throw new InvalidOperationException("Project file name not set")),
+            // Path.GetFullPath(gameBinDirectory ?? throw new InvalidOperationException("Game bin directory not set")),
             Path.GetFullPath(outputDirectory ?? throw new InvalidOperationException("Output directory not set")),
             _minify ?? MinifierLevel.None,
             _ignores ?? ImmutableList<string>.Empty,
@@ -228,87 +236,6 @@ public class ScriptProjectMetadata
         );
     }
 
-
-    /// <summary>
-    ///     Loads metadata from the given legacy MDK1 project files.
-    /// </summary>
-    /// <param name="project"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    public static async Task<ScriptProjectMetadata?> LoadLegacyAsync(Project project)
-    {
-        if (project.FilePath == null) return null;
-        var rootPath = Path.GetDirectoryName(project.FilePath)!;
-        if (!project.TryFindDocument("mdk.options.props", out var mdkOptionsProps)) return null;
-        string? outputDirectory = null;
-        var source = await mdkOptionsProps.GetTextAsync();
-        var document = XDocument.Parse(source.ToString());
-        var ns = document.Root?.Name.Namespace;
-        if (ns == null) return null;
-
-        var mdkVersionString = document.Root?.FindByPath(XNames.PropertyGroup, XNames.MDKVersion)?.Value;
-        if (mdkVersionString == null || !Version.TryParse(mdkVersionString, out var mdkVersion))
-            return null;
-        var mdkTrimTypesString = document.Root?.FindByPath(XNames.PropertyGroup, XNames.MDKTrimTypes, XNames.Enabled)?.Value;
-        var mdkTrimTypes = string.Equals(mdkTrimTypesString, "yes", StringComparison.OrdinalIgnoreCase);
-        var mdkMinifyString = document.Root?.FindByPath(XNames.PropertyGroup, XNames.MDKMinify, XNames.Level)?.Value;
-        if (mdkMinifyString == null || !Enum.TryParse<MinifierLevel>(mdkMinifyString, true, out var mdkMinify))
-            return null;
-        var ignoreElement = document.Root?.FindByPath(XNames.PropertyGroup, XNames.MDKIgnore);
-        var mdkIgnores = (ignoreElement?.Elements(ns + "Folder").Select(e => getDirectoryGlob(e.Value)) ?? Enumerable.Empty<string>())
-            .Concat(ignoreElement?.Elements(ns + "Folder").Elements(ns + "File").Select(e => getFileGlob(e.Value)) ?? Enumerable.Empty<string>()).ToImmutableList();
-
-        if (project.TryFindDocument("mdk.paths.props", out var mdkPathsProps))
-        {
-            source = await mdkPathsProps.GetTextAsync();
-            document = XDocument.Parse(source.ToString());
-            ns = document.Root?.Name.Namespace;
-            if (ns != null)
-            {
-                var outputPath = document.Root?.FindByPath(XNames.PropertyGroup, XNames.MDKOuputPath)?.Value;
-                if (!string.IsNullOrWhiteSpace(outputPath))
-                    outputDirectory = Path.Combine(rootPath, outputPath);
-            }
-        }
-
-        return new ScriptProjectMetadata(
-            mdkVersion,
-            project.FilePath,
-            outputDirectory,
-            mdkMinify,
-            mdkIgnores,
-            mdkTrimTypes,
-            null,
-            null,
-            null,
-            true
-        );
-
-        // FileSystemInfo getDirectoryInfo(string path)
-        // {
-        //     if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("Invalid MDK ignore folder");
-        //     return new DirectoryInfo(Path.Combine(rootPath, path));
-        // }
-
-        string getDirectoryGlob(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("Invalid MDK ignore folder");
-            return Path.Combine(rootPath, path, "**", "*");
-        }
-
-        // FileSystemInfo getFileInfo(string path)
-        // {
-        //     if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("Invalid MDK ignore file");
-        //     return new FileInfo(Path.Combine(rootPath, path));
-        // }
-
-        string getFileGlob(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("Invalid MDK ignore file");
-            return Path.Combine(rootPath, path);
-        }
-    }
-
     /// <summary>
     ///     Create a new metadata object from the provided <see cref="PackParameters" />.
     /// </summary>
@@ -319,7 +246,9 @@ public class ScriptProjectMetadata
     public static ScriptProjectMetadata ForOptions(PackParameters options, Version mdkVersion) =>
         new(
             mdkVersion,
+            MdkProjectType.Unknown,
             options.ProjectFile ?? throw new InvalidOperationException("No project file specified"),
+            // options.GameBin,
             options.Output,
             options.MinifierLevel,
             null,
@@ -344,6 +273,8 @@ public class ScriptProjectMetadata
         if (!File.Exists(iniFileName) && !File.Exists(localIniFileName))
             return null;
 
+        var type = MdkProjectType.Unknown;
+        // var gamebin = (string?)null;
         var output = (string?)null;
         var minifier = (MinifierLevel?)null;
         var trim = (bool?)null;
@@ -355,6 +286,8 @@ public class ScriptProjectMetadata
             var ini = Ini.FromFile(iniFileName);
 
             var parameters = ini["parameters"];
+            type = parameters["type"].ToEnum<MdkProjectType>();
+            // gamebin = parameters["gamebin"].ToString();
             output = parameters["output"].ToString();
             minifier = parameters["minifier"].ToEnum<MinifierLevel>();
             trim = parameters["trim"].ToBool();
@@ -369,19 +302,23 @@ public class ScriptProjectMetadata
             var ini = Ini.FromFile(localIniFileName);
 
             var parameters = ini["parameters"];
-            if (parameters.TryGet("output", out string v1))
-                output = v1;
-            if (parameters.TryGet("minifier", out MinifierLevel v2))
-                minifier = v2;
-            if (parameters.TryGet("trim", out bool v3))
-                trim = v3;
-            if (parameters.TryGet("interactive", out bool v4))
-                interactive = v4;
-            if (parameters.TryGet("ignore", out string v5) && !string.IsNullOrWhiteSpace(v5))
-                ignores = v5.Split(IgnoresSeparator, StringSplitOptions.RemoveEmptyEntries).ToImmutableList();
+            if (parameters.TryGet("type", out MdkProjectType v0))
+                type = v0;
+            // if (parameters.TryGet("gamebin", out string v1))
+            //     gamebin = v1;
+            if (parameters.TryGet("output", out string v2))
+                output = v2;
+            if (parameters.TryGet("minifier", out MinifierLevel v3))
+                minifier = v3;
+            if (parameters.TryGet("trim", out bool v4))
+                trim = v4;
+            if (parameters.TryGet("interactive", out bool v5))
+                interactive = v5;
+            if (parameters.TryGet("ignore", out string v6) && !string.IsNullOrWhiteSpace(v6))
+                ignores = v6.Split(IgnoresSeparator, StringSplitOptions.RemoveEmptyEntries).ToImmutableList();
         }
 
-        return new ScriptProjectMetadata(null, projectFileName, output, minifier, ignores, trim, null, null, null, interactive);
+        return new ScriptProjectMetadata(null, type, projectFileName, /*gamebin ?? "auto", */output, minifier, ignores, trim, null, null, null, interactive);
     }
 
     /// <summary>
@@ -395,6 +332,10 @@ public class ScriptProjectMetadata
             builder.AppendLine($"MDK Project Version: {_mdkProjectVersion}");
         if (_projectFileName != null)
             builder.AppendLine($"Project File Name: {_projectFileName}");
+        if (_projectType != null)
+            builder.AppendLine($"Project Type: {_projectType}");
+        // if (_gameBin != null)
+        //     builder.AppendLine($"Game Bin: {_gameBin}");
         if (_outputDirectory != null)
             builder.AppendLine($"Output Directory: {_outputDirectory}");
         if (_minify != null && _minify != MinifierLevel.None)
@@ -413,20 +354,7 @@ public class ScriptProjectMetadata
             builder.AppendLine($"Interactive: {_interactive}");
         return builder.ToString();
     }
-
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
-    static class XNames
-    {
-        public static readonly XName PropertyGroup = XName.Get("PropertyGroup", "http://schemas.microsoft.com/developer/msbuild/2003");
-        public static readonly XName MDKVersion = XName.Get("MDKVersion", "http://schemas.microsoft.com/developer/msbuild/2003");
-        public static readonly XName MDKTrimTypes = XName.Get("MDKTrimTypes", "http://schemas.microsoft.com/developer/msbuild/2003");
-        public static readonly XName MDKMinify = XName.Get("MDKMinify", "http://schemas.microsoft.com/developer/msbuild/2003");
-        public static readonly XName MDKIgnore = XName.Get("MDKIgnore", "http://schemas.microsoft.com/developer/msbuild/2003");
-        public static readonly XName MDKOuputPath = XName.Get("MDKOutputPath", "http://schemas.microsoft.com/developer/msbuild/2003");
-        public static readonly XName Enabled = XName.Get("Enabled", "http://schemas.microsoft.com/developer/msbuild/2003");
-        public static readonly XName Level = XName.Get("Level", "http://schemas.microsoft.com/developer/msbuild/2003");
-    }
-
+    
     /// <summary>
     /// Whether the given path should be ignored.
     /// </summary>

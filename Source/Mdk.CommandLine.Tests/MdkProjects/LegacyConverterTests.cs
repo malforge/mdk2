@@ -59,14 +59,29 @@ public class LegacyConverterTests
             // Act
             await converter.ConvertAsync(restoreParameters, mdkProject, console, httpClient);
             var projectFileContent = await File.ReadAllTextAsync(projectFileName);
+            Console.WriteLine($"--- {projectFileName} ---");
             Console.WriteLine(projectFileContent);
             
             // Assert
             var document = XDocument.Parse(projectFileContent);
+
             var mainIniFileName = Path.Combine(projectDirectory, "LegacyScriptProject.mdk.ini");
-            var localIniFileName = Path.Combine(projectDirectory, "LegacyScriptProject.mdk.local.ini");
             File.Exists(mainIniFileName).Should().BeTrue();
+            var iniContent = await File.ReadAllTextAsync(mainIniFileName);
+            Console.WriteLine($"--- {mainIniFileName} ---");
+            Console.WriteLine(iniContent);
+            
+            var localIniFileName = Path.Combine(projectDirectory, "LegacyScriptProject.mdk.local.ini");
             File.Exists(localIniFileName).Should().BeTrue();
+            iniContent = await File.ReadAllTextAsync(localIniFileName);
+            Console.WriteLine($"--- {localIniFileName} ---");
+            Console.WriteLine(iniContent);
+            
+            var gitIgnoreFileName = Path.Combine(projectDirectory, ".gitignore");
+            File.Exists(gitIgnoreFileName).Should().BeTrue();
+            var gitIgnoreContent = await File.ReadAllTextAsync(gitIgnoreFileName);
+            Console.WriteLine($"--- {gitIgnoreFileName} ---");
+            Console.WriteLine(gitIgnoreContent);
             
             // // document should not contain any reference to the legacy props files
             // // - as imports:

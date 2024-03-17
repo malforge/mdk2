@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Commands;
 using Mdk.CommandLine.SharedApi;
@@ -17,7 +18,7 @@ public static class Program
             ((DirectConsole)console).TraceEnabled = true;
         if (parameters.Log == null)
             return console;
-        
+
         var fileLogger = new FileConsole(parameters.Log, parameters.Trace);
         console = new CompositeConsole
         {
@@ -48,7 +49,7 @@ public static class Program
         using var httpClient = new WebHttpClient();
         try
         {
-            await parameters.ExecuteAsync(console, httpClient, interaction);
+            await RunAsync(parameters, console, httpClient, interaction);
             return 0;
         }
         catch (CommandLineException e)
@@ -56,5 +57,20 @@ public static class Program
             console.Print(e.Message);
             return e.ErrorCode;
         }
+    }
+
+    /// <summary>
+    ///     Run the application with the specified parameters and services.
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <param name="console"></param>
+    /// <param name="httpClient"></param>
+    /// <param name="interaction"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public static async Task RunAsync(ProgramParameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    {
+        var verb = parameters.VerbParameters ?? throw new InvalidOperationException("Verb parameters are not set.");
+        await verb.ExecuteAsync(console, httpClient, interaction);
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Mdk.CommandLine.Commands.Restore;
@@ -18,7 +17,7 @@ public class LegacyConverter
 
     public async Task ConvertAsync(RestoreParameters restoreParameters, MdkProject project, IConsole console, IHttpClient httpClient)
     {
-        await ConvertConfigAsync(project, console, httpClient);
+        await ConvertConfigAsync(project, console);
         await AddNugetReferencesAsync(project, console, httpClient);
     }
 
@@ -61,16 +60,16 @@ public class LegacyConverter
         }
     }
 
-    static async Task ConvertConfigAsync(MdkProject project, IConsole console, IHttpClient httpClient)
+    static async Task ConvertConfigAsync(MdkProject project, IConsole console)
     {
         var projectDirectory = Path.GetDirectoryName(project.Project.FilePath) ?? throw new InvalidOperationException("The project file path is invalid.");
         var optionsPropsFileName = Path.Combine(projectDirectory, "mdk", "mdk.options.props");
         var pathsPropsFileName = Path.Combine(projectDirectory, "mdk", "mdk.paths.props");
 
-        var gameBinPath = "auto";
+        // var gameBinPath = "auto";
         var outputPath = "auto";
         bool trimTypes;
-        List<string> ignores = new();
+        List<string> ignores = ["obj/**/*"];
         var minify = LegacyMinifierLevel.None;
 
         console.Trace("Loading legacy property file...");
@@ -95,12 +94,12 @@ public class LegacyConverter
         {
             using var reader = new StreamReader(pathsPropsFileName);
             var paths = await XDocument.LoadAsync(reader, LoadOptions.None, default);
-            var useGameBinPathString = (string?)paths.Element(MsbuildNs, "Project", "PropertyGroup", "MDKUseGameBinPath");
-            var gameBinPathString = (string?)paths.Element(MsbuildNs, "Project", "PropertyGroup", "MDKGameBinPath");
+            // var useGameBinPathString = (string?)paths.Element(MsbuildNs, "Project", "PropertyGroup", "MDKUseGameBinPath");
+            // var gameBinPathString = (string?)paths.Element(MsbuildNs, "Project", "PropertyGroup", "MDKGameBinPath");
             var outputPathString = (string?)paths.Element(MsbuildNs, "Project", "PropertyGroup", "MDKOutputPath");
 
-            if (gameBinPathString != null && string.Equals(useGameBinPathString ?? "", "yes", StringComparison.OrdinalIgnoreCase))
-                gameBinPath = gameBinPathString;
+            // if (gameBinPathString != null && string.Equals(useGameBinPathString ?? "", "yes", StringComparison.OrdinalIgnoreCase))
+            //     gameBinPath = gameBinPathString;
             if (outputPathString != null)
                 outputPath = outputPathString;
         }
@@ -111,8 +110,8 @@ public class LegacyConverter
         var localIniFileName = Path.Combine(projectDirectory,Path.ChangeExtension(projectFileName, ".mdk.local.ini"));
 
         console.Trace("Writing MDK ini files...");
-        await WriteMainIni(minify, trimTypes, outputPath, gameBinPath, ignores, mainIniFileName);
-        await WriteLocalIni(minify, trimTypes, ignores, localIniFileName);
+        await WriteMainIni(minify, trimTypes, ignores, mainIniFileName);
+        await WriteLocalIni(outputPath, /*gameBinPath, */localIniFileName);
 
         console.Trace("Adding or updating .gitignore file...");
         await AddOrUpdateGitIgnore(projectDirectory, projectFileName);
@@ -120,7 +119,7 @@ public class LegacyConverter
         console.Print("The project has been successfully converted to MDK2.");
     }
 
-    static async Task WriteMainIni(LegacyMinifierLevel minify, bool trimTypes, string outputPath, string gameBinPath, List<string> ignores, string basicIniFileName)
+    static async Task WriteMainIni(LegacyMinifierLevel minify, bool trimTypes, List<string> ignores, string basicIniFileName)
     {
         var ini = new Ini()
             .WithSection("mdk",
@@ -128,22 +127,18 @@ public class LegacyConverter
                     .WithKey("type", "programmableblock")
                     .WithKey("minify", minify.ToString().ToLowerInvariant())
                     .WithKey("trim", trimTypes ? "yes" : "no")
-                    .WithKey("output", outputPath)
-                    .WithKey("gamebin", gameBinPath)
                     .WithKey("ignores", string.Join(';', ignores))
             );
         await File.WriteAllTextAsync(basicIniFileName, ini.ToString());
     }
 
-    static async Task WriteLocalIni(LegacyMinifierLevel minify, bool trimTypes, List<string> ignores, string localIniFileName)
+    static async Task WriteLocalIni(string outputPath, /*string gameBinPath, */string localIniFileName)
     {
         var ini = new Ini()
             .WithSection("mdk",
                 section => section
-                    .WithKey("type", "programmableblock")
-                    .WithKey("minify", minify.ToString().ToLowerInvariant())
-                    .WithKey("trim", trimTypes ? "yes" : "no")
-                    .WithKey("ignores", string.Join(';', ignores))
+                    .WithKey("output", outputPath)
+                    // .WithKey("gamebin", gameBinPath)
             );
         await File.WriteAllTextAsync(localIniFileName, ini.ToString());
     }

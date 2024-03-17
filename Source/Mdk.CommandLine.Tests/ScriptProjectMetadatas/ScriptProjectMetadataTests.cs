@@ -149,7 +149,7 @@ public class ScriptProjectMetadataTests
         var result = metadata.Close(callback);
 
         // Assert
-        result.OutputDirectory.Should().Be("ThatOutput");
+        result.OutputDirectory.Should().Be(Path.GetFullPath("ThatOutput"));
     }
 
     [Test]
@@ -175,6 +175,6 @@ public class ScriptProjectMetadataTests
         var result = metadata.Close(callback);
 
         // Assert
-        result.OutputDirectory.Should().Be("ThisOutput");
+        result.OutputDirectory.Should().Be(Path.GetFullPath("ThisOutput"));
     }
 }

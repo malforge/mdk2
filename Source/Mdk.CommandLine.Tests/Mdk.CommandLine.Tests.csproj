@@ -26,5 +26,9 @@
         <Compile Remove="TestData\**" />
         <None Include="TestData\**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <Folder Include="ProgramTests\" />
+    </ItemGroup>
 
 </Project>
