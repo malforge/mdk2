@@ -11,7 +11,8 @@
 
     <Target Name="MdkPackPrepare">
         <PropertyGroup>
-            <MdkArgumentsList>pack-script &quot;$(MSBuildProjectFullPath)&quot; -minifier $(MdkMinifier) -output &quot;$(MdkOutput)&quot;</MdkArgumentsList>
+            <MdkRestoreArgumentsList>&quot;$(MSBuildProjectFullPath)&quot;</MdkRestoreArgumentsList>
+            <MdkArgumentsList>&quot;$(MSBuildProjectFullPath)&quot; -minifier $(MdkMinifier) -output &quot;$(MdkOutput)&quot;</MdkArgumentsList>
         </PropertyGroup>
 
         <PropertyGroup Condition="'$(MdkTrim)' == 'on'">
@@ -19,6 +20,7 @@
         </PropertyGroup>
 
         <PropertyGroup Condition="'$(MdkInteractive)' == 'on'">
+            <MdkRestoreArgumentsList>$(MdkRestoreArgumentsList) -interactive</MdkRestoreArgumentsList>
             <MdkArgumentsList>$(MdkArgumentsList) -interactive</MdkArgumentsList>
         </PropertyGroup>
         
@@ -27,11 +29,15 @@
         </PropertyGroup>
     </Target>
     
-    <Target Name="MdkPack" DependsOnTargets="MdkPackPrepare" AfterTargets="Build" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; $(MdkArgumentsList)" />
+    <Target Name="MdkRestore" DependsOnTargets="MdkPackPrepare" AfterTargets="PrepareForBuild" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore $(MdkRestoreArgumentsList)" />
     </Target>
     
-    <Target Name="MdkDidNotPack" DependsOnTargets="MdkPackPrepare" AfterTargets="Build" Condition="'$(Configuration)' != '$(MdkBuildConfiguration)' And '$(MdkBuildConfiguration)' != 'all'">
+    <Target Name="MdkPack" DependsOnTargets="MdkPackPrepare" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; pack $(MdkArgumentsList)" />
+    </Target>
+    
+    <Target Name="MdkDidNotPack" DependsOnTargets="MdkPackPrepare" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' != '$(MdkBuildConfiguration)' And '$(MdkBuildConfiguration)' != 'all'">
         <Exec Command="echo MDK did not pack, because the current configuration is '$(Configuration)', not '$(MdkBuildConfiguration)'." />
     </Target>   
 
