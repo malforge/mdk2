@@ -49,15 +49,11 @@ public class InterConnect : IDisposable
     /// <returns></returns>
     public bool IsAlreadyRunning() => !_createdNew;
 
-    /// <summary>
-    ///     Submits a message to the running instance.
-    /// </summary>
-    /// <param name="scriptFolder"></param>
-    public async void Submit(string scriptFolder)
+    public async void Submit(InterConnectMessage message)
     {
         if (_createdNew)
         {
-            OnMessageReceived(scriptFolder);
+            OnMessageReceived(message);
             return;
         }
 
@@ -69,9 +65,7 @@ public class InterConnect : IDisposable
             var port = int.Parse(await File.ReadAllTextAsync(iniFileName));
             using var client = new TcpClient("localhost", port);
             await using var stream = client.GetStream();
-            await using var writer = new StreamWriter(stream, Encoding.UTF8);
-            await writer.WriteAsync(scriptFolder);
-            await writer.FlushAsync();
+            await message.WriteAsync(stream);
         }
         catch
         {
@@ -116,14 +110,12 @@ public class InterConnect : IDisposable
             {
                 await using var stream = client.GetStream();
                 using var reader = new StreamReader(stream, Encoding.UTF8);
-                var folder = await reader.ReadLineAsync(cancellationToken);
-                if (folder == null)
-                    return;
-                Application.Current.Dispatcher.Invoke(() => OnMessageReceived(folder));
+                var message = InterConnectMessage.Read(stream);
+                Application.Current.Dispatcher.Invoke(() => OnMessageReceived(message));
             }
         }
         catch (OperationCanceledException) { }
     }
 
-    void OnMessageReceived(string folder) => MessageReceived?.Invoke(this, new InterConnectMessageReceivedEventArgs(folder));
+    void OnMessageReceived(InterConnectMessage message) => MessageReceived?.Invoke(this, new InterConnectMessageReceivedEventArgs(message));
 }

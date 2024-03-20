@@ -49,6 +49,6 @@ public class ScriptRestorer
             lastVersion = await versions.Where(v => !v.IsPrerelease()).OrderByDescending(v => v).FirstOrDefaultAsync();
 
         if (lastVersion > version)
-            interaction.Notify(InteractionType.NugetPackageVersionAvailable, string.Empty, lastVersion);
+            interaction.Nuget("Mal.Mdk2.PbPackager", versionString, lastVersion.ToString());
     }
 }

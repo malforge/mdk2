@@ -198,7 +198,7 @@ public class ScriptPacker
         final = await PostProcessComposition(final, postCompositionProcessors, console, metadata);
         await ProduceAsync(project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, console, metadata);
 
-        interaction.Notify(InteractionType.Script, null, project.Name, outputDirectory.FullName);
+        interaction.Script(project.Name, outputDirectory.FullName);
 
         return true;
     }

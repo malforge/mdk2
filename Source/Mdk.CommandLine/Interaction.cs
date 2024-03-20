@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using Mdk.CommandLine.SharedApi;
 
 namespace Mdk.CommandLine;
@@ -16,7 +15,7 @@ public class Interaction : IInteraction
         _console = console;
         if (!interactive || !OperatingSystem.IsWindows())
             return;
-        
+
         if (File.Exists("mdknotify-win.exe"))
             _notifyPath = "mdknotify-win.exe";
         else
@@ -37,47 +36,40 @@ public class Interaction : IInteraction
         }
     }
 
+    public void Custom(string message, params object?[] args)
+    {
+        if (string.IsNullOrEmpty(message))
+            return;
+        message = string.Format(message, args);
+        Run($"script {Escape(message)}");
+    }
+
+    public void Script(string scriptName, string folder, string? message, params object?[] args)
+    {
+        if (string.IsNullOrEmpty(message))
+            message = $"Your script \"{scriptName}\" has been successfully deployed.";
+        else
+            message = string.Format(message, args);
+        Run($"script {Escape(scriptName)} {Escape(folder)} {Escape(message)}");
+    }
+
+    public void Nuget(string packageName, string currentVersion, string newVersion, string? message, params object?[] args)
+    {
+        if (string.IsNullOrEmpty(message))
+            message = $"The {message} nuget package has a new version available: {currentVersion} -> {newVersion}";
+        else
+            message = string.Format(message, args);
+        Run($"nuget {Escape(packageName)} {Escape(currentVersion)} {Escape(newVersion)} {Escape(message)}");
+    }
+
     static string Escape(string value)
     {
-        var content = value.Replace("&", "&amp;");
+        var content = value.Replace("\"", "&quot;");
         if (content.Length == 0)
             return "\"\"";
         if (content.Contains(' '))
             return $"\"{content}\"";
         return content;
-    }
-
-    public void Notify(InteractionType type, string? message, params object?[] args)
-    {
-        if (string.IsNullOrEmpty(message))
-        {
-            message = string.Empty;            
-        }
-        else
-        {
-            message = string.Format(message, args);
-        }
-        switch (type)
-        {
-            case InteractionType.Normal:
-                _console.Print(message);
-                break;
-            case InteractionType.Script:
-                if (message.Length == 0)
-                    _console.Print($"The script {message} has been executed.");
-                else
-                    _console.Print(message);
-                break;
-            case InteractionType.NugetPackageVersionAvailable:
-                if (message.Length == 0)
-                    _console.Print($"The {message} nuget package has a new version available: {args[0]} -> {args[1]}");
-                else
-                    _console.Print(message);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
-        }
-        Run($"{type.ToString().ToLowerInvariant()} \"{Escape(message)}\" {string.Join(" ", args.Select(a => Escape(a?.ToString() ?? string.Empty)))}");
     }
 
     void Run(string arguments)

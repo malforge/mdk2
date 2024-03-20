@@ -57,4 +57,10 @@ Expected: script [project name] [script folder]</value>
         <value>No project name provided.
 Expected: script [project name] [script folder]</value>
     </data>
+    <data name="App_OnStartup_NugetPackageVersionAvailable" xml:space="preserve">
+        <value>The {0} nuget package has a new version available: {1} -&gt; {2}</value>
+    </data>
+    <data name="App_OnStartup_CustomNotificationNoMessage" xml:space="preserve">
+        <value>No message provided.</value>
+    </data>
 </root>

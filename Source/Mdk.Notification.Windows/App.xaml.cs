@@ -28,64 +28,72 @@ public partial class App
             Shutdown();
     }
 
+    static string Unescape(string value)
+    {
+        return value.Replace("&quot;", "\"");
+    }
+    
     void App_OnStartup(object sender, StartupEventArgs e)
     {
         List<string> arguments = [..e.Args];
 
-        if (!arguments.TryDequeue(out var type) || !string.Equals(type, "script", StringComparison.OrdinalIgnoreCase))
+        if (!arguments.TryDequeue(out var type) || !Enum.TryParse<NotificationType>(type, true, out var notificationType) || !Enum.IsDefined(notificationType))
         {
             MessageBox.Show(Notification.Windows.Resources.App_OnStartup_InvalidType);
             Shutdown();
             return;
         }
 
-        if (!arguments.TryDequeue(out var projectName))
-        {
-            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoProjectNameProvided);
-            Shutdown();
-            return;
-        }
-        
-        if (!arguments.TryDequeue(out var scriptFolder))
-        {
-            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoScriptFolderProvided);
-            Shutdown();
-            return;
-        }
+        for (var i = 0; i < arguments.Count; i++)
+            arguments[i] = Unescape(arguments[i]);
 
         _interconnect = new InterConnect();
         _interconnect.MessageReceived += (_, args) => OnInterConnectMessageReceived(args.Message);
-        _interconnect.Submit(string.Join("\0", "script", projectName, scriptFolder));
+        _interconnect.Submit(new InterConnectMessage(notificationType, arguments.ToArray()));
         if (_interconnect.IsAlreadyRunning())
             Shutdown();
     }
 
-    void ShowToast(string arguments)
+    void ShowToast(InterConnectMessage message)
     {
-        var parameters = arguments.Split('\0');
-        if (parameters.Length != 3 || !string.Equals(parameters[0], "script", StringComparison.OrdinalIgnoreCase))
+        switch (message.Type)
         {
-            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_InvalidType);
-            return;
+            case NotificationType.Script:
+                ShowScriptToast(message.Arguments);
+                break;
+            case NotificationType.Nuget:
+                ShowNugetPackageVersionAvailableToast(message.Arguments);
+                break;
+            case NotificationType.Custom:
+                ShowCustomToast(message.Arguments);
+                break;
+            default:
+                MessageBox.Show(Notification.Windows.Resources.App_OnStartup_InvalidType);
+                break;
         }
-        
-        var projectName = parameters[1];
-        var scriptFolder = parameters[2];
+    }
+
+    void ShowScriptToast(string[] messageArguments)
+    {
+        var message = TryGet(messageArguments, 0, string.Empty);
+        var projectName = TryGet(messageArguments, 1, string.Empty);
+        var scriptFolder = TryGet(messageArguments, 2, string.Empty);
+        if (string.IsNullOrEmpty(message))
+            message = string.Format(Notification.Windows.Resources.App_OnStartup_ScriptDeployed, projectName);
         
         if (!Directory.Exists(scriptFolder))
         {
             MessageBox.Show(Notification.Windows.Resources.App_OnStartup_ScriptFolderDoesNotExist);
             return;
         }
-
+        
         var scriptFileName = Path.Combine(scriptFolder, "script.cs");
         if (!File.Exists(scriptFileName))
         {
             MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoScriptFile);
             return;
         }
-        // var thumb = Path.Combine(scriptFolder, "thumb.png");
-
+        
         string content;
         try
         {
@@ -96,10 +104,10 @@ public partial class App
             MessageBox.Show(string.Format(Notification.Windows.Resources.App_OnStartup_ErrorReadingScript, exception.Message));
             return;
         }
-
+        
         Toast.Instance.IsEmptyChanged += OnIsEmptyChanged;
-
-        Toast.Instance.Show(string.Format(Notification.Windows.Resources.App_OnStartup_ScriptDeployed, projectName),
+        
+        Toast.Instance.Show(message,
             new ToastAction
             {
                 Text = Notification.Windows.Resources.App_OnStartup_ShowMe,
@@ -114,7 +122,41 @@ public partial class App
             });
     }
 
-    void OnInterConnectMessageReceived(string folder) => ShowToast(folder);
+    void ShowNugetPackageVersionAvailableToast(string[] messageArguments)
+    {
+        var message = TryGet(messageArguments, 0, string.Empty);
+        var packageName = TryGet(messageArguments, 1, string.Empty);
+        var currentVersion = TryGet(messageArguments, 2, string.Empty);
+        var newVersion = TryGet(messageArguments, 3, string.Empty);
+        
+        if (string.IsNullOrEmpty(message))
+            message = string.Format(Notification.Windows.Resources.App_OnStartup_NugetPackageVersionAvailable, packageName, currentVersion, newVersion);
+        
+        Toast.Instance.IsEmptyChanged += OnIsEmptyChanged;
+        
+        Toast.Instance.Show(message);
+    }
+
+    void ShowCustomToast(string[] messageArguments)
+    {
+        var message = TryGet(messageArguments, 0, string.Empty);
+        if (string.IsNullOrEmpty(message))
+        {
+            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_CustomNotificationNoMessage);
+            return;
+        }
+        
+        Toast.Instance.IsEmptyChanged += OnIsEmptyChanged;
+        
+        Toast.Instance.Show(message);
+    }
+
+    static string TryGet(string[] messageArguments, int index, string defaultValue)
+    {
+        return messageArguments.Length > index ? messageArguments[index] : defaultValue;
+    }
+
+    void OnInterConnectMessageReceived(InterConnectMessage message) => ShowToast(message);
 
     void OnCopyToClipboardClicked(string content)
     {

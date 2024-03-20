@@ -96,6 +96,15 @@ namespace Mdk.Notification.Windows {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No message provided..
+        /// </summary>
+        internal static string App_OnStartup_CustomNotificationNoMessage {
+            get {
+                return ResourceManager.GetString("App_OnStartup_CustomNotificationNoMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An error occurred while reading the script file: {0}.
         /// </summary>
         internal static string App_OnStartup_ErrorReadingScript {
@@ -140,6 +149,15 @@ namespace Mdk.Notification.Windows {
         internal static string App_OnStartup_NoScriptFolderProvided {
             get {
                 return ResourceManager.GetString("App_OnStartup_NoScriptFolderProvided", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The {0} nuget package has a new version available: {1} -&gt; {2}.
+        /// </summary>
+        internal static string App_OnStartup_NugetPackageVersionAvailable {
+            get {
+                return ResourceManager.GetString("App_OnStartup_NugetPackageVersionAvailable", resourceCulture);
             }
         }
         
