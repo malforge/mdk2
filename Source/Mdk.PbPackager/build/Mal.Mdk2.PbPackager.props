@@ -8,6 +8,10 @@
         <MdkBuildConfiguration>all</MdkBuildConfiguration>
         <MdkArguments />
     </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="**\*.ini" />
+    </ItemGroup>
 
     <Target Name="MdkPackPrepare">
         <PropertyGroup>
@@ -29,7 +33,7 @@
         </PropertyGroup>
     </Target>
     
-    <Target Name="MdkRestore" DependsOnTargets="MdkPackPrepare" AfterTargets="PrepareForBuild" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
+    <Target Name="MdkRestore" DependsOnTargets="MdkPackPrepare" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
         <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore $(MdkRestoreArgumentsList)" />
     </Target>
     

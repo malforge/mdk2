@@ -32,6 +32,13 @@ public static class ParameterQueueExtensions
                 value = (T)(object)queue.Dequeue();
                 return true;
             case TypeCode.Int32:
+                if (!typeof(T).IsEnum)
+                    throw new NotSupportedException($"Type {typeof(T).Name} is not supported.");
+                if (Enum.TryParse(typeof(T), queue.Dequeue(), true, out var result))
+                {
+                    value = (T)result;
+                    return true;
+                }
                 if (int.TryParse(queue.Dequeue(), NumberStyles.Any, CultureInfo.InvariantCulture, out var intValue))
                 {
                     value = (T)(object)intValue;
@@ -64,13 +71,6 @@ public static class ParameterQueueExtensions
                 value = default;
                 return false;
             default:
-                if (!typeof(T).IsEnum)
-                    throw new NotSupportedException($"Type {typeof(T).Name} is not supported.");
-                if (Enum.TryParse(typeof(T), queue.Dequeue(), true, out var result))
-                {
-                    value = (T)result;
-                    return true;
-                }
                 value = default;
                 return false;
         }

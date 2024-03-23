@@ -9,7 +9,7 @@ using Mdk.CommandLine.Utility;
 namespace Mdk.CommandLine.Commands.Pack;
 
 /// <summary>
-///     The parameters for the pack-script command.
+///     The parameters for the pack command.
 /// </summary>
 public class PackParameters : VerbParameters
 {
@@ -41,7 +41,6 @@ public class PackParameters : VerbParameters
     /// <inheritdoc />
     public override bool TryLoad(Queue<string> args, [MaybeNullWhen(true)] out string failureReason)
     {
-        var p = new PackParameters();
         while (args.Count > 0)
         {
             if (TryParseGlobalOptions(args, out failureReason))
@@ -54,13 +53,13 @@ public class PackParameters : VerbParameters
                     failureReason = "No or unknown minifier specified.";
                     return false;
                 }
-                p.MinifierLevel = level;
+                MinifierLevel = level;
                 continue;
             }
 
             if (args.TryDequeue("-trim"))
             {
-                p.TrimUnusedTypes = true;
+                TrimUnusedTypes = true;
                 continue;
             }
             
@@ -71,7 +70,7 @@ public class PackParameters : VerbParameters
                     failureReason = "No output file specified.";
                     return false;
                 }
-                p.Output = string.Equals(output, "auto") ? null : output;
+                Output = string.Equals(output, "auto") ? null : output;
                 continue;
             }
             
@@ -86,24 +85,24 @@ public class PackParameters : VerbParameters
             //     continue;
             // }
             //
-            if (p.ProjectFile is not null)
+            if (ProjectFile is not null)
             {
                 failureReason = "Only one project file can be specified.";
                 return false;
             }
 
-            p.ProjectFile = args.Dequeue();
+            ProjectFile = args.Dequeue();
         }
 
-        if (p.ProjectFile is null)
+        if (ProjectFile is null)
         {
             failureReason = "No project file specified.";
             return false;
         }
 
-        if (!File.Exists(p.ProjectFile))
+        if (!File.Exists(ProjectFile))
         {
-            failureReason = $"The specified project file '{p.ProjectFile}' does not exist.";
+            failureReason = $"The specified project file '{ProjectFile}' does not exist.";
             return false;
         }
 
@@ -112,7 +111,7 @@ public class PackParameters : VerbParameters
     }
 
     /// <summary>
-    ///     Displays help for the pack-script command.
+    ///     Displays help for the pack command.
     /// </summary>
     /// <param name="console"></param>
     public override void Help(IConsole console) =>

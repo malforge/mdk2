@@ -68,29 +68,29 @@ public partial class App
                 ShowCustomToast(message.Arguments);
                 break;
             default:
-                MessageBox.Show(Notification.Windows.Resources.App_OnStartup_InvalidType);
+                ShowCustomToast([Notification.Windows.Resources.App_OnStartup_InvalidType]);
                 break;
         }
     }
 
     void ShowScriptToast(string[] messageArguments)
     {
-        var message = TryGet(messageArguments, 0, string.Empty);
-        var projectName = TryGet(messageArguments, 1, string.Empty);
-        var scriptFolder = TryGet(messageArguments, 2, string.Empty);
+        var projectName = TryGet(messageArguments, 0, string.Empty);
+        var scriptFolder = TryGet(messageArguments, 1, string.Empty);
+        var message = TryGet(messageArguments, 2, string.Empty);
         if (string.IsNullOrEmpty(message))
             message = string.Format(Notification.Windows.Resources.App_OnStartup_ScriptDeployed, projectName);
         
         if (!Directory.Exists(scriptFolder))
         {
-            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_ScriptFolderDoesNotExist);
+            ShowCustomToast([Notification.Windows.Resources.App_OnStartup_ScriptFolderDoesNotExist]);
             return;
         }
         
         var scriptFileName = Path.Combine(scriptFolder, "script.cs");
         if (!File.Exists(scriptFileName))
         {
-            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_NoScriptFile);
+            ShowCustomToast([Notification.Windows.Resources.App_OnStartup_NoScriptFile]);
             return;
         }
         
@@ -101,7 +101,7 @@ public partial class App
         }
         catch (Exception exception)
         {
-            MessageBox.Show(string.Format(Notification.Windows.Resources.App_OnStartup_ErrorReadingScript, exception.Message));
+            ShowCustomToast([string.Format(Notification.Windows.Resources.App_OnStartup_ErrorReadingScript, exception.Message)]);
             return;
         }
         
@@ -141,10 +141,7 @@ public partial class App
     {
         var message = TryGet(messageArguments, 0, string.Empty);
         if (string.IsNullOrEmpty(message))
-        {
-            MessageBox.Show(Notification.Windows.Resources.App_OnStartup_CustomNotificationNoMessage);
-            return;
-        }
+            message = Notification.Windows.Resources.App_OnStartup_CustomNotificationNoMessage;
         
         Toast.Instance.IsEmptyChanged += OnIsEmptyChanged;
         

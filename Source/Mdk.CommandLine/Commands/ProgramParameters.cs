@@ -42,7 +42,7 @@ public class ProgramParameters : Parameters
 
     bool TryLoadVerb(string verb, Queue<string> queue, [MaybeNullWhen(true)] out string failureReason)
     {
-        if (string.Equals(verb, "pack-script", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(verb, "pack", StringComparison.OrdinalIgnoreCase))
         {
             var p = new PackParameters();
             if (!p.TryLoad(this, queue, out failureReason))
@@ -52,7 +52,7 @@ public class ProgramParameters : Parameters
             return true;
         }
 
-        if (string.Equals(verb, "restore-script", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(verb, "restore", StringComparison.OrdinalIgnoreCase))
         {
             var p = new RestoreParameters();
             if (!p.TryLoad(this, queue, out failureReason))
@@ -79,7 +79,6 @@ public class ProgramParameters : Parameters
     /// <inheritdoc />
     public override bool TryLoad(Queue<string> args, [MaybeNullWhen(true)] out string failureReason)
     {
-        var p = new ProgramParameters();
         while (args.Count > 0)
         {
             if (args.TryDequeue("-log"))
@@ -89,19 +88,19 @@ public class ProgramParameters : Parameters
                     failureReason = "Missing log file path after -log";
                     return false;
                 }
-                p.Log = log;
+                Log = log;
                 continue;
             }
 
             if (args.TryDequeue("-trace"))
             {
-                p.Trace = true;
+                Trace = true;
                 continue;
             }
             
             if (args.TryDequeue("-interactive"))
             {
-                p.Interactive = true;
+                Interactive = true;
                 continue;
             }
 
@@ -111,7 +110,7 @@ public class ProgramParameters : Parameters
             return false;
         }
 
-        if (p.Verb is null)
+        if (Verb is null)
         {
             failureReason = "No verb specified.";
             return false;
@@ -133,11 +132,11 @@ public class ProgramParameters : Parameters
             .Print("  -log <file>  Log output to the specified file.")
             .Print()
             .Print("Verbs:")
-            .Print("  pack-script     Pack a programmable block script")
-            .Print("  restore-script  Restore a packed programmable block script")
-            .Print("  help            Display help for a verb")
+            .Print("  pack     Pack a programmable block script")
+            .Print("  restore  Restore a packed programmable block script")
+            .Print("  help     Display help for a verb")
             .Print()
             .Print("Use 'mdk help <verb>' for more information about a verb.")
-            .Print("  Example: mdk help pack-script");
+            .Print("  Example: mdk help pack");
     }
 }

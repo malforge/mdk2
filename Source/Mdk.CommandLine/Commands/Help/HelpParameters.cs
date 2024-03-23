@@ -28,7 +28,6 @@ public class HelpParameters : VerbParameters
     /// <inheritdoc />
     public override bool TryLoad(Queue<string> args, [MaybeNullWhen(true)] out string failureReason)
     {
-        var p = new HelpParameters();
         while (args.Count > 0)
         {
             if (TryParseGlobalOptions(args, out failureReason))
@@ -36,16 +35,16 @@ public class HelpParameters : VerbParameters
 
             if (args.TryDequeue("-list-processors"))
             {
-                p.ListProcessors = true;
+                ListProcessors = true;
                 continue;
             }
 
-            if (p.Verb is not null)
+            if (Verb is not null)
             {
                 failureReason = "Only one verb can be specified.";
                 return false;
             }
-            p.Verb = args.Dequeue();
+            Verb = args.Dequeue();
         }
 
         failureReason = null;
@@ -83,12 +82,12 @@ public class HelpParameters : VerbParameters
             .Print(new string('=', header.Length))
             .Print();
 
-        if (string.Equals(Verb, "pack-script", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Verb, "pack", StringComparison.OrdinalIgnoreCase))
         {
             var verbParameters = new PackParameters();
             verbParameters.Help(console);
         }
-        else if (string.Equals(Verb, "restore-script", StringComparison.OrdinalIgnoreCase))
+        else if (string.Equals(Verb, "restore", StringComparison.OrdinalIgnoreCase))
         {
             var verbParameters = new RestoreParameters();
             verbParameters.Help(console);

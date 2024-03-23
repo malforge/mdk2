@@ -10,6 +10,10 @@
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <OutputPath>..\Mdk.CommandLine\bin\Debug\net8.0\win-x64</OutputPath>
+    </PropertyGroup>
+
     <ItemGroup>
       <EmbeddedResource Update="Resources.resx">
         <Generator>ResXFileCodeGenerator</Generator>

@@ -41,7 +41,9 @@ public class Interaction : IInteraction
         if (string.IsNullOrEmpty(message))
             return;
         message = string.Format(message, args);
-        Run($"script {Escape(message)}");
+        var arguments = $"custom {Escape(message)}";
+        _console.Trace($"Running: mdknotify-win.exe {arguments}");  
+        Run(arguments);
     }
 
     public void Script(string scriptName, string folder, string? message, params object?[] args)
@@ -50,7 +52,9 @@ public class Interaction : IInteraction
             message = $"Your script \"{scriptName}\" has been successfully deployed.";
         else
             message = string.Format(message, args);
-        Run($"script {Escape(scriptName)} {Escape(folder)} {Escape(message)}");
+        var arguments = $"script {Escape(scriptName)} {Escape(folder)} {Escape(message)}";
+        _console.Trace($"Running: mdknotify-win.exe {arguments}");
+        Run(arguments);
     }
 
     public void Nuget(string packageName, string currentVersion, string newVersion, string? message, params object?[] args)
@@ -59,7 +63,9 @@ public class Interaction : IInteraction
             message = $"The {message} nuget package has a new version available: {currentVersion} -> {newVersion}";
         else
             message = string.Format(message, args);
-        Run($"nuget {Escape(packageName)} {Escape(currentVersion)} {Escape(newVersion)} {Escape(message)}");
+        var arguments = $"nuget {Escape(packageName)} {Escape(currentVersion)} {Escape(newVersion)} {Escape(message)}";
+        _console.Trace($"Running: mdknotify-win.exe {arguments}");
+        Run(arguments);
     }
 
     static string Escape(string value)

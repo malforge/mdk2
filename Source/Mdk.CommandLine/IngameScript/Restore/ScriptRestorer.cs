@@ -30,15 +30,12 @@ public class ScriptRestorer
         var pbPackagerReference = document.Elements(MsbuildNs, "Project", "ItemGroup", "PackageReference")
             .FirstOrDefault(e => e.Attribute("Include")?.Value == "Mal.Mdk2.PbPackager");
 
-        if (pbPackagerReference is null)
-            throw new CommandLineException(-1, "The project does not reference the Mal.Mdk2.PbPackager nuget package.");
-
         // Get the version of the Mal.Mdk2.PbPackager nuget package
-        var versionString = pbPackagerReference.Attribute("Version")?.Value;
+        var versionString = pbPackagerReference?.Attribute("Version")?.Value;
         if (versionString is null)
-            throw new CommandLineException(-1, "The Mal.Mdk2.PbPackager nuget package does not have a version.");
+            return;
         if (!SemanticVersion.TryParse(versionString, out var version))
-            throw new CommandLineException(-1, $"The version '{versionString}' of the Mal.Mdk2.PbPackager nuget package is not a valid semantic version.");
+            return;
 
         // Detect version from Nuget
         var versions = Nuget.GetPackageVersionsAsync(httpClient, "Mal.Mdk2.PbPackager");

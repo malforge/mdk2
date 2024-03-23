@@ -74,8 +74,8 @@ public abstract class VerbParameters : Parameters
             return true;
         }
 
-        failureReason = null;
-        return true;
+        failureReason = "Unknown global parameter.";
+        return false;
     }
 
     /// <summary>

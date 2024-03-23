@@ -23,7 +23,7 @@ public class LegacyConverterTests
         // Arrange
         var console = A.Fake<IConsole>();
         var httpClient = A.Fake<IHttpClient>();
-        A.CallTo(() => httpClient.GetAsync(A<string>._)).Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        A.CallTo(() => httpClient.GetAsync(A<string>._, A<TimeSpan>._)).Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent( 
                 """
