@@ -16,6 +16,11 @@ public class Toast
     readonly List<ToastWindow> _liveNotifications = new();
 
     /// <summary>
+    /// A handle to the screen on which to display the notifications.
+    /// </summary>
+    public IntPtr MonitorHandle { get; set; }
+    
+    /// <summary>
     ///     Determines whether or not there are any active notifications.
     /// </summary>
     public bool IsEmpty => _liveNotifications.Count == 0;
@@ -96,9 +101,10 @@ public class Toast
         notification.Loaded += onLoaded;
         notification.Show();
         await tcs.Task;
-        var bottom = _liveNotifications.Aggregate(SystemParameters.WorkArea.Bottom, (current, t) => current - (t.Height + 10));
+        var workArea = WorkArea.GetMonitorWorkArea(MonitorHandle);
+        var bottom = _liveNotifications.Aggregate(workArea.Bottom, (current, t) => current - (t.Height + 10));
         notification.Top = bottom - notification.Height - 10;
-        notification.Left = (SystemParameters.WorkArea.Width - notification.Width) / 2;
+        notification.Left = (workArea.Width - notification.Width) / 2;
         _liveNotifications.Add(notification);
         if (_liveNotifications.Count == 1)
             IsEmptyChanged?.Invoke(this, EventArgs.Empty);
@@ -113,7 +119,8 @@ public class Toast
 
     async Task RearrangeAsync()
     {
-        var bottom = SystemParameters.WorkArea.Bottom;
+        var workArea = WorkArea.GetMonitorWorkArea(MonitorHandle);
+        var bottom = workArea.Bottom;
         var desiredTops = new List<double>();
         foreach (var t in _liveNotifications)
         {

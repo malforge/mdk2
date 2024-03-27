@@ -59,7 +59,7 @@ public class InterConnect : IDisposable
 
         try
         {
-            var executableName = Path.GetFileNameWithoutExtension(Application.ResourceAssembly.Location);
+            var executableName = Path.GetFileNameWithoutExtension(GetType().Assembly.Location);
             var iniFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), executableName, $"{executableName}.ini");
             Directory.CreateDirectory(Path.GetDirectoryName(iniFileName)!);
             var port = int.Parse(await File.ReadAllTextAsync(iniFileName));
@@ -78,7 +78,7 @@ public class InterConnect : IDisposable
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        var executableName = Path.GetFileNameWithoutExtension(Application.ResourceAssembly.Location);
+        var executableName = Path.GetFileNameWithoutExtension(GetType().Assembly.Location);
         var iniFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), executableName, $"{executableName}.ini");
         Directory.CreateDirectory(Path.GetDirectoryName(iniFileName)!);
         await File.WriteAllTextAsync(iniFileName, port.ToString(), cancellationToken);

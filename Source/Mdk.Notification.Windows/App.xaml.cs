@@ -44,6 +44,8 @@ public partial class App
             return;
         }
 
+        Toast.Instance.MonitorHandle = WorkArea.GetMonitorHandleFromMousePosition();
+        
         for (var i = 0; i < arguments.Count; i++)
             arguments[i] = Unescape(arguments[i]);
 

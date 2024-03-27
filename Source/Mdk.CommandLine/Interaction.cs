@@ -16,8 +16,11 @@ public class Interaction : IInteraction
         if (!interactive || !OperatingSystem.IsWindows())
             return;
 
-        if (File.Exists("mdknotify-win.exe"))
-            _notifyPath = "mdknotify-win.exe";
+        var exePath = Path.GetFullPath("mdknotify-win.exe");
+        if (File.Exists(exePath))
+            _notifyPath = exePath;
+        else if (File.Exists(exePath = Path.Combine(AppContext.BaseDirectory, "mdknotify.win-exe")))
+            _notifyPath = exePath;
         else
         {
             var path = Environment.GetEnvironmentVariable("Path");

@@ -79,6 +79,7 @@ public static class Program
     {
         switch (parameters.Verb)
         {
+            case Verb.None:
             case Verb.Help:
                 parameters.ShowHelp(console);
                 break;

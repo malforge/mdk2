@@ -88,6 +88,7 @@ public class Parameters : IParameters
                         throw new CommandLineException(-1, $"Unknown option '{arg}', or option specified before verb.");
                     if (!Enum.TryParse(arg, true, out verb))
                         throw new CommandLineException(-1, $"Unknown verb '{arg}'.");
+                    Verb = verb;
                     break;
 
                 case Verb.Help:
@@ -316,10 +317,10 @@ public class Parameters : IParameters
             .Print("  -interactive Prompt for confirmation before executing the verb.")
             .Print()
             .Print("Verbs:")
-            .Print("  help    Display help for a verb.")
-            .Print("  pack    Pack a project into a single script.")
-            .Print("  restore Restore a project.")
-            .Print("  version Display the version of MDK.")
+            .Print("  help [verb]  Display help for a verb.")
+            .Print("  pack         Pack a project into a single script.")
+            .Print("  restore      Restore a project.")
+            .Print("  version      Display the version of MDK.")
             .Print()
             .Print("Use 'mdk help <verb>' for more information on a verb.");
 
