@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.IO;
 using System.Threading.Tasks;
-using Mdk.CommandLine.Commands;
+using Mdk.CommandLine.CommandLine;
+using Mdk.CommandLine.IngameScript.LegacyConversion;
+using Mdk.CommandLine.IngameScript.Pack;
+using Mdk.CommandLine.IngameScript.Restore;
 using Mdk.CommandLine.SharedApi;
 
 namespace Mdk.CommandLine;
@@ -11,12 +15,12 @@ namespace Mdk.CommandLine;
 /// </summary>
 public static class Program
 {
-    static IConsole CreateConsole(ProgramParameters parameters)
+    static IConsole CreateConsole(Parameters? parameters = null)
     {
         IConsole console = new DirectConsole();
-        if (parameters.Trace)
+        if (parameters?.Trace == true)
             ((DirectConsole)console).TraceEnabled = true;
-        if (parameters.Log == null)
+        if (parameters?.Log == null)
             return console;
 
         var fileLogger = new FileConsole(parameters.Log, parameters.Trace);
@@ -35,14 +39,17 @@ public static class Program
     public static async Task<int> Main(string[] args)
     {
         IConsole console;
-        var parameters = new ProgramParameters();
-        if (!parameters.TryLoad(args, out var failureReason))
+        var parameters = new Parameters();
+        try
         {
-            console = CreateConsole(parameters);
-            console.Print(failureReason)
-                .Print();
-            parameters.Help(console);
-            return -1;
+            parameters.Parse(args);
+        }
+        catch (CommandLineException e)
+        {
+            console = CreateConsole();
+            console.Print(e.Message);
+            parameters.ShowHelp(console);
+            throw;
         }
         console = CreateConsole(parameters);
         var interaction = new Interaction(console, parameters.Interactive);
@@ -68,9 +75,57 @@ public static class Program
     /// <param name="interaction"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static async Task RunAsync(ProgramParameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    public static async Task RunAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
-        var verb = parameters.VerbParameters ?? throw new InvalidOperationException("Verb parameters are not set.");
-        await verb.ExecuteAsync(console, httpClient, interaction);
+        switch (parameters.Verb)
+        {
+            case Verb.Help:
+                parameters.ShowHelp(console);
+                break;
+            case Verb.Pack:
+                var packer = new ScriptPacker();
+                await packer.PackAsync(parameters, console, interaction);
+                break;
+            case Verb.Restore:
+                await RestoreAsync(parameters, console, httpClient, interaction);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    static async Task RestoreAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    {
+        if (parameters.RestoreVerb.ProjectFile is null) throw new CommandLineException(-1, "No project file specified.");
+        if (!File.Exists(parameters.RestoreVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.RestoreVerb.ProjectFile}' does not exist.");
+
+        if (parameters.RestoreVerb.DryRun)
+            console.Print("Currently performing a dry run. No changes will be made.");
+
+        await foreach (var project in MdkProject.LoadAsync(parameters.RestoreVerb.ProjectFile, console))
+        {
+            switch (project.Type)
+            {
+                case MdkProjectType.Mod:
+                    console.Print($"Mod projects are not yet implemented: {project.Project.Name}");
+                    break;
+
+                case MdkProjectType.ProgrammableBlock:
+                    console.Print($"Restoring ingame script project: {project.Project.Name}");
+                    var restorer = new ScriptRestorer();
+                    await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
+                    break;
+
+                case MdkProjectType.LegacyProgrammableBlock:
+                    console.Print($"Converting legacy ingame script project: {project.Project.Name}");
+                    var converter = new LegacyConverter();
+                    await converter.ConvertAsync(parameters, project, console, httpClient);
+                    goto case MdkProjectType.ProgrammableBlock;
+
+                case MdkProjectType.Unknown:
+                    console.Print($"The project file {project.Project.Name} does not seem to be an MDK project.");
+                    break;
+            }
+        }
     }
 }

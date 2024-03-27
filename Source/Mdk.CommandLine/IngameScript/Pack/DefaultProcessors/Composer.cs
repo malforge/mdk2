@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -16,8 +15,11 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 /// </summary>
 public class Composer : IScriptComposer
 {
+    // The default indent size. _Maybe_ we will make this configurable in the future.
+    const int IndentSize = 4;
+
     /// <inheritdoc />
-    public async Task<StringBuilder> ComposeAsync(Document document, IConsole console, ScriptProjectMetadata metadata)
+    public async Task<StringBuilder> ComposeAsync(Document document, IPackContext context)
     {
         var builder = new StringBuilder();
         if (await document.GetSyntaxRootAsync() is not CompilationUnitSyntax root)
@@ -27,13 +29,13 @@ public class Composer : IScriptComposer
         if (programClass == null)
             throw new InvalidOperationException("Failed to find the Program class");
 
-        WriteProgramClass(root, programClass, builder, metadata);
+        WriteProgramClass(root, programClass, builder);
         WriteEverythingElse(root, programClass, builder);
 
         return builder.Replace("\r\n", "\n");
     }
 
-    static void WriteProgramClass(CompilationUnitSyntax root, ClassDeclarationSyntax programClass, StringBuilder builder, ScriptProjectMetadata metadata)
+    static void WriteProgramClass(CompilationUnitSyntax root, ClassDeclarationSyntax programClass, StringBuilder builder)
     {
         var contentSpan = new TextSpan(programClass.OpenBraceToken.SpanStart, programClass.CloseBraceToken.Span.End - programClass.OpenBraceToken.SpanStart);
         var programLines = root.GetText().GetSubText(contentSpan).Lines.Select(l => l.ToString()).ToList();
@@ -43,7 +45,7 @@ public class Composer : IScriptComposer
         var tmpBuffer = new StringBuilder();
         foreach (var line in programLines)
             tmpBuffer.Append(line).Append('\n');
-        tmpBuffer.Unindent(metadata.IndentSize);
+        tmpBuffer.Unindent(IndentSize);
         builder.Append(tmpBuffer);
     }
 
@@ -54,9 +56,7 @@ public class Composer : IScriptComposer
         {
             builder.Append("}\n");
             foreach (var member in everythingElse)
-            {
                 builder.Append(member.ToFullString());
-            }
             for (var i = builder.Length - 1; i >= 0; i--)
             {
                 if (builder[i] == '}')
@@ -110,9 +110,9 @@ public class Composer : IScriptComposer
         var firstLine = programLines[0];
         var braceCount = 0;
         var deleteTo = 0;
-        for (var i = 0; i < firstLine.Length; i++)
+        foreach (var ch in firstLine)
         {
-            if (firstLine[i] == '{')
+            if (ch == '{')
             {
                 if (braceCount == 0)
                 {
@@ -122,7 +122,7 @@ public class Composer : IScriptComposer
                 }
                 break;
             }
-            if (!char.IsWhiteSpace(firstLine[i]))
+            if (!char.IsWhiteSpace(ch))
                 break;
             deleteTo++;
         }

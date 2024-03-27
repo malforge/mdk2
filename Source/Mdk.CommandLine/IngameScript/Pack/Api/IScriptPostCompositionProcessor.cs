@@ -12,7 +12,7 @@ public interface IScriptPostCompositionProcessor
     ///     Processes the script after it has been composed.
     /// </summary>
     /// <param name="script">The script to process.</param>
-    /// <param name="metadata">The metadata for the script project.</param>
+    /// <param name="context">The context for the pack command, containing parameters and services useful for the processor.</param>
     /// <returns></returns>
-    Task<StringBuilder> ProcessAsync(StringBuilder script, ScriptProjectMetadata metadata);
+    Task<StringBuilder> ProcessAsync(StringBuilder script, IPackContext context);
 }

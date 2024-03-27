@@ -1,8 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+using FakeItEasy;
 using FluentAssertions;
-using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
+using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -34,34 +37,42 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            ImmutableHashSet.Create<string>()
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-                using System;
+            using System;
 
-                public class Program
+            public class Program
+            {
+                public void Main()
                 {
-                    public void Main()
-                    {
-                        var y = 2;
-                    }
+                    var y = 2;
                 }
-                """.Replace("\r\n", "\n"));
+            }
+            """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -86,36 +97,43 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = ScriptProjectMetadata.ForOptions(
-                new PackParameters
-                {
-                    MinifierLevel = MinifierLevel.None,
-                    TrimUnusedTypes = false,
-                    ProjectFile = @"A:\Fake\Path\Project.csproj",
-                    Output = @"A:\Fake\Path\Output"
-                },
-                new Version(2, 0, 0)
-            ).WithAdditionalPreprocessorMacros(new[] { "DEBUG" })
-            .Close();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            ImmutableHashSet.Create("DEBUG")
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-                using System;
+            using System;
 
-                public class Program
+            public class Program
+            {
+                public void Main()
                 {
-                    public void Main()
-                    {
-                        var x = 1;
-                        var y = 2;
-                    }
+                    var x = 1;
+                    var y = 2;
                 }
-                """.Replace("\r\n", "\n"));
+            }
+            """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -141,34 +159,42 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            ImmutableHashSet.Create<string>()
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-                using System;
+            using System;
 
-                public class Program
+            public class Program
+            {
+                public void Main()
                 {
-                    public void Main()
-                    {
-                        var y = 2;
-                    }
+                    var y = 2;
                 }
-                """.Replace("\r\n", "\n"));
+            }
+            """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -193,35 +219,43 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            ImmutableHashSet.Create<string>()
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-                using System;
+            using System;
 
-                public class Program
+            public class Program
+            {
+                public void Main()
                 {
-                    public void Main()
-                    {
-                        var x = 1;
-                        var y = 2;
-                    }
+                    var x = 1;
+                    var y = 2;
                 }
-                """.Replace("\r\n", "\n"));
+            }
+            """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -248,35 +282,43 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            ImmutableHashSet.Create<string>()
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-                using System;
+            using System;
 
-                public class Program
+            public class Program
+            {
+                public void Main()
                 {
-                    public void Main()
-                    {
-                        var x = 1;
-                        var z = 3;
-                    }
+                    var x = 1;
+                    var z = 3;
                 }
-                """.Replace("\r\n", "\n"));
+            }
+            """.Replace("\r\n", "\n"));
     }
 
     [Test]
@@ -299,19 +341,27 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         result.Should().BeSameAs(document);
@@ -340,36 +390,42 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             }
             """);
         var processor = new PreprocessorConditionals();
-        var metadata = ScriptProjectMetadata.ForOptions(
-                new PackParameters
-                {
-                    MinifierLevel = MinifierLevel.None,
-                    TrimUnusedTypes = false,
-                    ProjectFile = @"A:\Fake\Path\Project.csproj",
-                    Output = @"A:\Fake\Path\Output"
-                },
-                new Version(2, 0, 0)
-            ).WithAdditionalPreprocessorMacros(new[] { "DEBUG", "TEST2" })
-            .Close();
-
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
+            {
+                MinifierLevel = MinifierLevel.None,
+                TrimUnusedTypes = false,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            ImmutableHashSet.Create("DEBUG", "TEST2")
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
-                using System;
+            using System;
 
-                public class Program
+            public class Program
+            {
+                public void Main()
                 {
-                    public void Main()
-                    {
-                        var x = 1;
-                        var y = 2;
-                    }
+                    var x = 1;
+                    var y = 2;
                 }
-                """.Replace("\r\n", "\n"));
+            }
+            """.Replace("\r\n", "\n"));
     }
 }

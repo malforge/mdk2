@@ -19,7 +19,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 public class Combiner : IScriptCombiner
 {
     /// <inheritdoc />
-    public async Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, ScriptProjectMetadata metadata)
+    public async Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, IPackContext context)
     {
         var trees = await Task.WhenAll(documents.Select(d => d.GetSyntaxTreeAsync()));
 

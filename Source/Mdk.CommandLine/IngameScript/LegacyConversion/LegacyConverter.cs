@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Mdk.CommandLine.Commands.Restore;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.SharedApi;
 using Mdk.CommandLine.Utility;
 
@@ -15,10 +15,10 @@ public class LegacyConverter
     static readonly XNamespace MsbuildNs = "http://schemas.microsoft.com/developer/msbuild/2003";
     // const string MsbuildNs = "http://schemas.microsoft.com/developer/msbuild/2003";
 
-    public async Task ConvertAsync(RestoreParameters restoreParameters, MdkProject project, IConsole console, IHttpClient httpClient)
+    public async Task ConvertAsync(Parameters parameters, MdkProject project, IConsole console, IHttpClient httpClient)
     {
-        await ConvertConfigAsync(project, console, restoreParameters.DryRun);
-        await AddNugetReferencesAsync(project, console, httpClient, restoreParameters.DryRun);
+        await ConvertConfigAsync(project, console, parameters.RestoreVerb.DryRun);
+        await AddNugetReferencesAsync(project, console, httpClient, parameters.RestoreVerb.DryRun);
     }
     
     static async Task ConvertConfigAsync(MdkProject project, IConsole console, bool dryRun)
@@ -30,7 +30,7 @@ public class LegacyConverter
         // var gameBinPath = "auto";
         var outputPath = "auto";
         bool trimTypes;
-        List<string> ignores = ["obj/**/*"];
+        List<string> ignores = ["obj/**/*", "MDK/**/*", "**/*.debug.cs"];
         var minify = LegacyMinifierLevel.None;
 
         console.Trace("Loading legacy property file...");

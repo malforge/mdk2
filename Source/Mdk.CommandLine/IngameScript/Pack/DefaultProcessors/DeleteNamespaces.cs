@@ -19,8 +19,11 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 [RunAfter<PreprocessorConditionals>]
 public class DeleteNamespaces : IScriptPreprocessor
 {
+    // The default indent size. _Maybe_ we will make this configurable in the future.
+    const int IndentSize = 4;
+
     /// <inheritdoc />
-    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, IPackContext metadata)
     {
         var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
         if (syntaxTree == null)
@@ -31,7 +34,7 @@ public class DeleteNamespaces : IScriptPreprocessor
         {
             var current = namespaceDeclarations[0];
 
-            var unindentedMembers = await Task.WhenAll(current.Members.Select(m => UnindentAsync(m, metadata.IndentSize)));
+            var unindentedMembers = await Task.WhenAll(current.Members.Select(m => UnindentAsync(m, IndentSize)));
 
             var newRoot = root.ReplaceNode(current, unindentedMembers);
             root = newRoot;

@@ -24,7 +24,7 @@ public class SymbolProtectionAnnotator : IScriptPostprocessor
     /// <param name="document"></param>
     /// <param name="metadata"></param>
     /// <returns></returns>
-    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, IPackContext metadata)
     {
         var root = await document.GetSyntaxRootAsync();
         if (root == null)

@@ -8,15 +8,15 @@ using Microsoft.CodeAnalysis.Editing;
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
 [RunAfter<PartialMerger>]
-public class TypeSorter: IScriptPostprocessor
+public class TypeSorter : IScriptPostprocessor
 {
-    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
         var root = await document.GetSyntaxRootAsync();
-        
+
         if (root is null)
             return document;
-        
+
         var editor = await DocumentEditor.CreateAsync(document);
         root = editor.GetChangedRoot();
 
@@ -30,7 +30,7 @@ public class TypeSorter: IScriptPostprocessor
         typeDeclarations.Remove(programType);
         editor.RemoveNode(programType);
         editor.InsertBefore(typeDeclarations.First(), programType);
-        
+
         return document.WithSyntaxRoot(editor.GetChangedRoot());
     }
 }

@@ -1,7 +1,10 @@
-﻿using FluentAssertions;
-using Mdk.CommandLine.Commands.Pack;
+﻿using System.Collections.Immutable;
+using FakeItEasy;
+using FluentAssertions;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
+using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -27,19 +30,27 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             }
             """);
         var processor = new PartialMerger();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
@@ -72,19 +83,27 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             }
             """);
         var processor = new PartialMerger();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
@@ -116,19 +135,27 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             }
             """);
         var processor = new PartialMerger();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();
@@ -164,19 +191,27 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             }
             """);
         var processor = new PartialMerger();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
 
         // Act
-        var result = await processor.ProcessAsync(document, metadata);
+        var result = await processor.ProcessAsync(document, context);
 
         // Assert
         var text = await result.GetTextAsync();

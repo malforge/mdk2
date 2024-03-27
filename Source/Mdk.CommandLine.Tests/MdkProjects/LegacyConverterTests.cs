@@ -4,7 +4,7 @@ using System.Xml.Linq;
 using FakeItEasy;
 using FluentAssertions;
 using Mdk.CommandLine;
-using Mdk.CommandLine.Commands.Restore;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.LegacyConversion;
 using Mdk.CommandLine.SharedApi;
 using NUnit.Framework;
@@ -51,13 +51,17 @@ public class LegacyConverterTests
             mdkProject.Project.Should().NotBeNull();
             
             var converter = new LegacyConverter();
-            var restoreParameters = new RestoreParameters
+            var parameters = new Parameters()
             {
-                ProjectFile = projectFileName
+                Verb = Verb.Restore,
+                RestoreVerb =
+                {
+                    ProjectFile = projectFileName
+                }
             };
 
             // Act
-            await converter.ConvertAsync(restoreParameters, mdkProject, console, httpClient);
+            await converter.ConvertAsync(parameters, mdkProject, console, httpClient);
             var projectFileContent = await File.ReadAllTextAsync(projectFileName);
             Console.WriteLine($"--- {projectFileName} ---");
             Console.WriteLine(projectFileContent);

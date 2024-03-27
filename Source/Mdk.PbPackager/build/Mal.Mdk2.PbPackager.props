@@ -25,11 +25,11 @@
 
         <PropertyGroup Condition="'$(MdkInteractive)' == 'on'">
             <MdkRestoreArgumentsList>$(MdkRestoreArgumentsList) -interactive</MdkRestoreArgumentsList>
-            <MdkArgumentsList>$(MdkArgumentsList) -interactive</MdkArgumentsList>
+            <MdkArgumentsList>$(MdkArgumentsList) -interactive </MdkArgumentsList>
         </PropertyGroup>
         
         <PropertyGroup>
-            <MdkArgumentsList>$(MdkArgumentsList) $(MdkArguments)</MdkArgumentsList>
+            <MdkArgumentsList>$(MdkArgumentsList) $(MdkArguments) -configuration $(Configuration)</MdkArgumentsList>
         </PropertyGroup>
     </Target>
     

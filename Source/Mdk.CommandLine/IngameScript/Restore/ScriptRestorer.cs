@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Mdk.CommandLine.Commands.Restore;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.SharedApi;
 using Mdk.CommandLine.Utility;
 
@@ -14,9 +14,9 @@ public class ScriptRestorer
 {
     static readonly XNamespace MsbuildNs = "http://schemas.microsoft.com/developer/msbuild/2003";
 
-    public async Task RestoreAsync(RestoreParameters restoreParameters, MdkProject project, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    public async Task RestoreAsync(Parameters parameters, MdkProject project, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
-        var projectFileName = restoreParameters.ProjectFile ?? throw new InvalidOperationException("Project file not specified.");
+        var projectFileName = parameters.RestoreVerb.ProjectFile ?? throw new InvalidOperationException("Project file not specified.");
         XDocument document;
         using (var reader = new StreamReader(projectFileName))
             document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);

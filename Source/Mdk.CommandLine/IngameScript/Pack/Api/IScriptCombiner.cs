@@ -15,7 +15,7 @@ public interface IScriptCombiner
     /// </summary>
     /// <param name="project">The project the documents are part of.</param>
     /// <param name="documents">The documents to process.</param>
-    /// <param name="metadata">Information about the project being processed.</param>
+    /// <param name="context">The context for the pack command, containing parameters and services useful for the combiner.</param>
     /// <returns></returns>
-    Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, ScriptProjectMetadata metadata);
+    Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, IPackContext context);
 }

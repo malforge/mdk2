@@ -20,9 +20,9 @@ public class PreprocessorConditionals : IScriptPreprocessor
     ///     Removes code within #if DEBUG blocks
     /// </summary>
     /// <param name="document"></param>
-    /// <param name="metadata"></param>
+    /// <param name="context"></param>
     /// <returns></returns>
-    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
         var sourceText = await document.GetTextAsync();
         if (sourceText.Length == 0)
@@ -96,7 +96,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
         }
 
         var result = new StringBuilder();
-        root.Evaluate(metadata.PreprocessorMacros ?? ImmutableHashSet<string>.Empty, result);
+        root.Evaluate(context.PreprocessorSymbols ?? ImmutableHashSet<string>.Empty, result);
 
         return document.WithText(SourceText.From(result.ToString()));
     }
@@ -244,12 +244,12 @@ public class PreprocessorConditionals : IScriptPreprocessor
     abstract class Block
     {
         public List<Block> Children { get; } = new();
-        public abstract void Evaluate(ImmutableHashSet<string> macros, StringBuilder result);
+        public abstract void Evaluate(IImmutableSet<string> macros, StringBuilder result);
     }
 
     class RootBlock : Block
     {
-        public override void Evaluate(ImmutableHashSet<string> macros, StringBuilder result)
+        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
         {
             foreach (var child in Children)
                 child.Evaluate(macros, result);
@@ -260,7 +260,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
     {
         public List<TextLine> Lines { get; } = new();
 
-        public override void Evaluate(ImmutableHashSet<string> macros, StringBuilder result)
+        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
         {
             foreach (var line in Lines)
                 result.Append(line.Text?.ToString(line.SpanIncludingLineBreak) ?? "");
@@ -317,7 +317,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 _ => 0
             };
 
-        public override void Evaluate(ImmutableHashSet<string> macros, StringBuilder result)
+        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
         {
             var condition = EvaluateExpression(macros, Expression);
             if (condition)
@@ -329,7 +329,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 Else?.Evaluate(macros, result);
         }
 
-        bool EvaluateExpression(ImmutableHashSet<string> macros, ImmutableArray<Token> expression)
+        bool EvaluateExpression(IImmutableSet<string> macros, ImmutableArray<Token> expression)
         {
             var stack = new Stack<bool>();
             var i = 0;
@@ -369,7 +369,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
     class ElseBlock : ConditionalBlock
     {
-        public override void Evaluate(ImmutableHashSet<string> macros, StringBuilder result)
+        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
         {
             foreach (var child in Children)
                 child.Evaluate(macros, result);

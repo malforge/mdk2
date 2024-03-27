@@ -14,7 +14,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 /// </summary>
 public class PartialMerger : IScriptPostprocessor
 {
-    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
         var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
         if (syntaxTree == null)

@@ -1,6 +1,7 @@
-﻿using FakeItEasy;
+﻿using System.Collections.Immutable;
+using FakeItEasy;
 using FluentAssertions;
-using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.SharedApi;
@@ -56,16 +57,24 @@ public class ComposerTests
             """);
 
         var composer = new Composer();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
         
         const string expected = """
                        public Program()
@@ -96,10 +105,9 @@ public class ComposerTests
                            }
 
                        """;
-        var console = A.Fake<IConsole>();
 
         // Act
-        var result = await composer.ComposeAsync(document, console, metadata);
+        var result = await composer.ComposeAsync(document, context);
 
         // Assert
         var str = result.ToString();

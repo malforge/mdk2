@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 
@@ -527,11 +528,11 @@ public class Ini
         /// <param name="name"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool TryGet(string name, out string value)
+        public bool TryGet(string name, [MaybeNullWhen(false)] out string value)
         {
             if (Keys.TryGetValue(name, out var key))
             {
-                value = key.ToString();
+                value = key.ToString()!;
                 return true;
             }
             value = string.Empty;
@@ -640,6 +641,13 @@ public class Ini
             value = default;
             return false;
         }
+
+        /// <summary>
+        /// Determines whether the section contains the specified key.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public bool HasKey(string name) => Keys.ContainsKey(name);
     }
 
     /// <summary>
@@ -825,6 +833,6 @@ public class Ini
         /// Returns the raw value or an empty string if the value is null.
         /// </summary>
         /// <returns></returns>
-        public override string ToString() => Value ?? string.Empty;
+        public override string? ToString() => Value;
     }
 }

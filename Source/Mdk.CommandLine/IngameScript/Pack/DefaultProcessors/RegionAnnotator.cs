@@ -13,10 +13,10 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 [RunBefore<PartialMerger>]
 public partial class RegionAnnotator : IScriptPostprocessor
 {
-    public async Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata)
+    public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
         var root = await document.GetSyntaxRootAsync();
-        var rewriter = new MdkAnnotationRewriter(metadata.Macros);
+        var rewriter = new MdkAnnotationRewriter(context.Parameters.PackVerb.Macros);
         root = rewriter.Visit(root);
         if (root == null)
             throw new InvalidOperationException("Failed to rewrite document");

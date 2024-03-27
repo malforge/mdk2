@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Mdk.CommandLine.Commands.Pack;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack.Api;
 using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Utility;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -25,11 +24,11 @@ public class ScriptPacker
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
     /// </summary>
-    /// <param name="options"></param>
+    /// <param name="parameters"></param>
     /// <param name="console"></param>
     /// <param name="interaction"></param>
     /// <exception cref="CommandLineException"></exception>
-    public async Task PackAsync(PackParameters options, IConsole console, IInteraction interaction)
+    public async Task PackAsync(Parameters parameters, IConsole console, IInteraction interaction)
     {
         if (!MSBuildLocator.IsRegistered)
         {
@@ -40,14 +39,14 @@ public class ScriptPacker
         }
         using var workspace = MSBuildWorkspace.Create();
 
-        var projectPath = options.ProjectFile;
+        var projectPath = parameters.PackVerb.ProjectFile;
         if (projectPath == null) throw new CommandLineException(-1, "No project file specified.");
 
         if (string.Equals(Path.GetExtension(projectPath), ".csproj", StringComparison.OrdinalIgnoreCase))
         {
             console.Trace($"Packing a single project: {projectPath}");
             var project = await workspace.OpenProjectAsync(projectPath);
-            if (!await PackProjectAsync(options, project, console, interaction))
+            if (!await PackProjectAsync(parameters, project, console, interaction))
                 throw new CommandLineException(-1, "The project is not recognized as an MDK project.");
 
             console.Print("The project was successfully packed.");
@@ -56,7 +55,7 @@ public class ScriptPacker
         {
             console.Trace("Packaging a solution: " + projectPath);
             var solution = await workspace.OpenSolutionAsync(projectPath);
-            var packedProjects = await PackSolutionAsync(options, solution, console, interaction);
+            var packedProjects = await PackSolutionAsync(parameters, solution, console, interaction);
             switch (packedProjects)
             {
                 case 0:
@@ -76,17 +75,17 @@ public class ScriptPacker
     /// <summary>
     ///     Pack an entire solution.
     /// </summary>
-    /// <param name="options"></param>
+    /// <param name="parameters"></param>
     /// <param name="solution"></param>
     /// <param name="console"></param>
     /// <param name="interaction"></param>
     /// <returns></returns>
-    public async Task<int> PackSolutionAsync(PackParameters options, Solution solution, IConsole console, IInteraction interaction)
+    public async Task<int> PackSolutionAsync(Parameters parameters, Solution solution, IConsole console, IInteraction interaction)
     {
         var packedProjects = 0;
         foreach (var project in solution.Projects)
         {
-            if (await PackProjectAsync(options, project, console, interaction))
+            if (await PackProjectAsync(parameters, project, console, interaction))
                 packedProjects++;
         }
         return packedProjects;
@@ -95,37 +94,46 @@ public class ScriptPacker
     /// <summary>
     ///     Pack an individual project.
     /// </summary>
-    /// <param name="options"></param>
+    /// <param name="parameters"></param>
     /// <param name="project"></param>
     /// <param name="console"></param>
     /// <param name="interaction"></param>
     /// <returns></returns>
     /// <exception cref="CommandLineException"></exception>
-    public async Task<bool> PackProjectAsync(PackParameters options, Project project, IConsole console, IInteraction interaction)
+    public async Task<bool> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
     {
-        var metadata = ScriptProjectMetadata.ForOptions(options, new Version(2, 0, 0));
-        console.Trace("Using the following metadata:")
-            .Trace(metadata.ToString());
+        parameters.DumpTrace(console);
+        UpdateParametersFromConfig(parameters, project, console);
+        ApplyDefaultMacros(parameters);
+        var filter = new PackInclusionFilter(parameters, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
+        var context = new PackContext(parameters, console, interaction, filter, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
 
-        metadata = metadata.WithAdditionalMacros(new Dictionary<string, string>
-            {
-                ["$MDK_DATETIME$"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-                ["$MDK_DATE$"] = DateTime.Now.ToString("yyyy-MM-dd"),
-                ["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm")
-            })
-            .Close(resolveAutoOutputDirectory);
+        return await PackProjectAsync(project, context);
+    }
 
-        switch (metadata.MdkProjectVersion.Major)
+    static void UpdateParametersFromConfig(Parameters parameters, Project project, IConsole console)
+    {
+        var iniFileName = Path.ChangeExtension(project.FilePath, ".mdk.ini");
+        var localIniFileName = Path.ChangeExtension(project.FilePath, ".mdk.local.ini");
+
+        if (File.Exists(iniFileName))
         {
-            case < 1:
-                throw new CommandLineException(-1, "The project is not recognized as an MDK project.");
-            case < 2:
-                console.Trace("Detected a legacy project.");
-                return await PackLegacyProjectAsync(project, metadata, console, interaction);
-            default:
-                console.Trace("Detected a modern project.");
-                return await PackProjectAsync(project, metadata, console, interaction);
+            console.Trace($"Found an MDK project configuration file: {iniFileName}");
+            var ini = Ini.FromFile(iniFileName);
+            parameters.Load(ini);
+            parameters.DumpTrace(console);
         }
+
+        if (File.Exists(localIniFileName))
+        {
+            console.Trace($"Found a local MDK project configuration file: {localIniFileName}");
+            var ini = Ini.FromFile(localIniFileName);
+            parameters.Load(ini);
+            parameters.DumpTrace(console);
+        }
+
+        if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
+            parameters.PackVerb.Output = resolveAutoOutputDirectory();
 
         string resolveAutoOutputDirectory()
         {
@@ -141,34 +149,43 @@ public class ScriptPacker
         }
     }
 
-    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
-    async Task<bool> PackProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console, IInteraction interaction)
+    static void ApplyDefaultMacros(Parameters parameters)
     {
-        var outputPath = Path.Combine(metadata.OutputDirectory, project.Name);
+        if (!parameters.PackVerb.Macros.ContainsKey("$MDK_DATETIME$"))
+            parameters.PackVerb.Macros["$MDK_DATETIME$"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        if (!parameters.PackVerb.Macros.ContainsKey("$MDK_DATE$"))
+            parameters.PackVerb.Macros["$MDK_DATE$"] = DateTime.Now.ToString("yyyy-MM-dd");
+        if (!parameters.PackVerb.Macros.ContainsKey("$MDK_TIME$"))
+            parameters.PackVerb.Macros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
+    }
+
+    async Task<bool> PackProjectAsync(Project project, PackContext context)
+    {
+        var outputPath = Path.Combine(context.Parameters.PackVerb.Output!, project.Name);
         var outputDirectory = new DirectoryInfo(outputPath);
 
         project = await CompileAndValidateProjectAsync(project);
 
         project.TryGetDocument("instructions.readme", out var readmeDocument);
         if (readmeDocument != null)
-            console.Trace("Found a readme file.");
+            context.Console.Trace("Found a readme file.");
 
         project.TryGetDocument("thumb.png", out var thumbnailDocument);
         if (thumbnailDocument != null)
-            console.Trace("Found a thumbnail file.");
+            context.Console.Trace("Found a thumbnail file.");
 
-        bool isNotIgnored(Document arg)
+        bool isNotIgnored(Document doc)
         {
-            return ShouldInclude(arg, metadata);
+            return context.FileFilter.IsMatch(doc.FilePath!);
         }
 
         var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
 
-        if (metadata.Minify != MinifierLevel.None)
-            console.Print($"Minifying is requested, but not supported yet. Ignoring the minifier level {metadata.Minify}.");
-        if (metadata.TrimTypes)
-            console.Print("Trimming unused types is requested, but not supported yet. Ignoring the option.");
-        
+        if (context.Parameters.PackVerb.MinifierLevel != MinifierLevel.None)
+            context.Console.Print($"Minifying is requested, but not supported yet. Ignoring the minifier level {context.Parameters.PackVerb.MinifierLevel}.");
+        if (context.Parameters.PackVerb.TrimUnusedTypes)
+            context.Console.Print("Trimming unused types is requested, but not supported yet. Ignoring the option.");
+
         var manager = ScriptProcessingManager.Create().Build();
 
         var preprocessors = manager.Preprocessors;
@@ -178,7 +195,7 @@ public class ScriptPacker
         var postCompositionProcessors = manager.PostCompositionProcessors;
         var producer = manager.Producer;
 
-        console.Trace("There are:")
+        context.Console.Trace("There are:")
             .Trace($"  {allDocuments.Length} documents")
             .Trace($"  {preprocessors.Count} preprocessors")
             .TraceIf(preprocessors.Count > 0, $"    {string.Join("\n    ", preprocessors.Select(p => p.GetType().Name))}")
@@ -190,15 +207,15 @@ public class ScriptPacker
             .TraceIf(postCompositionProcessors.Count > 0, $"    {string.Join("\n    ", postCompositionProcessors.Select(p => p.GetType().Name))}")
             .Trace($"  producer {producer.GetType().Name}");
 
-        allDocuments = await PreprocessAsync(allDocuments, preprocessors, console, metadata);
-        var scriptDocument = await CombineAsync(project, combiner, allDocuments, outputDirectory, console, metadata);
-        scriptDocument = await PostProcessAsync(scriptDocument, postprocessors, console, metadata);
-        await VerifyAsync(console, scriptDocument);
-        var final = await ComposeAsync(scriptDocument, composer, console, metadata);
-        final = await PostProcessComposition(final, postCompositionProcessors, console, metadata);
-        await ProduceAsync(project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, console, metadata);
+        allDocuments = await PreprocessAsync(allDocuments, preprocessors, context);
+        var scriptDocument = await CombineAsync(project, combiner, allDocuments, outputDirectory, context);
+        scriptDocument = await PostProcessAsync(scriptDocument, postprocessors, context);
+        await VerifyAsync(context.Console, scriptDocument);
+        var final = await ComposeAsync(scriptDocument, composer, context);
+        final = await PostProcessComposition(final, postCompositionProcessors, context);
+        await ProduceAsync(Path.GetDirectoryName(project.FilePath)!, project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, context);
 
-        interaction.Script(project.Name, outputDirectory.FullName);
+        context.Interaction.Script(project.Name, outputDirectory.FullName);
 
         return true;
     }
@@ -231,50 +248,50 @@ public class ScriptPacker
         throw new CommandLineException(-2, "Failed to compile the project.");
     }
 
-    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IScriptPreprocessor> preprocessors, IConsole console, ScriptProjectMetadata metadata)
+    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IScriptPreprocessor> preprocessors, PackContext context)
     {
         async Task<Document> preprocessSyntaxTree(Document document)
         {
             foreach (var preprocessor in preprocessors)
             {
-                console.Trace($"Running {nameof(preprocessor)} {preprocessor.GetType().Name} on {document.Name}");
-                document = await preprocessor.ProcessAsync(document, metadata);
+                context.Console.Trace($"Running {nameof(preprocessor)} {preprocessor.GetType().Name} on {document.Name}");
+                document = await preprocessor.ProcessAsync(document, context);
             }
             return document;
         }
 
         if (preprocessors.Count > 0)
         {
-            console.Trace("Preprocessing syntax trees");
+            context.Console.Trace("Preprocessing syntax trees");
             allDocuments = (await Task.WhenAll(allDocuments.Select(preprocessSyntaxTree))).ToImmutableArray();
         }
         else
-            console.Trace("No preprocessors found.");
+            context.Console.Trace("No preprocessors found.");
         return allDocuments;
     }
 
-    static async Task<Document> CombineAsync(Project project, IScriptCombiner combiner, ImmutableArray<Document> allDocuments, DirectoryInfo outputDirectory, IConsole console, ScriptProjectMetadata metadata)
+    static async Task<Document> CombineAsync(Project project, IScriptCombiner combiner, ImmutableArray<Document> allDocuments, DirectoryInfo outputDirectory, PackContext context)
     {
-        console.Trace($"Running combiner {combiner.GetType().Name}");
-        var scriptDocument = (await combiner.CombineAsync(project, allDocuments, metadata))
+        context.Console.Trace($"Running combiner {combiner.GetType().Name}");
+        var scriptDocument = (await combiner.CombineAsync(project, allDocuments, context))
             .WithName("script.cs")
             .WithFilePath(Path.Combine(outputDirectory.FullName, "script.cs"));
         return scriptDocument;
     }
 
-    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IScriptPostprocessor> postprocessors, IConsole console, ScriptProjectMetadata metadata)
+    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IScriptPostprocessor> postprocessors, PackContext context)
     {
         if (postprocessors.Count > 0)
         {
-            console.Trace("Postprocessing syntax tree");
+            context.Console.Trace("Postprocessing syntax tree");
             foreach (var postprocessor in postprocessors)
             {
-                console.Trace($"Running postprocessor {postprocessor.GetType().Name}");
-                scriptDocument = await postprocessor.ProcessAsync(scriptDocument, metadata);
+                context.Console.Trace($"Running postprocessor {postprocessor.GetType().Name}");
+                scriptDocument = await postprocessor.ProcessAsync(scriptDocument, context);
             }
         }
         else
-            console.Trace("No postprocessors found.");
+            context.Console.Trace("No postprocessors found.");
         return scriptDocument;
     }
 
@@ -291,51 +308,45 @@ public class ScriptPacker
         }
     }
 
-    static async Task<StringBuilder> ComposeAsync(Document scriptDocument, IScriptComposer composer, IConsole console, ScriptProjectMetadata metadata)
+    static async Task<StringBuilder> ComposeAsync(Document scriptDocument, IScriptComposer composer, PackContext context)
     {
-        console.Trace($"Running composer {composer.GetType().Name}");
-        var final = await composer.ComposeAsync(scriptDocument, console, metadata);
+        context.Console.Trace($"Running composer {composer.GetType().Name}");
+        var final = await composer.ComposeAsync(scriptDocument, context);
         return final;
     }
 
-    static async Task<StringBuilder> PostProcessComposition(StringBuilder final, ProcessorSet<IScriptPostCompositionProcessor> postCompositionProcessors, IConsole console, ScriptProjectMetadata metadata)
+    static async Task<StringBuilder> PostProcessComposition(StringBuilder final, ProcessorSet<IScriptPostCompositionProcessor> postCompositionProcessors, PackContext context)
     {
         if (postCompositionProcessors.Count > 0)
         {
-            console.Trace("Post-composing the final script");
+            context.Console.Trace("Post-composing the final script");
             foreach (var postCompositionProcessor in postCompositionProcessors)
             {
-                console.Trace($"Running post-composition processor {postCompositionProcessor.GetType().Name}");
-                final = await postCompositionProcessor.ProcessAsync(final, metadata);
+                context.Console.Trace($"Running post-composition processor {postCompositionProcessor.GetType().Name}");
+                final = await postCompositionProcessor.ProcessAsync(final, context);
             }
         }
         else
-            console.Trace("No post-composition processors found.");
+            context.Console.Trace("No post-composition processors found.");
         return final;
     }
 
-    static async Task ProduceAsync(string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IConsole console, ScriptProjectMetadata metadata)
+    static async Task ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
     {
-        console.Trace($"Running producer {producer.GetType().Name}");
-        console.Trace($"Producing into {outputDirectory.FullName}");
+        context.Console.Trace($"Running producer {producer.GetType().Name}");
+        context.Console.Trace($"Producing into {outputDirectory.FullName}");
         outputDirectory.Create();
-        await producer.ProduceAsync(outputDirectory, console, final, readmeDocument, thumbnailDocument, metadata);
+        await producer.ProduceAsync(outputDirectory, final, readmeDocument, thumbnailDocument, context);
         // get path relative to the project
-        var displayPath = Path.GetRelativePath(metadata.ProjectDirectory, outputDirectory.FullName);
-        console.Print($"{projectName} => {displayPath}");
+        var displayPath = Path.GetRelativePath(projectDirectory, outputDirectory.FullName);
+        context.Console.Print($"{projectName} => {displayPath}");
     }
 
-    static bool ShouldInclude(Document document, ScriptProjectMetadata metadata)
-    {
-        if (document.FilePath == null)
-            return false;
-        
-        return !metadata.ShouldIgnore(document.FilePath);
-    }
-
-    async Task<bool> PackLegacyProjectAsync(Project project, ScriptProjectMetadata metadata, IConsole console, IInteraction interaction)
-    {
-        metadata = metadata.WithAdditionalIgnore("obj/**/*");
-        return await PackProjectAsync(project, metadata, console, interaction);
-    }
+    // static bool ShouldInclude(Document document, ScriptProjectMetadata metadata)
+    // {
+    //     if (document.FilePath == null)
+    //         return false;
+    //
+    //     return !metadata.ShouldIgnore(document.FilePath);
+    // }
 }

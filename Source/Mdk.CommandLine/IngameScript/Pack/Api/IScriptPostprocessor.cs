@@ -12,7 +12,7 @@ public interface IScriptPostprocessor
     ///     Processes the combined syntax tree after all individual code files have been processed.
     /// </summary>
     /// <param name="document">The combined document to process.</param>
-    /// <param name="metadata">Information about the project being processed.</param>
+    /// <param name="context">The context for the pack command, containing parameters and services useful for the processor.</param>
     /// <returns></returns>
-    Task<Document> ProcessAsync(Document document, ScriptProjectMetadata metadata);
+    Task<Document> ProcessAsync(Document document, IPackContext context);
 }

@@ -1,7 +1,10 @@
-﻿using FluentAssertions;
-using Mdk.CommandLine.Commands.Pack;
+﻿using System.Collections.Immutable;
+using FakeItEasy;
+using FluentAssertions;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
+using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -55,19 +58,27 @@ public class CombinerTests
             """);
         project = document5.Project;
         var combiner = new Combiner();
-        var metadata = ScriptProjectMetadata.ForOptions(
-            new PackParameters
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
                 TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
-            },
-            new Version(2, 0, 0)
-        ).Close();
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
 
         // Act
-        var result = await combiner.CombineAsync(project, new[] { document1, document2, document3, document4, document5 }, metadata);
+        var result = await combiner.CombineAsync(project, new[] { document1, document2, document3, document4, document5 }, context);
 
         // Assert
         result.Should().NotBeNull();
