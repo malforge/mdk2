@@ -7,6 +7,8 @@ namespace Mdk.Notification.Windows;
 /// </summary>
 public partial class ToastWindow : Window
 {
+    Task _waitTask = Task.CompletedTask;
+
     /// <summary>
     ///     Creates a new instance of the <see cref="ToastWindow" /> class.
     /// </summary>
@@ -17,12 +19,22 @@ public partial class ToastWindow : Window
 
     void CloseButton_OnClick(object sender, RoutedEventArgs e) => Close();
 
-    void Hyperlink_OnClick(object sender, RoutedEventArgs e)
+    async void Hyperlink_OnClick(object sender, RoutedEventArgs e)
     {
         var hyperlink = (Hyperlink)sender;
         var action = (ToastAction)hyperlink.DataContext;
+        var args = new ToastActionArguments();
+        action.Action(args);
+        _waitTask = args.HoldTask;
+        if (action.OneTimeOnly)
+            hyperlink.IsEnabled = false;
         if (action.IsClosingAction)
-            Close();
-        action.Action();
+            await CloseAsync();
+    }
+
+    public async Task CloseAsync()
+    {
+        await _waitTask;
+        Close();
     }
 }

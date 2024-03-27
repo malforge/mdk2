@@ -82,20 +82,26 @@ public class LegacyConverter
 
     async Task AddNugetReferencesAsync(MdkProject project, IConsole console, IHttpClient httpClient, bool dryRun)
     {
-        var packageVersions = await Nuget.GetPackageVersionsAsync(httpClient, "Mal.Mdk2.PbPackager").OrderByDescending(v => v).ToListAsync();
+        var packageVersions = await Nuget.GetPackageVersionsAsync(httpClient, "Mal.Mdk2.PbPackager", project.Project.FilePath ?? throw new InvalidOperationException("The project file path is invalid."))
+            .ToListAsync();
         if (packageVersions.Count == 0)
             throw new CommandLineException(-1, "The Mal.Mdk2.PbPackager nuget package could not be found on the nuget web site.");
         
         // First see if we can find a non-preview version
-        var packageVersion = packageVersions.FirstOrDefault(v => !v.IsPrerelease());
-        if (packageVersion.IsEmpty())
+        var packageVersion = packageVersions.FirstOrDefault(v => !v.SemanticVersion.IsPrerelease());
+        if (packageVersion.SemanticVersion.IsEmpty())
         {
-            console.Trace("No non-preview version of Mal.Mdk2.PbPackager found. Using the latest preview version.");
+            console.Trace("No non-preview version of Mal.Mdk2.PbPackager found. Finding the latest preview version.");
             packageVersion = packageVersions.First();
         }
         else
-            console.Trace("Using the latest non-preview version of Mal.Mdk2.PbPackager.");
-        console.Trace($"Using version {packageVersion}.");
+            console.Trace("Finding the latest non-preview version of Mal.Mdk2.PbPackager.");
+        
+        var distinctSources = packageVersions.Select(v => v.Source).Distinct().ToList();
+        if (distinctSources.Count == 1)
+            console.Trace($"Found version {packageVersion}.");
+        else
+            console.Trace($"Found version {packageVersion} from {packageVersion.Source}.");
 
         var projectFileContent = await File.ReadAllTextAsync(project.Project.FilePath!);
         var document = XDocument.Parse(projectFileContent);
@@ -107,7 +113,7 @@ public class LegacyConverter
         {
             var packageReference = new XElement(XName.Get("PackageReference", MsbuildNs.NamespaceName))
                 .AddAttribute("Include", "Mal.Mdk2.PbPackager")
-                .AddAttribute("Version", packageVersion.ToString());
+                .AddAttribute("Version", packageVersion.SemanticVersion.ToString());
             
             // Find the first item group which has package references and add the new package reference to it - or create a new item group
             var itemGroup = document.Elements(MsbuildNs, "Project", "ItemGroup", "PackageReference").FirstOrDefault()?.Parent;

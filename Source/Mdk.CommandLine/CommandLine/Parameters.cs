@@ -136,7 +136,7 @@ public class Parameters : IParameters
                         PackVerb.Ignores.AddRange(ignores);
                         continue;
                     }
-                    if (matches("configuration"))
+                    if (matches("-configuration"))
                     {
                         if (!queue.TryDequeue(out var configuration))
                             throw new CommandLineException(-1, "No configuration specified.");
@@ -331,26 +331,28 @@ public class Parameters : IParameters
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public void DumpTrace(IConsole console)
     {
-        console.Trace($"Verb: {Verb}")
-            .TraceIf(Log != null, "Log: {Log}")
-            .TraceIf(Trace, "Trace")
-            .TraceIf(Interactive, "Interactive");
+        console.Trace($"> Verb: {Verb}")
+            .TraceIf(Log != null, "> Log: {Log}")
+            .TraceIf(Trace, "> Trace")
+            .TraceIf(Interactive, "> Interactive");
         switch (Verb)
         {
             case Verb.Help:
-                console.Trace($"Help.Verb: {HelpVerb.Verb}");
+                console.Trace($"> Help.Verb: {HelpVerb.Verb}");
                 break;
             case Verb.Pack:
-                console.Trace($"Pack.ProjectFile: {PackVerb.ProjectFile}")
-                    .TraceIf(PackVerb.GameBin != null, $"Pack.GameBin: {PackVerb.GameBin}")
-                    .TraceIf(PackVerb.Output != null, $"Pack.Output: {PackVerb.Output}")
-                    .TraceIf(PackVerb.MinifierLevel != MinifierLevel.None, $"Pack.MinifierLevel: {PackVerb.MinifierLevel}")
-                    .TraceIf(PackVerb.TrimUnusedTypes, "Pack.TrimUnusedTypes")
-                    .TraceIf(PackVerb.Ignores.Count > 0, $"Pack.Ignores: {string.Join(", ", PackVerb.Ignores)}");
+                console.Trace($"> Pack.ProjectFile: {PackVerb.ProjectFile}")
+                    .TraceIf(PackVerb.GameBin != null, $"> Pack.GameBin: {PackVerb.GameBin}")
+                    .TraceIf(PackVerb.Output != null, $"> Pack.Output: {PackVerb.Output}")
+                    .TraceIf(PackVerb.MinifierLevel != MinifierLevel.None, $"> Pack.MinifierLevel: {PackVerb.MinifierLevel}")
+                    .TraceIf(PackVerb.TrimUnusedTypes, "> Pack.TrimUnusedTypes")
+                    .TraceIf(PackVerb.Ignores.Count > 0, $"> Pack.Ignores: {string.Join(", ", PackVerb.Ignores)}")
+                    .TraceIf(PackVerb.Macros.Count > 0, $"> Pack.Macros: {string.Join(", ", PackVerb.Macros)}")
+                    .TraceIf(PackVerb.Configuration != "Release", $"> Pack.Configuration: {PackVerb.Configuration}");
                 break;
             case Verb.Restore:
-                console.Trace($"Restore.ProjectFile: {RestoreVerb.ProjectFile}")
-                    .TraceIf(RestoreVerb.DryRun, "Restore.DryRun");
+                console.Trace($"> Restore.ProjectFile: {RestoreVerb.ProjectFile}")
+                    .TraceIf(RestoreVerb.DryRun, "> Restore.DryRun");
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

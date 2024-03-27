@@ -27,9 +27,5 @@
       <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
       <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     </ItemGroup>
-    
-    <ItemGroup>
-      <Folder Include="Project\" />
-    </ItemGroup>
 
 </Project>

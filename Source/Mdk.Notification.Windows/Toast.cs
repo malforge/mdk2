@@ -113,7 +113,7 @@ public class Toast
         {
             await Task.Delay(timeout, cts.Token);
             if (!cts.Token.IsCancellationRequested)
-                notification.Close();
+                await notification.CloseAsync();
         }
     }
 

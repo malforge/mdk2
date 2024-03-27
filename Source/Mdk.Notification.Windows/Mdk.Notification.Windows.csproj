@@ -22,11 +22,20 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="Views\NugetHowTo\*.md">
+            <LogicalName>NugetHowToDocuments/%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>    
+    <ItemGroup>
       <Compile Update="Resources.Designer.cs">
         <DesignTime>True</DesignTime>
         <AutoGen>True</AutoGen>
         <DependentUpon>Resources.resx</DependentUpon>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MdXaml" Version="1.27.0" />
     </ItemGroup>
 
 </Project>

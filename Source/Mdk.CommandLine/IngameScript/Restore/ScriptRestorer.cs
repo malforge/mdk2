@@ -21,31 +21,65 @@ public class ScriptRestorer
         using (var reader = new StreamReader(projectFileName))
             document = await XDocument.LoadAsync(reader, LoadOptions.None, CancellationToken.None);
 
-        await CheckNugetPackageVersionAsync(document, httpClient, interaction);
+        await CheckNugetPackageVersionAsync(document, projectFileName, console, httpClient, interaction);
     }
 
-    async Task CheckNugetPackageVersionAsync(XDocument document, IHttpClient httpClient, IInteraction interaction)
+    async Task CheckNugetPackageVersionAsync(XDocument document, string projectFileName, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
-        // Find the Mal.Mdk2.PbPackager nuget package reference in the project
         var pbPackagerReference = document.Elements(MsbuildNs, "Project", "ItemGroup", "PackageReference")
             .FirstOrDefault(e => e.Attribute("Include")?.Value == "Mal.Mdk2.PbPackager");
 
-        // Get the version of the Mal.Mdk2.PbPackager nuget package
         var versionString = pbPackagerReference?.Attribute("Version")?.Value;
         if (versionString is null)
             return;
         if (!SemanticVersion.TryParse(versionString, out var version))
             return;
 
-        // Detect version from Nuget
-        var versions = Nuget.GetPackageVersionsAsync(httpClient, "Mal.Mdk2.PbPackager");
-        SemanticVersion lastVersion;
-        if (version.IsPrerelease())
-            lastVersion = await versions.OrderByDescending(v => v).FirstOrDefaultAsync();
-        else
-            lastVersion = await versions.Where(v => !v.IsPrerelease()).OrderByDescending(v => v).FirstOrDefaultAsync();
+        string? versionFile;
+        try
+        {
+            var appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2");
+            versionFile = Path.Combine(appDataFolder, Path.GetFileNameWithoutExtension(projectFileName) + ".version");
+            if (File.Exists(versionFile))
+            {
+                var fileChanged = File.GetLastWriteTimeUtc(versionFile);
+                var timeSince = DateTime.UtcNow - fileChanged;
+                if (timeSince < TimeSpan.FromDays(1))
+                {
+                    console.Trace("Version file is recent (less than a day old), skipping check.");
+                    return;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            console.Trace("Failed to read version file: " + e.Message);
+            versionFile = null;
+        }
 
-        if (lastVersion > version)
-            interaction.Nuget("Mal.Mdk2.PbPackager", versionString, lastVersion.ToString());
+        var versions = Nuget.GetPackageVersionsAsync(httpClient, "Mal.Mdk2.PbPackager", projectFileName);
+        Nuget.Version lastVersion;
+        if (version.IsPrerelease())
+            lastVersion = await versions.FirstOrDefaultAsync();
+        else
+            lastVersion = await versions.Where(v => !v.SemanticVersion.IsPrerelease()).FirstOrDefaultAsync();
+
+        if (versionFile != null && lastVersion.SemanticVersion > version)
+        {
+            try
+            {
+                var directoryInfo = new FileInfo(versionFile).Directory!;
+                if (!directoryInfo.Exists)
+                    directoryInfo.Create();
+                await File.WriteAllTextAsync(versionFile, lastVersion.SemanticVersion.ToString());
+            }
+            catch (Exception e)
+            {
+                console.Trace("Failed to write version file: " + e.Message);
+            }
+        }
+
+        if (lastVersion.SemanticVersion > version)
+            interaction.Nuget("Mal.Mdk2.PbPackager", versionString, lastVersion.SemanticVersion.ToString());
     }
 }
