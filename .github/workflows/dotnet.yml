@@ -32,9 +32,9 @@ jobs:
         shell: pwsh
         
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.x
         
@@ -44,7 +44,7 @@ jobs:
     - name: Build solution
       run: dotnet build MDK-Packages.sln --configuration Release
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: BuildOutput
         retention-days: 7
@@ -60,7 +60,7 @@ jobs:
           Copy-Item -Path $file.FullName -Destination ${{ env.NuGetDirectory }}
         }
         
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: nuget
         if-no-files-found: error
