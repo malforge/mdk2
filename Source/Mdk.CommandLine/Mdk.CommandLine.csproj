@@ -25,6 +25,7 @@
       <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.8.0" />
       <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
+      <PackageReference Include="System.IO.Hashing" Version="8.0.0" />
       <PackageReference Include="System.Linq.Async" Version="6.0.1" />
     </ItemGroup>
 

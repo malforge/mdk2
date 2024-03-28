@@ -112,13 +112,13 @@ public static class Program
                     break;
 
                 case MdkProjectType.ProgrammableBlock:
-                    console.Print($"Restoring ingame script project: {project.Project.Name}");
+                    console.Print($"MDK is restoring ingame script project: {project.Project.Name}");
                     var restorer = new ScriptRestorer();
                     await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
                     break;
 
                 case MdkProjectType.LegacyProgrammableBlock:
-                    console.Print($"Converting legacy ingame script project: {project.Project.Name}");
+                    console.Print($"MDK is converting legacy ingame script project: {project.Project.Name}");
                     var converter = new LegacyConverter();
                     await converter.ConvertAsync(parameters, project, console, httpClient);
                     goto case MdkProjectType.ProgrammableBlock;

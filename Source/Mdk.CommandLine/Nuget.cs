@@ -62,7 +62,7 @@ public static class Nuget
         await Task.Yield();
         foreach (var file in Directory.EnumerateFiles(source.url, $"{packageName}.*.nupkg"))
         {
-            var versionString = Path.GetFileNameWithoutExtension(file).Substring(packageName.Length + 1);
+            var versionString = Path.GetFileNameWithoutExtension(file)[(packageName.Length + 1)..];
             if (SemanticVersion.TryParse(versionString, out var semVer))
                 yield return new Version(packageName, semVer, source.url, source.displayName);
         }

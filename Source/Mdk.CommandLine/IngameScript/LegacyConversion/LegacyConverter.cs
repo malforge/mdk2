@@ -137,42 +137,44 @@ public class LegacyConverter
     
     static async Task WriteMainIni(IConsole console, LegacyMinifierLevel minify, bool trimTypes, List<string> ignores, string basicIniFileName, bool dryRun)
     {
-        var ini = new Ini()
-            .WithSection("mdk",
-                section => section
-                    .WithKey("type", "programmableblock")
-                    .WithKey("minify", minify.ToString().ToLowerInvariant())
-                    .WithKey("trim", trimTypes ? "yes" : "no")
-                    .WithKey("ignores", string.Join(';', ignores))
-            );
-
+        var iniContent = 
+            $"""
+            [mdk]
+            type=programmableblock
+            trace=off
+            minify={minify.ToString().ToLowerInvariant()}
+            trim={(trimTypes ? "yes" : "no")}
+            ignores={string.Join(';', ignores)}
+            """;
+        
+        await File.WriteAllTextAsync(basicIniFileName, iniContent);
+        
         if (dryRun)
         {
             console.Print($"Dry run: The following {Path.GetFileName(basicIniFileName)} file would be written:");
-            console.Print(ini.ToString());
+            console.Print(iniContent);
             return;
         }
         
-        await File.WriteAllTextAsync(basicIniFileName, ini.ToString());
+        await File.WriteAllTextAsync(basicIniFileName, iniContent);
     }
 
     static async Task WriteLocalIni(IConsole console, string outputPath, string localIniFileName, bool dryRun /*string gameBinPath, */)
     {
-        var ini = new Ini()
-            .WithSection("mdk",
-                section => section
-                    .WithKey("output", outputPath)
-                    // .WithKey("gamebin", gameBinPath)
-            );
+        var iniContent = 
+            $"""
+            [mdk]
+            output={outputPath}
+            """;
         
         if (dryRun)
         {
             console.Print($"Dry run: The following {Path.GetFileName(localIniFileName)} file would be written:");
-            console.Print(ini.ToString());
+            console.Print(iniContent);
             return;
         }
         
-        await File.WriteAllTextAsync(localIniFileName, ini.ToString());
+        await File.WriteAllTextAsync(localIniFileName, iniContent);
     }
 
     static async Task AddOrUpdateGitIgnore(IConsole console, string projectDirectory, string projectFileName, bool dryRun)

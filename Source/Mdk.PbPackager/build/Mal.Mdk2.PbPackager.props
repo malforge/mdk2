@@ -33,7 +33,7 @@
         </PropertyGroup>
     </Target>
     
-    <Target Name="MdkRestore" DependsOnTargets="MdkPackPrepare" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
+    <Target Name="MdkRestore" DependsOnTargets="MdkPackPrepare" BeforeTargets="PreBuildEvent">
         <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore $(MdkRestoreArgumentsList)" />
     </Target>
     

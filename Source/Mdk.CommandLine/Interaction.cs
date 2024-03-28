@@ -107,8 +107,7 @@ public class Interaction : IInteraction
             {
                 FileName = _notifyPath,
                 Arguments = arguments,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                UseShellExecute = true
             }
         };
         try

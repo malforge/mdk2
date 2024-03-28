@@ -19,7 +19,7 @@ namespace Mdk.CommandLine.IngameScript.Pack;
 ///     Processes an MDK project and produces a single script file, which is made compatible with the
 ///     Space Engineers Programmable Block.
 /// </summary>
-public class ScriptPacker
+public class ScriptPacker: ProjectJob
 {
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
@@ -110,45 +110,7 @@ public class ScriptPacker
 
         return await PackProjectAsync(project, context);
     }
-
-    static void UpdateParametersFromConfig(Parameters parameters, Project project, IConsole console)
-    {
-        var iniFileName = Path.ChangeExtension(project.FilePath, ".mdk.ini");
-        var localIniFileName = Path.ChangeExtension(project.FilePath, ".mdk.local.ini");
-
-        if (File.Exists(iniFileName))
-        {
-            console.Trace($"Found an MDK project configuration file: {iniFileName}");
-            var ini = Ini.FromFile(iniFileName);
-            parameters.Load(ini);
-            parameters.DumpTrace(console);
-        }
-
-        if (File.Exists(localIniFileName))
-        {
-            console.Trace($"Found a local MDK project configuration file: {localIniFileName}");
-            var ini = Ini.FromFile(localIniFileName);
-            parameters.Load(ini);
-            parameters.DumpTrace(console);
-        }
-
-        if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
-            parameters.PackVerb.Output = resolveAutoOutputDirectory();
-
-        string resolveAutoOutputDirectory()
-        {
-            console.Trace("Determining the output directory automatically...");
-            if (!OperatingSystem.IsWindows())
-                throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
-            var se = new SpaceEngineers();
-            var output = se.GetDataPath("IngameScripts", "local");
-            if (string.IsNullOrEmpty(output))
-                throw new CommandLineException(-1, "Failed to determine the output directory.");
-            console.Trace("Output directory: " + output);
-            return output;
-        }
-    }
-
+    
     static void ApplyDefaultMacros(Parameters parameters)
     {
         if (!parameters.PackVerb.Macros.ContainsKey("$MDK_DATETIME$"))

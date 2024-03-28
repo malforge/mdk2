@@ -227,9 +227,29 @@ public class Parameters : IParameters
             PackVerb.TrimUnusedTypes = section["trim"].ToBool();
         if (section.HasKey("ignores"))
         {
-            var ignores = section["ignores"].ToString()?.Split(';');
+            var ignores = section["ignores"].ToString()?.Split(',');
             if (ignores is { Length: > 0 })
                 PackVerb.Ignores.AddRange(ignores);
+        }
+        if (section.HasKey("macros"))
+        {
+            var macros = section["macros"].ToString()?.Split(',');
+            if (macros is { Length: > 0 })
+            {
+                foreach (var macro in macros)
+                {
+                    var equalsIndex = macro.IndexOf('=');
+                    if (equalsIndex == -1)
+                        throw new CommandLineException(-1, "Invalid macro format.");
+                    var name = macro[..equalsIndex].Trim();
+                    if (string.IsNullOrWhiteSpace(name))
+                        throw new CommandLineException(-1, "Invalid macro name.");
+                    var value = macro[(equalsIndex + 1)..].Trim();
+                    if (value.StartsWith('"') && value.EndsWith('"'))
+                        value = Unescape(value[1..^1]);
+                    PackVerb.Macros[name] = value;
+                }
+            }
         }
     }
 

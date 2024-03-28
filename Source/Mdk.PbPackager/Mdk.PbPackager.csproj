@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>netstandard2.0</TargetFramework>
         <PathToMdkCommandLine>$(SolutionDir)Mdk.CommandLine\Mdk.CommandLine.csproj</PathToMdkCommandLine>
         <PathToMdkNotificationWindows>$(SolutionDir)Mdk.Notification.Windows\Mdk.Notification.Windows.csproj</PathToMdkNotificationWindows>
         <RootNamespace>Mdk.Packager</RootNamespace>
@@ -30,7 +30,7 @@
         <None Include="$(MSBuildProjectDirectory)/../Mdk.CommandLine/PackageVersion.txt" Pack="false" />
         <None Include="..\malware256.png" Pack="true" PackagePath=""/>
         <None Include="readme.md" Pack="true" PackagePath=""/>
-        <None Include="lib\**\*.*" Pack="True" PackagePath="lib" />
+        <None Include="lib\netstandard2.0\_._" Pack="True" PackagePath="lib\netstandard2.0\" />
         <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build" />
         <Content Include="tools\**\*.*" Pack="true" PackagePath="tools" />
     </ItemGroup>
