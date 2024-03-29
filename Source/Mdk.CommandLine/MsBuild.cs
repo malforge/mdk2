@@ -4,8 +4,15 @@ using Microsoft.Build.Locator;
 
 namespace Mdk.CommandLine;
 
+/// <summary>
+/// MSBuild registration
+/// </summary>
 public static class MsBuild
 {
+    /// <summary>
+    /// Installs the MSBuild instance available on the system.
+    /// </summary>
+    /// <param name="console"></param>
     public static void Install(IConsole console)
     {
         if (MSBuildLocator.IsRegistered)

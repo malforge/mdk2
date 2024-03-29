@@ -3,36 +3,133 @@ using System.Reflection;
 
 namespace Mdk.CommandLine;
 
+/// <summary>
+///     An implementation of the Semantic Versioning specification.
+/// </summary>
+/// <param name="major"></param>
+/// <param name="minor"></param>
+/// <param name="patch"></param>
+/// <param name="preRelease"></param>
+/// <param name="buildMetadata"></param>
 public readonly struct SemanticVersion(int major, int minor, int patch, string? preRelease = null, string? buildMetadata = null)
     : IComparable<SemanticVersion>, IFormattable, IEquatable<SemanticVersion>
 {
-    public bool Equals(SemanticVersion other) => CompareTo(other) == 0;
-
-    public override bool Equals(object? obj) => obj is SemanticVersion other && Equals(other);
-
-    public override int GetHashCode() => HashCode.Combine(Major, Minor, Patch, PreRelease, BuildMetadata);
-
+    /// <summary>
+    ///     An empty semantic version.
+    /// </summary>
     public static readonly SemanticVersion Empty = new();
 
+    /// <summary>
+    ///     Determines if one semantic version is lower than another.
+    /// </summary>
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns></returns>
     public static bool operator <(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) < 0;
+
+    /// <summary>
+    ///     Determines if one semantic version is greater than another.
+    /// </summary>
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns></returns>
     public static bool operator >(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) > 0;
+
+    /// <summary>
+    ///     Determines if one semantic version is lower than or equal to another.
+    /// </summary>
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns></returns>
     public static bool operator <=(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) <= 0;
+
+    /// <summary>
+    ///     Determines if one semantic version is greater than or equal to another.
+    /// </summary>
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns></returns>
     public static bool operator >=(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) >= 0;
+
+    /// <summary>
+    ///     Determines if two semantic versions are equal.
+    /// </summary>
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns></returns>
     public static bool operator ==(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) == 0;
+
+    /// <summary>
+    ///     Determines if two semantic versions are not equal.
+    /// </summary>
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns></returns>
     public static bool operator !=(SemanticVersion left, SemanticVersion right) => left.CompareTo(right) != 0;
 
+    /// <summary>
+    ///     The major version number: "1" in "1.2.3".
+    /// </summary>
     public int Major { get; } = major;
+
+    /// <summary>
+    ///     The minor version number: "2" in "1.2.3".
+    /// </summary>
     public int Minor { get; } = minor;
+
+    /// <summary>
+    ///     The patch version number: "3" in "1.2.3".
+    /// </summary>
     public int Patch { get; } = patch;
+
+    /// <summary>
+    ///     The pre-release version: "alpha" in "1.2.3-alpha".
+    /// </summary>
     public string? PreRelease { get; } = preRelease;
+
+    /// <summary>
+    ///     The build metadata: "build123" in "1.2.3+build123". Note the + as opposed to - for pre-release.
+    /// </summary>
     public string? BuildMetadata { get; } = buildMetadata;
 
+    /// <summary>
+    ///     Determines if the semantic version is empty.
+    /// </summary>
+    /// <returns></returns>
     public bool IsEmpty() => Major == 0 && Minor == 0 && Patch == 0 && PreRelease == null && BuildMetadata == null;
 
+    /// <summary>
+    ///     Determines if the semantic version is a pre-release version.
+    /// </summary>
+    /// <returns></returns>
     public bool IsPrerelease() => PreRelease != null;
 
+    /// <summary>
+    ///     Determines if two semantic versions are equal.
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns></returns>
+    public bool Equals(SemanticVersion other) => CompareTo(other) == 0;
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj) => obj is SemanticVersion other && Equals(other);
+
+    /// <inheritdoc />
+    public override int GetHashCode() => HashCode.Combine(Major, Minor, Patch, PreRelease, BuildMetadata);
+
+    /// <summary>
+    ///     Creates a string representation of the semantic version.
+    /// </summary>
+    /// <returns></returns>
     public override string ToString() => ToString("V", null);
 
+    /// <summary>
+    ///     Creates a string representation of the semantic version.
+    /// </summary>
+    /// <param name="format"></param>
+    /// <param name="formatProvider"></param>
+    /// <returns></returns>
+    /// <exception cref="FormatException"></exception>
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
         if (string.IsNullOrEmpty(format) || format == "V")
@@ -51,6 +148,12 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
         throw new FormatException($"The format string '{format}' is not supported.");
     }
 
+    /// <summary>
+    ///     Extracts a semantic version from an assembly's informational version attribute.
+    /// </summary>
+    /// <param name="assembly"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public static SemanticVersion FromAssemblyInformationalVersion(Assembly assembly)
     {
         var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
@@ -61,6 +164,12 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
         return semanticVersion;
     }
 
+    /// <summary>
+    ///     Extracts a semantic version from an assembly's version attribute.
+    /// </summary>
+    /// <param name="assembly"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public static SemanticVersion FromAssemblyVersion(Assembly assembly)
     {
         var version = assembly.GetName().Version;
@@ -69,6 +178,12 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
         return new SemanticVersion(version.Major, version.Minor, version.Build);
     }
 
+    /// <summary>
+    ///     Attempts to parse a semantic version from a string.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="version"></param>
+    /// <returns></returns>
     public static bool TryParse(string input, out SemanticVersion version)
     {
         version = default;
@@ -92,6 +207,7 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
         return true;
     }
 
+    /// <inheritdoc />
     public int CompareTo(SemanticVersion other)
     {
         var majorComparison = Major.CompareTo(other.Major);
@@ -109,7 +225,7 @@ public readonly struct SemanticVersion(int major, int minor, int patch, string? 
             return -1;
         if (PreRelease is null)
             return 1;
-        
+
         var preRelease = PreRelease;
         var otherPreRelease = other.PreRelease;
 

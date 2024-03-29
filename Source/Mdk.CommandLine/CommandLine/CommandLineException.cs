@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Mdk.CommandLine;
+namespace Mdk.CommandLine.CommandLine;
 
 /// <summary>
 ///     An exception that is thrown when an error occurs in the program, and the program should exit with an error code.

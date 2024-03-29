@@ -10,11 +10,20 @@ using Mdk.CommandLine.Utility;
 
 namespace Mdk.CommandLine.IngameScript.LegacyConversion;
 
+/// <summary>
+/// Converts a legacy MDK project to MDK2.
+/// </summary>
 public class LegacyConverter
 {
     static readonly XNamespace MsbuildNs = "http://schemas.microsoft.com/developer/msbuild/2003";
-    // const string MsbuildNs = "http://schemas.microsoft.com/developer/msbuild/2003";
 
+    /// <summary>
+    /// Converts a legacy MDK project to MDK2.
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <param name="project"></param>
+    /// <param name="console"></param>
+    /// <param name="httpClient"></param>
     public async Task ConvertAsync(Parameters parameters, MdkProject project, IConsole console, IHttpClient httpClient)
     {
         await ConvertConfigAsync(project, console, parameters.RestoreVerb.DryRun);
