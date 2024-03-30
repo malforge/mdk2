@@ -1,9 +1,12 @@
-﻿v.2.0.0-alpha1
- - Emergency publish of a very early build due to the problems with MDK1 and the new version of Visual Studio 2022.
- - This version is highly untested, and is missing the minifier.
- 
+﻿v.2.0.0-alpha52
+ - Added a warning if the final composed script exceeds the maximum allowed character count of the programmable block.
+
 v.2.0.0-alpha51
  - Final structure (I think) for MDK2 command line.
  - Now notifying when new nuget packages are available (currently just Mal.MDK2.PbPackager).
  - Changed to an .ini based configuration rather than an msbuild based one.
  - Added an auto-migrator to add MDK2 support to MDK1 projects.
+
+v.2.0.0-alpha1
+ - Emergency publish of a very early build due to the problems with MDK1 and the new version of Visual Studio 2022.
+ - This version is highly untested, and is missing the minifier.

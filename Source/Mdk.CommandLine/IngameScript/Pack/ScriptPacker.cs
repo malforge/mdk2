@@ -21,6 +21,8 @@ namespace Mdk.CommandLine.IngameScript.Pack;
 /// </summary>
 public class ScriptPacker: ProjectJob
 {
+    const int MaxScriptLength = 100000;
+    
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
     /// </summary>
@@ -177,6 +179,9 @@ public class ScriptPacker: ProjectJob
         final = await PostProcessComposition(final, postCompositionProcessors, context);
         await ProduceAsync(Path.GetDirectoryName(project.FilePath)!, project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, context);
 
+        if (final.Length > MaxScriptLength)
+            context.Interaction.Custom($"NOTE: The final script has {final.Length} characters, which exceeds the maximum of {MaxScriptLength}. The programmable block will not be able to run it.");
+        
         context.Interaction.Script(project.Name, outputDirectory.FullName);
 
         return true;
