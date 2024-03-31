@@ -22,30 +22,29 @@ public static class Nuget
     /// <param name="httpClient"></param>
     /// <param name="packageName"></param>
     /// <param name="projectFileName"></param>
+    /// <param name="timeout"></param>
     /// <returns></returns>
-    public static async IAsyncEnumerable<Version> GetPackageVersionsAsync(IHttpClient httpClient, string packageName, string projectFileName)
+    public static async IAsyncEnumerable<Version> GetPackageVersionsAsync(IHttpClient httpClient, string packageName, string projectFileName, TimeSpan timeout)
     {
-        var results = AsyncEnumerable.Empty<Version>();
-        results = await GetNugetSources(projectFileName)
-            .Distinct()
-            .AggregateAsync(results,
-                (current, source) => current
-                    .Concat(LoadVersionsFromSourceAsync(source, httpClient, packageName)
-                    )
-            );
-
-        results = results
+        var sources = await GetNugetSources(projectFileName).ToListAsync();
+        
+        var allResults = await Task.WhenAll(
+            sources.Select(async source => await LoadVersionsFromSourceAsync(source, httpClient, packageName, timeout).ToListAsync())); 
+        
+        var compiledAndSortedResults = allResults
+            .SelectMany(x => x)
             .Distinct()
             .OrderByDescending(k => k);
-        await foreach (var result in results)
+
+        foreach (var result in compiledAndSortedResults)
             yield return result;
     }
 
-    static async IAsyncEnumerable<Version> LoadVersionsFromSourceAsync((string url, string displayName) source, IHttpClient httpClient, string packageName)
+    static async IAsyncEnumerable<Version> LoadVersionsFromSourceAsync((string url, string displayName) source, IHttpClient httpClient, string packageName, TimeSpan timeout)
     {
         if (source.url.StartsWith("http:") || source.url.StartsWith("https:"))
         {
-            await foreach (var p in LoadVersionsFromWebAsync(source, httpClient, packageName))
+            await foreach (var p in LoadVersionsFromWebAsync(source, httpClient, packageName, timeout))
                 yield return p;
         }
         else
@@ -68,13 +67,13 @@ public static class Nuget
         }
     }
 
-    static async IAsyncEnumerable<Version> LoadVersionsFromWebAsync((string url, string displayName) source, IHttpClient httpClient, string packageName)
+    static async IAsyncEnumerable<Version> LoadVersionsFromWebAsync((string url, string displayName) source, IHttpClient httpClient, string packageName, TimeSpan timeout)
     {
         var requestUrl = string.Format(source.url, packageName.ToLower());
         JsonElement.ArrayEnumerator versions;
         try
         {
-            var response = await httpClient.GetAsync(requestUrl, TimeSpan.FromSeconds(10));
+            var response = await httpClient.GetAsync(requestUrl, timeout);
             if (!response.IsSuccessStatusCode)
                 yield break;
 

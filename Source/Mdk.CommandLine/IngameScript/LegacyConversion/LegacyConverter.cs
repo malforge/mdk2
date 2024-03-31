@@ -91,7 +91,11 @@ public class LegacyConverter
 
     async Task AddNugetReferencesAsync(MdkProject project, IConsole console, IHttpClient httpClient, bool dryRun)
     {
-        var packageVersions = await Nuget.GetPackageVersionsAsync(httpClient, "Mal.Mdk2.PbPackager", project.Project.FilePath ?? throw new InvalidOperationException("The project file path is invalid."))
+        var packageVersions = await Nuget.GetPackageVersionsAsync(
+                httpClient, 
+                "Mal.Mdk2.PbPackager", 
+                project.Project.FilePath ?? throw new InvalidOperationException("The project file path is invalid."),
+                TimeSpan.FromSeconds(30))
             .ToListAsync();
         if (packageVersions.Count == 0)
             throw new CommandLineException(-1, "The Mal.Mdk2.PbPackager nuget package could not be found on the nuget web site.");
@@ -149,11 +153,23 @@ public class LegacyConverter
         var iniContent = 
             $"""
             [mdk]
+            ; This is a programmable block script project.
+            ; You should not change this.
             type=programmableblock
+            
+            ; Toggle trace (on|off) (verbose output)
             trace=off
+            
+            ; What type of minification to use (none|stripcomments|lite|full)
             minify={minify.ToString().ToLowerInvariant()}
+            
+            ; Whether to remove unused types (yes|no)
             trim={(trimTypes ? "yes" : "no")}
-            ignores={string.Join(';', ignores)}
+            
+            ; A list of files and folder to ignore when creating the script.
+            ; This is a comma separated list of glob patterns. 
+            ; See https://code.visualstudio.com/docs/editor/glob-patterns
+            ignores={string.Join(',', ignores)}
             """;
         
         await File.WriteAllTextAsync(basicIniFileName, iniContent);
@@ -173,6 +189,7 @@ public class LegacyConverter
         var iniContent = 
             $"""
             [mdk]
+            ; Where to output the script to (auto|specific path)
             output={outputPath}
             """;
         

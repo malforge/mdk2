@@ -1,4 +1,7 @@
-﻿v.2.0.0-alpha52
+﻿v.2.0.0-alpha54
+ - Fixed an issue where the mdk2 .ini file ignores were made with ; as a separator rather than ,.
+
+v.2.0.0-alpha52
  - Added a warning if the final composed script exceeds the maximum allowed character count of the programmable block.
 
 v.2.0.0-alpha51
