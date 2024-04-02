@@ -85,7 +85,6 @@ namespace Mdk2.PbAnalyzers
 
         void RegisterActions(CompilationStartAnalysisContext context)
         {
-            Debugger.Launch();
             context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.projectdir", out _projectDir);
             _projectDir = _projectDir ?? ".";
             context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.mdk-ignorepaths", out var ignorePaths);
