@@ -11,17 +11,22 @@ public enum MinifierLevel
     None,
 
     /// <summary>
-    ///     Minify the script by removing comments only.
+    ///     Minify the script by removing unused code.
+    /// </summary>
+    Trim,
+
+    /// <summary>
+    ///     Minify the script by removing unused code and comments.
     /// </summary>
     StripComments,
 
     /// <summary>
-    ///     Minify the script by removing comments and whitespace.
+    ///     Perform a light minification of the script, removing unused code, comments, and whitespace.
     /// </summary>
     Lite,
 
     /// <summary>
-    ///     Perform a full minification of the script, removing comments, whitespace, and shortening variable names.
+    ///     Perform a full minification of the script, removing unused code, comments, whitespace, and renaming variables.
     /// </summary>
     Full
 }

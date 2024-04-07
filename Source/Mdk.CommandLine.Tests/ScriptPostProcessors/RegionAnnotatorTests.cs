@@ -28,7 +28,6 @@ public class RegionAnnotatorTests : ScriptPostProcessorTests<RegionAnnotator>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
@@ -80,7 +79,6 @@ public class RegionAnnotatorTests : ScriptPostProcessorTests<RegionAnnotator>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }

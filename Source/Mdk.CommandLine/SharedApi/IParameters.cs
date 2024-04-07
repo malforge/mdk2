@@ -79,11 +79,6 @@ public interface IParameters
         ///     What level of minification to use, if any.
         /// </summary>
         MinifierLevel MinifierLevel { get; }
-
-        /// <summary>
-        ///     Whether to trim away unused types.
-        /// </summary>
-        bool TrimUnusedTypes { get; }
                 
         /// <summary>
         /// What configuration to run the pack for.

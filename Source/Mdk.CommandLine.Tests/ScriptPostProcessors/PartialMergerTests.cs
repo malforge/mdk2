@@ -36,7 +36,6 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
@@ -89,7 +88,6 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
@@ -141,7 +139,6 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
@@ -197,7 +194,6 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }

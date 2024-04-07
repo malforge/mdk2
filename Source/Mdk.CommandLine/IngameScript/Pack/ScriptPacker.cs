@@ -147,8 +147,6 @@ public class ScriptPacker: ProjectJob
 
         if (context.Parameters.PackVerb.MinifierLevel != MinifierLevel.None)
             context.Console.Print($"Minifying is requested, but not supported yet. Ignoring the minifier level {context.Parameters.PackVerb.MinifierLevel}.");
-        if (context.Parameters.PackVerb.TrimUnusedTypes)
-            context.Console.Print("Trimming unused types is requested, but not supported yet. Ignoring the option.");
 
         var manager = ScriptProcessingManager.Create().Build();
 

@@ -27,7 +27,6 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
@@ -61,7 +60,6 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
@@ -104,7 +102,6 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }

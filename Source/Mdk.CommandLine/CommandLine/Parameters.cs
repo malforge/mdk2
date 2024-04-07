@@ -37,7 +37,7 @@ public class Parameters : IParameters
 
     /// <inheritdoc />
     public bool Interactive { get; set; }
-    
+
     IParameters.IHelpVerbParameters IParameters.HelpVerb => HelpVerb;
     IParameters.IPackVerbParameters IParameters.PackVerb => PackVerb;
     IParameters.IRestoreVerbParameters IParameters.RestoreVerb => RestoreVerb;
@@ -124,10 +124,7 @@ public class Parameters : IParameters
                         continue;
                     }
                     if (matches("-trim"))
-                    {
-                        PackVerb.TrimUnusedTypes = true;
-                        continue;
-                    }
+                        throw new CommandLineException(-1, "The -trim option is no longer supported. Use -minifier trim instead.");
                     if (matches("-ignore"))
                     {
                         if (!queue.TryDequeue(out var ignore))
@@ -224,7 +221,12 @@ public class Parameters : IParameters
         if (section.HasKey("minify"))
             PackVerb.MinifierLevel = section["minifier"].ToEnum<MinifierLevel>();
         if (section.HasKey("trim"))
-            PackVerb.TrimUnusedTypes = section["trim"].ToBool();
+        {
+            // This is only here to maintain backwards compatibility with existing configuration files.
+            var trimUnusedTypes = section["trim"].ToBool();
+            if (trimUnusedTypes && PackVerb.MinifierLevel == MinifierLevel.None)
+                PackVerb.MinifierLevel = MinifierLevel.Trim;
+        }
         if (section.HasKey("ignores"))
         {
             var ignores = section["ignores"].ToString()?.Split(',');
@@ -309,8 +311,7 @@ public class Parameters : IParameters
             .Print()
             .Print("Options (for script projects):")
             .Print("  -minifier <level>  Set the minifier level.")
-            .Print("                      - none, strip-comments, lite, full")
-            .Print("  -trim              Trim unused types.")
+            .Print("                      - none (default), trim, strip-comments, lite, full.")
             .Print("  -gamebin <path>    Path to the game's bin folder.")
             .Print("                      \"auto\" to auto-detect the bin folder from Steam (default).")
             .Print("  -output <path>     Write the output to the specified folder.")
@@ -365,7 +366,6 @@ public class Parameters : IParameters
                     .TraceIf(PackVerb.GameBin != null, $"> Pack.GameBin: {PackVerb.GameBin}")
                     .TraceIf(PackVerb.Output != null, $"> Pack.Output: {PackVerb.Output}")
                     .TraceIf(PackVerb.MinifierLevel != MinifierLevel.None, $"> Pack.MinifierLevel: {PackVerb.MinifierLevel}")
-                    .TraceIf(PackVerb.TrimUnusedTypes, "> Pack.TrimUnusedTypes")
                     .TraceIf(PackVerb.Ignores.Count > 0, $"> Pack.Ignores: {string.Join(", ", PackVerb.Ignores)}")
                     .TraceIf(PackVerb.Macros.Count > 0, $"> Pack.Macros: {string.Join(", ", PackVerb.Macros)}")
                     .TraceIf(PackVerb.Configuration != "Release", $"> Pack.Configuration: {PackVerb.Configuration}");
@@ -410,9 +410,6 @@ public class Parameters : IParameters
 
         /// <inheritdoc />
         public MinifierLevel MinifierLevel { get; set; }
-
-        /// <inheritdoc />
-        public bool TrimUnusedTypes { get; set; }
 
         /// <inheritdoc />
         public string? Configuration { get; set; } = "Release";

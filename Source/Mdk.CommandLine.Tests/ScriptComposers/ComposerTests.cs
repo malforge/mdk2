@@ -63,7 +63,6 @@ public class ComposerTests
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }

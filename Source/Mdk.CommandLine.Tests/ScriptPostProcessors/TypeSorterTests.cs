@@ -28,7 +28,6 @@ public class TypeSorterTests : ScriptPostProcessorTests<TypeSorter>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
@@ -62,7 +61,6 @@ public class TypeSorterTests : ScriptPostProcessorTests<TypeSorter>
             PackVerb = 
             {
                 MinifierLevel = MinifierLevel.None,
-                TrimUnusedTypes = false,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }
