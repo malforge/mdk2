@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
+[RunAfter<CommentStripper>]
 public class WhitespaceTrimmer : IScriptPostprocessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)

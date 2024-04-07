@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
+[RunAfter<WhitespaceTrimmer>]
 public class SymbolRenamer : IScriptPostprocessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
@@ -12,6 +13,6 @@ public class SymbolRenamer : IScriptPostprocessor
         if (context.Parameters.PackVerb.MinifierLevel < MinifierLevel.Full)
             return document;
         await Task.Yield();
-        throw new NotImplementedException("TypeTrimmer is not implemented yet.");
+        throw new NotImplementedException("SymbolRenamer is not implemented yet.");
     }
 }
