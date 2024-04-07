@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack.Api;
 using Mdk.CommandLine.SharedApi;
-using Mdk.CommandLine.Utility;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
