@@ -20,6 +20,6 @@ public class WhitespaceTrimmer : IScriptPostprocessor
             return document;
         }
         await Task.Yield();
-        throw new NotImplementedException("TypeTrimmer is not implemented yet.");
+        throw new NotImplementedException("Whitespace Trimmer is not implemented yet.");
     }
 }

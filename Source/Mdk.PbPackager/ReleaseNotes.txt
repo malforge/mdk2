@@ -1,23 +1,26 @@
-﻿v.2.0.0-alpha59
+﻿v.2.0.0-alpha060
+ - Wrong / confusing error message for a part of the minifier that isn't finished yet
+  
+v.2.0.0-alpha059
  - Fixed type trimmer removing types it shouldn't have, and vice versa.
   
-v.2.0.0-alpha58
+v.2.0.0-alpha058
  - Fixed minifier specification being wrongly named in the package arguments (minifier instead of minify).
 
-v.2.0.0-alpha57
+v.2.0.0-alpha057
  - Fixed minifier specification being wrongly named in the MDK2 command line (minifier instead of minify).
 
-v.2.0.0-alpha56
+v.2.0.0-alpha056
  - Added the type trimmer minifier level to the MDK2 command line.
  - Added the comment removal minifier level to the MDK2 command line.
 
-v.2.0.0-alpha54
+v.2.0.0-alpha054
  - Fixed an issue where the mdk2 .ini file ignores were made with ; as a separator rather than ,.
 
-v.2.0.0-alpha52
+v.2.0.0-alpha052
  - Added a warning if the final composed script exceeds the maximum allowed character count of the programmable block.
 
-v.2.0.0-alpha51
+v.2.0.0-alpha051
  - Final structure (I think) for MDK2 command line.
  - Now notifying when new nuget packages are available (currently just Mal.MDK2.PbPackager).
  - Changed to an .ini based configuration rather than an msbuild based one.
