@@ -256,6 +256,7 @@ public class ScriptPacker: ProjectJob
                 context.Console.Trace($"Running postprocessor {postprocessor.GetType().Name}");
                 var code = await scriptDocument.GetTextAsync();
                 scriptDocument = await postprocessor.ProcessAsync(scriptDocument, context);
+                scriptDocument = await scriptDocument.RemoveUnnecessaryUsingsAsync();
             }
         }
         else

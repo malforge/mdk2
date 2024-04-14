@@ -40,7 +40,7 @@ public class Combiner : IScriptCombiner
         var documentIds = documents.Select(d => d.Id).ToImmutableArray();
         var document = project.RemoveDocuments(documentIds)
             .AddDocument("script.cs", await combinedSyntaxTree.GetRootAsync());
-
-        return document;
+        
+        return await document.RemoveUnnecessaryUsingsAsync();
     }
 }

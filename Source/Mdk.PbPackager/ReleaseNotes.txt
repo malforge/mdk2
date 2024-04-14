@@ -1,4 +1,7 @@
-﻿v.2.0.0-alpha061
+﻿v.2.0.0-alpha072
+ - Fixed a bug where references to sub-namespaces would cause compile errors. 
+
+v.2.0.0-alpha061
  - Fixed warning about unusable minifier
 
 v.2.0.0-alpha060
