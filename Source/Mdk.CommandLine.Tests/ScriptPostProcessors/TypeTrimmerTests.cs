@@ -472,7 +472,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
         };
         var context = new PackContext(
             parameters,
-            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IConsole>(),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IImmutableSet<string>>(o => o.Strict())

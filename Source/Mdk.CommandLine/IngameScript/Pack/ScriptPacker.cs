@@ -251,6 +251,7 @@ public class ScriptPacker: ProjectJob
             foreach (var postprocessor in postprocessors)
             {
                 context.Console.Trace($"Running postprocessor {postprocessor.GetType().Name}");
+                var code = await scriptDocument.GetTextAsync();
                 scriptDocument = await postprocessor.ProcessAsync(scriptDocument, context);
             }
         }

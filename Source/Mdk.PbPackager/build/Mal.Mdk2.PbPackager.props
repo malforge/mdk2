@@ -16,13 +16,9 @@
     <Target Name="MdkPackPrepare">
         <PropertyGroup>
             <MdkRestoreArgumentsList>&quot;$(MSBuildProjectFullPath)&quot;</MdkRestoreArgumentsList>
-            <MdkArgumentsList>&quot;$(MSBuildProjectFullPath)&quot; -minifier $(MdkMinifier) -output &quot;$(MdkOutput)&quot;</MdkArgumentsList>
+            <MdkArgumentsList>&quot;$(MSBuildProjectFullPath)&quot; -minify $(MdkMinifier) -output &quot;$(MdkOutput)&quot;</MdkArgumentsList>
         </PropertyGroup>
-
-        <PropertyGroup Condition="'$(MdkTrim)' == 'on'">
-            <MdkArgumentsList>$(MdkArgumentsList) -trim</MdkArgumentsList>
-        </PropertyGroup>
-
+        
         <PropertyGroup Condition="'$(MdkInteractive)' == 'on'">
             <MdkRestoreArgumentsList>$(MdkRestoreArgumentsList) -interactive</MdkRestoreArgumentsList>
             <MdkArgumentsList>$(MdkArgumentsList) -interactive </MdkArgumentsList>

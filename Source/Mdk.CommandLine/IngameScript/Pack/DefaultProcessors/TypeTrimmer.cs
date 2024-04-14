@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -19,143 +18,74 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 [RunAfter<SymbolProtectionAnnotator>]
 public class TypeTrimmer : IScriptPostprocessor
 {
-    /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
-        if (context.Parameters.PackVerb.MinifierLevel < MinifierLevel.Trim)
-            return document;
-        var analyzer = new UsageAnalyzer();
-        var nodes = new Dictionary<ISymbol, Node>(SymbolEqualityComparer.Default);
-        var symbolDefinitions = await analyzer.FindUsagesAsync(document);
-        var symbolLookup = symbolDefinitions.GroupBy(d => d.Symbol, SymbolEqualityComparer.Default)
-            .Where(g => g.Key != null)
-            .ToDictionary(g => g.Key!, g => g.ToList(), SymbolEqualityComparer.Default);
-        var rootNode = await document.GetSyntaxRootAsync();
-        if (rootNode == null)
-            return document;
-
-        foreach (var definition in symbolDefinitions)
+        while (true)
         {
-            if (definition.Symbol is not ITypeSymbol typeSymbol)
-                continue;
-            if (typeSymbol.TypeKind == TypeKind.TypeParameter)
-                continue;
-
-            if (!nodes.TryGetValue(definition.Symbol, out var node))
-                nodes[definition.Symbol] = node = new Node(definition);
-            else
-                node.Definitions.Add(definition);
-
-            if (!definition.HasUsageData)
-                continue;
+            var rootNode = await document.GetSyntaxRootAsync();
+            if (rootNode == null)
+                return document;
+            var semanticModel = await document.GetSemanticModelAsync();
+            if (semanticModel == null)
+                return document;
+            var solution = document.Project.Solution;
             
-            foreach (var usage in definition.Usage)
+            var allTypeDeclarations = rootNode.DescendantNodes().OfType<TypeDeclarationSyntax>();
+            var unusedTypes = new List<TypeDeclarationSyntax>();
+            foreach (var typeDeclaration in allTypeDeclarations)
             {
-                foreach (var location in usage.Locations)
+                if (semanticModel.GetDeclaredSymbol(typeDeclaration) is not INamedTypeSymbol symbol)
+                    continue;
+                if (!IsEligibleForRemoval(typeDeclaration, symbol))
+                    continue;
+                var references = (await SymbolFinder.FindReferencesAsync(symbol, solution)).ToList();
+                
+                // Check for extension class usage
+                if (symbol is { IsDefinition: true } and ITypeSymbol { TypeKind: TypeKind.Class, IsStatic: true, ContainingType: null } typeSymbol)
                 {
-                    var enclosingSymbol = await FindTypeSymbolAsync(rootNode, location);
-                    var enclosingSymbolDefinitions = symbolLookup[enclosingSymbol];
-                    if (!nodes.TryGetValue(enclosingSymbol, out var referencingNode))
-                        nodes[enclosingSymbol] = referencingNode = new Node(enclosingSymbolDefinitions);
-                    if (node != referencingNode)
-                        referencingNode.References.Add(node);
+                    var members = typeSymbol.GetMembers().Where(m => m is IMethodSymbol { IsStatic: true, IsExtensionMethod: true }).ToArray();
+                    foreach (var member in members)
+                        references.AddRange(await SymbolFinder.FindReferencesAsync(member, document.Project.Solution));
                 }
+                
+                references.RemoveAll(reference => !reference.Locations.Any());
+                references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingType(rootNode, typeDeclaration, location)));
+                
+                if (references.Count > 0)
+                    continue;
+                
+                unusedTypes.Add(typeDeclaration);
+                context.Console.Trace($"Unused type: {symbol.Name}");
             }
+            
+            if (unusedTypes.Count == 0)
+                break;
+            
+            rootNode = rootNode.RemoveNodes(unusedTypes, SyntaxRemoveOptions.KeepNoTrivia);
+            if (rootNode == null)
+                throw new InvalidOperationException("Failed to remove unused types.");
+            document = document.WithSyntaxRoot(rootNode);
         }
-
-        var program = symbolDefinitions.FirstOrDefault(d => d.FullName == "Program");
-        if (program?.Symbol == null || !nodes.TryGetValue(program.Symbol, out var programNode))
-            throw new InvalidOperationException("Cannot find entry point");
-
-        var usedNodes = new List<Node>();
-        var queue = new Queue<Node>();
-        var visitedNodes = new HashSet<Node>();
-        queue.Enqueue(programNode);
-        while (queue.Count > 0)
-        {
-            var node = queue.Dequeue();
-            if (!visitedNodes.Add(node))
-                continue;
-            usedNodes.Add(node);
-            foreach (var reference in node.References)
-                queue.Enqueue(reference);
-        }
-
-        var usedSymbolDefinitions = usedNodes.SelectMany(n => n.Definitions).ToImmutableHashSet();
-        var unusedSymbolDefinitions = symbolDefinitions.Where(definition => IsEligibleForRemoval(definition) && !usedSymbolDefinitions.Contains(definition)).ToList();
-        var nodesToRemove = unusedSymbolDefinitions.Select(definition => definition.FullName!).ToImmutableHashSet();
-
-        var walker = new RemovalWalker(nodesToRemove);
-        rootNode = walker.Visit(rootNode);
-        foreach (var symbol in unusedSymbolDefinitions)
-            rootNode = RemoveDefinition(rootNode, symbol);
-
-        return document.WithSyntaxRoot(rootNode);
+        return document;
     }
 
-    static SyntaxNode RemoveDefinition(SyntaxNode rootNode, SymbolDefinitionInfo symbol) => rootNode.RemoveNode(symbol.SyntaxNode, SyntaxRemoveOptions.KeepUnbalancedDirectives)!;
-
-    static bool IsEligibleForRemoval(SymbolDefinitionInfo definition)
+    static bool IsEligibleForRemoval(TypeDeclarationSyntax typeDeclaration, INamedTypeSymbol symbol)
     {
-        if (definition.IsProtected)
+        if (symbol.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName) == "Program")
             return false;
-        var symbol = definition.Symbol;
-        if (!(symbol?.IsDefinition ?? false))
+        if (typeDeclaration.Identifier.ShouldBePreserved())
             return false;
-        if (symbol is not ITypeSymbol typeSymbol)
+        if (!symbol.IsDefinition)
             return false;
-        if (typeSymbol.TypeKind == TypeKind.TypeParameter)
+        if (symbol.TypeKind == TypeKind.TypeParameter)
             return false;
         return true;
     }
-
-    static ISymbol FindTypeSymbol(ISymbol symbol)
+    
+    static bool IsSelfReferencingType(SyntaxNode root, TypeDeclarationSyntax typeDeclaration, ReferenceLocation referenceLocation)
     {
-        if (symbol is ITypeSymbol)
-            return symbol;
-        return symbol.ContainingType;
-    }
-
-    static async Task<ISymbol> FindTypeSymbolAsync(SyntaxNode rootNode, ReferenceLocation location)
-    {
-        var semanticModel = await location.Document.GetSemanticModelAsync();
-        if (semanticModel == null)
-            throw new InvalidOperationException("Failed to get semantic model for reference location.");
-        var syntaxNode = rootNode.FindNode(location.Location.SourceSpan);
-        var typeDeclarationNode = syntaxNode.AncestorsAndSelf().FirstOrDefault(node => node is TypeDeclarationSyntax);
-        if (typeDeclarationNode != null)
-        {
-            var symbol = semanticModel.GetDeclaredSymbol(typeDeclarationNode);
-            if (symbol != null)
-                return symbol;
-        }
-
-        var enclosingSymbol = semanticModel.GetEnclosingSymbol(location.Location.SourceSpan.Start);
-        if (enclosingSymbol == null)
-            throw new InvalidOperationException("Failed to get enclosing symbol for reference location.");
-
-        return FindTypeSymbol(enclosingSymbol);
-    }
-
-    class Node
-    {
-        public Node(SymbolDefinitionInfo definition)
-        {
-            Definitions = new HashSet<SymbolDefinitionInfo>
-            {
-                definition
-            };
-        }
-
-        public Node(IEnumerable<SymbolDefinitionInfo> definitions)
-        {
-            Definitions = new HashSet<SymbolDefinitionInfo>(definitions);
-        }
-
-        public HashSet<SymbolDefinitionInfo> Definitions { get; }
-
-        public HashSet<Node> References { get; } = [];
-
-        public override string ToString() => Definitions.FirstOrDefault()?.FullName ?? "";
+        var referenceNode = root.FindNode(referenceLocation.Location.SourceSpan);
+        var referenceTypeDeclaration = referenceNode.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
+        return referenceTypeDeclaration == typeDeclaration;
     }
 }

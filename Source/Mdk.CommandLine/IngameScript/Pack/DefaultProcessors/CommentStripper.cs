@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
 /// <summary>
-/// A processor that removes comments from the script.
+///     A processor that removes comments from the script.
 /// </summary>
 [RunAfter<TypeTrimmer>]
 public class CommentStripper : IScriptPostprocessor
@@ -14,7 +14,10 @@ public class CommentStripper : IScriptPostprocessor
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
         if (context.Parameters.PackVerb.MinifierLevel < MinifierLevel.StripComments)
+        {
+            context.Console.Trace("Skipping comment stripping because the minifier level < StripComments.");
             return document;
+        }
         var simplifier = new CommentStrippingRewriter();
         return await simplifier.ProcessAsync(document);
     }

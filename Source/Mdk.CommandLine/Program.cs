@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.IO;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
@@ -22,15 +21,15 @@ public static class Program
             ((DirectConsole)console).TraceEnabled = true;
         if (parameters?.Log == null)
             return console;
-
+        
         var fileLogger = new FileConsole(parameters.Log, parameters.Trace);
         console = new CompositeConsole
         {
-            Loggers = ImmutableArray.Create(console, fileLogger)
+            Loggers = [console, fileLogger]
         };
         return console;
     }
-
+    
     /// <summary>
     ///     The main entry point for the command line application.
     /// </summary>
@@ -65,7 +64,7 @@ public static class Program
             return e.ErrorCode;
         }
     }
-
+    
     /// <summary>
     ///     Run the application with the specified parameters and services.
     /// </summary>
@@ -94,15 +93,15 @@ public static class Program
                 throw new ArgumentOutOfRangeException();
         }
     }
-
+    
     static async Task RestoreAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
         if (parameters.RestoreVerb.ProjectFile is null) throw new CommandLineException(-1, "No project file specified.");
         if (!File.Exists(parameters.RestoreVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.RestoreVerb.ProjectFile}' does not exist.");
-
+        
         if (parameters.RestoreVerb.DryRun)
             console.Print("Currently performing a dry run. No changes will be made.");
-
+        
         await foreach (var project in MdkProject.LoadAsync(parameters.RestoreVerb.ProjectFile, console))
         {
             switch (project.Type)
@@ -110,19 +109,19 @@ public static class Program
                 case MdkProjectType.Mod:
                     console.Print($"Mod projects are not yet implemented: {project.Project.Name}");
                     break;
-
+                
                 case MdkProjectType.ProgrammableBlock:
                     console.Print($"MDK is restoring ingame script project: {project.Project.Name}");
                     var restorer = new ScriptRestorer();
                     await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
                     break;
-
+                
                 case MdkProjectType.LegacyProgrammableBlock:
                     console.Print($"MDK is converting legacy ingame script project: {project.Project.Name}");
                     var converter = new LegacyConverter();
                     await converter.ConvertAsync(parameters, project, console, httpClient);
                     goto case MdkProjectType.ProgrammableBlock;
-
+                
                 case MdkProjectType.Unknown:
                     console.Print($"The project file {project.Project.Name} does not seem to be an MDK project.");
                     break;

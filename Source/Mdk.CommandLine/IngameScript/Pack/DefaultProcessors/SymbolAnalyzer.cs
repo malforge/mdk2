@@ -24,12 +24,12 @@ class SymbolAnalyzer
 
     static bool IsNotSpecialDefinitions(SymbolDefinitionInfo s) => s.Symbol is { IsOverride: false } && !s.Symbol.IsInterfaceImplementation();
 
-    public async Task<SymbolDefinitionInfo[]> FindSymbolsAsync(Document document)
+    public SymbolDefinitionInfo[] FindSymbols(SyntaxNode root, SemanticModel semanticModel)
     {
-        var root = await document.GetSyntaxRootAsync();
-        var semanticModel = await document.GetSemanticModelAsync();
-        if (root == null || semanticModel == null)
-            return Array.Empty<SymbolDefinitionInfo>();
+        // var root = await document.GetSyntaxRootAsync();
+        // var semanticModel = await document.GetSemanticModelAsync();
+        // if (root == null || semanticModel == null)
+        //     return Array.Empty<SymbolDefinitionInfo>();
 
         return root.DescendantNodes().Where(node => node.IsSymbolDeclaration())
             .Select(n => new SymbolDefinitionInfo(semanticModel.GetDeclaredSymbol(n), n))

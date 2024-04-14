@@ -1,4 +1,17 @@
-﻿v.2.0.0-alpha54
+﻿v.2.0.0-alpha59
+ - Fixed type trimmer removing types it shouldn't have, and vice versa.
+  
+v.2.0.0-alpha58
+ - Fixed minifier specification being wrongly named in the package arguments (minifier instead of minify).
+
+v.2.0.0-alpha57
+ - Fixed minifier specification being wrongly named in the MDK2 command line (minifier instead of minify).
+
+v.2.0.0-alpha56
+ - Added the type trimmer minifier level to the MDK2 command line.
+ - Added the comment removal minifier level to the MDK2 command line.
+
+v.2.0.0-alpha54
  - Fixed an issue where the mdk2 .ini file ignores were made with ; as a separator rather than ,.
 
 v.2.0.0-alpha52

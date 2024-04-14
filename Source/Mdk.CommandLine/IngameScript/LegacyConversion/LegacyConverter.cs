@@ -160,11 +160,8 @@ public class LegacyConverter
             ; Toggle trace (on|off) (verbose output)
             trace=off
             
-            ; What type of minification to use (none|stripcomments|lite|full)
+            ; What type of minification to use (none|trim|stripcomments|lite|full)
             minify={minify.ToString().ToLowerInvariant()}
-            
-            ; Whether to remove unused types (yes|no)
-            trim={(trimTypes ? "yes" : "no")}
             
             ; A list of files and folder to ignore when creating the script.
             ; This is a comma separated list of glob patterns. 

@@ -102,7 +102,7 @@ public class Parameters : IParameters
                     break;
 
                 case Verb.Pack:
-                    if (matches("-minifier"))
+                    if (matches("-minify"))
                     {
                         if (!queue.TryDequeue(out MinifierLevel level))
                             throw new CommandLineException(-1, "No or unknown minifier specified.");
@@ -124,7 +124,7 @@ public class Parameters : IParameters
                         continue;
                     }
                     if (matches("-trim"))
-                        throw new CommandLineException(-1, "The -trim option is no longer supported. Use -minifier trim instead.");
+                        throw new CommandLineException(-1, "The -trim option is no longer supported. Use -minify trim instead.");
                     if (matches("-ignore"))
                     {
                         if (!queue.TryDequeue(out var ignore))
@@ -219,7 +219,7 @@ public class Parameters : IParameters
         if (section.HasKey("output"))
             PackVerb.Output = section["output"].ToString();
         if (section.HasKey("minify"))
-            PackVerb.MinifierLevel = section["minifier"].ToEnum<MinifierLevel>();
+            PackVerb.MinifierLevel = section["minify"].ToEnum<MinifierLevel>();
         if (section.HasKey("trim"))
         {
             // This is only here to maintain backwards compatibility with existing configuration files.
