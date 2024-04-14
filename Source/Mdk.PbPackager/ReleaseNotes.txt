@@ -1,4 +1,7 @@
-﻿v.2.0.0-alpha060
+﻿v.2.0.0-alpha061
+ - Fixed warning about unusable minifier
+
+v.2.0.0-alpha060
  - Wrong / confusing error message for a part of the minifier that isn't finished yet
   
 v.2.0.0-alpha059

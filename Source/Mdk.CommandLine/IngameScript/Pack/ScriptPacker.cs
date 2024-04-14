@@ -143,10 +143,13 @@ public class ScriptPacker: ProjectJob
         }
 
         var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
-
-        if (context.Parameters.PackVerb.MinifierLevel != MinifierLevel.None)
-            context.Console.Print($"Minifying is requested, but not supported yet. Ignoring the minifier level {context.Parameters.PackVerb.MinifierLevel}.");
-
+        
+        if (context.Parameters.PackVerb.MinifierLevel > MinifierLevel.StripComments)
+        {
+            context.Console.Print($"Minifying above {context.Parameters.PackVerb.MinifierLevel} level is not supported yet. Clamp to {MinifierLevel.StripComments}.");
+            context.Parameters.PackVerb.MinifierLevel = MinifierLevel.StripComments;
+        }
+        
         var manager = ScriptProcessingManager.Create().Build();
 
         var preprocessors = manager.Preprocessors;
