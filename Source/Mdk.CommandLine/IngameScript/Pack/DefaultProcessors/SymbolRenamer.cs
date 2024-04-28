@@ -14,7 +14,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///     A processor that renames symbols in the script to single or double character names, in order to reduce the script's
 ///     size.
 /// </summary>
-[RunAfter<WhitespaceTrimmer>]
+[RunAfter<CommentStripper>]
 public partial class SymbolRenamer : IScriptPostprocessor
 {
     static readonly SymbolDisplayFormat OurFormat = new(

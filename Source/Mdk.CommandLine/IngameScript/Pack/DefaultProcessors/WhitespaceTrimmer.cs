@@ -8,7 +8,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 /// <summary>
 ///     A processor that removes whitespace from the script.
 /// </summary>
-[RunAfter<CommentStripper>]
+[RunAfter<SymbolRenamer>]
 public class WhitespaceTrimmer : IScriptPostprocessor
 {
     /// <inheritdoc />
@@ -19,8 +19,15 @@ public class WhitespaceTrimmer : IScriptPostprocessor
             context.Console.Trace("Skipping whitespace trimming because the minifier level < Lite.");
             return document;
         }
-        await Task.Yield();
+        
+        var root = await document.GetSyntaxRootAsync();
+        var rewriter = new WhitespaceCompactor();
+        var newRoot = rewriter.Visit(root) ?? throw new InvalidOperationException("Failed to rewrite the syntax tree.");
+        
+        var lineBreaker = new LineWrapper();
+        newRoot = lineBreaker.Visit(newRoot) ?? throw new InvalidOperationException("Failed to rewrite the syntax tree.");
+        
+        document = document.WithSyntaxRoot(newRoot);
         return document;
-        // throw new NotImplementedException("Whitespace Trimmer is not implemented yet.");
     }
 }
