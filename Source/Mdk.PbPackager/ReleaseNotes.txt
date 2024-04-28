@@ -1,4 +1,7 @@
-﻿v.2.0.0-alpha072
+﻿v.2.0.0-alpha073
+ - Minifiers Ahoy! (the two last major minifier components are now in place)
+
+v.2.0.0-alpha072
  - Fixed a bug where references to sub-namespaces would cause compile errors. 
 
 v.2.0.0-alpha061
