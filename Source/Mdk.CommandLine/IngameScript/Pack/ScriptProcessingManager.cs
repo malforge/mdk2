@@ -49,11 +49,11 @@ public class ScriptProcessingManager
     public static ProcessingManagerBuilder Create() =>
         new()
         {
-            Preprocessors = DefaultProcessorTypes.Preprocessors.ToImmutableArray(),
+            Preprocessors = [..DefaultProcessorTypes.Preprocessors],
             Combiner = DefaultProcessorTypes.Combiner,
-            Postprocessors = DefaultProcessorTypes.Postprocessors.ToImmutableArray(),
+            Postprocessors = [..DefaultProcessorTypes.Postprocessors],
             Composer = DefaultProcessorTypes.Composer,
-            PostCompositionProcessors = DefaultProcessorTypes.PostCompositionProcessors.ToImmutableArray(),
+            PostCompositionProcessors = [..DefaultProcessorTypes.PostCompositionProcessors],
             Producer = DefaultProcessorTypes.Producer
         };
 
@@ -248,7 +248,7 @@ public class ScriptProcessingManager
         public static readonly Type Combiner = typeof(Combiner);
         public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(RegionAnnotator), typeof(TypeSorter), typeof(SymbolProtectionAnnotator), typeof(TypeTrimmer), typeof(CommentStripper), typeof(WhitespaceTrimmer), typeof(SymbolRenamer)];
         public static readonly Type Composer = typeof(Composer);
-        public static readonly Type[] PostCompositionProcessors = Array.Empty<Type>();
+        public static readonly Type[] PostCompositionProcessors = [];
         public static readonly Type Producer = typeof(Producer);
     }
 }

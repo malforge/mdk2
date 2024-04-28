@@ -16,7 +16,7 @@ public class SymbolProtectionAnnotator : IScriptPostprocessor
     ///     The protected symbol annotation can be used to make sure that certain symbols are not removed by any subsequent
     ///     processors (like the minifier).
     /// </summary>
-    public static readonly SyntaxAnnotation ProtectedSymbolAnnotation = new("MDKProtectedSymbol");
+    public static readonly SyntaxAnnotation ProtectedSymbolAnnotation = new("MDK", "preserve");
 
     /// <summary>
     ///     Annotates the Program class and its Main and Save methods with a protected symbol annotation.
@@ -36,6 +36,11 @@ public class SymbolProtectionAnnotator : IScriptPostprocessor
             return document;
         var newProgramClass = programClass.WithIdentifier(programClass.Identifier.WithAdditionalAnnotations(ProtectedSymbolAnnotation)).WithAdditionalAnnotations(ProtectedSymbolAnnotation);
 
+        // Find and annotate the Program constructor
+        var constructor = newProgramClass.Members.OfType<ConstructorDeclarationSyntax>().FirstOrDefault(c => c.ParameterList.Parameters.Count == 0);
+        if (constructor != null)
+            newProgramClass = newProgramClass.ReplaceNode(constructor, constructor.WithIdentifier(constructor.Identifier.WithAdditionalAnnotations(ProtectedSymbolAnnotation)).WithAdditionalAnnotations(ProtectedSymbolAnnotation));
+        
         // Find and annotate the Main methods
         var mainMethods = newProgramClass.Members.OfType<MethodDeclarationSyntax>().Where(m => m.Identifier.Text == "Main").ToDictionary(m => m, m => m);
         var keys = mainMethods.Keys.ToArray();
