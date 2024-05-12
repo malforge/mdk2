@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "github.com/malware-dev/MDK-SE",
+  "classifications": ["MDK: Space Engineers"],
+  "name": "Programmable Block Mixin (MDK2)",
+  "description": "A mixin extension for MDK2: Programmable Block Script projects.",
+  "groupIdentity": "Mal.Mdk2.Templates",
+  "identity": "Mal.Mdk2.IngameScriptMixinTemplate",
+  "shortName": "mdk2pbmixin",
+  "defaultName": "Mdk.PbMixin1",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "PbMixin",
+  "symbols": {
+  }
+}

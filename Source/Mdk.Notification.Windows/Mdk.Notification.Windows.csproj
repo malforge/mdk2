@@ -8,10 +8,8 @@
         <UseWPF>true</UseWPF>
         <AssemblyName>mdknotify-win</AssemblyName>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <OutputPath>..\Mdk.CommandLine\bin\Debug\net8.0\win-x64</OutputPath>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

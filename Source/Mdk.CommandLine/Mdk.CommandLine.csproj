@@ -12,6 +12,8 @@
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <Description>This is part of the MDK2 project.</Description>
         <Copyright>2024 Morten "Malware" Aune Lyrstad</Copyright>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
     </PropertyGroup>
 
     <Target Name="BuildMdk" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">

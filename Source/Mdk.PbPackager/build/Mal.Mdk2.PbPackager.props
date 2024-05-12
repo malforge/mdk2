@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
     <PropertyGroup>
-        <MdkMinifier>none</MdkMinifier>
-        <MdkTrim>off</MdkTrim>
-        <MdkInteractive>on</MdkInteractive>
-        <MdkOutput>auto</MdkOutput>
         <MdkBuildConfiguration>all</MdkBuildConfiguration>
         <MdkArguments />
     </PropertyGroup>
@@ -14,16 +10,6 @@
     </ItemGroup>
 
     <Target Name="MdkPackPrepare">
-        <PropertyGroup>
-            <MdkRestoreArgumentsList>&quot;$(MSBuildProjectFullPath)&quot;</MdkRestoreArgumentsList>
-            <MdkArgumentsList>&quot;$(MSBuildProjectFullPath)&quot; -minify $(MdkMinifier) -output &quot;$(MdkOutput)&quot;</MdkArgumentsList>
-        </PropertyGroup>
-        
-        <PropertyGroup Condition="'$(MdkInteractive)' == 'on'">
-            <MdkRestoreArgumentsList>$(MdkRestoreArgumentsList) -interactive</MdkRestoreArgumentsList>
-            <MdkArgumentsList>$(MdkArgumentsList) -interactive </MdkArgumentsList>
-        </PropertyGroup>
-        
         <PropertyGroup>
             <MdkArgumentsList>$(MdkArgumentsList) $(MdkArguments) -configuration $(Configuration)</MdkArgumentsList>
         </PropertyGroup>

@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.PbPackager", "Mdk.PbPac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.PbAnalyzers", "Mdk.PbAnalyzers\Mdk.PbAnalyzers.csproj", "{822DDB41-DBF4-445D-A945-F1B482AB396D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptTemplates", "ScriptTemplates\ScriptTemplates.csproj", "{181BD1EA-A09B-4F00-AF87-75A50CB106B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{822DDB41-DBF4-445D-A945-F1B482AB396D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{822DDB41-DBF4-445D-A945-F1B482AB396D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{822DDB41-DBF4-445D-A945-F1B482AB396D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{181BD1EA-A09B-4F00-AF87-75A50CB106B4}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{181BD1EA-A09B-4F00-AF87-75A50CB106B4}.Debug|Any CPU.Build.0 = Debug|x64
+		{181BD1EA-A09B-4F00-AF87-75A50CB106B4}.Release|Any CPU.ActiveCfg = Release|x64
+		{181BD1EA-A09B-4F00-AF87-75A50CB106B4}.Release|Any CPU.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

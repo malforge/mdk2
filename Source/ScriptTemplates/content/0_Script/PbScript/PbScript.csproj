@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netframework48</TargetFramework>
+        <RootNamespace>IngameScript</RootNamespace>
+        <LangVersion>6</LangVersion>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
+        
+
+<!--        <PackageType>Template</PackageType>-->
+<!--        <PackageVersion>2.0.1</PackageVersion>-->
+<!--        <PackageId>Mal.Mdk2.Template</PackageId>-->
+<!--        <Title>&gt;Space Engineers Programmable Block Script Template</Title>-->
+<!--        <Authors>Morten "Malware" Aune Lyrstad</Authors>-->
+<!--        <Description>Templates to use when creating an application</Description>-->
+<!--        <PackageTags>dotnet;templates;space engineers;pb;programmable block;ingame script</PackageTags>-->
+<!--        <IncludeContentInPack>true</IncludeContentInPack>-->
+<!--        <IncludeBuildOutput>false</IncludeBuildOutput>-->
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Mal.Mdk2.PbAnalyzers" Version="2.*" />
+      <PackageReference Include="Mal.Mdk2.PbPackager" Version="2.*" />
+      <PackageReference Include="Mal.Mdk2.References" Version="2.*" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Instructions.readme" />
+      <AdditionalFiles Include="Instructions.readme" />
+    </ItemGroup>
+
+</Project>
