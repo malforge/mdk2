@@ -24,7 +24,7 @@ public class ScriptRestorer : ProjectJob
     /// <exception cref="InvalidOperationException"></exception>
     public async Task RestoreAsync(Parameters parameters, MdkProject project, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
-        UpdateParametersFromConfig(parameters, project.Project, console);
+        ApplyMissingParametersFromConfig(parameters, project.Project, console);
         var projectFileName = parameters.RestoreVerb.ProjectFile ?? throw new InvalidOperationException("Project file not specified.");
         XDocument document;
         using (var reader = new StreamReader(projectFileName))

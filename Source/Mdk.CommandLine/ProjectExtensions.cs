@@ -73,18 +73,24 @@ public static class ProjectExtensions
     {
         // Simulate a build to get diagnostics
         var compilation = await document.Project.GetCompilationAsync();
+        if (compilation == null)
+            throw new InvalidOperationException("Failed to get compilation.");
         var diagnostics = compilation.GetDiagnostics();
         
         // Filter for CS0246 errors
         var invalidNamespaceDiagnostics = diagnostics.Where(d => d.Id == "CS0246");
         
         var root = await document.GetSyntaxRootAsync();
+        if (root == null)
+            throw new InvalidOperationException("Failed to get syntax root.");
         var usingDirectivesToRemove = invalidNamespaceDiagnostics
-            .SelectMany(d => root.FindToken(d.Location.SourceSpan.Start).Parent.AncestorsAndSelf().OfType<UsingDirectiveSyntax>())
+            .SelectMany(d => root.FindToken(d.Location.SourceSpan.Start).Parent!.AncestorsAndSelf().OfType<UsingDirectiveSyntax>())
             .Distinct();
         
         // Remove the using directives
         var newRoot = root.RemoveNodes(usingDirectivesToRemove, SyntaxRemoveOptions.KeepNoTrivia);
+        if (newRoot == null)
+            throw new InvalidOperationException("Failed to remove unnecessary using directives.");
         var formattedRoot = Formatter.Format(newRoot, Formatter.Annotation, document.Project.Solution.Workspace);
         return document.WithSyntaxRoot(formattedRoot);
 
@@ -110,13 +116,13 @@ public static class ProjectExtensions
         // return document.WithSyntaxRoot(formattedRoot);
     }
     
-    static bool IsUsingDirectiveUnnecessary(UsingDirectiveSyntax usingDirective, SemanticModel model)
-    {
-        if (usingDirective.Name is null)
-            return false;
-        
-        var namespaceName = usingDirective.Name.ToString();
-        var symbols = model.LookupNamespacesAndTypes(usingDirective.SpanStart, name: namespaceName);
-        return !symbols.Any();
-    }
+    // static bool IsUsingDirectiveUnnecessary(UsingDirectiveSyntax usingDirective, SemanticModel model)
+    // {
+    //     if (usingDirective.Name is null)
+    //         return false;
+    //     
+    //     var namespaceName = usingDirective.Name.ToString();
+    //     var symbols = model.LookupNamespacesAndTypes(usingDirective.SpanStart, name: namespaceName);
+    //     return !symbols.Any();
+    // }
 }

@@ -9,41 +9,62 @@ namespace Mdk.CommandLine.CommandLine;
 /// <summary>
 ///     The default implementation of <see cref="IParameters" />.
 /// </summary>
-public class Parameters : IParameters
+public class Parameters : TracksPropertyChanges, IParameters
 {
+    bool _interactive;
+    string? _log;
+    bool _trace;
+    Verb _verb;
+    
     /// <summary>
     ///     Detailed parameters for the help verb.
     /// </summary>
     public HelpVerbParameters HelpVerb { get; } = new();
-
+    
     /// <summary>
     ///     Detailed parameters for the pack verb.
     /// </summary>
     public PackVerbParameters PackVerb { get; } = new();
-
+    
     /// <summary>
     ///     Detailed parameters for the restore verb.
     /// </summary>
     public RestoreVerbParameters RestoreVerb { get; } = new();
-
+    
     /// <inheritdoc />
-    public Verb Verb { get; set; }
-
+    public Verb Verb
+    {
+        get => _verb;
+        set => SetField(ref _verb, value);
+    }
+    
     /// <inheritdoc />
-    public string? Log { get; set; }
-
+    public string? Log
+    {
+        get => _log;
+        set => SetField(ref _log, value);
+    }
+    
     /// <inheritdoc />
-    public bool Trace { get; set; }
-
+    public bool Trace
+    {
+        get => _trace;
+        set => SetField(ref _trace, value);
+    }
+    
     /// <inheritdoc />
-    public bool Interactive { get; set; }
-
+    public bool Interactive
+    {
+        get => _interactive;
+        set => SetField(ref _interactive, value);
+    }
+    
     IParameters.IHelpVerbParameters IParameters.HelpVerb => HelpVerb;
     IParameters.IPackVerbParameters IParameters.PackVerb => PackVerb;
     IParameters.IRestoreVerbParameters IParameters.RestoreVerb => RestoreVerb;
-
+    
     static string Unescape(string value) => value.Replace("&quot;", "\"");
-
+    
     /// <summary>
     ///     Parses parameters from the provided list of command line arguments.
     /// </summary>
@@ -60,7 +81,7 @@ public class Parameters : IParameters
             {
                 return string.Equals(arg, what, StringComparison.OrdinalIgnoreCase);
             }
-
+            
             if (matches("-log"))
             {
                 if (!queue.TryDequeue(out var log))
@@ -68,19 +89,19 @@ public class Parameters : IParameters
                 Log = log;
                 continue;
             }
-
+            
             if (matches("-trace"))
             {
                 Trace = true;
                 continue;
             }
-
+            
             if (matches("-interactive"))
             {
                 Interactive = true;
                 continue;
             }
-
+            
             switch (verb)
             {
                 case Verb.None:
@@ -90,7 +111,7 @@ public class Parameters : IParameters
                         throw new CommandLineException(-1, $"Unknown verb '{arg}'.");
                     Verb = verb;
                     break;
-
+                
                 case Verb.Help:
                     if (arg.StartsWith('-'))
                         throw new CommandLineException(-1, $"Unknown option '{arg}' for verb '{verb}'.");
@@ -100,7 +121,7 @@ public class Parameters : IParameters
                         throw new CommandLineException(-1, $"Unknown verb '{arg}'.");
                     HelpVerb.Verb = verb;
                     break;
-
+                
                 case Verb.Pack:
                     if (matches("-minify"))
                     {
@@ -162,7 +183,7 @@ public class Parameters : IParameters
                         throw new CommandLineException(-1, "Only one project file can be specified.");
                     PackVerb.ProjectFile = arg;
                     break;
-
+                
                 case Verb.Restore:
                     if (matches("-dry-run"))
                     {
@@ -175,29 +196,29 @@ public class Parameters : IParameters
                         throw new CommandLineException(-1, "Only one project file can be specified.");
                     RestoreVerb.ProjectFile = arg;
                     break;
-
+                
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
-
+        
         if (verb == Verb.None)
             throw new CommandLineException(-1, "No verb specified.");
-
+        
         switch (verb)
         {
             case Verb.Pack:
                 if (PackVerb.ProjectFile == null)
                     throw new CommandLineException(-1, "No project file specified.");
                 break;
-
+            
             case Verb.Restore:
                 if (RestoreVerb.ProjectFile == null)
                     throw new CommandLineException(-1, "No project file specified.");
                 break;
         }
     }
-
+    
     /// <summary>
     ///     Attempts to load the parameters from the specified arguments.
     /// </summary>
@@ -205,22 +226,23 @@ public class Parameters : IParameters
     ///     Will only overwrite values that are specified in the ini file, allowing for partial configuration.
     /// </remarks>
     /// <param name="ini"></param>
-    public void Load(Ini ini)
+    /// <param name="overrideExisting">Whether to override existing values. Default is <c>true</c>.</param>
+    public void Load(Ini ini, bool overrideExisting = true)
     {
         var section = ini["mdk"];
-        if (section.HasKey("log"))
+        if (section.HasKey("log") && (overrideExisting || !IsSet(this, nameof(Log))))
             Log = section["log"].ToString();
-        if (section.HasKey("trace"))
+        if (section.HasKey("trace") && (overrideExisting || !IsSet(this, nameof(Trace))))
             Trace = section["trace"].ToBool();
-        if (section.HasKey("interactive"))
+        if (section.HasKey("interactive") && (overrideExisting || !IsSet(this, nameof(Interactive))))
             Interactive = section["interactive"].ToBool();
-        if (section.HasKey("game-bin"))
+        if (section.HasKey("game-bin") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.GameBin))))
             PackVerb.GameBin = section["game-bin"].ToString();
-        if (section.HasKey("output"))
+        if (section.HasKey("output") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.Output))))
             PackVerb.Output = section["output"].ToString();
-        if (section.HasKey("minify"))
+        if (section.HasKey("minify") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.MinifierLevel))))
             PackVerb.MinifierLevel = section["minify"].ToEnum<MinifierLevel>();
-        if (section.HasKey("trim"))
+        if (section.HasKey("trim") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.MinifierLevel))))
         {
             // This is only here to maintain backwards compatibility with existing configuration files.
             var trimUnusedTypes = section["trim"].ToBool();
@@ -254,7 +276,7 @@ public class Parameters : IParameters
             }
         }
     }
-
+    
     /// <summary>
     ///     Show help as defined by the parameters.
     /// </summary>
@@ -289,7 +311,7 @@ public class Parameters : IParameters
                 break;
         }
     }
-
+    
     void ShowHelpAboutRestore(IConsole console) =>
         console.Print("Usage: mdk restore <project-file> [options]")
             .Print()
@@ -304,7 +326,7 @@ public class Parameters : IParameters
             .Print()
             .Print("Example:")
             .Print("  mdk restore MyProject.csproj -interactive");
-
+    
     void ShowHelpAboutPack(IConsole console) =>
         console.Print("Usage: mdk pack <project-file> [options]")
             .Print("Packs a script or mod project into a workshop-ready package.")
@@ -328,7 +350,7 @@ public class Parameters : IParameters
             .Print()
             .Print("Example:")
             .Print("  mdk pack /path/to/project.csproj -minifier full -output auto");
-
+    
     void ShowGeneralHelp(IConsole console) =>
         console.Print("Usage: mdk [options] <verb> [verb-options]")
             .Print()
@@ -344,7 +366,7 @@ public class Parameters : IParameters
             .Print("  version      Display the version of MDK.")
             .Print()
             .Print("Use 'mdk help <verb>' for more information on a verb.");
-
+    
     /// <summary>
     ///     Dumps trace information to the console.
     /// </summary>
@@ -378,58 +400,101 @@ public class Parameters : IParameters
                 throw new ArgumentOutOfRangeException();
         }
     }
-
+    
     /// <summary>
     ///     Default implementation of <see cref="IParameters.IHelpVerbParameters" />.
     /// </summary>
-    public class HelpVerbParameters : IParameters.IHelpVerbParameters
+    public class HelpVerbParameters : TracksPropertyChanges, IParameters.IHelpVerbParameters
     {
+        Verb _verb;
+        
         /// <inheritdoc />
-        public Verb Verb { get; set; }
+        public Verb Verb
+        {
+            get => _verb;
+            set => SetField(ref _verb, value);
+        }
     }
-
+    
     /// <summary>
     ///     Default implementation of <see cref="IParameters.IPackVerbParameters" />.
     /// </summary>
-    public class PackVerbParameters : IParameters.IPackVerbParameters
+    public class PackVerbParameters : TracksPropertyChanges, IParameters.IPackVerbParameters
     {
+        string? _configuration = "Release";
+        string? _gameBin;
+        MinifierLevel _minifierLevel;
+        string? _output;
+        string? _projectFile;
+        
         /// <inheritdoc cref="IParameters.IPackVerbParameters.Ignores" />
         public List<string> Ignores { get; } = new();
-
+        
         /// <inheritdoc cref="IParameters.IPackVerbParameters.Macros" />
         public Dictionary<string, string> Macros { get; } = new(StringComparer.OrdinalIgnoreCase);
-
+        
         /// <inheritdoc />
-        public string? ProjectFile { get; set; }
-
+        public string? ProjectFile
+        {
+            get => _projectFile;
+            set => SetField(ref _projectFile, value);
+        }
+        
         /// <inheritdoc />
-        public string? GameBin { get; set; }
-
+        public string? GameBin
+        {
+            get => _gameBin;
+            set => SetField(ref _gameBin, value);
+        }
+        
         /// <inheritdoc />
-        public string? Output { get; set; }
-
+        public string? Output
+        {
+            get => _output;
+            set => SetField(ref _output, value);
+        }
+        
         /// <inheritdoc />
-        public MinifierLevel MinifierLevel { get; set; }
-
+        public MinifierLevel MinifierLevel
+        {
+            get => _minifierLevel;
+            set => SetField(ref _minifierLevel, value);
+        }
+        
         /// <inheritdoc />
-        public string? Configuration { get; set; } = "Release";
-
+        public string? Configuration
+        {
+            get => _configuration;
+            set => SetField(ref _configuration, value);
+        }
+        
         /// <inheritdoc />
         IReadOnlyList<string> IParameters.IPackVerbParameters.Ignores => Ignores;
-
+        
         /// <inheritdoc />
         IReadOnlyDictionary<string, string> IParameters.IPackVerbParameters.Macros => Macros;
     }
-
+    
     /// <summary>
     ///     Default implementation of <see cref="IParameters.IRestoreVerbParameters" />.
     /// </summary>
-    public class RestoreVerbParameters : IParameters.IRestoreVerbParameters
+    public class RestoreVerbParameters : TracksPropertyChanges, IParameters.IRestoreVerbParameters
     {
+        bool _dryRun;
+        string? _projectFile;
+        
         /// <inheritdoc />
-        public string? ProjectFile { get; set; }
-
+        public string? ProjectFile
+        {
+            get => _projectFile;
+            set => SetField(ref _projectFile, value);
+        }
+        
         /// <inheritdoc />
-        public bool DryRun { get; set; }
+        public bool DryRun
+        {
+            get => _dryRun;
+            set => SetField(ref _dryRun, value);
+        }
     }
 }

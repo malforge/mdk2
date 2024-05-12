@@ -104,7 +104,7 @@ public class ScriptPacker: ProjectJob
     public async Task<bool> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
     {
         parameters.DumpTrace(console);
-        UpdateParametersFromConfig(parameters, project, console);
+        ApplyMissingParametersFromConfig(parameters, project, console);
         ApplyDefaultMacros(parameters);
         var filter = new PackInclusionFilter(parameters, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
         var context = new PackContext(parameters, console, interaction, filter, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
@@ -224,7 +224,7 @@ public class ScriptPacker: ProjectJob
         if (preprocessors.Count > 0)
         {
             context.Console.Trace("Preprocessing syntax trees");
-            allDocuments = (await Task.WhenAll(allDocuments.Select(preprocessSyntaxTree))).ToImmutableArray();
+            allDocuments = [..await Task.WhenAll(allDocuments.Select(preprocessSyntaxTree))];
         }
         else
             context.Console.Trace("No preprocessors found.");

@@ -19,19 +19,11 @@ public abstract class ProjectJob
     /// <param name="project"></param>
     /// <param name="console"></param>
     /// <exception cref="CommandLineException"></exception>
-    protected static void UpdateParametersFromConfig(Parameters parameters, Project project, IConsole console)
+    protected static void ApplyMissingParametersFromConfig(Parameters parameters, Project project, IConsole console)
     {
         var iniFileName = Path.ChangeExtension(project.FilePath, ".mdk.ini");
         var localIniFileName = Path.ChangeExtension(project.FilePath, ".mdk.local.ini");
-
-        if (File.Exists(iniFileName))
-        {
-            console.Trace($"Found an MDK project configuration file: {iniFileName}");
-            var ini = Ini.FromFile(iniFileName);
-            parameters.Load(ini);
-            parameters.DumpTrace(console);
-        }
-
+        
         if (File.Exists(localIniFileName))
         {
             console.Trace($"Found a local MDK project configuration file: {localIniFileName}");
@@ -39,10 +31,18 @@ public abstract class ProjectJob
             parameters.Load(ini);
             parameters.DumpTrace(console);
         }
-
+        
+        if (File.Exists(iniFileName))
+        {
+            console.Trace($"Found an MDK project configuration file: {iniFileName}");
+            var ini = Ini.FromFile(iniFileName);
+            parameters.Load(ini);
+            parameters.DumpTrace(console);
+        }
+        
         if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
             parameters.PackVerb.Output = resolveAutoOutputDirectory();
-
+    
         string resolveAutoOutputDirectory()
         {
             console.Trace("Determining the output directory automatically...");
