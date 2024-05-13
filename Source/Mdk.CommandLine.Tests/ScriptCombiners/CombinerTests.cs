@@ -23,7 +23,9 @@ public class CombinerTests
         var document1 = project.AddDocument("TestDocument1",
             """
             using System;
-            class Program {}
+            class Program {
+                Int32 i;
+            }
 
             """);
         project = document1.Project;
@@ -31,14 +33,21 @@ public class CombinerTests
             """
             using System;
             using System.Collections.Generic;
-            class OtherClass {}
+            class OtherClass {
+                List<Int32> list;
+            }
 
             """);
         project = document2.Project;
         var document3 = project.AddDocument("TestDocument3",
             """
             using System.Linq;
-            class AnotherClass {}
+            class AnotherClass {
+                IEnumerable<Int32> enumerable;
+                void Method() {
+                    var query = enumerable.Select(i => i);
+                }
+            }
 
             """);
         project = document3.Project;
@@ -46,14 +55,19 @@ public class CombinerTests
             """
             using System.Text;
             using System.Collections.Generic;
-            class YetAnotherClass {}
+            class YetAnotherClass {
+                StringBuilder builder;
+                List<String> list;
+            }
 
             """);
         project = document4.Project;
         var document5 = project.AddDocument("TestDocument5",
             """
             using System.Threading.Tasks;
-            class AndAnotherClass {}
+            class AndAnotherClass {
+                Task task;
+            }
 
             """);
         project = document5.Project;

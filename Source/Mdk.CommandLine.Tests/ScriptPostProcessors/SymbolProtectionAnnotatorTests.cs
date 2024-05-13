@@ -131,75 +131,82 @@ public class SymbolProtectionAnnotatorTests : ScriptPostProcessorTests<RegionAnn
         root.Should().NotBeNull();
 
         var programClass = root!.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "Program");
-        var annotations = programClass.GetAnnotations("MDKProtectedSymbol");
+        var annotations = programClass.GetAnnotations("MDK").ToList();
         annotations.Should().NotBeEmpty();
+        annotations.Count.Should().Be(1);
+        annotations[0].Data.Should().Be("preserve");
 
         var saveMethods = programClass.Members.OfType<MethodDeclarationSyntax>().Where(m => m.Identifier.Text == "Save").ToList();
         saveMethods.Should().HaveCount(3);
         foreach (var saveMethod in saveMethods)
         {
-            annotations = saveMethod.GetAnnotations("MDKProtectedSymbol");
+            annotations = saveMethod.GetAnnotations("MDK").ToList();
             annotations.Should().NotBeEmpty();
+            annotations.Count.Should().Be(1);
+            annotations[0].Data.Should().Be("preserve");
         }
 
         var mainMethods = programClass.Members.OfType<MethodDeclarationSyntax>().Where(m => m.Identifier.Text == "Main").ToList();
         mainMethods.Should().HaveCount(4);
         foreach (var mainMethod in mainMethods)
         {
-            annotations = mainMethod.GetAnnotations("MDKProtectedSymbol");
+            annotations = mainMethod.GetAnnotations("MDK").ToList();
+            annotations.Should().NotBeEmpty();
+            annotations.Count.Should().Be(1);
+            annotations[0].Data.Should().Be("preserve");
             annotations.Should().NotBeEmpty();
         }
 
         var unprotectedMethod = programClass.Members.OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "UnprotectedMethod");
-        annotations = unprotectedMethod.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedMethod.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedProperty = programClass.Members.OfType<PropertyDeclarationSyntax>().First(p => p.Identifier.Text == "UnprotectedProperty");
-        annotations = unprotectedProperty.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedProperty.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedField = programClass.Members.OfType<FieldDeclarationSyntax>().First(f => f.Declaration.Variables.First().Identifier.Text == "_unprotectedField");
-        annotations = unprotectedField.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedField.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedNestedClass = programClass.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "UnprotectedNestedClass");
-        annotations = unprotectedNestedClass.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedNestedClass.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedNestedSaveMethod = unprotectedNestedClass.Members.OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "Save");
-        annotations = unprotectedNestedSaveMethod.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedNestedSaveMethod.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedNestedMainMethod = unprotectedNestedClass.Members.OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "Main");
-        annotations = unprotectedNestedMainMethod.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedNestedMainMethod.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedClass = root.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "UnprotectedClass");
-        annotations = unprotectedClass.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedClass.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedClassMainMethod = unprotectedClass.Members.OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "Main");
-        annotations = unprotectedClassMainMethod.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedClassMainMethod.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedClassSaveMethod = unprotectedClass.Members.OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "Save");
-        annotations = unprotectedClassSaveMethod.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedClassSaveMethod.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedClassProgramClass = unprotectedClass.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "Program");
-        annotations = unprotectedClassProgramClass.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedClassProgramClass.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedClassProgramClassSaveMethod = unprotectedClassProgramClass.Members.OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "Save");
-        annotations = unprotectedClassProgramClassSaveMethod.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedClassProgramClassSaveMethod.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedClassProgramClassMainMethod = unprotectedClassProgramClass.Members.OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "Main");
-        annotations = unprotectedClassProgramClassMainMethod.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedClassProgramClassMainMethod.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
 
         var unprotectedClassProgramClassConstructor = unprotectedClassProgramClass.Members.OfType<ConstructorDeclarationSyntax>().First();
-        annotations = unprotectedClassProgramClassConstructor.GetAnnotations("MDKProtectedSymbol");
+        annotations = unprotectedClassProgramClassConstructor.GetAnnotations("MDK").ToList();
         annotations.Should().BeEmpty();
     }
 }

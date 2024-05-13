@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.SharedApi;
 using Mdk.CommandLine.Utility;
@@ -11,6 +12,7 @@ namespace Mdk.CommandLine.CommandLine;
 /// </summary>
 public class Parameters : TracksPropertyChanges, IParameters
 {
+    readonly List<string> _autoConfigFiles = new();
     bool _interactive;
     string? _log;
     bool _trace;
@@ -62,6 +64,34 @@ public class Parameters : TracksPropertyChanges, IParameters
     IParameters.IHelpVerbParameters IParameters.HelpVerb => HelpVerb;
     IParameters.IPackVerbParameters IParameters.PackVerb => PackVerb;
     IParameters.IRestoreVerbParameters IParameters.RestoreVerb => RestoreVerb;
+    
+    /// <summary>
+    ///     Enumerates any config files that were loaded when using the <see cref="ParseAndLoadConfigs" /> method.
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<string> GetAutoConfigFiles() => _autoConfigFiles;
+    
+    /// <summary>
+    ///     Attempts to get a projectfile reference from the parameters, depending on the verb.
+    /// </summary>
+    /// <param name="projectFile"></param>
+    /// <returns></returns>
+    public bool TryGetProjectFile(out string? projectFile)
+    {
+        projectFile = null;
+        switch (Verb)
+        {
+            case Verb.Pack:
+                projectFile = PackVerb.ProjectFile;
+                break;
+            case Verb.Restore:
+                projectFile = RestoreVerb.ProjectFile;
+                break;
+            default:
+                return false;
+        }
+        return projectFile != null;
+    }
     
     static string Unescape(string value) => value.Replace("&quot;", "\"");
     
@@ -278,6 +308,33 @@ public class Parameters : TracksPropertyChanges, IParameters
     }
     
     /// <summary>
+    ///     First parses the arguments, then attempts to load any relevant configuration files based on those arguments.
+    /// </summary>
+    /// <param name="args"></param>
+    public void ParseAndLoadConfigs(string[] args)
+    {
+        Parse(args);
+        if (!TryGetProjectFile(out var projectFile))
+            return;
+        var iniFileName = Path.ChangeExtension(projectFile, ".mdk.ini");
+        var localIniFileName = Path.ChangeExtension(projectFile, ".mdk.local.ini");
+        
+        if (File.Exists(localIniFileName))
+        {
+            var ini = Ini.FromFile(localIniFileName);
+            Load(ini);
+            _autoConfigFiles.Add(localIniFileName);
+        }
+        
+        if (File.Exists(iniFileName))
+        {
+            var ini = Ini.FromFile(iniFileName);
+            Load(ini);
+            _autoConfigFiles.Add(iniFileName);
+        }
+    }
+    
+    /// <summary>
     ///     Show help as defined by the parameters.
     /// </summary>
     /// <param name="console"></param>
@@ -374,6 +431,8 @@ public class Parameters : TracksPropertyChanges, IParameters
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public void DumpTrace(IConsole console)
     {
+        foreach (var configFile in _autoConfigFiles)
+            console.Trace($"> Loaded config file: {configFile}");
         console.Trace($"> Verb: {Verb}")
             .TraceIf(Log != null, "> Log: {Log}")
             .TraceIf(Trace, "> Trace")

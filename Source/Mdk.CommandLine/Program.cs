@@ -41,7 +41,7 @@ public static class Program
         var parameters = new Parameters();
         try
         {
-            parameters.Parse(args);
+            parameters.ParseAndLoadConfigs(args);
         }
         catch (CommandLineException e)
         {
@@ -51,6 +51,7 @@ public static class Program
             throw;
         }
         console = CreateConsole(parameters);
+        parameters.DumpTrace(console);
         var interaction = new Interaction(console, parameters.Interactive);
         using var httpClient = new WebHttpClient();
         try

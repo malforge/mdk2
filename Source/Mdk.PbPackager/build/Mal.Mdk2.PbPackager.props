@@ -11,6 +11,11 @@
 
     <Target Name="MdkPackPrepare">
         <PropertyGroup>
+            <MdkRestoreArgumentsList>&quot;$(MSBuildProjectFullPath)&quot;</MdkRestoreArgumentsList>
+            <MdkArgumentsList>&quot;$(MSBuildProjectFullPath)&quot;</MdkArgumentsList>
+        </PropertyGroup>
+
+        <PropertyGroup>
             <MdkArgumentsList>$(MdkArgumentsList) $(MdkArguments) -configuration $(Configuration)</MdkArgumentsList>
         </PropertyGroup>
     </Target>

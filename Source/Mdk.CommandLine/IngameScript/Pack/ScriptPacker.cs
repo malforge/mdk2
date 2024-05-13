@@ -103,9 +103,24 @@ public class ScriptPacker: ProjectJob
     /// <exception cref="CommandLineException"></exception>
     public async Task<bool> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
     {
-        parameters.DumpTrace(console);
-        ApplyMissingParametersFromConfig(parameters, project, console);
+        if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
+            parameters.PackVerb.Output = resolveAutoOutputDirectory();
+        
+        string resolveAutoOutputDirectory()
+        {
+            console.Trace("Determining the output directory automatically...");
+            if (!OperatingSystem.IsWindows())
+                throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
+            var se = new SpaceEngineers();
+            var output = se.GetDataPath("IngameScripts", "local");
+            if (string.IsNullOrEmpty(output))
+                throw new CommandLineException(-1, "Failed to determine the output directory.");
+            console.Trace("Output directory: " + output);
+            return output;
+        }
         ApplyDefaultMacros(parameters);
+        parameters.DumpTrace(console);
+
         var filter = new PackInclusionFilter(parameters, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
         var context = new PackContext(parameters, console, interaction, filter, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
 
