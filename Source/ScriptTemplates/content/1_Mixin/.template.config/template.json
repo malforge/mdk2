@@ -4,7 +4,6 @@
   "classifications": ["MDK: Space Engineers"],
   "name": "Programmable Block Mixin (MDK2)",
   "description": "A mixin extension for MDK2: Programmable Block Script projects.",
-  "groupIdentity": "Mal.Mdk2.Templates",
   "identity": "Mal.Mdk2.IngameScriptMixinTemplate",
   "shortName": "mdk2pbmixin",
   "defaultName": "Mdk.PbMixin1",

@@ -1,92 +1,92 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <PackageId>Mal.Mdk2.ScriptTemplates</PackageId>
+        <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
+        <Title>Space Engineers Programmable Block Script Templates</Title>
+        <Authors>Morten "Malware" Aune Lyrstad</Authors>
+        <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/description.txt"))</Description>
+        <PackageTags>dotnet;templates;space engineers;pb;programmable block;ingame script</PackageTags>
+        <PackageProjectUrl>https://github.com/malware-dev/MDK-SE</PackageProjectUrl>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-  <PropertyGroup>
-    <PackageId>Mal.Mdk2.ScriptTemplates</PackageId>
-    <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
-    <Title>Space Engineers Programmable Block Script Templates</Title>
-    <Authors>Morten "Malware" Aune Lyrstad</Authors>
-    <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/description.txt"))</Description>
-    <PackageTags>dotnet;templates;space engineers;pb;programmable block;ingame script</PackageTags>
-    <PackageProjectUrl>https://github.com/malware-dev/MDK-SE</PackageProjectUrl>
-    <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <!-- Keep package type as 'Template' to show the package as a template package on nuget.org and make your template available in dotnet new search.-->
+        <PackageType>Template</PackageType>
+        <TargetFramework>netframework48</TargetFramework>
+        <IncludeContentInPack>true</IncludeContentInPack>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <ContentTargetFolders>content</ContentTargetFolders>
+        <NoWarn>$(NoWarn);NU5128</NoWarn>
+        <NoDefaultExcludes>true</NoDefaultExcludes>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
 
-    <!-- Keep package type as 'Template' to show the package as a template package on nuget.org and make your template available in dotnet new search.-->
-    <PackageType>Template</PackageType>
-    <TargetFramework>netframework48</TargetFramework>
-    <IncludeContentInPack>true</IncludeContentInPack>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
-    <ContentTargetFolders>content</ContentTargetFolders>
-    <NoWarn>$(NoWarn);NU5128</NoWarn>
-    <NoDefaultExcludes>true</NoDefaultExcludes>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Configurations>Release;Debug</Configurations>
-    <Platforms>x64</Platforms>
-  </PropertyGroup>
+    <PropertyGroup>
+        <LocalizeTemplates>false</LocalizeTemplates>
+    </PropertyGroup>
 
-  <PropertyGroup>
-    <LocalizeTemplates>false</LocalizeTemplates>
-  </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.TemplateEngine.Tasks" Version="*" PrivateAssets="all" IsImplicitlyDefined="true"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.TemplateEngine.Tasks" Version="*" PrivateAssets="all" IsImplicitlyDefined="true"/>
-  </ItemGroup>
+    <ItemGroup>
+        <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" PackagePath="content"/>
+        <Compile Remove="**\*"/>
+<!--        <Content Update="content\0_Script\.template.config\icon.png" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\0_Script\.template.config\ide.host.json" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\0_Script\.template.config\template.json" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\0_Script\PbScript\Instructions.readme" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\0_Script\PbScript\PbScript.csproj" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\0_Script\PbScript\PbScript.mdk.ini" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\0_Script\PbScript\PbScript.mdk.local.ini" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\0_Script\PbScript\Program.cs" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\1_Mixin\.template.config\icon.png" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\1_Mixin\.template.config\ide.host.json" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\1_Mixin\.template.config\template.json" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\1_Mixin\PbMixin\Class1.cs" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\1_Mixin\PbMixin\PbMixin.projitems" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+<!--        <Content Update="content\1_Mixin\PbMixin\PbMixin.shproj" Pack="true">-->
+<!--            <PackagePath>content</PackagePath>-->
+<!--        </Content>-->
+    </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" />
-    <Compile Remove="**\*" />
-    <Content Update="content\0_Script\.template.config\icon.png">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\0_Script\.template.config\ide.host.json">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\0_Script\.template.config\template.json">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\0_Script\PbScript\Instructions.readme">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\0_Script\PbScript\PbScript.csproj">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\0_Script\PbScript\PbScript.mdk.ini">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\0_Script\PbScript\PbScript.mdk.local.ini">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\0_Script\PbScript\Program.cs">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\1_Mixin\.template.config\icon.png">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\1_Mixin\.template.config\ide.host.json">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\1_Mixin\.template.config\template.json">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\1_Mixin\PbMixin\Class1.cs">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\1_Mixin\PbMixin\PbMixin.projitems">
-      <PackagePath>content</PackagePath>
-    </Content>
-    <Content Update="content\1_Mixin\PbMixin\PbMixin.shproj">
-      <PackagePath>content</PackagePath>
-    </Content>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\malware256.png" Pack="true" PackagePath=""/>
+        <None Include="README.md" Pack="true" PackagePath=""/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\malware256.png" Pack="true" PackagePath="" />
-    <None Include="README.md" Pack="true" PackagePath="" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="content\0_Script\" />
-    <Folder Include="content\1_Mixin\" />
-  </ItemGroup>
+<!--    <ItemGroup>-->
+<!--        <Folder Include="content\0_Script\"/>-->
+<!--        <Folder Include="content\1_Mixin\"/>-->
+<!--    </ItemGroup>-->
 
 </Project>

@@ -25,13 +25,13 @@
         <Copy SourceFiles="$(SolutionDir)Binaries\mdk.exe" DestinationFolder="$(ProjectDir)tools\"/>
         <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify-win.exe" DestinationFolder="$(ProjectDir)tools\"/>
     </Target>
-    
+
     <ItemGroup>
-        <None Include="$(MSBuildProjectDirectory)/../Mdk.CommandLine/PackageVersion.txt" Pack="false" />
+        <None Include="$(MSBuildProjectDirectory)/../Mdk.CommandLine/PackageVersion.txt" Pack="false"/>
         <None Include="..\malware256.png" Pack="true" PackagePath=""/>
         <None Include="readme.md" Pack="true" PackagePath=""/>
-        <None Include="lib\netstandard2.0\_._" Pack="True" PackagePath="lib\netstandard2.0\" />
-        <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build" />
-        <Content Include="tools\**\*.*" Pack="true" PackagePath="tools" />
+        <None Include="lib\netstandard2.0\_._" Pack="True" PackagePath="lib\netstandard2.0\"/>
+        <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build"/>
+        <Content Include="tools\**\*.*" Pack="true" PackagePath="tools"/>
     </ItemGroup>
 </Project>
