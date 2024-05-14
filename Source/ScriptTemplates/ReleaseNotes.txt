@@ -1,2 +1,5 @@
+v.2.0.1
+ - Fixed templates having extra folder
+
 v.2.0.0
  - Initial release
