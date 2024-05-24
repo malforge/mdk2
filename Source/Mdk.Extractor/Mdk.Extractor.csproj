@@ -10,38 +10,37 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Reference Include="Sandbox.Game">
-            <HintPath>$(SpaceEngineersBinPath)\SpaceEngineers.exe</HintPath>
-            <Private>$(SpaceEngineersBinCopyLocal)</Private>
-        </Reference>
+        <PackageReference Include="Mal.Mdk2.References" Version="2.1.9"/>
     </ItemGroup>
-    
+
+    <Target Name="SpaceEngineersExecutable" AfterTargets="SpaceEngineers">
+        <ItemGroup>
+            <Reference Include="SpaceEngineers">
+                <HintPath>$(SpaceEngineersBinPath)\SpaceEngineers.exe</HintPath>
+                <Private>$(SpaceEngineersBinCopyLocal)</Private>
+            </Reference>
+        </ItemGroup>
+    </Target>
+
     <ItemGroup>
-      <None Update="steam_appid.txt">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </None>
+        <None Update="steam_appid.txt">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Update="Resources.resx">
-        <Generator>ResXFileCodeGenerator</Generator>
-        <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
+        <EmbeddedResource Update="Resources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Resources.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>Resources.resx</DependentUpon>
-      </Compile>
+        <Compile Update="Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
     </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Mal.Mdk2.References" Version="2.1.9" />
-    </ItemGroup>
-
-    <Import Project="Properties\SpaceEngineersPath.props"/>
-    <Import Project="Properties\SpaceEngineersReferences.props" Condition="exists('Properties\SpaceEngineersPath.props')"/>
     
 </Project>

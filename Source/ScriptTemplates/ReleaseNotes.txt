@@ -1,3 +1,6 @@
+v.2.0.2
+ - Fixed comment in script template mentioning an "utility class" which is not something that exists in MDK2.
+
 v.2.0.1
  - Fixed templates having extra folder
 

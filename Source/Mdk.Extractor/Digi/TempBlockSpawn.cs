@@ -66,7 +66,7 @@ namespace Digi.BuildInfo.Features.LiveData
             grid.IsPreview = true;
             grid.Save = false;
             grid.Flags = EntityFlags.None;
-            grid.Render.Visible = false;
+            // grid.Render.Visible = false;
         }
 
         MyObjectBuilder_CubeBlock CreateBlockOB(MyDefinitionId defId)

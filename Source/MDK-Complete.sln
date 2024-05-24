@@ -24,9 +24,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptTemplates", "ScriptTemplates\ScriptTemplates.csproj", "{4FE6DB07-8C36-46FB-ADC2-EE29EB0448B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PbScript", "ScriptTemplates\content\0_Script\PbScript\PbScript.csproj", "{792D6ECD-D391-4494-A234-081C8D735A1A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PbScript", "ScriptTemplates\content\0_Script\PbScript.csproj", "{792D6ECD-D391-4494-A234-081C8D735A1A}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "PbMixin", "ScriptTemplates\content\1_Mixin\PbMixin\PbMixin.shproj", "{8A3CDCC5-4B55-4D87-A415-698A0E1FF06F}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "PbMixin", "ScriptTemplates\content\1_Mixin\PbMixin.shproj", "{8A3CDCC5-4B55-4D87-A415-698A0E1FF06F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
