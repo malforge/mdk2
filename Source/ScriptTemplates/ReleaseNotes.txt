@@ -1,3 +1,7 @@
+v.2.0.3
+ - Remove some comments in the project file that was remaining from my experiments with templating
+ - Added binarypath in the default local ini file
+
 v.2.0.2
  - Fixed comment in script template mentioning an "utility class" which is not something that exists in MDK2.
 

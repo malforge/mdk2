@@ -1,3 +1,6 @@
+v.2.2.1
+ - Binary directory can now be overridden by the MDK2 ini file(s)
+
 v.2.1.9
  - Package didn't work properly in Visual Studio 
 

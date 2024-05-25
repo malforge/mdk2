@@ -658,7 +658,7 @@ public class Ini
         /// <summary>
         /// An empty key.
         /// </summary>
-        public static readonly Key Empty = new(string.Empty, null, null);
+        public static readonly Key Empty = new();
         
         /// <summary>
         /// Creates a new key with the specified name and value.
@@ -676,6 +676,11 @@ public class Ini
             Comment = comment;
         }
 
+        /// <summary>
+        /// Determines whether the key is empty.
+        /// </summary>
+        public bool IsEmpty() => string.IsNullOrWhiteSpace(Name);
+        
         /// <summary>
         /// An optional comment (or whitespace) for the key.
         /// </summary>

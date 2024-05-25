@@ -7,17 +7,6 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
-        
-
-<!--        <PackageType>Template</PackageType>-->
-<!--        <PackageVersion>2.0.1</PackageVersion>-->
-<!--        <PackageId>Mal.Mdk2.Template</PackageId>-->
-<!--        <Title>&gt;Space Engineers Programmable Block Script Template</Title>-->
-<!--        <Authors>Morten "Malware" Aune Lyrstad</Authors>-->
-<!--        <Description>Templates to use when creating an application</Description>-->
-<!--        <PackageTags>dotnet;templates;space engineers;pb;programmable block;ingame script</PackageTags>-->
-<!--        <IncludeContentInPack>true</IncludeContentInPack>-->
-<!--        <IncludeBuildOutput>false</IncludeBuildOutput>-->
     </PropertyGroup>
 
     <ItemGroup>

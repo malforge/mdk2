@@ -188,6 +188,8 @@ public class LegacyConverter
             [mdk]
             ; Where to output the script to (auto|specific path)
             output={outputPath}
+            ; Override the game bin path (auto|specific path)
+            binarypath=auto
             """;
         
         if (dryRun)

@@ -22,6 +22,19 @@ public static class XElementExtensions
         var names = new[] { firstName }.Concat(otherNames.Select(n => n)).ToList();
         return Element(container, names, 0);
     }
+    
+    /// <summary>
+    /// Finds the first element which matches the given name path - but ignores the namespace.
+    /// </summary>
+    /// <param name="container"></param>
+    /// <param name="firstName"></param>
+    /// <param name="otherNames"></param>
+    /// <returns></returns>
+    public static XElement? ElementByLocalName(this XContainer container, string firstName, params string[] otherNames)
+    {
+        var names = new[] { firstName }.Concat(otherNames.Select(n => n)).ToList();
+        return ElementByLocalName(container, names, 0);
+    }
 
     /// <summary>
     ///     Finds the first element which matches the given name path and namespace.
@@ -55,6 +68,24 @@ public static class XElementExtensions
         return null;
     }
 
+    static XElement? ElementByLocalName(XContainer? container, List<string> names, int depth)
+    {
+        if (container == null)
+            return null;
+        var n = depth + 1;
+        foreach (var element in container.Elements().Where(e => e.Name.LocalName.Equals(names[depth], StringComparison.OrdinalIgnoreCase)))
+        {
+            if (names.Count == n)
+                return element;
+
+            var next = ElementByLocalName(element, names, n);
+            if (next != null)
+                return next;
+        }
+
+        return null;
+    }
+
     static IEnumerable<XElement> Elements(XContainer? container, List<XName> names, int depth)
     {
         if (container == null || depth >= names.Count)
@@ -70,6 +101,21 @@ public static class XElementExtensions
         }
     }
 
+    static IEnumerable<XElement> ElementsByLocalName(XContainer? container, List<string> names, int depth)
+    {
+        if (container == null || depth >= names.Count)
+            yield break;
+        var n = depth + 1;
+        foreach (var element in container.Elements().Where(e => e.Name.LocalName.Equals(names[depth], StringComparison.OrdinalIgnoreCase)))
+        {
+            if (names.Count == n)
+                yield return element;
+
+            foreach (var selection in ElementsByLocalName(element, names, n))
+                yield return selection;
+        }
+    }
+
     /// <summary>
     ///     Finds all elements which match the given name path and namespace.
     /// </summary>
@@ -81,6 +127,19 @@ public static class XElementExtensions
     {
         var names = new[] { firstName }.Concat(otherNames.Select(n => n)).ToList();
         return Elements(container, names, 0);
+    }
+
+    /// <summary>
+    ///     Finds all elements which match the given name path and namespace.
+    /// </summary>
+    /// <param name="container"></param>
+    /// <param name="firstName"></param>
+    /// <param name="otherNames"></param>
+    /// <returns></returns>
+    public static IEnumerable<XElement> ElementsByLocalName(this XContainer container, string firstName, params string[] otherNames)
+    {
+        var names = new[] { firstName }.Concat(otherNames.Select(n => n)).ToList();
+        return ElementsByLocalName(container, names, 0);
     }
 
     /// <summary>

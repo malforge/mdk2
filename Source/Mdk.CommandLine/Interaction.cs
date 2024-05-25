@@ -30,6 +30,7 @@ public class Interaction : IInteraction
         if (!interactive)
         {
             console.Trace("Interaction disabled.");
+            return;
         }
         if (!OperatingSystem.IsWindows())
         {
@@ -76,7 +77,7 @@ public class Interaction : IInteraction
     public void Nuget(string packageName, string currentVersion, string newVersion, string? message, params object?[] args)
     {
         if (string.IsNullOrEmpty(message))
-            message = $"The {message} nuget package has a new version available: {currentVersion} -> {newVersion}";
+            message = $"The {packageName} nuget package has a new version available: {currentVersion} -> {newVersion}";
         else
             message = string.Format(message, args);
         _console.Print(message);

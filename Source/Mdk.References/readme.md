@@ -28,6 +28,19 @@ copied locally. To do so, add the following to the initial PropertyGroup in your
 pack and redistribute these dlls, this is the entire reason why this package exist to automate
 their reference for you.
 
+### Overriding the binary path
+To manually specify where to get the Space Engineers binaries from, add a file named 
+`<projectname>.mdk.local.ini` to the project directory. For example; if your project is named 
+`MyMod`, the file should be named `MyMod.mdk.local.ini`. In this file, add the following line:
+```
+[mdk]
+binarypath = C:\Path\To\SpaceEngineers\Bin
+```
+
+Note: Make sure you add this file to your `.gitignore` file, or any other version control ignore 
+file you use. The binary path is usually different for each developer. If, against all odds, this 
+does not apply to you, you should use the file name pattern `<projectname>.mdk.ini` instead.
+
 ---
 
 _Disclaimer:_

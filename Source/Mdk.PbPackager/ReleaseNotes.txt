@@ -1,4 +1,8 @@
-﻿v.2.0.0
+﻿v.2.0.1
+ - Simplified how project properties are defined and used as their complexity was unnecessary.
+ - Restore now checks the other packages for updates as well.
+
+v.2.0.0
  - Official release of MDK2 (Programmable Block Edition)
 
 v.2.0.0-alpha073

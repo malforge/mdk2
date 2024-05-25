@@ -8,7 +8,7 @@
     <UsingTask TaskName="SpaceEngineersFinder" AssemblyFile="$(MSBuildThisFileDirectory)..\tools\netstandard2.0\cs\Mal.Mdk2.References.dll"/>
 
     <Target Name="SpaceEngineers" BeforeTargets="PrepareForBuild">
-        <SpaceEngineersFinder Interactive="$(IsIDEBuild)">
+        <SpaceEngineersFinder Interactive="$(IsIDEBuild)" ProjectPath="$(MSBuildProjectFullPath)">
             <Output PropertyName="SpaceEngineersBinPath" TaskParameter="BinaryPath"/>
             <Output PropertyName="SpaceEngineersDataPath" TaskParameter="DataPath"/>
         </SpaceEngineersFinder>

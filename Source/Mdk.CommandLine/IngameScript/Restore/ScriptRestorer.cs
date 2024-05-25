@@ -33,7 +33,9 @@ public class ScriptRestorer : ProjectJob
 
         var tasks = new[]
         {
-            NugetVersionCheck.CheckAsync(document, projectFileName, console, httpClient, interaction),
+            NugetVersionCheck.CheckAsync(document, projectFileName, "Mal.Mdk2.PbPackager", console, httpClient, interaction),
+            NugetVersionCheck.CheckAsync(document, projectFileName, "Mal.Mdk2.PbAnalyzers", console, httpClient, interaction),
+            NugetVersionCheck.CheckAsync(document, projectFileName, "Mal.Mdk2.References", console, httpClient, interaction),
             BadIgnoresBugFix.CheckAsync(projectFileName, console)
         };
         

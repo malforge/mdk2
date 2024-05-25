@@ -9,9 +9,9 @@ public partial class Program
     [Verb, Default]
     public static void Main([Switch] string modWhitelist = null, [Switch] string pbWhitelist = null, [Switch] string terminal = null, [Switch] string sePath = null)
     {
-        modWhitelist ??= "modwhitelist.cache";
-        pbWhitelist ??= "pbwhitelist.cache";
-        terminal ??= "terminal.cache";
+        modWhitelist ??= "modwhitelist.dat";
+        pbWhitelist ??= "pbwhitelist.dat";
+        terminal ??= "terminal.dat";
 
         modWhitelist = Path.GetFullPath(modWhitelist);
         pbWhitelist = Path.GetFullPath(pbWhitelist);
