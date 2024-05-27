@@ -1,3 +1,6 @@
+v.2.2.2
+ - Some numbnuts (me) forgot to move the OS type check below the local binarypath override.
+ 
 v.2.2.1
  - Binary directory can now be overridden by the MDK2 ini file(s)
 

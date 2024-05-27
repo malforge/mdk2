@@ -25,12 +25,6 @@ namespace Mdk2.References
 
         public override bool Execute()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Log.LogWarning("Unable to determine the location of Space Engineers, because we're not running on Windows.");
-                return false;
-            }
-            
             if (!string.IsNullOrEmpty(ProjectPath))
             {
                 var localIniFileName = Path.ChangeExtension(ProjectPath, ".mdk.local.ini");
@@ -46,6 +40,12 @@ namespace Mdk2.References
                     Log.LogMessage(MessageImportance.High, $"Found ini file: {iniFileName}");
                     if (LoadFromIni(iniFileName)) return true;
                 }
+            }
+            
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Log.LogWarning("Unable to determine the location of Space Engineers, because we're not running on Windows.");
+                return false;
             }
             
             var se = new SpaceEngineers();
