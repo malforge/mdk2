@@ -166,6 +166,19 @@ public partial class SymbolRenamer : IScriptPostprocessor
             return newNode.WithIdentifier(newIdentifier);
         }
         
+        public override SyntaxNode? VisitCatchDeclaration(CatchDeclarationSyntax node)
+        {
+            var newNode = (CatchDeclarationSyntax?)base.VisitCatchDeclaration(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var oldName = newNode!.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            return newNode.WithIdentifier(newIdentifier);
+        }
+        
         public override SyntaxNode? VisitVariableDeclarator(VariableDeclaratorSyntax node)
         {
             var newNode = (VariableDeclaratorSyntax?)base.VisitVariableDeclarator(node);
