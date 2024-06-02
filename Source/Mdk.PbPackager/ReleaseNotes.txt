@@ -1,4 +1,7 @@
-﻿v.2.0.1
+﻿v.2.0.0
+ - Fixed a problem where generic method declarations didn't get their generic parameters renamed with the full minifier.
+
+v.2.0.1
  - Simplified how project properties are defined and used as their complexity was unnecessary.
  - Restore now checks the other packages for updates as well.
 
