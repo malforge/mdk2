@@ -275,6 +275,7 @@ public class ScriptPacker: ProjectJob
     static async Task VerifyAsync(IConsole console, TextDocument scriptDocument)
     {
         console.Trace("Verifying that nothing went wrong");
+        var script = (await scriptDocument.GetTextAsync()).ToString();
         var compilation = await scriptDocument.Project.GetCSharpCompilationAsync() ?? throw new CommandLineException(-1, "Failed to compile the project.");
         var diagnostics = compilation.GetDiagnostics();
         if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))

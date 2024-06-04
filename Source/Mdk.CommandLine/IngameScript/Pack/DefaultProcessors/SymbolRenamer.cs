@@ -17,13 +17,6 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 [RunAfter<CommentStripper>]
 public partial class SymbolRenamer : IScriptPostprocessor
 {
-    static readonly SymbolDisplayFormat OurFormat = new(
-        SymbolDisplayGlobalNamespaceStyle.Omitted,
-        SymbolDisplayTypeQualificationStyle.NameAndContainingTypes,
-        SymbolDisplayGenericsOptions.IncludeTypeParameters,
-        SymbolDisplayMemberOptions.IncludeContainingType,
-        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
-    
     /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
@@ -79,14 +72,6 @@ public partial class SymbolRenamer : IScriptPostprocessor
         return new string(result);
     }
     
-    static string FullyQualifiedNameOf(ISymbol symbol)
-    {
-        if (symbol is IParameterSymbol parameter)
-            return FullyQualifiedNameOf(parameter.ContainingSymbol) + "@" + parameter.Name;
-        
-        return symbol.ToDisplayString(OurFormat);
-    }
-    
     class NodeIdentifierRewriter : CSharpSyntaxRewriter
     {
         long _identSrc;
@@ -126,18 +111,25 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 symbol = default;
                 return false;
             }
-            if (node.ShouldBePreserved())
-            {
-                symbol = default;
-                return false;
-            }
             var id = node.GetAnnotations("NodeID").FirstOrDefault()?.Data;
             if (id == null)
             {
                 symbol = default;
                 return false;
             }
-            return _symbolMap.TryGetValue(id, out symbol);
+            if (!_symbolMap.TryGetValue(id, out symbol))
+            {
+                symbol = default;
+                return false;
+            }
+            // Is this a referencing node, not a definition one?
+            if (symbol.DeclaringSyntaxReferences.Length == 0)
+            {
+                // Then we need to 
+                symbol = default;
+                return false;
+            }
+            return true;
         }
         
         public override SyntaxNode? VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
@@ -198,6 +190,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             var newNode = (ParameterSyntax?)base.VisitParameter(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
@@ -398,13 +391,55 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 symbol = methodSymbol.ReducedFrom ?? symbol;
             
             if (symbol != null && _symbolMap.Values.Contains(symbol, SymbolEqualityComparer.Default))
+            {
+                if (IsOverriddenSymbolPreserved(symbol))
+                    return;
+                if (IsReferencedSymbolPreserved(symbol))
+                    return;
                 _symbolMap[nodeId] = symbol;
+            }
             
             // // Additional handling for invocation expressions
             // if (node is InvocationExpressionSyntax invocation)
             //     HandleInvocationExpression(invocation, nodeId);
         }
         
+        static T? GetOverriddenSymbol<T>(T symbol) where T : class, ISymbol
+        {
+            if (symbol.IsOverride)
+            {
+                return symbol switch
+                {
+                    IMethodSymbol methodSymbol => methodSymbol.OverriddenMethod as T,
+                    IPropertySymbol propertySymbol => propertySymbol.OverriddenProperty as T,
+                    IEventSymbol eventSymbol => eventSymbol.OverriddenEvent as T,
+                    _ => null
+                };
+            }
+            
+            if (symbol.TryGetInterfaceImplementation(out var interfaceMethod))
+                return interfaceMethod as T;
+            
+            return null;
+        }
+        
+        static bool IsOverriddenSymbolPreserved<T>(T symbol) where T : class, ISymbol
+        {
+            var overrideBase = GetOverriddenSymbol(symbol);
+            if (overrideBase == null)
+                return false;
+            var overrideDefinitionNode = overrideBase.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+            return overrideDefinitionNode == null || overrideDefinitionNode.ShouldBePreserved();
+        }
+        
+        static bool IsReferencedSymbolPreserved<T>(T symbol) where T : class, ISymbol
+        {
+            var references = symbol.DeclaringSyntaxReferences;
+            if (references.Length == 0)
+                return false;
+            return references.All(r => r.GetSyntax().ShouldBePreserved());
+        }
+ 
         // void HandleInvocationExpression(InvocationExpressionSyntax invocation, string nodeId)
         // {
         //     // Get the method symbol for the invocation

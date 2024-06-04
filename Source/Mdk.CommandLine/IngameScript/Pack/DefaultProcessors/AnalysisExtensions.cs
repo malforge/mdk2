@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -28,6 +29,35 @@ public static class AnalysisExtensions
                 var implementation = symbol.ContainingType.FindImplementationForInterfaceMember(member);
                 return implementation != null && SymbolEqualityComparer.Default.Equals(implementation, symbol);
             });
+    }
+    
+    /// <summary>
+    /// Determines if the given symbol is an interface implementation and retrieves the interface member it implements if it is.
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <param name="result"></param>
+    /// <returns></returns>
+    public static bool TryGetInterfaceImplementation(this ISymbol symbol, [MaybeNullWhen(false)] out ISymbol result)
+    { 
+        if (symbol.ContainingType == null)
+        {
+            result = null;
+            return false;
+        }
+        foreach (var i in symbol.ContainingType.AllInterfaces)
+        {
+            foreach (var member in i.GetMembers())
+            {
+                var implementation = symbol.ContainingType.FindImplementationForInterfaceMember(member);
+                if (implementation != null && SymbolEqualityComparer.Default.Equals(implementation, symbol))
+                {
+                    result = member;
+                    return true;
+                }
+            }
+        }
+        result = null;
+        return false;
     }
 
     /// <summary>
