@@ -55,7 +55,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
     /// <returns></returns>
     static string ToNBaseString(int value, char[] baseChars)
     {
-        // 32 is the worst cast buffer size for base 2 and int.MaxValue
+        // 32 is the worst case buffer size for base 2 and int.MaxValue
         var i = 32;
         var buffer = new char[i];
         var targetBase = baseChars.Length;
@@ -119,13 +119,6 @@ public partial class SymbolRenamer : IScriptPostprocessor
             }
             if (!_symbolMap.TryGetValue(id, out symbol))
             {
-                symbol = default;
-                return false;
-            }
-            // Is this a referencing node, not a definition one?
-            if (symbol.DeclaringSyntaxReferences.Length == 0)
-            {
-                // Then we need to 
                 symbol = default;
                 return false;
             }
@@ -338,7 +331,46 @@ public partial class SymbolRenamer : IScriptPostprocessor
         }
     }
     
-    class DefinitionScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap) : CSharpSyntaxWalker
+    abstract class BaseWalker : CSharpSyntaxWalker
+    {
+        static T? GetOverriddenSymbol<T>(T symbol) where T : class, ISymbol
+        {
+            if (symbol.IsOverride)
+            {
+                return symbol switch
+                {
+                    IMethodSymbol methodSymbol => methodSymbol.OverriddenMethod as T,
+                    IPropertySymbol propertySymbol => propertySymbol.OverriddenProperty as T,
+                    IEventSymbol eventSymbol => eventSymbol.OverriddenEvent as T,
+                    _ => null
+                };
+            }
+            
+            if (symbol.TryGetInterfaceImplementation(out var interfaceMethod))
+                return interfaceMethod as T;
+            
+            return null;
+        }
+        
+        protected static bool IsOverriddenSymbolPreserved<T>(T symbol) where T : class, ISymbol
+        {
+            var overrideBase = GetOverriddenSymbol(symbol);
+            if (overrideBase == null)
+                return false;
+            var overrideDefinitionNode = overrideBase.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+            return overrideDefinitionNode == null || overrideDefinitionNode.ShouldBePreserved();
+        }
+        
+        protected static bool IsReferencedSymbolPreserved<T>(T symbol) where T : class, ISymbol
+        {
+            var references = symbol.DeclaringSyntaxReferences;
+            if (references.Length == 0)
+                return false;
+            return references.All(r => r.GetSyntax().ShouldBePreserved());
+        }
+    }
+    
+    class DefinitionScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap) : BaseWalker
     {
         readonly SemanticModel _semanticModel = semanticModel;
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
@@ -355,7 +387,13 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 return;
             var symbol = _semanticModel.GetDeclaredSymbol(node);
             if (symbol != null)
+            {
+                if (IsOverriddenSymbolPreserved(symbol))
+                    return;
+                if (IsReferencedSymbolPreserved(symbol))
+                    return;
                 _symbolMap[nodeId] = symbol;
+            }
             /* Confusingly, the code below breaks the minification and I have no idea why.
                So let's just leave `var` alone for now.
             else if (node is VariableDeclarationSyntax { Type.IsVar: true } vds)
@@ -370,7 +408,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
         }
     }
     
-    class UsageScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap) : CSharpSyntaxWalker
+    class UsageScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap) : BaseWalker
     {
         readonly SemanticModel _semanticModel = semanticModel;
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
@@ -404,41 +442,6 @@ public partial class SymbolRenamer : IScriptPostprocessor
             //     HandleInvocationExpression(invocation, nodeId);
         }
         
-        static T? GetOverriddenSymbol<T>(T symbol) where T : class, ISymbol
-        {
-            if (symbol.IsOverride)
-            {
-                return symbol switch
-                {
-                    IMethodSymbol methodSymbol => methodSymbol.OverriddenMethod as T,
-                    IPropertySymbol propertySymbol => propertySymbol.OverriddenProperty as T,
-                    IEventSymbol eventSymbol => eventSymbol.OverriddenEvent as T,
-                    _ => null
-                };
-            }
-            
-            if (symbol.TryGetInterfaceImplementation(out var interfaceMethod))
-                return interfaceMethod as T;
-            
-            return null;
-        }
-        
-        static bool IsOverriddenSymbolPreserved<T>(T symbol) where T : class, ISymbol
-        {
-            var overrideBase = GetOverriddenSymbol(symbol);
-            if (overrideBase == null)
-                return false;
-            var overrideDefinitionNode = overrideBase.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-            return overrideDefinitionNode == null || overrideDefinitionNode.ShouldBePreserved();
-        }
-        
-        static bool IsReferencedSymbolPreserved<T>(T symbol) where T : class, ISymbol
-        {
-            var references = symbol.DeclaringSyntaxReferences;
-            if (references.Length == 0)
-                return false;
-            return references.All(r => r.GetSyntax().ShouldBePreserved());
-        }
  
         // void HandleInvocationExpression(InvocationExpressionSyntax invocation, string nodeId)
         // {
