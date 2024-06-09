@@ -1,4 +1,7 @@
-﻿v.2.0.2
+﻿v.2.0.3
+ - Fixed a problem where references to generic methods would not be renamed with the full minifier.
+ 
+v.2.0.2
  - Fixed a problem where generic method declarations didn't get their generic parameters renamed with the full minifier.
  - Fixed a problem where the full minifier did not rename catch clause variables
  - Fixed a problem where the full minifier would rename references to protected symbols

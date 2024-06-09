@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
@@ -322,6 +323,19 @@ public partial class SymbolRenamer : IScriptPostprocessor
             return newNode.WithIdentifier(newIdentifier);
         }
         
+        public override SyntaxNode? VisitGenericName(GenericNameSyntax node)
+        {
+            var newNode = (GenericNameSyntax?)base.VisitGenericName(node);
+            if (!TryGetSymbol(newNode, out var symbol))
+                return newNode;
+            var oldName = symbol.Name;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode!.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            return newNode.WithIdentifier(newIdentifier);
+        }
+        
         public override SyntaxNode? VisitInvocationExpression(InvocationExpressionSyntax node)
         {
             var newNode = (InvocationExpressionSyntax?)base.VisitInvocationExpression(node);
@@ -380,6 +394,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             base.Visit(node);
             if (node == null)
                 return;
+            
             if (node.ShouldBePreserved())
                 return;
             var nodeId = node.GetAnnotations("NodeID").FirstOrDefault()?.Data;
@@ -413,13 +428,23 @@ public partial class SymbolRenamer : IScriptPostprocessor
         readonly SemanticModel _semanticModel = semanticModel;
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
         
+        public override void VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            base.VisitIdentifierName(node);
+        }
+        
+        public override void VisitGenericName(GenericNameSyntax node)
+        {
+            base.VisitGenericName(node);
+        }
+        
         public override void Visit(SyntaxNode? node)
         {
             base.Visit(node);
             if (node == null)
                 return;
-            if (node.ShouldBePreserved())
-                return;
+            // if (node.ShouldBePreserved())
+            //     return;
             var nodeId = node.GetAnnotations("NodeID").FirstOrDefault()?.Data;
             if (nodeId == null)
                 return;
@@ -427,6 +452,12 @@ public partial class SymbolRenamer : IScriptPostprocessor
             var symbol = symbolInfo.Symbol;
             if (symbol is IMethodSymbol { MethodKind: MethodKind.ReducedExtension } methodSymbol)
                 symbol = methodSymbol.ReducedFrom ?? symbol;
+            
+            // If the symbol is generic, we need to find the original definition
+            if (symbol is IMethodSymbol { Arity: > 0 } genericMethod)
+                symbol = genericMethod.OriginalDefinition;
+            else if (symbol is INamedTypeSymbol { Arity: > 0 } genericType)
+                symbol = genericType.OriginalDefinition;
             
             if (symbol != null && _symbolMap.Values.Contains(symbol, SymbolEqualityComparer.Default))
             {
