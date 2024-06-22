@@ -1,5 +1,7 @@
 ﻿v.2.0.3
  - Fixed a problem where references to generic methods would not be renamed with the full minifier.
+ - Fixed a problem where delegates would not be renamed with the full minifier.
+ - Intermediate code files are now written to the \obj folder when trace is enabled.
  
 v.2.0.2
  - Fixed a problem where generic method declarations didn't get their generic parameters renamed with the full minifier.
