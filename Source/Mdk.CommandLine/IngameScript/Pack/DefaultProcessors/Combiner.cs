@@ -23,7 +23,7 @@ public class Combiner : IScriptCombiner
     {
         var trees = await Task.WhenAll(documents.Select(async d =>
         {
-            d = await d.RemoveUnnecessaryUsingsAsync();
+            //d = await d.RemoveUnnecessaryUsingsAsync();
             return await d.GetSyntaxTreeAsync();
         }));
 
