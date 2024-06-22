@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -26,7 +27,9 @@ public partial class SymbolRenamer : IScriptPostprocessor
             context.Console.Trace("Skipping symbol renaming because the minifier level < Full.");
             return document;
         }
-        
+
+        context.Console.Trace("Starting symbol renaming...");
+        var stopwatch = Stopwatch.StartNew();
         var syntaxRoot = await document.GetSyntaxRootAsync() ?? throw new InvalidOperationException("Failed to get syntax root.");
         var identifierRewriter = new NodeIdentifierRewriter();
         syntaxRoot = identifierRewriter.Visit(syntaxRoot) ?? throw new InvalidOperationException("Failed to identify nodes.");
@@ -45,6 +48,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
         
         document = document.WithSyntaxRoot(syntaxRoot);
         
+        context.Console.Trace("Symbol renaming complete in " + stopwatch.Elapsed);
         return document;
     }
     
@@ -193,6 +197,8 @@ public partial class SymbolRenamer : IScriptPostprocessor
             return newNode.WithIdentifier(newIdentifier);
         }
         
+        
+        
         public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             var newNode = (MethodDeclarationSyntax?)base.VisitMethodDeclaration(node);
@@ -296,7 +302,20 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
+        public override SyntaxNode? VisitDelegateDeclaration(DelegateDeclarationSyntax node)
+        {
+            var newNode = (DelegateDeclarationSyntax?)base.VisitDelegateDeclaration(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var oldName = newNode!.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            return newNode.WithIdentifier(newIdentifier);
+        }
+
         public override SyntaxNode? VisitForEachStatement(ForEachStatementSyntax node)
         {
             var newNode = (ForEachStatementSyntax?)base.VisitForEachStatement(node);

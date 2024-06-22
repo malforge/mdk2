@@ -21,7 +21,11 @@ public class Combiner : IScriptCombiner
     /// <inheritdoc />
     public async Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, IPackContext context)
     {
-        var trees = await Task.WhenAll(documents.Select(d => d.GetSyntaxTreeAsync()));
+        var trees = await Task.WhenAll(documents.Select(async d =>
+        {
+            d = await d.RemoveUnnecessaryUsingsAsync();
+            return await d.GetSyntaxTreeAsync();
+        }));
 
         var namespaceUsings = trees.SelectMany(t => t?.GetRoot().DescendantNodes().OfType<UsingDirectiveSyntax>() ?? Enumerable.Empty<UsingDirectiveSyntax>())
             .GroupBy(u => u.Name?.ToString()).Select(g => g.First()).ToArray();

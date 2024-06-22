@@ -183,10 +183,12 @@ public class ScriptPacker: ProjectJob
         allDocuments = await PreprocessAsync(allDocuments, preprocessors, context);
         var scriptDocument = await CombineAsync(project, combiner, allDocuments, outputDirectory, context);
         scriptDocument = await PostProcessAsync(scriptDocument, postprocessors, context);
+
+        var projectDir = Path.GetDirectoryName(project.FilePath)!;
         await VerifyAsync(context.Console, scriptDocument);
         var final = await ComposeAsync(scriptDocument, composer, context);
         final = await PostProcessComposition(final, postCompositionProcessors, context);
-        await ProduceAsync(Path.GetDirectoryName(project.FilePath)!, project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, context);
+        await ProduceAsync(projectDir, project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, context);
 
         if (final.Length > MaxScriptLength)
             context.Interaction.Custom($"NOTE: The final script has {final.Length} characters, which exceeds the maximum of {MaxScriptLength}. The programmable block will not be able to run it.");
@@ -249,9 +251,18 @@ public class ScriptPacker: ProjectJob
     static async Task<Document> CombineAsync(Project project, IScriptCombiner combiner, ImmutableArray<Document> allDocuments, DirectoryInfo outputDirectory, PackContext context)
     {
         context.Console.Trace($"Running combiner {combiner.GetType().Name}");
+        var projectDirectory = Path.GetDirectoryName(project.FilePath)!;
+        var intermediateFileName = Path.Combine(projectDirectory, "obj", "intermediate-script.cs");
         var scriptDocument = (await combiner.CombineAsync(project, allDocuments, context))
-            .WithName("script.cs")
-            .WithFilePath(Path.Combine(outputDirectory.FullName, "script.cs"));
+            .WithName(Path.GetFileName(intermediateFileName))
+            .WithFilePath(intermediateFileName);
+        
+        if (context.Console.TraceEnabled)
+        {
+            context.Console.Trace($"Writing intermediate script to {scriptDocument.FilePath}");
+            await File.WriteAllTextAsync(scriptDocument.FilePath!, (await scriptDocument.GetTextAsync()).ToString());
+        }
+        
         return scriptDocument;
     }
 
@@ -265,6 +276,12 @@ public class ScriptPacker: ProjectJob
                 context.Console.Trace($"Running postprocessor {postprocessor.GetType().Name}");
                 scriptDocument = await postprocessor.ProcessAsync(scriptDocument, context);
                 scriptDocument = await scriptDocument.RemoveUnnecessaryUsingsAsync();
+                if (context.Console.TraceEnabled)
+                {
+                    var intermediateFileName = Path.ChangeExtension(scriptDocument.FilePath!, $"{postprocessor.GetType().Name}.cs");
+                    context.Console.Trace($"Writing intermediate script to {intermediateFileName}");
+                    await File.WriteAllTextAsync(intermediateFileName, (await scriptDocument.GetTextAsync()).ToString());
+                }
             }
         }
         else
@@ -275,7 +292,21 @@ public class ScriptPacker: ProjectJob
     static async Task VerifyAsync(IConsole console, TextDocument scriptDocument)
     {
         console.Trace("Verifying that nothing went wrong");
-        var script = (await scriptDocument.GetTextAsync()).ToString();
+        // if (console.TraceEnabled)
+        // {
+        //     console.Trace($"Writing intermediate script to {scriptDocument.FilePath}");
+        //     var script = (await scriptDocument.GetTextAsync()).ToString();
+        //     var objDirectory = Path.GetDirectoryName(scriptDocument.FilePath)!;
+        //     try
+        //     {
+        //         Directory.CreateDirectory(objDirectory);
+        //         await File.WriteAllTextAsync(scriptDocument.FilePath!, script);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         console.Print($"Failed to write intermediate script: {e.Message}");
+        //     }
+        // }
         var compilation = await scriptDocument.Project.GetCSharpCompilationAsync() ?? throw new CommandLineException(-1, "Failed to compile the project.");
         var diagnostics = compilation.GetDiagnostics();
         if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
