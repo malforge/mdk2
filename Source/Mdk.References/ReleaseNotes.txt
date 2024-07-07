@@ -1,3 +1,6 @@
+v.2.2.3
+ - Package was not defined as a development dependency
+
 v.2.2.2
  - Some numbnuts (me) forgot to move the OS type check below the local binarypath override.
  

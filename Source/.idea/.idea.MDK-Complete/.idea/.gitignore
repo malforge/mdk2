@@ -1,15 +1,20 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-# Rider ignored files
-/modules.xml
-/.idea.Source.iml
-/contentModel.xml
-/projectSettingsUpdater.xml
-# Editor-based HTTP Client requests
-/httpRequests/
-# Datasource local storage ignored files
-/dataSources/
-/dataSources.local.xml
-# GitHub Copilot persisted chat sessions
-/copilot/chatSessions
+#### ignore all .idea files ...
+*
+
+#### except
+
+# Version Control configuration for your project
+!vcs.xml
+
+# how IDEA should treat the text files in your project
+!encodings.xml
+
+# automatic code formatting
+!codeStyleSettings.xml
+
+# project specific words
+!dictionaries
+
+!copyrights
+!misc.xml
+!sqldialects.xml
