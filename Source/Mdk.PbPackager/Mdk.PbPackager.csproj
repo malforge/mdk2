@@ -17,6 +17,7 @@
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
+        <DevelopmentDependency>true</DevelopmentDependency>
     </PropertyGroup>
 
     <Target Name="BuildMdk" BeforeTargets="PreBuildEvent">

@@ -1,4 +1,7 @@
-﻿v.2.0.4
+﻿v.2.0.5
+    - Package was not defined as a development dependency
+
+v.2.0.4
  - Reverted a convenience fix that caused more trouble than convenience...
  
 v.2.0.3

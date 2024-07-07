@@ -9,10 +9,6 @@
         <Platforms>x64</Platforms>
     </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Mal.Mdk2.References" Version="2.1.9"/>
-    </ItemGroup>
-
     <Target Name="SpaceEngineersExecutable" AfterTargets="SpaceEngineers">
         <ItemGroup>
             <Reference Include="SpaceEngineers">
@@ -41,6 +37,10 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Mal.Mdk2.References" Version="2.2.2" />
     </ItemGroup>
     
 </Project>

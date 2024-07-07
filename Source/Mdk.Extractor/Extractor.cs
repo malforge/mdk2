@@ -35,19 +35,13 @@ public class Extractor
         var directory = new DirectoryInfo(path);
         if (!directory.Exists)
             directory.Create();
+        else
+            Cleanup(directory);
 
         File.WriteAllText(Path.Combine(path, "SpaceEngineers.cfg"), Resources.SpaceEngineersCfg);
-
-        try
-        {
-            var launcher = (ILauncher)Activator.CreateInstance(typeof(Program).Assembly.GetType(LauncherTypeName, true));
-            launcher.Path = SeBinPath;
-            launcher.Launch("-nosplash", "-skipintro", "-appdata", path);
-        }
-        finally
-        {
-            Cleanup(directory);
-        }
+        var launcher = (ILauncher)Activator.CreateInstance(typeof(Program).Assembly.GetType(LauncherTypeName, true));
+        launcher.Path = SeBinPath;
+        launcher.Launch("-nosplash", "-skipintro", "-appdata", path);
     }
 
     void Cleanup(DirectoryInfo directory)

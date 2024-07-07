@@ -4,6 +4,9 @@
         <Mdk-IgnorePaths>obj\**\*;MDK\**\*;**\*.debug.cs</Mdk-IgnorePaths>
     </PropertyGroup>
     <ItemGroup>
+        <PackageReference Update="Mal.Mdk2.PbAnalyzers" IncludeAssets="analyzers" />
+    </ItemGroup>
+    <ItemGroup>
         <CompilerVisibleProperty Include="ProjectDir" />
         <CompilerVisibleProperty Include="Mdk-IgnorePaths" />
     </ItemGroup>

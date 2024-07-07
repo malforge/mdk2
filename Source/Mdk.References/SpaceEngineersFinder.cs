@@ -44,7 +44,7 @@ namespace Mdk2.References
             
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Log.LogWarning("Unable to determine the location of Space Engineers, because we're not running on Windows.");
+                Log.LogWarning("Unable to determine the location of Space Engineers, because we're not running on Windows. If you have a .mdk.local.ini file, you can specify the BinaryPath there.");
                 return false;
             }
             
