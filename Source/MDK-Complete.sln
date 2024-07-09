@@ -30,6 +30,10 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "PbMixin", "ScriptTemplates\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.PbPackager", "Mdk.PbPackager\Mdk.PbPackager.csproj", "{15218DAA-FFF4-4E20-A21B-0A8347E27833}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.DocumentGenerator", "Mal.DocumentGenerator\Mal.DocumentGenerator.csproj", "{0E5186BD-BCFB-4A71-8C03-9F0815C8C63C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mal.DocumentGenerator.Tests", "Mal.DocumentGenerator.Tests\Mal.DocumentGenerator.Tests.csproj", "{5F52634F-725F-4D72-8A5F-AC9546DDD39B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|x64 = Release|x64
@@ -76,6 +80,14 @@ Global
 		{15218DAA-FFF4-4E20-A21B-0A8347E27833}.Release|x64.Build.0 = Release|Any CPU
 		{15218DAA-FFF4-4E20-A21B-0A8347E27833}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{15218DAA-FFF4-4E20-A21B-0A8347E27833}.Debug|x64.Build.0 = Debug|Any CPU
+		{0E5186BD-BCFB-4A71-8C03-9F0815C8C63C}.Debug|x64.ActiveCfg = Debug|x64
+		{0E5186BD-BCFB-4A71-8C03-9F0815C8C63C}.Debug|x64.Build.0 = Debug|x64
+		{0E5186BD-BCFB-4A71-8C03-9F0815C8C63C}.Release|x64.ActiveCfg = Release|x64
+		{0E5186BD-BCFB-4A71-8C03-9F0815C8C63C}.Release|x64.Build.0 = Release|x64
+		{5F52634F-725F-4D72-8A5F-AC9546DDD39B}.Release|x64.ActiveCfg = Release|Any CPU
+		{5F52634F-725F-4D72-8A5F-AC9546DDD39B}.Release|x64.Build.0 = Release|Any CPU
+		{5F52634F-725F-4D72-8A5F-AC9546DDD39B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5F52634F-725F-4D72-8A5F-AC9546DDD39B}.Debug|x64.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8A3CDCC5-4B55-4D87-A415-698A0E1FF06F} = {8EAA4661-9512-40CE-AA5D-E0CEFB85AE64}

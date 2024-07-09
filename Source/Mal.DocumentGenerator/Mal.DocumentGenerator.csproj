@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8-windows</TargetFramework>
+        <AssemblyName>mdoc</AssemblyName>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
+        <Nullable>enable</Nullable>
+        <WarningsAsErrors>nullable</WarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Mal.Mdk2.References" Version="2.2.3">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Mono.Cecil" Version="0.11.5" />
+      <PackageReference Include="System.Memory" Version="4.5.5" />
+    </ItemGroup>
+
+</Project>
