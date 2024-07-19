@@ -6,9 +6,12 @@ namespace Mal.DocumentGenerator.Whitelists;
 
 public class Whitelist
 {
-    readonly List<WhitelistRule> _blacklist = new();
+    readonly List<BlacklistRule> _blacklist = new();
     readonly List<WhitelistRule> _rules = new();
 
+    public IEnumerable<WhitelistRule> WhitelistRules => _rules;
+    public IEnumerable<BlacklistRule> BlacklistRules => _blacklist;
+    
     public static Whitelist Load(string fileName)
     {
         var lines = File.ReadAllLines(fileName);
@@ -20,7 +23,7 @@ public class Whitelist
 
     public void AddWhitelist(string whitelistRule) => _rules.Add(new WhitelistRule(whitelistRule));
 
-    public void AddBlacklist(string blacklistRule) => _blacklist.Add(new WhitelistRule(blacklistRule));
+    public void AddBlacklist(string blacklistRule) => _blacklist.Add(new BlacklistRule(blacklistRule));
 
     public bool IsWhitelisted(string assemblyName, string typeName) => _rules.Any(rule => rule.IsMatch(assemblyName, typeName)) && !_blacklist.Any(rule => rule.IsMatch(assemblyName, typeName));
 

@@ -8,14 +8,13 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
 {
     readonly AssemblyDefinition _assembly = assembly;
     readonly Context _context = context;
-    readonly Stack<Node> _nodeStack = new();
+    readonly Stack<INode> _nodeStack = new();
     readonly HashSet<AssemblyDefinition> _visitedAssemblies = new();
     readonly Whitelist _whitelist = whitelist;
 
     public void Visit()
     {
-        var assemblyNode = _context.GetOrAddAssembly(assembly);
-        _nodeStack.Push(assemblyNode);
+        _nodeStack.Push(_context);
         VisitModule(assembly.MainModule);
         _nodeStack.Pop();
     }
@@ -26,10 +25,7 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
             return;
         if (_whitelist.IsAssemblyWhitelisted(assembly.Name.Name) == false)
             return;
-        var assemblyNode = _context.GetOrAddAssembly(assembly);
-        _nodeStack.Push(assemblyNode);
         base.VisitAssembly(assembly);
-        _nodeStack.Pop();
     }
 
     protected override void VisitModule(ModuleDefinition module)
@@ -56,20 +52,11 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
             return;
         if (!type.IsAccessible())
             return;
-        if (!_whitelist.IsWhitelisted(type.Module.Assembly.Name.Name, type.ToWhitespaceFullName()))
+        if (!_whitelist.IsWhitelisted(type.Module.Assembly.Name.Name, type.GetWhitelistName()))
             return;
 
         bool shouldPopAgain = false;
-        if (!_nodeStack.TryPeek(out Node? parentNode) || parentNode is not ITypeContainer parent)
-        {
-            var namespaceName = type.Namespace;
-            var assemblyNode = (AssemblyNode)_nodeStack.Peek();
-            var namespaceNode = assemblyNode.GetOrAddNamespace(namespaceName);
-            _nodeStack.Push(namespaceNode);
-            parent = namespaceNode;
-            shouldPopAgain = true;
-        }
-        var typeNode = parent.GetOrAddType(type);
+        var typeNode = ((ITypeContainer) _nodeStack.Peek()).GetOrAddType(type);
         _nodeStack.Push(typeNode);
         base.VisitType(type);
         _nodeStack.Pop();
@@ -79,11 +66,9 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
 
     protected override void VisitConstructor(MethodDefinition constructor)
     {
-        if (constructor.IsSpecialName || constructor.IsRuntimeSpecialName)
-            return;
         if (!constructor.IsAccessible())
             return;
-        if (!_whitelist.IsWhitelisted(constructor.DeclaringType.Module.Assembly.Name.Name, constructor.ToWhitespaceFullName()))
+        if (!_whitelist.IsWhitelisted(constructor.DeclaringType.Module.Assembly.Name.Name, constructor.GetWhitelistName()))
             return;
         var typeNode = (TypeNode)_nodeStack.Peek();
         typeNode.GetOrAddConstructor(constructor);
@@ -96,7 +81,7 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
             return;
         if (!field.IsAccessible())
             return;
-        if (!_whitelist.IsWhitelisted(field.DeclaringType.Module.Assembly.Name.Name, field.ToWhitespaceFullName()))
+        if (!_whitelist.IsWhitelisted(field.DeclaringType.Module.Assembly.Name.Name, field.GetWhitelistName()))
             return;
         var typeNode = (TypeNode)_nodeStack.Peek();
         typeNode.GetOrAddField(field);
@@ -109,7 +94,7 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
             return;
         if (!property.IsAccessible())
             return;
-        if (!_whitelist.IsWhitelisted(property.DeclaringType.Module.Assembly.Name.Name, property.ToWhitespaceFullName()))
+        if (!_whitelist.IsWhitelisted(property.DeclaringType.Module.Assembly.Name.Name, property.GetWhitelistName()))
             return;
         var typeNode = (TypeNode)_nodeStack.Peek();
         typeNode.GetOrAddProperty(property);
@@ -122,7 +107,7 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
             return;
         if (!method.IsAccessible())
             return;
-        if (!_whitelist.IsWhitelisted(method.DeclaringType.Module.Assembly.Name.Name, method.ToWhitespaceFullName()))
+        if (!_whitelist.IsWhitelisted(method.DeclaringType.Module.Assembly.Name.Name, method.GetWhitelistName()))
             return;
         var typeNode = (TypeNode)_nodeStack.Peek();
         typeNode.GetOrAddMethod(method);
@@ -135,7 +120,7 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
             return;
         if (!member.IsAccessible())
             return;
-        if (!_whitelist.IsWhitelisted(member.DeclaringType.Module.Assembly.Name.Name, member.ToWhitespaceFullName()))
+        if (!_whitelist.IsWhitelisted(member.DeclaringType.Module.Assembly.Name.Name, member.GetWhitelistName()))
             return;
         var typeNode = (TypeNode)_nodeStack.Peek();
         typeNode.GetOrAddEvent(member);

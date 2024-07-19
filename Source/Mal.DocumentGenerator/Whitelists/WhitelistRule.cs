@@ -23,7 +23,7 @@ public class WhitelistRule
     public string Path { get; }
     public bool AnyMember { get; }
 
-    public bool IsMatch(string assemblyName, string typeName)
+    public virtual bool IsMatch(string assemblyName, string typeName)
     {
         if (AssemblyName != assemblyName)
             return false;
@@ -31,5 +31,13 @@ public class WhitelistRule
         if (AnyMember)
             return typeName.StartsWith(Path);
         return typeName == Path;
+    }
+}
+
+public class BlacklistRule(string whitelistRule) : WhitelistRule(whitelistRule)
+{
+    public override bool IsMatch(string assemblyName, string typeName)
+    {
+        return base.IsMatch(assemblyName, typeName) && (!AnyMember || typeName.Length > Path.Length);
     }
 }

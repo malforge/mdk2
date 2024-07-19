@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Mal.DocumentGenerator;
 using Mal.DocumentGenerator.Common;
+using Mal.DocumentGenerator.DocExtensions;
 using Mal.DocumentGenerator.Whitelists;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
@@ -40,24 +41,43 @@ try
     //ReflectionAssemblyManager.Init(sePath);
 
     var pbWhitelist = Whitelist.Load(parameters.PbWhitelist);
+    var spaceTextRule = pbWhitelist.WhitelistRules.Where(r => r.Path.Contains("MySpaceTexts")).ToList();
     pbWhitelist.AddBlacklist("Sandbox.Game.Localization.MySpaceTexts+*, Sandbox.Game");
     var modWhitelist = Whitelist.Load(parameters.ModWhitelist);
     var terminal = Terminals.Load(parameters.Terminal);
+
+    Summary[] extensions =
+    [
+        new Summary
+        {
+            Target = "Sandbox.Game.Localization.MySpaceTexts",
+            AuthorNickname = "Malware",
+            AuthorUserId = "mlyrstad@gmail.com",
+            Date = DateTimeOffset.Now,
+            ReplacesOriginal = false,
+            SummaryText =
+                """
+                The MySpaceTexts class holds the localization strings for Space Engineers. There are many thousands of strings in this class, so we will not be documenting them all here.
+                If you need to find the properties, you may be able to use your IDE's autocomplete feature to find the property you are looking for, depending
+                on the IDE you are using. If you are using Visual Studio, you can press Ctrl+Space to bring up the autocomplete menu. 
+                """
+        }
+    ];
 
     var resolver = new DefaultAssemblyResolver();
     resolver.AddSearchDirectory(sePath);
     var readerParameters = new ReaderParameters { AssemblyResolver = resolver };
 
-    var context = new Context();
+    var context = new Context(sePath);
     var asm = AssemblyDefinition.ReadAssembly(Path.Combine(sePath, "SpaceEngineers.exe"), readerParameters);
     var visitor = new DocumentGeneratorVisitor(pbWhitelist, context, asm);
     visitor.Visit();
     
-    var everything = context.Everything().Where(n => n is TypeNode).ToList();
-    //
+    var everything = context.Everything()/*.Where(n => n is TypeNode)*/.ToList();
+    
     // var entries = new List<string>();
-    //
-    // var visited = new HashSet<AssemblyDefinition>();
+    // //
+    //  var visited = new HashSet<AssemblyDefinition>();
     // visitAssemblyForPb(asm, readerParameters, pbWhitelist, visited, entries);
     //
     //
@@ -106,10 +126,10 @@ void visitAssemblyForPb(AssemblyDefinition assembly, ReaderParameters rp, Whitel
     {
         if (type.IsSpecialName || type.IsRuntimeSpecialName)
             continue;
-        if (!type.IsPublic && !type.IsNestedPublic)
+        if (type is {IsPublic: false, IsNestedPublic: false})
             continue;
 
-        var fullNameOfType = type.ToWhitespaceFullName();
+        var fullNameOfType = type.GetWhitelistName();
         if (!whitelist.IsWhitelisted(assembly.Name.Name, fullNameOfType))
             continue;
 
@@ -117,7 +137,7 @@ void visitAssemblyForPb(AssemblyDefinition assembly, ReaderParameters rp, Whitel
 
         foreach (var member in type.GetConstructors())
         {
-            var fullName = member.ToWhitespaceFullName();
+            var fullName = member.GetWhitelistName();
             if (!whitelist.IsWhitelisted(assembly.Name.Name, fullName))
                 continue;
 
@@ -126,7 +146,7 @@ void visitAssemblyForPb(AssemblyDefinition assembly, ReaderParameters rp, Whitel
             if (member.IsPrivate)
                 continue;
 
-            entries.Add(member.ToWhitespaceFullName());
+            entries.Add(member.GetWhitelistName());
         }
 
         foreach (var member in type.Fields)
@@ -139,7 +159,7 @@ void visitAssemblyForPb(AssemblyDefinition assembly, ReaderParameters rp, Whitel
             if (member.IsPrivate)
                 continue;
 
-            var fullName = member.ToWhitespaceFullName();
+            var fullName = member.GetWhitelistName();
             if (!whitelist.IsWhitelisted(assembly.Name.Name, fullName))
                 continue;
 
@@ -156,7 +176,7 @@ void visitAssemblyForPb(AssemblyDefinition assembly, ReaderParameters rp, Whitel
             if ((member.GetMethod?.IsPrivate ?? true) && (member.SetMethod?.IsPrivate ?? true))
                 continue;
 
-            var fullName = member.ToWhitespaceFullName();
+            var fullName = member.GetWhitelistName();
             if (!whitelist.IsWhitelisted(assembly.Name.Name, fullName))
                 continue;
 
@@ -173,7 +193,7 @@ void visitAssemblyForPb(AssemblyDefinition assembly, ReaderParameters rp, Whitel
             if (member.AddMethod.IsPrivate && member.RemoveMethod.IsPrivate)
                 continue;
 
-            var fullName = member.ToWhitespaceFullName();
+            var fullName = member.GetWhitelistName();
             if (!whitelist.IsWhitelisted(assembly.Name.Name, fullName))
                 continue;
 
@@ -197,7 +217,7 @@ void visitAssemblyForPb(AssemblyDefinition assembly, ReaderParameters rp, Whitel
             if (member.IsPrivate)
                 continue;
 
-            var fullName = member.ToWhitespaceFullName();
+            var fullName = member.GetWhitelistName();
             if (!whitelist.IsWhitelisted(assembly.Name.Name, fullName))
                 continue;
 

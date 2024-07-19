@@ -16,6 +16,16 @@ public class WhitelistTests
         whitelist.IsWhitelisted("mscorlib", "System.Type").Should().BeTrue();
         whitelist.IsWhitelisted("mscorlib", "System.Type.Member").Should().BeFalse();
     }
+
+    [Test]
+    public void Rule_WithTypeOrMembers_DoesNotMatchType()
+    {
+        var whitelist = new Whitelist();
+        whitelist.AddWhitelist("System.Type.*, mscorlib");
+        
+        whitelist.IsWhitelisted("mscorlib", "System.Type").Should().BeFalse();
+        whitelist.IsWhitelisted("mscorlib", "System.Type.Member").Should().BeTrue();
+    }
     
     [TestCase("System.Type+*, mscorlib")]
     [TestCase("System.Type.*, mscorlib")]
@@ -24,7 +34,7 @@ public class WhitelistTests
         var whitelist = new Whitelist();
         whitelist.AddWhitelist(pattern);
 
-        whitelist.IsWhitelisted("mscorlib", "System.Type").Should().BeTrue();
+        whitelist.IsWhitelisted("mscorlib", "System.Type").Should().BeFalse();
         whitelist.IsWhitelisted("mscorlib", "System.Type.Member").Should().BeTrue();
     }
     

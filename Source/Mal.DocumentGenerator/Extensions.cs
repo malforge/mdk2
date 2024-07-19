@@ -9,38 +9,38 @@ namespace Mal.DocumentGenerator;
 
 public static class Extensions
 {
-    public static string ToWhitespaceFullName(this EventDefinition member)
+    public static string GetWhitelistName(this EventDefinition member)
     {
         var builder = new StringBuilder();
-        builder.Append(ToWhitespaceFullName(member.DeclaringType))
+        builder.Append(GetWhitelistName(member.DeclaringType))
             .Append('.')
             .Append(member.Name);
         return builder.ToString();
     }
 
-    public static string ToWhitespaceFullName(this PropertyDefinition member)
+    public static string GetWhitelistName(this PropertyDefinition member)
     {
         var builder = new StringBuilder();
-        builder.Append(ToWhitespaceFullName(member.DeclaringType))
+        builder.Append(GetWhitelistName(member.DeclaringType))
             .Append('.')
             .Append(member.Name);
         return builder.ToString();
     }
 
-    public static string ToWhitespaceFullName(this FieldDefinition member)
+    public static string GetWhitelistName(this FieldDefinition member)
     {
         var builder = new StringBuilder();
-        builder.Append(ToWhitespaceFullName(member.DeclaringType))
+        builder.Append(GetWhitelistName(member.DeclaringType))
             .Append('.')
             .Append(member.Name);
         return builder.ToString();
     }
 
-    public static string ToWhitespaceFullName(this MethodDefinition member)
+    public static string GetWhitelistName(this MethodDefinition member)
     {
         var builder = new StringBuilder();
         var first = true;
-        builder.Append(ToWhitespaceFullName(member.DeclaringType))
+        builder.Append(GetWhitelistName(member.DeclaringType))
             .Append('.');
         if (member.HasGenericParameters)
         {
@@ -65,13 +65,13 @@ public static class Extensions
             if (!first)
                 builder.Append(',');
             first = false;
-            builder.Append(ToWhitespaceFullName(param.ParameterType));
+            builder.Append(GetWhitelistName(param.ParameterType));
         }
         builder.Append(')');
         return builder.ToString();
     }
 
-    public static string ToWhitespaceFullName(this TypeReference type)
+    public static string GetWhitelistName(this TypeReference type)
     {
         if (type.IsGenericParameter)
             return type.Name;
@@ -79,7 +79,7 @@ public static class Extensions
         var builder = new StringBuilder();
         if (type.IsNested)
         {
-            builder.Append(ToWhitespaceFullName(type.DeclaringType));
+            builder.Append(GetWhitelistName(type.DeclaringType));
             builder.Append('.');
         }
         else
@@ -101,7 +101,7 @@ public static class Extensions
                 if (!first)
                     builder.Append(',');
                 first = false;
-                builder.Append(ToWhitespaceFullName(arg));
+                builder.Append(GetWhitelistName(arg));
             }
             builder.Append('>');
         }
