@@ -1,5 +1,10 @@
-﻿v.2.0.6
+﻿v.2.0.7
+   - Fixed a problem where the minifier replaced a `var` with an incorrect type reference. Now leaving `var` as is.
+   - Now removing `private` and `internal` access modifiers where they are redundant.
+
+v.2.0.6
    - Fixed a problem where a quirk in Roslyn behavior for indexers would cause a compile error after minification.
+   - Added the missing <mdk sortorder="#"/> feature.
 
 v.2.0.5
     - Package was not defined as a development dependency
