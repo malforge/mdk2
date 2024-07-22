@@ -246,7 +246,7 @@ public class ScriptProcessingManager
     {
         public static readonly Type[] Preprocessors = [typeof(PreprocessorConditionals), typeof(DeleteNamespaces)];
         public static readonly Type Combiner = typeof(Combiner);
-        public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(RegionAnnotator), typeof(TypeSorter), typeof(SymbolProtectionAnnotator), typeof(TypeTrimmer), typeof(CommentStripper), typeof(WhitespaceTrimmer), typeof(SymbolRenamer)];
+        public static readonly Type[] Postprocessors = [typeof(PartialMerger), typeof(RegionAnnotator), typeof(TypeSorter), typeof(SymbolProtectionAnnotator), typeof(CodeSmallifier), typeof(TypeTrimmer), typeof(CommentStripper), typeof(WhitespaceTrimmer), typeof(SymbolRenamer)];
         public static readonly Type Composer = typeof(Composer);
         public static readonly Type[] PostCompositionProcessors = [];
         public static readonly Type Producer = typeof(Producer);

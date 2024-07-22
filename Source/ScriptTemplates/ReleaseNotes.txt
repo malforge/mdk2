@@ -1,3 +1,7 @@
+v.2.0.4
+ - Added the missing thumbnail image to the template.
+ - Stopped using auto-updating nuggets as they don't work as user-friendly as I would like.
+
 v.2.0.3
  - Remove some comments in the project file that was remaining from my experiments with templating
  - Added binarypath in the default local ini file

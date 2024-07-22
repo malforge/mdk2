@@ -18,33 +18,12 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 /// </remarks>
 public class Combiner : IScriptCombiner
 {
-    readonly struct TreeWithWeight
-    {
-        static readonly string[] NewLine = { "\r\n", "\n" };
-        
-        public TreeWithWeight(SyntaxTree tree, int weight)
-        {
-            Tree = tree;
-            //Weight = weight;
-            if (MdkTrivia.TryGetMdkTrivia(Tree, out var trivia))
-            {
-                if (trivia.SortOrderSpecified)
-                    Weight = trivia.SortOrder;
-            }
-        }
-
-        public SyntaxTree Tree { get; }
-        public int Weight { get; }
-        
-        public SyntaxNode GetRoot() => Tree.GetRoot();
-    } 
-    
     /// <inheritdoc />
     public async Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, IPackContext context)
     {
         var trees = (await Task.WhenAll(documents.Select(async d => await d.GetSyntaxTreeAsync())))
             .Where(t => t is not null)
-            .Select((t, i) => new TreeWithWeight(t!, i))
+            .Select((t, i) => new TreeWithWeight(t!))
             .OrderBy(t => t.Weight)
             .ToList();
 
@@ -65,7 +44,25 @@ public class Combiner : IScriptCombiner
         var documentIds = documents.Select(d => d.Id).ToImmutableArray();
         var document = project.RemoveDocuments(documentIds)
             .AddDocument("script.cs", await combinedSyntaxTree.GetRootAsync());
-        
+
         return await document.RemoveUnnecessaryUsingsAsync();
+    }
+
+    readonly struct TreeWithWeight
+    {
+        public TreeWithWeight(SyntaxTree tree)
+        {
+            Tree = tree;
+            if (MdkTrivia.TryGetMdkTrivia(Tree, out var trivia))
+            {
+                if (trivia.SortOrderSpecified)
+                    Weight = trivia.SortOrder;
+            }
+        }
+
+        public SyntaxTree Tree { get; }
+        public int Weight { get; }
+
+        public SyntaxNode GetRoot() => Tree.GetRoot();
     }
 }

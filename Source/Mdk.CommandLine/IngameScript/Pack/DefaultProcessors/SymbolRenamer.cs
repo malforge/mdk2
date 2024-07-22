@@ -168,17 +168,35 @@ public partial class SymbolRenamer : IScriptPostprocessor
             return newNode.WithIdentifier(newIdentifier);
         }
 
+        public override SyntaxNode VisitVariableDeclaration(VariableDeclarationSyntax node)
+        {
+            var newNode = (VariableDeclarationSyntax?)base.VisitVariableDeclaration(node);
+            
+            // If the type is a qualified name (containing a dot) replace it with a `var` type
+            // as it's likely to be either as short, or shorter than the original type name.
+            if (newNode?.Type is QualifiedNameSyntax qualifiedName)
+            {
+                var varType = SyntaxFactory.IdentifierName("var")
+                    .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
+                    .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
+                return newNode.WithType(varType);
+            }
+
+            return newNode!;
+        }
+
         public override SyntaxNode? VisitVariableDeclarator(VariableDeclaratorSyntax node)
         {
             var newNode = (VariableDeclaratorSyntax?)base.VisitVariableDeclarator(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
-            // Create a new identifier, preserving all trivia of the old one
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -330,6 +348,10 @@ public partial class SymbolRenamer : IScriptPostprocessor
         public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
         {
             var newNode = (IdentifierNameSyntax?)base.VisitIdentifierName(node);
+            // If this is a `var` identifier, don't rename it
+            if (newNode?.Identifier.Text == "var" && newNode.Parent is VariableDeclarationSyntax)
+                return newNode;
+            
             if (!TryGetSymbol(newNode, out var symbol))
                 return newNode;
             var oldName = symbol.Name;
@@ -427,17 +449,6 @@ public partial class SymbolRenamer : IScriptPostprocessor
                     return;
                 _symbolMap[nodeId] = symbol;
             }
-            /* Confusingly, the code below breaks the minification and I have no idea why.
-               So let's just leave `var` alone for now.
-            else if (node is VariableDeclarationSyntax { Type.IsVar: true } vds)
-            {
-                // Find the inferred type symbol
-                var typeInfo = _semanticModel.GetTypeInfo(vds.Type);
-                var typeNodeId = vds.Type.GetAnnotations("NodeID").FirstOrDefault()?.Data;
-                if (typeInfo.Type != null && typeNodeId != null)
-                    _symbolMap[typeNodeId] = typeInfo.Type;
-            }
-            */
         }
     }
 
