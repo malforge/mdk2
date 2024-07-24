@@ -12,10 +12,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 /// <summary>
 ///     The TypeTrimmer processor removes unused types from the script.
 /// </summary>
-[RunAfter<PartialMerger>]
-[RunAfter<RegionAnnotator>]
-[RunAfter<TypeSorter>]
-[RunAfter<SymbolProtectionAnnotator>]
+[RunAfter<CodeSmallifier>]
 public class TypeTrimmer : IScriptPostprocessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)

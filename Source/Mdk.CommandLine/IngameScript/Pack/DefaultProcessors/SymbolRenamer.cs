@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -36,22 +35,22 @@ public partial class SymbolRenamer : IScriptPostprocessor
         document = document.WithSyntaxRoot(syntaxRoot);
         var semanticModel = await document.GetSemanticModelAsync() ?? throw new InvalidOperationException("Failed to get semantic model.");
         syntaxRoot = await document.GetSyntaxRootAsync() ?? throw new InvalidOperationException("Failed to get syntax root.");
-        
+
         var idMap = new Dictionary<string, ISymbol>(StringComparer.Ordinal);
         var scanPhase1 = new DefinitionScanWalker(semanticModel, idMap);
         scanPhase1.Visit(syntaxRoot);
         var scanPhase2 = new UsageScanWalker(semanticModel, idMap);
         scanPhase2.Visit(syntaxRoot);
-        
+
         var renamer = new SymbolRenamingRewriter(idMap);
         syntaxRoot = renamer.Visit(syntaxRoot) ?? throw new InvalidOperationException("Failed to rename symbols.");
-        
+
         document = document.WithSyntaxRoot(syntaxRoot);
-        
+
         context.Console.Trace("Symbol renaming complete in " + stopwatch.Elapsed);
         return document;
     }
-    
+
     /// <summary>
     ///     Changes the given integer into a string representing it in Base-N
     /// </summary>
@@ -64,23 +63,23 @@ public partial class SymbolRenamer : IScriptPostprocessor
         var i = 32;
         var buffer = new char[i];
         var targetBase = baseChars.Length;
-        
+
         do
         {
             buffer[--i] = baseChars[value % targetBase];
             value /= targetBase;
         } while (value > 0);
-        
+
         var result = new char[32 - i];
         Array.Copy(buffer, i, result, 0, 32 - i);
-        
+
         return new string(result);
     }
-    
+
     class NodeIdentifierRewriter : CSharpSyntaxRewriter
     {
         long _identSrc;
-        
+
         public override SyntaxNode? Visit(SyntaxNode? node)
         {
             if (node == null)
@@ -88,14 +87,14 @@ public partial class SymbolRenamer : IScriptPostprocessor
             return base.Visit(node).WithAdditionalAnnotations(new SyntaxAnnotation("NodeID", $"ID_{_identSrc++}"));
         }
     }
-    
+
     class SymbolRenamingRewriter(Dictionary<string, ISymbol> symbolMap) : CSharpSyntaxRewriter
     {
         readonly HashSet<string> _distinctSymbolNames = new();
         readonly Dictionary<string, string> _nameMap = new(StringComparer.Ordinal);
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
         int _symbolSrc;
-        
+
         string GetMinifiedName(string oldName)
         {
             if (_nameMap.TryGetValue(oldName, out var newName))
@@ -108,7 +107,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             _distinctSymbolNames.Add(name);
             return name;
         }
-        
+
         bool TryGetSymbol(SyntaxNode? node, [MaybeNullWhen(false)] out ISymbol symbol)
         {
             if (node == null)
@@ -129,7 +128,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             }
             return true;
         }
-        
+
         public override SyntaxNode? VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
             var newNode = (ConstructorDeclarationSyntax?)base.VisitConstructorDeclaration(node);
@@ -142,7 +141,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitTypeParameter(TypeParameterSyntax node)
         {
             var newNode = (TypeParameterSyntax?)base.VisitTypeParameter(node);
@@ -155,7 +154,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitCatchDeclaration(CatchDeclarationSyntax node)
         {
             var newNode = (CatchDeclarationSyntax?)base.VisitCatchDeclaration(node);
@@ -168,24 +167,27 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
+        public override SyntaxNode VisitVariableDeclaration(VariableDeclarationSyntax node)
+        {
+            var newNode = (VariableDeclarationSyntax?)base.VisitVariableDeclaration(node);
+            
+            // If the type is a qualified name (containing a dot) replace it with a `var` type
+            // as it's likely to be either as short, or shorter than the original type name.
+            if (newNode?.Type is QualifiedNameSyntax qualifiedName)
+            {
+                var varType = SyntaxFactory.IdentifierName("var")
+                    .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
+                    .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
+                return newNode.WithType(varType);
+            }
+
+            return newNode!;
+        }
+
         public override SyntaxNode? VisitVariableDeclarator(VariableDeclaratorSyntax node)
         {
             var newNode = (VariableDeclaratorSyntax?)base.VisitVariableDeclarator(node);
-            if (!TryGetSymbol(newNode, out _))
-                return newNode;
-            var oldName = newNode!.Identifier.Text;
-            var newName = GetMinifiedName(oldName);
-            // Create a new identifier, preserving all trivia of the old one
-            var newIdentifier = SyntaxFactory.Identifier(newName)
-                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
-                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
-            return newNode.WithIdentifier(newIdentifier);
-        }
-        
-        public override SyntaxNode? VisitParameter(ParameterSyntax node)
-        {
-            var newNode = (ParameterSyntax?)base.VisitParameter(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
             
@@ -194,11 +196,25 @@ public partial class SymbolRenamer : IScriptPostprocessor
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            
             return newNode.WithIdentifier(newIdentifier);
         }
-        
-        
-        
+
+        public override SyntaxNode? VisitParameter(ParameterSyntax node)
+        {
+            var newNode = (ParameterSyntax?)base.VisitParameter(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+
+            var oldName = newNode!.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            return newNode.WithIdentifier(newIdentifier);
+        }
+
+
         public override SyntaxNode? VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             var newNode = (MethodDeclarationSyntax?)base.VisitMethodDeclaration(node);
@@ -211,7 +227,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             var newNode = (ClassDeclarationSyntax?)base.VisitClassDeclaration(node);
@@ -224,7 +240,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitStructDeclaration(StructDeclarationSyntax node)
         {
             var newNode = (StructDeclarationSyntax?)base.VisitStructDeclaration(node);
@@ -237,7 +253,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
             var newNode = (InterfaceDeclarationSyntax?)base.VisitInterfaceDeclaration(node);
@@ -250,7 +266,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitEnumDeclaration(EnumDeclarationSyntax node)
         {
             var newNode = (EnumDeclarationSyntax?)base.VisitEnumDeclaration(node);
@@ -263,7 +279,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitEnumMemberDeclaration(EnumMemberDeclarationSyntax node)
         {
             var newNode = (EnumMemberDeclarationSyntax?)base.VisitEnumMemberDeclaration(node);
@@ -276,7 +292,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
             var newNode = (PropertyDeclarationSyntax?)base.VisitPropertyDeclaration(node);
@@ -289,7 +305,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitEventDeclaration(EventDeclarationSyntax node)
         {
             var newNode = (EventDeclarationSyntax?)base.VisitEventDeclaration(node);
@@ -328,10 +344,14 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
         {
             var newNode = (IdentifierNameSyntax?)base.VisitIdentifierName(node);
+            // If this is a `var` identifier, don't rename it
+            if (newNode?.Identifier.Text == "var" && newNode.Parent is VariableDeclarationSyntax)
+                return newNode;
+            
             if (!TryGetSymbol(newNode, out var symbol))
                 return newNode;
             var oldName = symbol.Name;
@@ -341,7 +361,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitGenericName(GenericNameSyntax node)
         {
             var newNode = (GenericNameSyntax?)base.VisitGenericName(node);
@@ -354,7 +374,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
         public override SyntaxNode? VisitInvocationExpression(InvocationExpressionSyntax node)
         {
             var newNode = (InvocationExpressionSyntax?)base.VisitInvocationExpression(node);
@@ -363,7 +383,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             return newNode;
         }
     }
-    
+
     abstract class BaseWalker : CSharpSyntaxWalker
     {
         static T? GetOverriddenSymbol<T>(T symbol) where T : class, ISymbol
@@ -378,13 +398,13 @@ public partial class SymbolRenamer : IScriptPostprocessor
                     _ => null
                 };
             }
-            
+
             if (symbol.TryGetInterfaceImplementation(out var interfaceMethod))
                 return interfaceMethod as T;
-            
+
             return null;
         }
-        
+
         protected static bool IsOverriddenSymbolPreserved<T>(T symbol) where T : class, ISymbol
         {
             var overrideBase = GetOverriddenSymbol(symbol);
@@ -393,7 +413,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             var overrideDefinitionNode = overrideBase.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
             return overrideDefinitionNode == null || overrideDefinitionNode.ShouldBePreserved();
         }
-        
+
         protected static bool IsReferencedSymbolPreserved<T>(T symbol) where T : class, ISymbol
         {
             var references = symbol.DeclaringSyntaxReferences;
@@ -402,24 +422,25 @@ public partial class SymbolRenamer : IScriptPostprocessor
             return references.All(r => r.GetSyntax().ShouldBePreserved());
         }
     }
-    
+
     class DefinitionScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap) : BaseWalker
     {
         readonly SemanticModel _semanticModel = semanticModel;
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
-        
+
         public override void Visit(SyntaxNode? node)
         {
             base.Visit(node);
             if (node == null)
                 return;
-            
+
             if (node.ShouldBePreserved())
                 return;
             var nodeId = node.GetAnnotations("NodeID").FirstOrDefault()?.Data;
             if (nodeId == null)
                 return;
             var symbol = _semanticModel.GetDeclaredSymbol(node);
+
             if (symbol != null)
             {
                 if (IsOverriddenSymbolPreserved(symbol))
@@ -428,42 +449,19 @@ public partial class SymbolRenamer : IScriptPostprocessor
                     return;
                 _symbolMap[nodeId] = symbol;
             }
-            /* Confusingly, the code below breaks the minification and I have no idea why.
-               So let's just leave `var` alone for now.
-            else if (node is VariableDeclarationSyntax { Type.IsVar: true } vds)
-            {
-                // Find the inferred type symbol
-                var typeInfo = _semanticModel.GetTypeInfo(vds.Type);
-                var typeNodeId = vds.Type.GetAnnotations("NodeID").FirstOrDefault()?.Data;
-                if (typeInfo.Type != null && typeNodeId != null)
-                    _symbolMap[typeNodeId] = typeInfo.Type;
-            }
-            */
         }
     }
-    
+
     class UsageScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap) : BaseWalker
     {
         readonly SemanticModel _semanticModel = semanticModel;
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
-        
-        public override void VisitIdentifierName(IdentifierNameSyntax node)
-        {
-            base.VisitIdentifierName(node);
-        }
-        
-        public override void VisitGenericName(GenericNameSyntax node)
-        {
-            base.VisitGenericName(node);
-        }
-        
+
         public override void Visit(SyntaxNode? node)
         {
             base.Visit(node);
-            if (node == null)
+            if (node is null)
                 return;
-            // if (node.ShouldBePreserved())
-            //     return;
             var nodeId = node.GetAnnotations("NodeID").FirstOrDefault()?.Data;
             if (nodeId == null)
                 return;
@@ -471,13 +469,30 @@ public partial class SymbolRenamer : IScriptPostprocessor
             var symbol = symbolInfo.Symbol;
             if (symbol is IMethodSymbol { MethodKind: MethodKind.ReducedExtension } methodSymbol)
                 symbol = methodSymbol.ReducedFrom ?? symbol;
-            
-            // If the symbol is generic, we need to find the original definition
-            if (symbol is IMethodSymbol { Arity: > 0 } genericMethod)
-                symbol = genericMethod.OriginalDefinition;
-            else if (symbol is INamedTypeSymbol { Arity: > 0 } genericType)
-                symbol = genericType.OriginalDefinition;
-            
+
+            switch (symbol)
+            {
+                // If the symbol is generic, we need to find the original definition
+                case IMethodSymbol { Arity: > 0 } genericMethod:
+                    symbol = genericMethod.OriginalDefinition;
+                    break;
+                case INamedTypeSymbol { Arity: > 0 } genericType:
+                    symbol = genericType.OriginalDefinition;
+                    break;
+                
+                // If the symbol is an indexer, it will be returning a _clone_ of the original indexer parameter definition.
+                // So we need to find the original.
+                case IParameterSymbol { OriginalDefinition.ContainingSymbol: IMethodSymbol { AssociatedSymbol: IPropertySymbol { IsIndexer: true } propertySymbol } } parameterSymbol:
+                {
+                    var originalParameterSymbol = propertySymbol.Parameters
+                        .FirstOrDefault(p => p.Name == parameterSymbol.Name);
+
+                    if (originalParameterSymbol != null)
+                        symbol = originalParameterSymbol;
+                    break;
+                }
+            }
+
             if (symbol != null && _symbolMap.Values.Contains(symbol, SymbolEqualityComparer.Default))
             {
                 if (IsOverriddenSymbolPreserved(symbol))
@@ -486,13 +501,13 @@ public partial class SymbolRenamer : IScriptPostprocessor
                     return;
                 _symbolMap[nodeId] = symbol;
             }
-            
+
             // // Additional handling for invocation expressions
             // if (node is InvocationExpressionSyntax invocation)
             //     HandleInvocationExpression(invocation, nodeId);
         }
-        
- 
+
+
         // void HandleInvocationExpression(InvocationExpressionSyntax invocation, string nodeId)
         // {
         //     // Get the method symbol for the invocation

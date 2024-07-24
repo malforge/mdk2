@@ -21,16 +21,16 @@ public class Combiner : IScriptCombiner
     /// <inheritdoc />
     public async Task<Document> CombineAsync(Project project, IReadOnlyList<Document> documents, IPackContext context)
     {
-        var trees = await Task.WhenAll(documents.Select(async d =>
-        {
-            //d = await d.RemoveUnnecessaryUsingsAsync();
-            return await d.GetSyntaxTreeAsync();
-        }));
+        var trees = (await Task.WhenAll(documents.Select(async d => await d.GetSyntaxTreeAsync())))
+            .Where(t => t is not null)
+            .Select((t, i) => new TreeWithWeight(t!))
+            .OrderBy(t => t.Weight)
+            .ToList();
 
-        var namespaceUsings = trees.SelectMany(t => t?.GetRoot().DescendantNodes().OfType<UsingDirectiveSyntax>() ?? Enumerable.Empty<UsingDirectiveSyntax>())
+        var namespaceUsings = trees.SelectMany(t => t.GetRoot().DescendantNodes().OfType<UsingDirectiveSyntax>() ?? [])
             .GroupBy(u => u.Name?.ToString()).Select(g => g.First()).ToArray();
 
-        var typeDeclarations = trees.SelectMany(t => t?.GetRoot().DescendantNodes().OfType<MemberDeclarationSyntax>() ?? Enumerable.Empty<MemberDeclarationSyntax>())
+        var typeDeclarations = trees.SelectMany(t => t.GetRoot().DescendantNodes().OfType<MemberDeclarationSyntax>() ?? [])
             .Where(t => t is not NamespaceDeclarationSyntax && t.Parent is CompilationUnitSyntax or NamespaceDeclarationSyntax)
             .ToArray();
 
@@ -44,7 +44,25 @@ public class Combiner : IScriptCombiner
         var documentIds = documents.Select(d => d.Id).ToImmutableArray();
         var document = project.RemoveDocuments(documentIds)
             .AddDocument("script.cs", await combinedSyntaxTree.GetRootAsync());
-        
+
         return await document.RemoveUnnecessaryUsingsAsync();
+    }
+
+    readonly struct TreeWithWeight
+    {
+        public TreeWithWeight(SyntaxTree tree)
+        {
+            Tree = tree;
+            if (MdkTrivia.TryGetMdkTrivia(Tree, out var trivia))
+            {
+                if (trivia.SortOrderSpecified)
+                    Weight = trivia.SortOrder;
+            }
+        }
+
+        public SyntaxTree Tree { get; }
+        public int Weight { get; }
+
+        public SyntaxNode GetRoot() => Tree.GetRoot();
     }
 }
