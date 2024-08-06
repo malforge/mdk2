@@ -3,9 +3,9 @@ using System.Xml.Linq;
 
 namespace Mal.DocumentGenerator;
 
-public abstract class Node(Context context, string key, string assembly) : INode
+public abstract class Node(ITypeContext context, string key, string assembly) : INode
 {
-    public Context Context { get; } = context;
+    public ITypeContext Context { get; } = context;
     public string Key { get; } = key;
     public string Assembly { get; } = assembly;
     
@@ -29,5 +29,7 @@ public abstract class Node(Context context, string key, string assembly) : INode
     protected abstract Node? GetParent();
     protected abstract IEnumerable<Node> EnumerateChildren();
 
+    public abstract string Signature();
+    
     public override string ToString() => Key;
 }

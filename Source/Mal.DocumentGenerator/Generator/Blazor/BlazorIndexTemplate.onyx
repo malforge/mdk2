@@ -1,0 +1,24 @@
+﻿{{ $template indented }}
+<html>
+    <head>
+        <title>Index</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body class="api-index">
+        <h1 id="cat-top">Index</h1>
+        <p class="desc">{{ Description }}</p>
+        <div class="quickindex">
+        {{ $foreach category in Categories }}<a href="#cat-{{ name }}">{{ name }}</a>{{ $next }}
+        </div>
+        {{ $foreach category in Categories }}
+        <div class="cat">
+            <h2 id="cat-{{ name }}">{{ name }}<a href="#cat-top">&#x25B2;</a></h2>
+            <ul>
+                {{ $foreach item in Items }}
+                <li><a href="{{ url }}">{{ name }}</a></li>
+                {{ $next }}
+            </ul>
+        </div>
+        {{ $next }}
+    </body>
+</html>

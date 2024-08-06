@@ -229,4 +229,73 @@ public static class Extensions
     }
 
     public static bool IsAccessible(this EventDefinition eventDefinition) => eventDefinition.AddMethod.IsAccessible() || eventDefinition.RemoveMethod.IsAccessible();
+    
+    public static bool IsExtensionMethod(this MethodDefinition method)
+    {
+        // Check if the method is static
+        if (!method.IsStatic)
+        {
+            return false;
+        }
+
+        // Check if the method is defined in a class marked with the ExtensionAttribute
+        if (method.DeclaringType.CustomAttributes.All(attr => attr.AttributeType.FullName != "System.Runtime.CompilerServices.ExtensionAttribute"))
+        {
+            return false;
+        }
+        
+        if (method.CustomAttributes.Any(attr => attr.AttributeType.FullName == "System.Runtime.CompilerServices.ExtensionAttribute"))
+        {
+            return true;
+        }
+
+        return false;
+    }
+    
+    public static bool IsAssignableFrom(this TypeReference? baseType, TypeReference? derivedType)
+    {
+        if (baseType == null || derivedType == null)
+        {
+            return false;
+        }
+
+        var baseTypeDef = baseType.Resolve();
+        var derivedTypeDef = derivedType.Resolve();
+
+        // Check if types are the same
+        if (baseTypeDef == derivedTypeDef)
+        {
+            return true;
+        }
+
+        // Check base types
+        while (derivedTypeDef != null)
+        {
+            if (derivedTypeDef.BaseType != null)
+            {
+                var resolvedBaseType = derivedTypeDef.BaseType.Resolve();
+                if (resolvedBaseType == baseTypeDef)
+                {
+                    return true;
+                }
+                derivedTypeDef = resolvedBaseType;
+            }
+            else
+            {
+                derivedTypeDef = null;
+            }
+        }
+
+        // Check interfaces
+        derivedTypeDef = derivedType.Resolve(); // Resolve again for interface checking
+        foreach (var interfaceImpl in derivedTypeDef.Interfaces)
+        {
+            if (interfaceImpl.InterfaceType.Resolve() == baseTypeDef)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

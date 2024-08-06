@@ -4,10 +4,10 @@ using Mono.Cecil;
 
 namespace Mal.DocumentGenerator;
 
-public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, AssemblyDefinition assembly) : AssemblyVisitor
+public class DocumentGeneratorVisitor(Whitelist whitelist, TypeContextBuilder context, AssemblyDefinition assembly) : AssemblyVisitor
 {
     readonly AssemblyDefinition _assembly = assembly;
-    readonly Context _context = context;
+    readonly TypeContextBuilder _context = context;
     readonly Stack<INode> _nodeStack = new();
     readonly HashSet<AssemblyDefinition> _visitedAssemblies = new();
     readonly Whitelist _whitelist = whitelist;
@@ -54,8 +54,10 @@ public class DocumentGeneratorVisitor(Whitelist whitelist, Context context, Asse
             return;
         if (!_whitelist.IsWhitelisted(type.Module.Assembly.Name.Name, type.GetWhitelistName()))
             return;
+        if (type.Module.Assembly.IsMicrosoftAssembly())
+            return;
 
-        bool shouldPopAgain = false;
+        var shouldPopAgain = false;
         var typeNode = ((ITypeContainer) _nodeStack.Peek()).GetOrAddType(type);
         _nodeStack.Push(typeNode);
         base.VisitType(type);
