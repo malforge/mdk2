@@ -38,9 +38,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="modwhitelist.cache"/>
-        <EmbeddedResource Include="modwhitelist.cache">
-            <LogicalName>modwhitelist.cache</LogicalName>
+        <None Remove="modwhitelist.dat"/>
+        <EmbeddedResource Include="modwhitelist.dat">
+            <LogicalName>modwhitelist.dat</LogicalName>
         </EmbeddedResource>
     </ItemGroup>
 

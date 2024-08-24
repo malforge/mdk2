@@ -1,3 +1,6 @@
+v.2.1.10
+    - Whitelist update... sorry about that
+
 v.2.1.9
     - Package was not defined as a development dependency
 

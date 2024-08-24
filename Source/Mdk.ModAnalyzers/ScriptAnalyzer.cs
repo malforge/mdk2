@@ -55,7 +55,7 @@ namespace Mdk2.ModAnalyzers
         void LoadEmbeddedWhitelist()
         {
             string[] lines;
-            using (var stream = GetType().Assembly.GetManifestResourceStream("modwhitelist.cache"))
+            using (var stream = GetType().Assembly.GetManifestResourceStream("modwhitelist.dat"))
             {
                 using (var reader = new StreamReader(stream ?? throw new InvalidOperationException("Error loading embedded whitelist cache")))
                     lines = reader.ReadToEnd().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
