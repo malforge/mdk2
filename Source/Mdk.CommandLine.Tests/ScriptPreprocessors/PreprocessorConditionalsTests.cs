@@ -52,6 +52,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
         );
 
@@ -111,6 +112,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             ImmutableHashSet.Create("DEBUG")
         );
 
@@ -172,6 +174,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
         );
 
@@ -231,6 +234,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
         );
 
@@ -293,6 +297,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
         );
 
@@ -351,6 +356,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
@@ -399,6 +405,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             ImmutableHashSet.Create("DEBUG", "TEST2")
         );
 

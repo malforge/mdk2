@@ -122,7 +122,11 @@ public class ScriptPacker: ProjectJob
         parameters.DumpTrace(console);
 
         var filter = new PackInclusionFilter(parameters, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
-        var context = new PackContext(parameters, console, interaction, filter, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
+        var outputPath = Path.Combine(parameters.PackVerb.Output!, project.Name);
+        var projectPath= Path.GetDirectoryName(project.FilePath)!;
+        var tracePath = Path.Combine(projectPath, "obj");
+        var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
+        var context = new PackContext(parameters, console, interaction, filter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
 
         return await PackProjectAsync(project, context);
     }
@@ -181,7 +185,7 @@ public class ScriptPacker: ProjectJob
             .Trace($"  producer {producer.GetType().Name}");
 
         allDocuments = await PreprocessAsync(allDocuments, preprocessors, context);
-        var scriptDocument = await CombineAsync(project, combiner, allDocuments, outputDirectory, context);
+        var scriptDocument = await CombineAsync(project, combiner, allDocuments, context);
         scriptDocument = await PostProcessAsync(scriptDocument, postprocessors, context);
 
         var projectDir = Path.GetDirectoryName(project.FilePath)!;
@@ -248,11 +252,10 @@ public class ScriptPacker: ProjectJob
         return allDocuments;
     }
 
-    static async Task<Document> CombineAsync(Project project, IScriptCombiner combiner, ImmutableArray<Document> allDocuments, DirectoryInfo outputDirectory, PackContext context)
+    static async Task<Document> CombineAsync(Project project, IScriptCombiner combiner, ImmutableArray<Document> allDocuments, PackContext context)
     {
         context.Console.Trace($"Running combiner {combiner.GetType().Name}");
-        var projectDirectory = Path.GetDirectoryName(project.FilePath)!;
-        var intermediateFileName = Path.Combine(projectDirectory, "obj", "intermediate-script.cs");
+        var intermediateFileName = Path.Combine(context.FileSystem.TraceDirectory, "intermediate-script.cs");
         var scriptDocument = (await combiner.CombineAsync(project, allDocuments, context))
             .WithName(Path.GetFileName(intermediateFileName))
             .WithFilePath(intermediateFileName);
@@ -260,7 +263,7 @@ public class ScriptPacker: ProjectJob
         if (context.Console.TraceEnabled)
         {
             context.Console.Trace($"Writing intermediate script to {scriptDocument.FilePath}");
-            await File.WriteAllTextAsync(scriptDocument.FilePath!, (await scriptDocument.GetTextAsync()).ToString());
+            await context.FileSystem.WriteTraceAsync(scriptDocument.FilePath!, (await scriptDocument.GetTextAsync()).ToString());
         }
         
         return scriptDocument;
@@ -280,7 +283,7 @@ public class ScriptPacker: ProjectJob
                 {
                     var intermediateFileName = Path.ChangeExtension(scriptDocument.FilePath!, $"{postprocessor.GetType().Name}.cs");
                     context.Console.Trace($"Writing intermediate script to {intermediateFileName}");
-                    await File.WriteAllTextAsync(intermediateFileName, (await scriptDocument.GetTextAsync()).ToString());
+                    await context.FileSystem.WriteTraceAsync(intermediateFileName, (await scriptDocument.GetTextAsync()).ToString());
                 }
             }
         }

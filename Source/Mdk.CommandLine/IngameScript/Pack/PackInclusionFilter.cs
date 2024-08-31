@@ -3,9 +3,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Mdk.CommandLine.IngameScript.Pack;
 
-/// <summary>
-///     A file filter that determines whether a file should be included in a pack operation.
-/// </summary>
+/// <inheritdoc />
 public class PackInclusionFilter : IFileFilter
 {
     readonly Matcher _ignoreMatcher;

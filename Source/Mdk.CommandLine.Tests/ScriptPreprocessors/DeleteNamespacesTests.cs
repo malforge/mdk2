@@ -36,6 +36,7 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
@@ -69,6 +70,7 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
@@ -111,6 +113,7 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 

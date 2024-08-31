@@ -37,6 +37,7 @@ public class RegionAnnotatorTests : ScriptPostProcessorTests<RegionAnnotator>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
@@ -88,6 +89,7 @@ public class RegionAnnotatorTests : ScriptPostProcessorTests<RegionAnnotator>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 

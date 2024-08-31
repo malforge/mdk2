@@ -45,6 +45,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
@@ -97,6 +98,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
@@ -148,6 +150,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
@@ -203,6 +206,7 @@ public class PartialMergerTests : ScriptPostProcessorTests<PartialMerger>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 

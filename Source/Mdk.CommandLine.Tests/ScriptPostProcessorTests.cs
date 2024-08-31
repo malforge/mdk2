@@ -32,9 +32,10 @@ public abstract class ScriptPostProcessorTests<T> where T : class, IScriptPostpr
         };
         var context = new PackContext(
             parameters,
-            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IConsole>(),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 

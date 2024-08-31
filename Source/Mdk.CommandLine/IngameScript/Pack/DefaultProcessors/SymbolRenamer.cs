@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -48,6 +49,17 @@ public partial class SymbolRenamer : IScriptPostprocessor
         document = document.WithSyntaxRoot(syntaxRoot);
 
         context.Console.Trace("Symbol renaming complete in " + stopwatch.Elapsed);
+
+        if (context.Console.TraceEnabled)
+        {
+            var fileName = Path.Combine(context.FileSystem.TraceDirectory, "symbol.map");
+            context.Console.Trace($"Writing intermediate symbol map to {fileName}");
+            await context.FileSystem.WriteTraceAsync(fileName,
+                "[symbolmap]\n" +
+                string.Join("\n", renamer.NameMap.Select(kvp => $"{kvp.Value}={kvp.Key}")));
+        }
+        // if (!context.Parameters.PackVerb.NoSymbolMap)
+        //     context.FileSystem.Write("symbol.map", string.Join("\n", idMap.Select(kvp => $"{kvp.Value}={kvp.Key}")));
         return document;
     }
 
@@ -95,6 +107,8 @@ public partial class SymbolRenamer : IScriptPostprocessor
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
         int _symbolSrc;
 
+        public IReadOnlyDictionary<string, string> NameMap => _nameMap;
+        
         string GetMinifiedName(string oldName)
         {
             if (_nameMap.TryGetValue(oldName, out var newName))
@@ -127,6 +141,19 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 return false;
             }
             return true;
+        }
+
+        public override SyntaxNode? VisitLabeledStatement(LabeledStatementSyntax node)
+        {
+            var newNode = (LabeledStatementSyntax?)base.VisitLabeledStatement(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var oldName = newNode!.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            return newNode.WithIdentifier(newIdentifier);
         }
 
         public override SyntaxNode? VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
@@ -344,7 +371,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-
+        
         public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
         {
             var newNode = (IdentifierNameSyntax?)base.VisitIdentifierName(node);
@@ -411,7 +438,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             if (overrideBase == null)
                 return false;
             var overrideDefinitionNode = overrideBase.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
-            return overrideDefinitionNode == null || overrideDefinitionNode.ShouldBePreserved();
+            return overrideDefinitionNode == null || overrideDefinitionNode.ShouldBePreserved() || IsOverriddenSymbolPreserved(overrideBase);
         }
 
         protected static bool IsReferencedSymbolPreserved<T>(T symbol) where T : class, ISymbol

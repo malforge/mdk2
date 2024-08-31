@@ -1,4 +1,8 @@
-﻿v.2.0.7
+﻿v.2.0.8
+   - Added symbol map generation to trace mode to help with debugging minification issues.
+   - Fixed more problems with minifier not renaming things it should have and vice versa.
+
+v.2.0.7
    - Fixed a problem where the minifier replaced a `var` with an incorrect type reference. Now leaving `var` as is.
    - Now removing `private` and `internal` access modifiers where they are redundant.
 
