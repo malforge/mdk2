@@ -24,6 +24,7 @@
     <ItemGroup>
       <None Remove="Instructions.readme" />
       <AdditionalFiles Include="Instructions.readme" />
+      <AdditionalFiles Include="thumb.png" />
     </ItemGroup>
 
 </Project>
