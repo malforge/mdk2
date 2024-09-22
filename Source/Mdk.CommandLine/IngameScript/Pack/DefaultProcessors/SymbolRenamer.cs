@@ -111,6 +111,8 @@ public partial class SymbolRenamer : IScriptPostprocessor
         
         string GetMinifiedName(string oldName)
         {
+            if (oldName.StartsWith('@'))
+                oldName = oldName.Substring(1);
             if (_nameMap.TryGetValue(oldName, out var newName))
                 return newName;
             string name;

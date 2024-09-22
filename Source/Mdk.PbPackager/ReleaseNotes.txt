@@ -1,5 +1,6 @@
 ﻿v.2.0.9
    - Fixed #40: missing MSBuild instance just crashing MDK rather than giving a meaningful error message.
+   - Fixed #42 verbatim variables was not renamed correctly in the minifier
 
 v.2.0.8
    - Added symbol map generation to trace mode to help with debugging minification issues.
