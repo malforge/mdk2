@@ -1,4 +1,7 @@
-﻿v.2.0.8
+﻿v.2.0.9
+   - Fixed #40: missing MSBuild instance just crashing MDK rather than giving a meaningful error message.
+
+v.2.0.8
    - Added symbol map generation to trace mode to help with debugging minification issues.
    - Fixed more problems with minifier not renaming things it should have and vice versa.
 

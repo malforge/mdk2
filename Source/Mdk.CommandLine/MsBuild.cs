@@ -13,14 +13,17 @@ public static class MsBuild
     /// Installs the MSBuild instance available on the system.
     /// </summary>
     /// <param name="console"></param>
-    public static void Install(IConsole console)
+    public static bool Install(IConsole console)
     {
         if (MSBuildLocator.IsRegistered)
-            return;
+            return true;
         
-        var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToArray();
+        var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToList();
         foreach (var instance in msbuildInstances)
             console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
-        MSBuildLocator.RegisterInstance(msbuildInstances.First());
+        var selectedInstance = msbuildInstances.FirstOrDefault();
+        if (selectedInstance == null) return false;
+        MSBuildLocator.RegisterInstance(selectedInstance);
+        return true;
     }
 }

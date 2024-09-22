@@ -27,7 +27,8 @@ public readonly struct MdkProject
     {
         if (fileName == null) throw new CommandLineException(-1, "No project file specified.");
 
-        MsBuild.Install(console);
+        if (!MsBuild.Install(console))
+            throw new CommandLineException(-1, "Unable to find a valid MSBuild instance. Please install Visual Studio or the .NET SDK.");
 
         using var workspace = MSBuildWorkspace.Create();
         if (string.Equals(Path.GetExtension(fileName), ".csproj", StringComparison.OrdinalIgnoreCase))
