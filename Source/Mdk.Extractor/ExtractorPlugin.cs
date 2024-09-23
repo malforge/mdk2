@@ -175,6 +175,7 @@ public class ExtractorPlugin : IPlugin
         {
             if (string.IsNullOrEmpty(terminalFileName))
                 return;
+            MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Extracting terminal actions and properties");
             // var targetsArgumentIndex = commandLine.IndexOf("-terminalcaches");
             // if (targetsArgumentIndex == -1 || targetsArgumentIndex == commandLine.Count - 1)
             //     return;
@@ -182,8 +183,13 @@ public class ExtractorPlugin : IPlugin
             // var targets = targetsArgument.Split(';');
             
             var blockInfos = new List<BlockInfo>();
+            var totalTime = TimeSpan.Zero;
+            TimeSpan timeSinceLastWrite = TimeSpan.Zero;
+            int n = 0;
+            int total = blocks.Count;
             foreach (var (cbd, block) in blocks)
             {
+                var stopwatch = Stopwatch.StartNew();
                 var infoAttribute = block.GetType().GetCustomAttribute<MyTerminalInterfaceAttribute>();
                 if (infoAttribute == null)
                 {
@@ -209,6 +215,16 @@ public class ExtractorPlugin : IPlugin
                 var blockInfo = new BlockInfo(block.GetType(), FindTypeDefinition(block.GetType()), ingameType, actions, properties);
                 if (blockInfo.BlockInterfaceType != null && blockInfos.All(b => b.BlockInterfaceType != blockInfo.BlockInterfaceType))
                     blockInfos.Add(blockInfo);
+                var elapsed = stopwatch.Elapsed;
+                totalTime += elapsed;
+                var averageTime = totalTime.TotalMilliseconds / ++n;
+                var estimatedTime = TimeSpan.FromMilliseconds(averageTime * (total - n));
+                timeSinceLastWrite += elapsed;
+                if (timeSinceLastWrite > TimeSpan.FromSeconds(1))
+                {
+                    timeSinceLastWrite = TimeSpan.Zero;
+                    Console.WriteLine($@"Estimated time left: {estimatedTime}");
+                }
             }
             MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Writing terminal cache {terminalFileName}");
             WriteTerminals(blockInfos, terminalFileName);

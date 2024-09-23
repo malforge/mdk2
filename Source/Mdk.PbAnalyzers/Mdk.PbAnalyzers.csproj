@@ -38,9 +38,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="pbwhitelist.cache"/>
-        <EmbeddedResource Include="pbwhitelist.cache">
-            <LogicalName>pbwhitelist.cache</LogicalName>
+        <None Remove="pbwhitelist.dat"/>
+        <EmbeddedResource Include="pbwhitelist.dat">
+            <LogicalName>pbwhitelist.dat</LogicalName>
         </EmbeddedResource>
     </ItemGroup>
 

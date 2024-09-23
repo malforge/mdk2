@@ -1,3 +1,6 @@
+v.2.1.10
+    - Strange whitelist failure causing ImmutableArray to be considered illegal
+
 v.2.1.9
     - Package was not defined as a development dependency
 
