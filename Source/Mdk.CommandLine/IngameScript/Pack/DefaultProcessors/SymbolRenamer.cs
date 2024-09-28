@@ -366,6 +366,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
             var newNode = (ForEachStatementSyntax?)base.VisitForEachStatement(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
@@ -373,12 +374,116 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-        
+
+        public override SyntaxNode? VisitQualifiedName(QualifiedNameSyntax node)
+        {
+            if (IsVarAllowedFor(node))
+            {
+                return SyntaxFactory.IdentifierName("var")
+                    .WithLeadingTrivia(node.GetLeadingTrivia())
+                    .WithTrailingTrivia(node.GetTrailingTrivia());
+            }
+            
+            return base.VisitQualifiedName(node);
+        }
+
+    private static bool IsVarAllowedFor(QualifiedNameSyntax node)
+    {
+        var parent = node.Parent;
+
+        switch (parent)
+        {
+            case VariableDeclarationSyntax variableDeclaration:
+                switch (variableDeclaration.Parent)
+                {
+                    case LocalDeclarationStatementSyntax:
+                    {
+                        foreach (var variable in variableDeclaration.Variables)
+                        {
+                            if (variable.Initializer == null)
+                                return false;
+                        }
+                        return true;
+                    }
+                    case ForStatementSyntax:
+                    {
+                        foreach (var variable in variableDeclaration.Variables)
+                        {
+                            if (variable.Initializer == null)
+                                return false;
+                        }
+                        return true;
+                    }
+                }
+                break;
+            
+            case ForEachStatementSyntax or ForEachVariableStatementSyntax:
+                return true;
+            
+            case UsingStatementSyntax { Declaration: not null } usingStatement:
+            {
+                foreach (var variable in usingStatement.Declaration.Variables)
+                {
+                    if (variable.Initializer == null)
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+        // bool TryProcessType(TypeSyntax type, bool canUseVar, out TypeSyntax final)
+        // {
+        //     if (type is QualifiedNameSyntax qualifiedName)
+        //     {
+        //         // If we can use `var` as the type, replace the qualified name with `var`
+        //         if (canUseVar)
+        //         {
+        //             final = SyntaxFactory.IdentifierName("var")
+        //                 .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
+        //                 .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
+        //             return true;
+        //         }
+        //         // Otherwise, we need to replace every part of the qualified name with a minified name
+        //         var newLeft = TryProcessTypeName(qualifiedName.Left, out var left) ? left : qualifiedName.Left;
+        //         var newRight = TryProcessTypeName(qualifiedName.Right, out var right) ? right : qualifiedName.Right;
+        //         final = SyntaxFactory.QualifiedName(newLeft, (SimpleNameSyntax)newRight)
+        //             .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
+        //             .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
+        //         return true;
+        //     }
+        //         
+        //     
+        // }
+
+        // bool TryProcessTypeName(NameSyntax name, out NameSyntax final)
+        // {
+        //     if (name is IdentifierNameSyntax identifierName)
+        //     {
+        //         if (TryGetSymbol(identifierName, out var symbol))
+        //         {
+        //             var oldName = identifierName.Identifier.Text;
+        //             var newName = GetMinifiedName(oldName);
+        //             var newIdentifier = SyntaxFactory.Identifier(newName)
+        //                 .WithLeadingTrivia(identifierName.Identifier.LeadingTrivia)
+        //                 .WithTrailingTrivia(identifierName.Identifier.TrailingTrivia);
+        //             final = SyntaxFactory.IdentifierName(newIdentifier);
+        //             return true;
+        //         }
+        //     }
+        //
+        //     final = name;
+        //     return false;
+        // }
+
         public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
         {
             var newNode = (IdentifierNameSyntax?)base.VisitIdentifierName(node);
+        
             // If this is a `var` identifier, don't rename it
-            if (newNode?.Identifier.Text == "var" && newNode.Parent is VariableDeclarationSyntax)
+            if (newNode?.Identifier.Text == "var" && (newNode.Parent is VariableDeclarationSyntax || newNode.Parent is ForEachStatementSyntax))
                 return newNode;
             
             if (!TryGetSymbol(newNode, out var symbol))
@@ -390,7 +495,7 @@ public partial class SymbolRenamer : IScriptPostprocessor
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
             return newNode.WithIdentifier(newIdentifier);
         }
-
+        
         public override SyntaxNode? VisitGenericName(GenericNameSyntax node)
         {
             var newNode = (GenericNameSyntax?)base.VisitGenericName(node);
