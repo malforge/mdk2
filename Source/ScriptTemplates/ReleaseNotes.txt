@@ -1,5 +1,6 @@
 v.2.0.5
  - Fixed the template not having the correct thumbnail image.
+ - Updated the package versions in the template.
  
 v.2.0.4
  - Added the missing thumbnail image to the template.

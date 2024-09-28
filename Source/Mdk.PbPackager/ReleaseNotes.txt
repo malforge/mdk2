@@ -1,4 +1,8 @@
-﻿v.2.0.9
+﻿v.2.0.10
+   - Fixed nuget version checks not working properly.
+   - Much improved qualified name handling in the minifier + leaving `var` as is.
+
+v.2.0.9
    - Fixed #40: missing MSBuild instance just crashing MDK rather than giving a meaningful error message.
    - Fixed #42 verbatim variables was not renamed correctly in the minifier
 
