@@ -167,7 +167,7 @@ namespace Mdk.CommandLine.IngameScript.Restore;
 static class NugetVersionCheck
 {
     // static readonly XNamespace MsbuildNs = "http://schemas.microsoft.com/developer/msbuild/2003";
-    
+
     /// <summary>
     ///     Checks the nuget package version and notifies the user if a newer version is available.
     /// </summary>
@@ -181,7 +181,7 @@ static class NugetVersionCheck
     {
         if (!TryFindCurrentVersion(document, packageName, console, out var version))
             return;
-        
+
         Nuget.Version lastVersion;
         try
         {
@@ -192,7 +192,7 @@ static class NugetVersionCheck
             console.Print($"Failed the check for the latest version of Mal.Mdk2.PbPackager: {e.Message}");
             return;
         }
-        
+
         string? versionFile;
         try
         {
@@ -209,7 +209,7 @@ static class NugetVersionCheck
                     console.Trace("Last detected version is newer than the latest version, will not notify.");
                     return;
                 }
-                
+
                 if (!lastDetectedVersion.IsEmpty()
                     && lastDetectedVersion == lastVersion.SemanticVersion
                     && timeSince < TimeSpan.FromDays(1))
@@ -224,7 +224,7 @@ static class NugetVersionCheck
             console.Trace($"Failed to read version file: {e.Message}");
             versionFile = null;
         }
-        
+
         if (versionFile != null && lastVersion.SemanticVersion > version)
         {
             try
@@ -236,17 +236,17 @@ static class NugetVersionCheck
                 console.Trace($"Failed to write version file: {e.Message}");
             }
         }
-        
+
         if (lastVersion.SemanticVersion > version)
             interaction.Nuget(packageName, version.ToString(), lastVersion.SemanticVersion.ToString());
     }
-    
+
     static bool TryFindCurrentVersion(XDocument document, string packageName, IConsole console, out SemanticVersion version)
     {
         console.Trace($"Looking for package {packageName} in the project...");
         var pbPackagerReference = document.ElementsByLocalName("Project", "ItemGroup", "PackageReference")
             .FirstOrDefault(e => e.Attribute("Include")?.Value == packageName);
-        
+
         var versionString = pbPackagerReference?.Attribute("Version")?.Value;
         if (versionString is null)
         {
@@ -256,27 +256,36 @@ static class NugetVersionCheck
         }
         if (!SemanticVersion.TryParse(versionString, out version))
         {
-            console.Trace("Found the package, but failed to parse the version."); 
+            console.Trace("Found the package, but failed to parse the version.");
             return false;
         }
         console.Trace($"Found the package, currently at version {version}.");
         return true;
     }
-    
+
     static async Task<Nuget.Version> FindLatestVersionAsync(string projectFileName, string packageName, IConsole console, IHttpClient httpClient, SemanticVersion version)
     {
         console.Trace($"Looking for the latest version of {packageName}...");
         var versions = Nuget.GetPackageVersionsAsync(httpClient, packageName, projectFileName, TimeSpan.FromSeconds(10));
+        if (console.TraceEnabled)
+        {
+            versions = versions.Select(v =>
+            {
+                console.Trace($"Found version {v.SemanticVersion} ({v.Source})");
+                return v;
+            });
+        }
+
         Nuget.Version lastVersion;
         if (version.IsPrerelease())
             lastVersion = await versions.FirstOrDefaultAsync();
         else
             lastVersion = await versions.Where(v => !v.SemanticVersion.IsPrerelease()).FirstOrDefaultAsync();
-        
+
         console.Trace($"Latest version of {packageName}: {lastVersion.SemanticVersion} ({lastVersion.Source})");
         return lastVersion;
     }
-    
+
     /// <summary>
     ///     Generate a reasonably enough unique file name for the version file.
     /// </summary>
@@ -290,7 +299,7 @@ static class NugetVersionCheck
         var appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2");
         return Path.Combine(appDataFolder, $"{new Guid(bytes):N}.version");
     }
-    
+
     static SemanticVersion LoadLastDetectedVersion(string versionFile, string packageName, IConsole console)
     {
         try
@@ -306,29 +315,30 @@ static class NugetVersionCheck
         }
         return SemanticVersion.Empty;
     }
-    
+
     static async Task SaveLastDetectedVersionAsync(string versionFile, string projectFileName, string packageName, SemanticVersion version)
     {
         var directoryInfo = new FileInfo(versionFile).Directory!;
         if (!directoryInfo.Exists)
             directoryInfo.Create();
-        
+
         var maxRetries = 5;
         var delay = 1000;
-        
+
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
             try
             {
-                await using var stream = File.Open(versionFile, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
-                var content = await new StreamReader(stream).ReadToEndAsync();
+                var exists = File.Exists(versionFile);
+                await using var stream = File.Open(versionFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
+                var content = exists? await new StreamReader(stream).ReadToEndAsync() : string.Empty;
                 Ini ini;
                 ini = Ini.TryParse(content, out ini) ? ini : new Ini();
                 content = ini.WithKey("mdk", "projectpath", projectFileName)
                     .WithKey(packageName, "lastdetectedversion", version.ToString())
                     .WithKey(packageName, "lastdetectionutctime", DateTime.UtcNow.ToString("O"))
                     .ToString();
-                
+
                 stream.Position = 0;
                 stream.SetLength(0);
                 await stream.WriteAsync(Encoding.UTF8.GetBytes(content));

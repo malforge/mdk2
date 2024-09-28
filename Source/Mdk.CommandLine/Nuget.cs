@@ -81,7 +81,7 @@ public static class Nuget
             var doc = JsonDocument.Parse(jsonResponse);
             versions = doc.RootElement.GetProperty("versions").EnumerateArray();
         }
-        catch (Exception)
+        catch (Exception e)
         {
             yield break;
         }
@@ -146,7 +146,7 @@ public static class Nuget
     /// <param name="source"></param>
     /// <param name="displayName"></param>
     public readonly struct Version(string packageName, SemanticVersion semanticVersion, string source, string displayName)
-        : IComparable<Version>
+        : IComparable<Version>, IEquatable<Version>
     {
         /// <summary>
         ///     The name of the package.
@@ -178,5 +178,15 @@ public static class Nuget
                 return semanticVersionComparison;
             return semanticVersionComparison;
         }
+
+        public bool Equals(Version other) => PackageName == other.PackageName && SemanticVersion.Equals(other.SemanticVersion) && Source == other.Source && DisplayName == other.DisplayName;
+
+        public override bool Equals(object? obj) => obj is Version other && Equals(other);
+
+        public override int GetHashCode() => HashCode.Combine(PackageName, SemanticVersion, Source, DisplayName);
+
+        public static bool operator ==(Version left, Version right) => left.Equals(right);
+
+        public static bool operator !=(Version left, Version right) => !left.Equals(right);
     }
 }
