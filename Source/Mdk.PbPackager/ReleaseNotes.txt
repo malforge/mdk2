@@ -1,4 +1,8 @@
-﻿v.2.0.10
+﻿v.2.0.11
+   - Ignored documents were not always properly ignored in the project, which in certain rare cases could cause a 
+     compile error.
+
+v.2.0.10
    - Fixed nuget version checks not working properly.
    - Much improved qualified name handling in the minifier + leaving `var` as is.
 

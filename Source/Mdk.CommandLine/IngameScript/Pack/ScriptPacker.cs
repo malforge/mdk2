@@ -161,7 +161,20 @@ public class ScriptPacker: ProjectJob
             return context.FileFilter.IsMatch(doc.FilePath!);
         }
 
-        var allDocuments = project.Documents.Where(isNotIgnored).ToImmutableArray();
+        // Remove ignored documents from the project
+        project = project.RemoveDocuments([..project.Documents.Where(doc => !isNotIgnored(doc)).Select(doc => doc.Id)]);
+
+        // Make sure the project is class library (convert it if necessary)
+        if (project.CompilationOptions?.OutputKind != OutputKind.DynamicallyLinkedLibrary)
+        {
+            context.Console.Trace("Converting the project to a class library (in memory only)");
+            if (project.CompilationOptions == null)
+                project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            else
+                project = project.WithCompilationOptions(project.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary));
+        }
+        
+        var allDocuments = project.Documents.ToImmutableArray(); // project.Documents.Where(isNotIgnored).ToImmutableArray();
         
         var manager = ScriptProcessingManager.Create().Build();
 
