@@ -33,8 +33,16 @@ public class PreprocessorConditionals : IScriptPreprocessor
         Stack<Block> stack = new();
         stack.Push(root);
         var needsMacroCheck = false;
+
+
+        //Console.WriteLine("================================\n");
+        //Console.WriteLine("====\nsourceText.Lines:\n" + sourceText+ "\n====\n");
+        bool isThereAnyDefine = false;
+        ImmutableHashSet<string> localDefines = ImmutableHashSet.Create("");
+
         foreach (var line in sourceText.Lines)
         {
+            //Console.WriteLine("line:" + line);
             tokens.Clear();
             if (!TryTokenize(sourceText, line.SpanIncludingLineBreak, tokens))
             {
@@ -49,9 +57,32 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 stack.Peek().Children.Add(textBlock);
                 linesBuilder.Clear();
             }
+            
+            //define
+            if (tokens[0].Kind == Kind.Define)
+            {
+                //Console.WriteLine("token0:define:" + tokens[0].Value);
+                //Console.WriteLine("token0:define:line:" + line);
+                TextLine textLineTL = line;
+                string tmpStr = textLineTL.ToString();
+                //since "#define " is 8 in length
+                string extractedDefineString = tmpStr.Substring(8);
+                //Console.WriteLine("token0:define:extractedDefineString:" + extractedDefineString);
+                if (isThereAnyDefine == true)
+                {
+                    localDefines.Add(extractedDefineString);
+                }
+                else
+                {
+                     localDefines = ImmutableHashSet.Create(extractedDefineString);
+                }
+                isThereAnyDefine = true;
+            }
+
 
             if (tokens[0].Kind == Kind.If)
             {
+                //Console.WriteLine("token0:if:"+tokens[0].Value);
                 var ifBlock = new IfBlock(tokens.Skip(1).ToImmutableArray());
                 stack.Peek().Children.Add(ifBlock);
                 stack.Push(ifBlock);
@@ -98,7 +129,18 @@ public class PreprocessorConditionals : IScriptPreprocessor
         var result = new StringBuilder();
         root.Evaluate(context.PreprocessorSymbols ?? ImmutableHashSet<string>.Empty, result);
 
-        return document.WithText(SourceText.From(result.ToString()));
+        //Console.WriteLine("====\nresult:\n " + result.ToString() + "\n===========\n");
+        if (isThereAnyDefine == true)
+        {
+            var result2 = new StringBuilder();
+            root.Evaluate(localDefines, result2);
+            //Console.WriteLine("====\nresult2:\n " + result2.ToString() + "\n===========\n");
+            return document.WithText(SourceText.From(result2.ToString()));
+        }
+        else
+        {
+            return document.WithText(SourceText.From(result.ToString()));
+        }
     }
 
     bool TryTokenize(SourceText text, TextSpan span, List<Token> tokens)
@@ -109,6 +151,15 @@ public class PreprocessorConditionals : IScriptPreprocessor
         while (!ptr.IsOutOfBounds())
         {
             TextPtr end;
+            if (ptr.Is("#define"))
+            {
+                end = ptr.Advance(7);
+                var token = new Token(Kind.Define, TextSpan.FromBounds(ptr.Position, end.Position));
+                tokens.Add(token);
+                ptr = end.SkipWhitespace();
+                continue;
+            }
+
             if (ptr.Is("#if"))
             {
                 end = ptr.Advance(3);
@@ -211,6 +262,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
             case Kind.Elif:
             case Kind.Else:
             case Kind.Endif:
+            case Kind.Define:
                 return true;
             default:
                 return false;
@@ -225,6 +277,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
         Else,
         Elif,
         Endif,
+        Define,
         LParen,
         RParen,
         Not,
