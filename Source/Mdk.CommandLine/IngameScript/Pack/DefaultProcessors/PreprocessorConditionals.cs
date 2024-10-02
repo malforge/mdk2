@@ -37,8 +37,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
         //Console.WriteLine("================================\n");
         //Console.WriteLine("====\nsourceText.Lines:\n" + sourceText+ "\n====\n");
-        bool isThereAnyDefine = false;
-        ImmutableHashSet<string> localDefines = ImmutableHashSet.Create("");
+        ImmutableHashSet<string> localDefines = ImmutableHashSet<string>.Empty;
 
         foreach (var line in sourceText.Lines)
         {
@@ -68,15 +67,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 //since "#define " is 8 in length
                 string extractedDefineString = tmpStr.Substring(8);
                 //Console.WriteLine("token0:define:extractedDefineString:" + extractedDefineString);
-                if (isThereAnyDefine == true)
-                {
-                    localDefines.Add(extractedDefineString);
-                }
-                else
-                {
-                     localDefines = ImmutableHashSet.Create(extractedDefineString);
-                }
-                isThereAnyDefine = true;
+                localDefines = localDefines.Add(extractedDefineString);
             }
 
 
@@ -130,7 +121,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
         root.Evaluate(context.PreprocessorSymbols ?? ImmutableHashSet<string>.Empty, result);
 
         //Console.WriteLine("====\nresult:\n " + result.ToString() + "\n===========\n");
-        if (isThereAnyDefine == true)
+        if (localDefines != ImmutableHashSet<string>.Empty)
         {
             var result2 = new StringBuilder();
             root.Evaluate(localDefines, result2);
