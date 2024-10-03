@@ -35,8 +35,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
         var needsMacroCheck = false;
 
 
-        //Console.WriteLine("================================\n");
-        //Console.WriteLine("====\nsourceText.Lines:\n" + sourceText+ "\n====\n");
         ImmutableHashSet<string>.Builder allExistingLocalDefineBuilder = ImmutableHashSet.CreateBuilder<string>();
 
         if(context.PreprocessorSymbols != ImmutableHashSet<string>.Empty)
@@ -49,7 +47,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
         foreach (var line in sourceText.Lines)
         {
-            //Console.WriteLine("line:" + line);
             tokens.Clear();
             if (!TryTokenize(sourceText, line.SpanIncludingLineBreak, tokens))
             {
@@ -65,24 +62,18 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 linesBuilder.Clear();
             }
             
-            //define
             if (tokens[0].Kind == Kind.Define)
             {
-                //Console.WriteLine("token0:define:" + tokens[0].Value);
-                //Console.WriteLine("token0:define:line:" + line);
                 TextLine textLineTL = line;
                 string tmpStr = textLineTL.ToString();
                 //since "#define " is 8 in length
                 string extractedDefineString = tmpStr.Substring(8);
-                //Console.WriteLine("token0:define:extractedDefineString:" + extractedDefineString);
-                //localDefines = localDefines.Add(extractedDefineString);
                 allExistingLocalDefineBuilder.Add(extractedDefineString);
             }
 
 
             if (tokens[0].Kind == Kind.If)
             {
-                //Console.WriteLine("token0:if:"+tokens[0].Value);
                 var ifBlock = new IfBlock(tokens.Skip(1).ToImmutableArray());
                 stack.Peek().Children.Add(ifBlock);
                 stack.Push(ifBlock);
@@ -133,7 +124,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
         root.Evaluate(allSymbols ?? ImmutableHashSet<string>.Empty, result);
 
-        //Console.WriteLine("====\nresult:\n " + result.ToString() + "\n===========\n");
         return document.WithText(SourceText.From(result.ToString()));
     }
 
