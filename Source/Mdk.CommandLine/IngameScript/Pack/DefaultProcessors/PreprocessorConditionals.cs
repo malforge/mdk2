@@ -37,7 +37,15 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
         //Console.WriteLine("================================\n");
         //Console.WriteLine("====\nsourceText.Lines:\n" + sourceText+ "\n====\n");
-        ImmutableHashSet<string> localDefines = ImmutableHashSet<string>.Empty;
+        ImmutableHashSet<string>.Builder allExistingLocalDefineBuilder = ImmutableHashSet.CreateBuilder<string>();
+
+        if(context.PreprocessorSymbols != ImmutableHashSet<string>.Empty)
+        {
+            foreach (var defineContexts in context.PreprocessorSymbols)
+            {
+                allExistingLocalDefineBuilder.Add(defineContexts);
+            }
+        }
 
         foreach (var line in sourceText.Lines)
         {
@@ -67,7 +75,8 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 //since "#define " is 8 in length
                 string extractedDefineString = tmpStr.Substring(8);
                 //Console.WriteLine("token0:define:extractedDefineString:" + extractedDefineString);
-                localDefines = localDefines.Add(extractedDefineString);
+                //localDefines = localDefines.Add(extractedDefineString);
+                allExistingLocalDefineBuilder.Add(extractedDefineString);
             }
 
 
@@ -117,21 +126,15 @@ public class PreprocessorConditionals : IScriptPreprocessor
             stack.Peek().Children.Add(textBlock);
         }
 
+
+        ImmutableHashSet<string> allSymbols = allExistingLocalDefineBuilder.ToImmutableHashSet(); ;
+
         var result = new StringBuilder();
-        root.Evaluate(context.PreprocessorSymbols ?? ImmutableHashSet<string>.Empty, result);
+
+        root.Evaluate(allSymbols ?? ImmutableHashSet<string>.Empty, result);
 
         //Console.WriteLine("====\nresult:\n " + result.ToString() + "\n===========\n");
-        if (localDefines != ImmutableHashSet<string>.Empty)
-        {
-            var result2 = new StringBuilder();
-            root.Evaluate(localDefines, result2);
-            //Console.WriteLine("====\nresult2:\n " + result2.ToString() + "\n===========\n");
-            return document.WithText(SourceText.From(result2.ToString()));
-        }
-        else
-        {
-            return document.WithText(SourceText.From(result.ToString()));
-        }
+        return document.WithText(SourceText.From(result.ToString()));
     }
 
     bool TryTokenize(SourceText text, TextSpan span, List<Token> tokens)
