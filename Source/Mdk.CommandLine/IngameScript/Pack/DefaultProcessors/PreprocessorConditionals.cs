@@ -69,6 +69,8 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 //since "#define " is 8 in length
                 string extractedDefineString = tmpStr.Substring(8);
                 allExistingLocalDefineBuilder.Add(extractedDefineString);
+                var defineBlock = new DefineBlock(extractedDefineString);
+                needsMacroCheck = true;
             }
 
 
@@ -118,11 +120,11 @@ public class PreprocessorConditionals : IScriptPreprocessor
         }
 
 
-        ImmutableHashSet<string> allSymbols = allExistingLocalDefineBuilder.ToImmutableHashSet(); ;
+        List<string> allSymbols = allExistingLocalDefineBuilder.ToList(); ;
 
         var result = new StringBuilder();
 
-        root.Evaluate(allSymbols ?? ImmutableHashSet<string>.Empty, result);
+        root.Evaluate(allSymbols ?? new List<string>(), result);
 
         return document.WithText(SourceText.From(result.ToString()));
     }
@@ -281,12 +283,27 @@ public class PreprocessorConditionals : IScriptPreprocessor
     abstract class Block
     {
         public List<Block> Children { get; } = new();
-        public abstract void Evaluate(IImmutableSet<string> macros, StringBuilder result);
+        public abstract void Evaluate(List<string> macros, StringBuilder result);
+    }
+
+    class DefineBlock : Block
+    {
+        public string symbolName = "";
+        public DefineBlock(string name)
+        {
+            symbolName = name;
+        }
+        public override void Evaluate(List<string> macros, StringBuilder result)
+        {
+            if(macros != null)
+                if(macros.Contains(symbolName) == false)
+                    macros.Add(symbolName);
+        }
     }
 
     class RootBlock : Block
     {
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(List<string> macros, StringBuilder result)
         {
             foreach (var child in Children)
                 child.Evaluate(macros, result);
@@ -297,7 +314,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
     {
         public List<TextLine> Lines { get; } = new();
 
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(List<string> macros, StringBuilder result)
         {
             foreach (var line in Lines)
                 result.Append(line.Text?.ToString(line.SpanIncludingLineBreak) ?? "");
@@ -354,7 +371,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 _ => 0
             };
 
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(List<string> macros, StringBuilder result)
         {
             var condition = EvaluateExpression(macros, Expression);
             if (condition)
@@ -366,7 +383,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 Else?.Evaluate(macros, result);
         }
 
-        bool EvaluateExpression(IImmutableSet<string> macros, ImmutableArray<Token> expression)
+        bool EvaluateExpression(List<string> macros, ImmutableArray<Token> expression)
         {
             var stack = new Stack<bool>();
             var i = 0;
@@ -406,7 +423,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
     class ElseBlock : ConditionalBlock
     {
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(List<string> macros, StringBuilder result)
         {
             foreach (var child in Children)
                 child.Evaluate(macros, result);
