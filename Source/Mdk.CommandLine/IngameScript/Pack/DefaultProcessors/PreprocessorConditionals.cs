@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -66,13 +67,8 @@ public class PreprocessorConditionals : IScriptPreprocessor
             
             if (tokens[0].Kind == Kind.Define)
             {
-                TextLine textLineTL = line;
-                string tmpStr = textLineTL.ToString();
-                //since "#define " is 8 in length
-                string extractedDefineString = tmpStr.Substring(8);
-                allSymbols.Add(extractedDefineString);
-                
-                var defineBlock = new DefineBlock(extractedDefineString);
+                var defineBlock = new DefineBlock(tokens.Skip(1).ToImmutableArray());
+                allSymbols.Add(defineBlock.symbolName);
                 needsMacroCheck = true;
             }
 
@@ -289,9 +285,10 @@ public class PreprocessorConditionals : IScriptPreprocessor
     class DefineBlock : Block
     {
         public string symbolName = "";
-        public DefineBlock(string name)
+
+        public DefineBlock(ImmutableArray<Token> expression)
         {
-            symbolName = name;
+            symbolName = expression[0].Value;
         }
         public override void Evaluate(HashSet<string> macros, StringBuilder result)
         {
