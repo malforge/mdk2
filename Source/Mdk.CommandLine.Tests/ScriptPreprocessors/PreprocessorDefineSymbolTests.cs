@@ -13,16 +13,18 @@ namespace MDK.CommandLine.Tests.ScriptPreprocessors;
 
 [TestFixture]
 [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
-public class PreprocessorConditionalsTests : ScriptPreprocessorTests<PreprocessorConditionals>
+public class PreprocessorDefineSymbolTests : ScriptPreprocessorTests<PreprocessorConditionals>
 {
+    //function_withthisstate_shoulddothis
     [Test]
-    public async Task ProcessAsync_WithSimpleDebugBlock_RemovesDebugBlock()
+    public async Task ProcessAsync_WithSimpleWithDefineLABEL1withIfDEBUG_RemovesDebugBlock()
     {
         // Arrange
         var workspace = new AdhocWorkspace();
         var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
         var document = project.AddDocument("TestDocument",
             """
+            #define LABEL1
             using System;
 
             public class Program
@@ -40,7 +42,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
@@ -61,6 +63,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
 
         // Assert
         var text = await result.GetTextAsync();
+        //Console.WriteLine(text);
         text.ToString().Replace("\r\n", "\n").Should().Be(
             """
             using System;
@@ -76,7 +79,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
     }
 
     [Test]
-    public async Task ProcessAsync_WithSimpleDebugBlockWithDebugSymbol_ShouldLeaveBlock()
+    public async Task ProcessAsync_WithDEBUGconfigAndIfLABEL1_ShouldRemoveBlock()
     {
         // Arrange
         var workspace = new AdhocWorkspace();
@@ -89,7 +92,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             {
                 public void Main()
                 {
-                    #if DEBUG
+                    #if LABEL1
                     var x = 1;
                     #endif
                     var y = 2;
@@ -100,7 +103,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
@@ -129,15 +132,16 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             {
                 public void Main()
                 {
-                    var x = 1;
                     var y = 2;
                 }
             }
             """.Replace("\r\n", "\n"));
     }
 
+
+
     [Test]
-    public async Task ProcessAsync_WithIfElse_ShouldLeaveElse()
+    public async Task ProcessAsync_WithLABEL1asConfigWithLABEL1block_ShouldLeaveBlock()
     {
         // Arrange
         var workspace = new AdhocWorkspace();
@@ -150,11 +154,10 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             {
                 public void Main()
                 {
-                    #if DEBUG
+                    #if LABEL1
                     var x = 1;
-                    #else
-                    var y = 2;
                     #endif
+                    var y = 2;
                 }
             }
             """);
@@ -162,7 +165,69 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            ImmutableHashSet.Create("LABEL1")
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var text = await result.GetTextAsync();
+        text.ToString().Replace("\r\n", "\n").Should().Be(
+            """
+            using System;
+
+            public class Program
+            {
+                public void Main()
+                {
+                    var x = 1;
+                    var y = 2;
+                }
+            }
+            """.Replace("\r\n", "\n"));
+    }
+
+
+    [Test]
+    public async Task ProcessAsync_WithoutLABEL1config_WithLABEL1block_ShouldRemoveBlock()
+    {
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument",
+            """
+            using System;
+
+            public class Program
+            {
+                public void Main()
+                {
+                    #if LABEL1
+                    var x = 1;
+                    #endif
+                    var y = 2;
+                }
+            }
+            """);
+        var processor = new PreprocessorConditionals();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
@@ -197,21 +262,23 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """.Replace("\r\n", "\n"));
     }
 
+
     [Test]
-    public async Task ProcessAsync_WithIfNot_ShouldLeaveBlock()
+    public async Task ProcessAsync_withDefineLABEL1withLABEL1block_ShouldLeaveBlock()
     {
         // Arrange
         var workspace = new AdhocWorkspace();
         var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
         var document = project.AddDocument("TestDocument",
             """
+            #define LABEL1
             using System;
 
             public class Program
             {
                 public void Main()
                 {
-                    #if !DEBUG
+                    #if LABEL1
                     var x = 1;
                     #endif
                     var y = 2;
@@ -222,7 +289,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
@@ -258,13 +325,55 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             """.Replace("\r\n", "\n"));
     }
 
+
     [Test]
-    public async Task ProcessAsync_WithIfNotElse_ShouldLeaveBlock()
+    public async Task ProcessAsync_withDefineLABEL2withLABEL1block_ShouldRemoveBlock()
     {
         // Arrange
         var workspace = new AdhocWorkspace();
         var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
         var document = project.AddDocument("TestDocument",
+            """
+            #define LABEL2
+            using System;
+
+            public class Program
+            {
+                public void Main()
+                {
+                    #if LABEL1
+                    var x = 1;
+                    #endif
+                    var y = 2;
+                }
+            }
+            """);
+        var processor = new PreprocessorConditionals();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            ImmutableHashSet.Create<string>()
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var text = await result.GetTextAsync();
+        text.ToString().Replace("\r\n", "\n").Should().Be(
             """
             using System;
 
@@ -272,9 +381,33 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             {
                 public void Main()
                 {
-                    #if !DEBUG
+                    var y = 2;
+                }
+            }
+            """.Replace("\r\n", "\n"));
+    }
+
+
+    [Test]
+    public async Task ProcessAsync_withDefineLABEL1and2withLABEL1blockandLABEL2Block_ShouldLeaveBlocks()
+    {
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument",
+            """
+            #define LABEL1
+            #define LABEL2
+            using System;
+
+            public class Program
+            {
+                public void Main()
+                {
+                    #if LABEL1
                     var x = 1;
-                    #else
+                    #endif
+                    #if LABEL2
                     var y = 2;
                     #endif
                     var z = 3;
@@ -285,7 +418,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
@@ -315,117 +448,11 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
                 public void Main()
                 {
                     var x = 1;
+                    var y = 2;
                     var z = 3;
                 }
             }
             """.Replace("\r\n", "\n"));
     }
 
-    [Test]
-    public async Task ProcessAsync_WithNoConditionals_DoesNotAlterDocument()
-    {
-        // Arrange
-        var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
-        var document = project.AddDocument("TestDocument",
-            """
-            using System;
-
-            public class Program
-            {
-                public void Main()
-                {
-                    var x = 1;
-                    var y = 2;
-                }
-            }
-            """);
-        var processor = new PreprocessorConditionals();
-        var parameters = new Parameters
-        {
-            Verb = Verb.Pack,
-            PackVerb = 
-            {
-                MinifierLevel = MinifierLevel.None,
-                ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output"
-            }
-        };
-        var context = new PackContext(
-            parameters,
-            A.Fake<IConsole>(o => o.Strict()),
-            A.Fake<IInteraction>(o => o.Strict()),
-            A.Fake<IFileFilter>(o => o.Strict()),
-            A.Fake<IFileSystem>(),
-            ImmutableHashSet<string>.Empty
-        );
-
-        // Act
-        var result = await processor.ProcessAsync(document, context);
-
-        // Assert
-        result.Should().BeSameAs(document);
-    }
-
-    [Test]
-    [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
-    public async Task ProcessAsync_WithExpressionConditionals_ShouldAlterDocument()
-    {
-        // Arrange
-        var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
-        var document = project.AddDocument("TestDocument",
-            """
-            using System;
-
-            public class Program
-            {
-                public void Main()
-                {
-                    #if DEBUG && (TEST || TEST2)
-                    var x = 1;
-                    #endif
-                    var y = 2;
-                }
-            }
-            """);
-        var processor = new PreprocessorConditionals();
-        var parameters = new Parameters
-        {
-            Verb = Verb.Pack,
-            PackVerb = 
-            {
-                MinifierLevel = MinifierLevel.None,
-                ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output"
-            }
-        };
-        var context = new PackContext(
-            parameters,
-            A.Fake<IConsole>(o => o.Strict()),
-            A.Fake<IInteraction>(o => o.Strict()),
-            A.Fake<IFileFilter>(o => o.Strict()),
-            A.Fake<IFileSystem>(),
-            ImmutableHashSet.Create("DEBUG", "TEST2")
-        );
-
-        // Act
-        var result = await processor.ProcessAsync(document, context);
-
-        // Assert
-        var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
-            """
-            using System;
-
-            public class Program
-            {
-                public void Main()
-                {
-                    var x = 1;
-                    var y = 2;
-                }
-            }
-            """.Replace("\r\n", "\n"));
-    }
 }
