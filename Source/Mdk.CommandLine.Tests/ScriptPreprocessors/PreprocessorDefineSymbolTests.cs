@@ -13,7 +13,7 @@ namespace MDK.CommandLine.Tests.ScriptPreprocessors;
 
 [TestFixture]
 [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
-public class PreproSymbolTests : ScriptPreprocessorTests<PreprocessorConditionals>
+public class PreprocessorDefineSymbolTests : ScriptPreprocessorTests<PreprocessorConditionals>
 {
     //function_withthisstate_shoulddothis
     [Test]

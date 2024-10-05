@@ -34,19 +34,10 @@ public class PreprocessorConditionals : IScriptPreprocessor
         Stack<Block> stack = new();
         stack.Push(root);
         var needsMacroCheck = false;
+        var allSymbols = new HashSet<string>();
 
-
-
-
-        HashSet<string> allSymbols = new HashSet<string>();
-
-        if (context.PreprocessorSymbols != ImmutableHashSet<string>.Empty)
-        {
-            foreach (var defineContexts in context.PreprocessorSymbols)
-            {
-                allSymbols.Add(defineContexts);
-            }
-        }
+        foreach (var defineContexts in context.PreprocessorSymbols)
+            allSymbols.Add(defineContexts);
 
         foreach (var line in sourceText.Lines)
         {
@@ -68,12 +59,10 @@ public class PreprocessorConditionals : IScriptPreprocessor
             if (tokens[0].Kind == Kind.Define)
             {
                 var defineBlock = new DefineBlock(tokens.Skip(1).ToImmutableArray());
-                allSymbols.Add(defineBlock.symbolName);
+                stack.Peek().Children.Add(defineBlock);
                 needsMacroCheck = true;
             }
-
-
-            if (tokens[0].Kind == Kind.If)
+            else if (tokens[0].Kind == Kind.If)
             {
                 var ifBlock = new IfBlock(tokens.Skip(1).ToImmutableArray());
                 stack.Peek().Children.Add(ifBlock);
@@ -234,7 +223,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
             return false;
         }
 
-
         if (tokens.Count == 0)
             return false;
         var primaryToken = tokens[0];
@@ -250,7 +238,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 return false;
         }
     }
-
 
     enum Kind
     {
@@ -268,7 +255,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
         Identifier
     }
 
-
     readonly struct Token(Kind kind, TextSpan span, string? value = null)
     {
         public readonly Kind Kind = kind;
@@ -284,15 +270,17 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
     class DefineBlock : Block
     {
-        public string symbolName = "";
+        public Token Symbol { get; }
 
         public DefineBlock(ImmutableArray<Token> expression)
         {
-            symbolName = expression[0].Value;
+            if (expression.Length != 1 || expression[0].Kind != Kind.Identifier)
+                throw new InvalidOperationException("Invalid #define expression");
+            Symbol = expression[0];
         }
         public override void Evaluate(HashSet<string> macros, StringBuilder result)
         {
-            macros.Add(symbolName);
+            macros.Add(Symbol.Value!);
         }
     }
 
