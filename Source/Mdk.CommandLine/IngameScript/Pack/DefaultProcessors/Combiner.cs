@@ -23,7 +23,7 @@ public class Combiner : IScriptCombiner
     {
         var trees = (await Task.WhenAll(documents.Select(async d => await d.GetSyntaxTreeAsync())))
             .Where(t => t is not null)
-            .Select((t, i) => new TreeWithWeight(t!))
+            .Select((t, _) => new TreeWithWeight(t!))
             .OrderBy(t => t.Weight)
             .ToList();
 

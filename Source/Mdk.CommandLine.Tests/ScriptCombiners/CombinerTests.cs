@@ -1,4 +1,6 @@
 ﻿using System.Collections.Immutable;
+using System.Reflection;
+using System.Text;
 using FakeItEasy;
 using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
@@ -6,6 +8,7 @@ using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
@@ -14,12 +17,39 @@ namespace MDK.CommandLine.Tests.ScriptCombiners;
 [TestFixture]
 public class CombinerTests
 {
+    // Helper method to get the required references using Assembly.Load and direct System.Runtime reference
+    static IEnumerable<MetadataReference> GetCoreReferences()
+    {
+        var coreAssemblies = new[]
+        {
+            typeof(object).Assembly, // System.Private.CoreLib
+            typeof(Console).Assembly, // System.Console
+            typeof(Enumerable).Assembly, // System.Linq
+            typeof(List<>).Assembly, // System.Collections
+            typeof(Task).Assembly, // System.Threading.Tasks
+            typeof(StringBuilder).Assembly // System.Text
+        };
+
+        // Create metadata references for core assemblies
+        var references = coreAssemblies.Select(assembly => MetadataReference.CreateFromFile(assembly.Location)).ToList();
+
+        // Explicitly add the System.Runtime.dll reference
+        var systemRuntimePath = Assembly.Load("System.Runtime").Location;
+        references.Add(MetadataReference.CreateFromFile(systemRuntimePath));
+
+        return references;
+    }
+
     [Test]
     public async Task CombineAsync_With5DocumentsWithVariousUsingDeclarations_CombinesAndUnifiesUsingDeclarations()
     {
         // Arrange
         var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
         var document1 = project.AddDocument("TestDocument1",
             """
             using System;
@@ -75,7 +105,7 @@ public class CombinerTests
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",

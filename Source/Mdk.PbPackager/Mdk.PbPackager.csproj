@@ -35,4 +35,8 @@
         <None Include="build\*.*" CopyToOutputDirectory="Always" Pack="true" PackagePath="build"/>
         <Content Include="tools\**\*.*" Pack="true" PackagePath="tools"/>
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="tools\" />
+    </ItemGroup>
 </Project>
