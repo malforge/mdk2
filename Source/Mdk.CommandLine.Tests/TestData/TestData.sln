@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Issue44", "Issue44\Issue44.csproj", "{D139B7A7-7AE8-409F-92F6-6F6E6885DA2A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LegacyScriptProject", "LegacyScriptProject\LegacyScriptProject.csproj", "{A4FE816B-9220-4EFE-A4CE-4A2030769A76}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D139B7A7-7AE8-409F-92F6-6F6E6885DA2A}.Debug|x64.ActiveCfg = Debug|x64
+		{D139B7A7-7AE8-409F-92F6-6F6E6885DA2A}.Debug|x64.Build.0 = Debug|x64
+		{D139B7A7-7AE8-409F-92F6-6F6E6885DA2A}.Release|x64.ActiveCfg = Release|x64
+		{D139B7A7-7AE8-409F-92F6-6F6E6885DA2A}.Release|x64.Build.0 = Release|x64
+		{A4FE816B-9220-4EFE-A4CE-4A2030769A76}.Debug|x64.ActiveCfg = Debug|x64
+		{A4FE816B-9220-4EFE-A4CE-4A2030769A76}.Debug|x64.Build.0 = Debug|x64
+		{A4FE816B-9220-4EFE-A4CE-4A2030769A76}.Release|x64.ActiveCfg = Debug|x64
+		{A4FE816B-9220-4EFE-A4CE-4A2030769A76}.Release|x64.Build.0 = Debug|x64
+	EndGlobalSection
+EndGlobal

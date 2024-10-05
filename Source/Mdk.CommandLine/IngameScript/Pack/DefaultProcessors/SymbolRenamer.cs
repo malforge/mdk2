@@ -600,10 +600,10 @@ public partial class SymbolRenamer : IScriptPostprocessor
             if (nodeId == null)
                 return;
             var symbolInfo = _semanticModel.GetSymbolInfo(node);
-            var symbol = symbolInfo.Symbol;
+            var symbol = symbolInfo.Symbol?.OriginalDefinition ?? symbolInfo.Symbol;
             if (symbol is IMethodSymbol { MethodKind: MethodKind.ReducedExtension } methodSymbol)
                 symbol = methodSymbol.ReducedFrom ?? symbol;
-
+            
             switch (symbol)
             {
                 // If the symbol is generic, we need to find the original definition

@@ -1,4 +1,9 @@
-﻿v.2.0.11
+﻿v.2.0.12
+   - Fixed test that failed due to missing references. Attempt to clean up files that shouldn't be committed.
+   - Update to gitignore
+   - Fixed a problem where object-initializing a generic type would cause a compile error after minification.
+
+v.2.0.11
    - Ignored documents were not always properly ignored in the project, which in certain rare cases could cause a 
      compile error.
 

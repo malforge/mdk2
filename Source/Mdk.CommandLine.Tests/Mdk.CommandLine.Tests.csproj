@@ -30,7 +30,7 @@
     </ItemGroup>
     
     <ItemGroup>
-      <Folder Include="ProgramTests\" />
+      <EmbeddedResource Remove="ProgramTests\**" />
     </ItemGroup>
 
 </Project>
