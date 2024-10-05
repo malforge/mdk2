@@ -1,4 +1,7 @@
-﻿v.2.0.12
+﻿v.2.0.13
+   - Readded missing binaries
+
+v.2.0.12
    - Fixed test that failed due to missing references. Attempt to clean up files that shouldn't be committed.
    - Update to gitignore
    - Fixed a problem where object-initializing a generic type would cause a compile error after minification.
