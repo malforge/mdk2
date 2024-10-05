@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -33,6 +34,11 @@ public class PreprocessorConditionals : IScriptPreprocessor
         Stack<Block> stack = new();
         stack.Push(root);
         var needsMacroCheck = false;
+        var allSymbols = new HashSet<string>();
+
+        foreach (var defineContexts in context.PreprocessorSymbols)
+            allSymbols.Add(defineContexts);
+
         foreach (var line in sourceText.Lines)
         {
             tokens.Clear();
@@ -49,8 +55,14 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 stack.Peek().Children.Add(textBlock);
                 linesBuilder.Clear();
             }
-
-            if (tokens[0].Kind == Kind.If)
+            
+            if (tokens[0].Kind == Kind.Define)
+            {
+                var defineBlock = new DefineBlock(tokens.Skip(1).ToImmutableArray());
+                stack.Peek().Children.Add(defineBlock);
+                needsMacroCheck = true;
+            }
+            else if (tokens[0].Kind == Kind.If)
             {
                 var ifBlock = new IfBlock(tokens.Skip(1).ToImmutableArray());
                 stack.Peek().Children.Add(ifBlock);
@@ -96,7 +108,8 @@ public class PreprocessorConditionals : IScriptPreprocessor
         }
 
         var result = new StringBuilder();
-        root.Evaluate(context.PreprocessorSymbols ?? ImmutableHashSet<string>.Empty, result);
+
+        root.Evaluate(allSymbols, result);
 
         return document.WithText(SourceText.From(result.ToString()));
     }
@@ -109,6 +122,15 @@ public class PreprocessorConditionals : IScriptPreprocessor
         while (!ptr.IsOutOfBounds())
         {
             TextPtr end;
+            if (ptr.Is("#define"))
+            {
+                end = ptr.Advance(8);
+                var token = new Token(Kind.Define, TextSpan.FromBounds(ptr.Position, end.Position));
+                tokens.Add(token);
+                ptr = end.SkipWhitespace();
+                continue;
+            }
+
             if (ptr.Is("#if"))
             {
                 end = ptr.Advance(3);
@@ -201,7 +223,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
             return false;
         }
 
-
         if (tokens.Count == 0)
             return false;
         var primaryToken = tokens[0];
@@ -211,12 +232,12 @@ public class PreprocessorConditionals : IScriptPreprocessor
             case Kind.Elif:
             case Kind.Else:
             case Kind.Endif:
+            case Kind.Define:
                 return true;
             default:
                 return false;
         }
     }
-
 
     enum Kind
     {
@@ -225,6 +246,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
         Else,
         Elif,
         Endif,
+        Define,
         LParen,
         RParen,
         Not,
@@ -232,7 +254,6 @@ public class PreprocessorConditionals : IScriptPreprocessor
         Or,
         Identifier
     }
-
 
     readonly struct Token(Kind kind, TextSpan span, string? value = null)
     {
@@ -244,12 +265,28 @@ public class PreprocessorConditionals : IScriptPreprocessor
     abstract class Block
     {
         public List<Block> Children { get; } = new();
-        public abstract void Evaluate(IImmutableSet<string> macros, StringBuilder result);
+        public abstract void Evaluate(HashSet<string> macros, StringBuilder result);
+    }
+
+    class DefineBlock : Block
+    {
+        public Token Symbol { get; }
+
+        public DefineBlock(ImmutableArray<Token> expression)
+        {
+            if (expression.Length != 1 || expression[0].Kind != Kind.Identifier)
+                throw new InvalidOperationException("Invalid #define expression");
+            Symbol = expression[0];
+        }
+        public override void Evaluate(HashSet<string> macros, StringBuilder result)
+        {
+            macros.Add(Symbol.Value!);
+        }
     }
 
     class RootBlock : Block
     {
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(HashSet<string> macros, StringBuilder result)
         {
             foreach (var child in Children)
                 child.Evaluate(macros, result);
@@ -260,7 +297,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
     {
         public List<TextLine> Lines { get; } = new();
 
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(HashSet<string> macros, StringBuilder result)
         {
             foreach (var line in Lines)
                 result.Append(line.Text?.ToString(line.SpanIncludingLineBreak) ?? "");
@@ -304,7 +341,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 postfix.Add(stack.Pop());
             Expression = postfix.ToImmutableArray();
         }
-
+         
         public ImmutableArray<Token> Expression { get; }
         public ConditionalBlock? Else { get; set; }
 
@@ -317,7 +354,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 _ => 0
             };
 
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(HashSet<string> macros, StringBuilder result)
         {
             var condition = EvaluateExpression(macros, Expression);
             if (condition)
@@ -329,7 +366,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
                 Else?.Evaluate(macros, result);
         }
 
-        bool EvaluateExpression(IImmutableSet<string> macros, ImmutableArray<Token> expression)
+        bool EvaluateExpression(HashSet<string> macros, ImmutableArray<Token> expression)
         {
             var stack = new Stack<bool>();
             var i = 0;
@@ -369,7 +406,7 @@ public class PreprocessorConditionals : IScriptPreprocessor
 
     class ElseBlock : ConditionalBlock
     {
-        public override void Evaluate(IImmutableSet<string> macros, StringBuilder result)
+        public override void Evaluate(HashSet<string> macros, StringBuilder result)
         {
             foreach (var child in Children)
                 child.Evaluate(macros, result);

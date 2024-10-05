@@ -83,6 +83,41 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
     }
 
     [Test]
+    public async Task ProcessAsync_WithNamespaceWithDefine_ReturnsDocumentWithoutNamespace()
+    {
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        //var document = project.AddDocument("TestDocument", "namespace TestNamespace { class Program {} }");
+        var document = project.AddDocument("TestDocument", "#define LABEL\r\nnamespace TestNamespace { class Program {} }");
+        var processor = new DeleteNamespaces();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var text = await result.GetTextAsync();
+        text.ToString().Replace("\r\n", "\n").Should().Be(" class Program {}".Replace("\r\n", "\n"));
+    }
+    [Test]
     public async Task ProcessAsync_WithNamespace_WillUnindent()
     {
         // Arrange
