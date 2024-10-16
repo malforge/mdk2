@@ -44,7 +44,7 @@
 
     <Target Name="UpdateThings" BeforeTargets="BeforeBuild">
         <Message Text="BeforeBuild target running..." Importance="high" />
-        <Exec Command="powershell -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1 -Verbose" />
+        <Exec Command="pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1" />
     </Target>
     
 </Project>
