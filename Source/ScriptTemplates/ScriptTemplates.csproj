@@ -42,9 +42,9 @@
         <None Include="README.md" Pack="true" PackagePath=""/>
     </ItemGroup>
 
-    <Target Name="UpdateThings" BeforeTargets="BeforeBuild">
-        <Message Text="BeforeBuild target running..." Importance="high" />
-        <Exec Command="pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1" />
-    </Target>
+    <Target Name="UpdatePackageReferences" BeforeTargets="BeforeBuild">
+        <Exec Command="powershell -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1" Condition="'$(OS)' == 'Windows_NT'" />
+        <Exec Command="pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1" Condition="'$(OS)' != 'Windows_NT'" />
+    </Target>    
     
 </Project>
