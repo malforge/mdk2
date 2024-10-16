@@ -42,4 +42,9 @@
         <None Include="README.md" Pack="true" PackagePath=""/>
     </ItemGroup>
 
+    <Target Name="UpdateThings" BeforeTargets="BeforeBuild">
+        <Message Text="BeforeBuild target running..." Importance="high" />
+        <Exec Command="powershell -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1 -Verbose" />
+    </Target>
+    
 </Project>
