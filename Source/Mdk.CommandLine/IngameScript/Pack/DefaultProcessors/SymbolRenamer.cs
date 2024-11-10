@@ -205,10 +205,13 @@ public partial class SymbolRenamer : IScriptPostprocessor
             // as it's likely to be either as short, or shorter than the original type name.
             if (newNode?.Type is QualifiedNameSyntax qualifiedName)
             {
-                var varType = SyntaxFactory.IdentifierName("var")
-                    .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
-                    .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
-                return newNode.WithType(varType);
+                if (IsVarAllowedFor(qualifiedName))
+                {
+                    var varType = SyntaxFactory.IdentifierName("var")
+                        .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
+                        .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
+                    return newNode.WithType(varType);
+                }
             }
 
             return newNode!;

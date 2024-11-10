@@ -74,6 +74,11 @@ public interface IParameters
         ///     An optional output folder to write to.
         /// </summary>
         string? Output { get; }
+        
+        /// <summary>
+        ///    Whether to perform a dry run, which will not actually create the final output.
+        /// </summary>
+        bool DryRun { get; }
 
         /// <summary>
         ///     What level of minification to use, if any.

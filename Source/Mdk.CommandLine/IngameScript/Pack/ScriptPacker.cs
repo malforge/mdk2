@@ -23,13 +23,31 @@ public class ScriptPacker: ProjectJob
     const int MaxScriptLength = 100000;
     
     /// <summary>
+    /// A packed project.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="producedFiles"></param>
+    public readonly struct PackedProject(string name, ImmutableArray<IScriptProducer.ProducedFile> producedFiles)
+    {
+        /// <summary>
+        /// The name of the packed project.
+        /// </summary>
+        public string Name { get; } = name;
+        
+        /// <summary>
+        /// The files produced by the pack operation.
+        /// </summary>
+        public ImmutableArray<IScriptProducer.ProducedFile> ProducedFiles { get; } = producedFiles;
+    }
+    
+    /// <summary>
     ///     Perform packing operation(s) based on the provided options.
     /// </summary>
     /// <param name="parameters"></param>
     /// <param name="console"></param>
     /// <param name="interaction"></param>
     /// <exception cref="CommandLineException"></exception>
-    public async Task PackAsync(Parameters parameters, IConsole console, IInteraction interaction)
+    public async Task<ImmutableArray<PackedProject>> PackAsync(Parameters parameters, IConsole console, IInteraction interaction)
     {
         if (!MSBuildLocator.IsRegistered)
         {
@@ -47,17 +65,19 @@ public class ScriptPacker: ProjectJob
         {
             console.Trace($"Packing a single project: {projectPath}");
             var project = await workspace.OpenProjectAsync(projectPath);
-            if (!await PackProjectAsync(parameters, project, console, interaction))
+            var result = await PackProjectAsync(parameters, project, console, interaction);
+            if (!result.Any())
                 throw new CommandLineException(-1, "The project is not recognized as an MDK project.");
-
             console.Print("The project was successfully packed.");
+            return [new PackedProject(project.Name, result)];
         }
-        else if (string.Equals(Path.GetExtension(projectPath), ".sln", StringComparison.OrdinalIgnoreCase))
+        
+        if (string.Equals(Path.GetExtension(projectPath), ".sln", StringComparison.OrdinalIgnoreCase))
         {
             console.Trace("Packaging a solution: " + projectPath);
             var solution = await workspace.OpenSolutionAsync(projectPath);
             var packedProjects = await PackSolutionAsync(parameters, solution, console, interaction);
-            switch (packedProjects)
+            switch (packedProjects.Length)
             {
                 case 0:
                     throw new CommandLineException(-1, "No MDK projects found in the solution.");
@@ -68,9 +88,10 @@ public class ScriptPacker: ProjectJob
                     console.Print($"Successfully packed {packedProjects} projects.");
                     break;
             }
+            return packedProjects;
         }
-        else
-            throw new CommandLineException(-1, "Unknown file type.");
+        
+        throw new CommandLineException(-1, "Unknown file type.");
     }
 
     /// <summary>
@@ -81,15 +102,16 @@ public class ScriptPacker: ProjectJob
     /// <param name="console"></param>
     /// <param name="interaction"></param>
     /// <returns></returns>
-    public async Task<int> PackSolutionAsync(Parameters parameters, Solution solution, IConsole console, IInteraction interaction)
+    public async Task<ImmutableArray<PackedProject>> PackSolutionAsync(Parameters parameters, Solution solution, IConsole console, IInteraction interaction)
     {
-        var packedProjects = 0;
+        var packedProjects = ImmutableArray.CreateBuilder<PackedProject>();
         foreach (var project in solution.Projects)
         {
-            if (await PackProjectAsync(parameters, project, console, interaction))
-                packedProjects++;
+            var result = await PackProjectAsync(parameters, project, console, interaction);
+            if (result.Any())
+                packedProjects.Add(new PackedProject(project.Name, result));
         }
-        return packedProjects;
+        return packedProjects.ToImmutable();
     }
 
     /// <summary>
@@ -101,7 +123,7 @@ public class ScriptPacker: ProjectJob
     /// <param name="interaction"></param>
     /// <returns></returns>
     /// <exception cref="CommandLineException"></exception>
-    public async Task<bool> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
+    public async Task<ImmutableArray<IScriptProducer.ProducedFile>> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
     {
         if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
             parameters.PackVerb.Output = resolveAutoOutputDirectory();
@@ -141,7 +163,7 @@ public class ScriptPacker: ProjectJob
             parameters.PackVerb.Macros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
     }
 
-    async Task<bool> PackProjectAsync(Project project, PackContext context)
+    async Task<ImmutableArray<IScriptProducer.ProducedFile>> PackProjectAsync(Project project, PackContext context)
     {
         var outputPath = Path.Combine(context.Parameters.PackVerb.Output!, project.Name);
         var outputDirectory = new DirectoryInfo(outputPath);
@@ -205,14 +227,14 @@ public class ScriptPacker: ProjectJob
         await VerifyAsync(context.Console, scriptDocument);
         var final = await ComposeAsync(scriptDocument, composer, context);
         final = await PostProcessComposition(final, postCompositionProcessors, context);
-        await ProduceAsync(projectDir, project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, context);
+        var result = await ProduceAsync(projectDir, project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, context);
 
         if (final.Length > MaxScriptLength)
             context.Interaction.Custom($"NOTE: The final script has {final.Length} characters, which exceeds the maximum of {MaxScriptLength}. The programmable block will not be able to run it.");
         
         context.Interaction.Script(project.Name, outputDirectory.FullName);
 
-        return true;
+        return result;
     }
 
     async Task<Project> CompileAndValidateProjectAsync(Project project)
@@ -356,15 +378,17 @@ public class ScriptPacker: ProjectJob
         return final;
     }
 
-    static async Task ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
+    static async Task<ImmutableArray<IScriptProducer.ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
     {
         context.Console.Trace($"Running producer {producer.GetType().Name}");
         context.Console.Trace($"Producing into {outputDirectory.FullName}");
         outputDirectory.Create();
-        await producer.ProduceAsync(outputDirectory, final, readmeDocument, thumbnailDocument, context);
+        var result = await producer.ProduceAsync(outputDirectory, final, readmeDocument, thumbnailDocument, context);
         // get path relative to the project
         var displayPath = Path.GetRelativePath(projectDirectory, outputDirectory.FullName);
         context.Console.Print($"{projectName} => {displayPath}");
+        
+        return result;
     }
 
     // static bool ShouldInclude(Document document, ScriptProjectMetadata metadata)

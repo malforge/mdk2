@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,9 +15,18 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 public class Producer : IScriptProducer
 {
     /// <inheritdoc />
-    public async Task ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context)
+    public async Task<ImmutableArray<IScriptProducer.ProducedFile>> ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context)
     {
-        context.Console.Trace("Writing the combined syntax tree to a file");
+        if (context.Parameters.PackVerb.DryRun)
+        {
+            context.Console.Trace("Dry run mode is enabled, so the script will not be written to disk");
+        }
+        else
+        {
+            context.Console.Trace("Writing the combined syntax tree to a file");
+        }
+        var fileBuilder = ImmutableArray.CreateBuilder<IScriptProducer.ProducedFile>();
+        
         var outputPath = Path.Combine(outputDirectory.FullName, "script.cs");
         var buffer = new StringBuilder();
         if (readmeDocument != null)
@@ -25,13 +35,31 @@ public class Producer : IScriptProducer
             buffer.Append("// " + string.Join("\n// ", readmeText.Lines.Select(l => l.ToString()))).Append('\n');
         }
         buffer.Append(script.ToString().Replace(Environment.NewLine, "\n"));
-        await File.WriteAllTextAsync(outputPath, buffer.ToString());
-        context.Console.Trace($"The combined syntax tree was written to {outputPath}");
+        fileBuilder.Add(new IScriptProducer.ProducedFile("script.cs", outputPath, buffer.ToString()));
+        if (!context.Parameters.PackVerb.DryRun)
+        {
+            await File.WriteAllTextAsync(outputPath, buffer.ToString());
+            context.Console.Trace($"The combined syntax tree was written to {outputPath}");
+        }
+        else
+        {
+            context.Console.Trace($"The combined syntax tree would have been written to {outputPath}");
+        }
         if (thumbnailDocument != null)
         {
             var thumbnailPath = Path.Combine(outputDirectory.FullName, "thumb.png");
-            File.Copy(thumbnailDocument.FilePath!, thumbnailPath, true);
-            context.Console.Trace($"The thumbnail was written to {thumbnailPath}");
+            fileBuilder.Add(new IScriptProducer.ProducedFile("thumb.png", thumbnailPath, null));
+            if (!context.Parameters.PackVerb.DryRun)
+            {
+                File.Copy(thumbnailDocument.FilePath!, thumbnailPath, true);
+                context.Console.Trace($"The thumbnail was written to {thumbnailPath}");
+            }
+            else
+            {
+                context.Console.Trace($"The thumbnail would have been written to {thumbnailPath}");
+            }
         }
+        
+        return fileBuilder.ToImmutable();
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
@@ -55,14 +56,14 @@ public static class Program
     /// </summary>
     /// <param name="peripherals"></param>
     /// <exception cref="Exception"></exception>
-    public static async Task RunAsync(Peripherals peripherals)
+    public static async Task<ImmutableArray<ScriptPacker.PackedProject>?> RunAsync(Peripherals peripherals)
     {
         if (peripherals.IsEmpty())
             throw new ArgumentException("The peripherals must be set.", nameof(peripherals));
         if (peripherals.Exception != null)
             throw peripherals.Exception;
 
-        await RunAsync(peripherals.Parameters, peripherals.Console, peripherals.HttpClient, peripherals.Interaction);
+        return await RunAsync(peripherals.Parameters, peripherals.Console, peripherals.HttpClient, peripherals.Interaction);
     }
 
     /// <summary>
@@ -75,21 +76,20 @@ public static class Program
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="CommandLineException"></exception>
-    public static async Task RunAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    public static async Task<ImmutableArray<ScriptPacker.PackedProject>?> RunAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
         switch (parameters.Verb)
         {
             case Verb.None:
             case Verb.Help:
                 parameters.ShowHelp(console);
-                break;
+                return null;
             case Verb.Pack:
                 var packer = new ScriptPacker();
-                await packer.PackAsync(parameters, console, interaction);
-                break;
+                return await packer.PackAsync(parameters, console, interaction);
             case Verb.Restore:
                 await RestoreAsync(parameters, console, httpClient, interaction);
-                break;
+                return null;
             default:
                 throw new ArgumentOutOfRangeException();
         }

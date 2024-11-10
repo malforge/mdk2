@@ -1,4 +1,7 @@
-﻿v.2.0.13
+﻿v.2.0.14
+   - Fixed a problem where references to nested types would be replaced by a "var" by the minifier.
+
+v.2.0.13
    - Readded missing binaries
 
 v.2.0.12

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Immutable;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -19,5 +20,29 @@ public interface IScriptProducer
     /// <param name="thumbnailDocument">An optional thumbnail document to output.</param>
     /// <param name="context">The context for the pack command, containing parameters and services useful for the producer.</param>
     /// <returns></returns>
-    Task ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context);
+    Task<ImmutableArray<ProducedFile>> ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context);
+
+    /// <summary>
+    /// Represents a file that was produced by the script producer.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="path"></param>
+    /// <param name="content"></param>
+    public readonly struct ProducedFile(string? id, string path, string? content)
+    {
+        /// <summary>
+        /// The ID of the produced file.
+        /// </summary>
+        public string? Id { get; } = id;
+        
+        /// <summary>
+        /// The absolute path of the produced file.
+        /// </summary>
+        public string Path { get; } = path;
+        
+        /// <summary>
+        /// The content of a produced file, unless it was simply copied from another location.
+        /// </summary>
+        public string? Content { get; } = content;
+    }
 }
