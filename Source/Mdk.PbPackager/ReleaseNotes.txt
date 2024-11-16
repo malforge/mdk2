@@ -1,4 +1,7 @@
-﻿v.2.0.14
+﻿v.2.0.15
+   - DotNet 9 Compatibility
+
+v.2.0.14
    - Fixed a problem where references to nested types would be replaced by a "var" by the minifier.
 
 v.2.0.13
