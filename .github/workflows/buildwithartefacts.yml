@@ -64,7 +64,7 @@ jobs:
         name: ${{ env.ARTIFACT_NAME }}-artifact
         if-no-files-found: error
         retention-days: 7
-        path: ./output
+        path: ./output/*.exe
 
   # Job to build the primary project
   build-primary:
