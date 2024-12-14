@@ -1,0 +1,112 @@
+name: Build Artefacts and Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      publishToNuGet:
+        description: 'Publish to NuGet (y/n)'
+        required: true
+        default: 'n'
+  push:
+    branches: 
+      - dotnet9
+    paths:
+      - 'Source/**/PackageVersion.txt'
+      
+env:
+  NuGetDirectory: ${{ github.workspace }}/nuget
+
+jobs:
+  # Job to build individual tool projects
+  build-tools:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project: 
+          - "Mdk.CommandLine/Mdk.CommandLine.csproj"
+          - "Mdk.Notification/Mdk.Notification.csproj"
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.x
+
+    - name: Build tool project
+      run: |
+        dotnet publish ${{ matrix.project }} -c Release -o ./output  -c Release --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+    - name: Prepare artifact name
+      run: |
+        $artifactName = ${{ matrix.project }}.Split("/")[-1].Split(".")[0]
+        Write-Host "Artifact name: $artifactName"
+        echo "ARTIFACT_NAME=$artifactName" >> $GITHUB_ENV
+
+    - name: Upload tool artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.ARTIFACT_NAME }}-artifact
+        retention-days: 7
+        path: ./output
+
+  # Job to build the primary project
+  build-primary:
+    runs-on: ubuntu-latest
+    needs: build-tools
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.x
+
+    # Download artifacts from the tool projects
+    - name: Download tool artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: Mdk.CommandLine-artifact
+        path: ./Mdk.PbPackager/tools
+
+    - name: Download tool artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: Mdk.Notifier-artifact
+        path: ./Mdk.PbPackager/tools
+
+    # Restore dependencies for the whole solution
+    - name: Restore dependencies
+      run: dotnet restore MDK-Packages.sln
+
+    # Build the primary solution
+    - name: Build solution
+      run: dotnet build MDK-Packages.sln --configuration Release
+
+    # Collect NuGet packages
+    - name: Collect NuGet packages
+      run: |
+        New-Item -ItemType Directory -Force -Path ${{ env.NuGetDirectory }}
+        $files = Get-ChildItem -Path . -Filter *.nupkg -Recurse
+        Write-Host "Found files: $files"
+        foreach ($file in $files) {
+          Write-Host "Copying file: $file"
+          Copy-Item -Path $file.FullName -Destination ${{ env.NuGetDirectory }}
+        }
+
+    # Upload NuGet packages as an artifact
+    - uses: actions/upload-artifact@v4
+      with:
+        name: nuget
+        if-no-files-found: error
+        retention-days: 7
+        path: ${{ env.NuGetDirectory }}/*.nupkg
+
+    # Publish NuGet packages to NuGet.org
+    - name: Publish NuGet packages
+      if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.publishToNuGet == 'y') || github.event_name == 'push' }}
+      run: |
+        foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
+          dotnet nuget push $file --api-key "${{ secrets.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
