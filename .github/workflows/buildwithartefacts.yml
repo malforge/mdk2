@@ -88,13 +88,13 @@ jobs:
     - name: Download tool artifacts
       uses: actions/download-artifact@v4
       with:
-        name: Mdk.CommandLine-artifact
+        name: mdk-artifact
         path: ./Mdk.PbPackager/tools
 
     - name: Download tool artifacts
       uses: actions/download-artifact@v4
       with:
-        name: Mdk.Notifier-artifact
+        name: mdknotify-artifact
         path: ./Mdk.PbPackager/tools
 
     # Restore dependencies for the whole solution
