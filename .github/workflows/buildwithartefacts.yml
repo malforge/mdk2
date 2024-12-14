@@ -89,13 +89,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: mdk-artifact
-        path: ./Mdk.PbPackager/tools
+        path: ./Source/Mdk.PbPackager/tools
 
     - name: Download tool artifacts
       uses: actions/download-artifact@v4
       with:
         name: mdknotify-artifact
-        path: ./Mdk.PbPackager/tools
+        path: ./Source/Mdk.PbPackager/tools
 
     # Restore dependencies for the whole solution
     - name: Restore dependencies
