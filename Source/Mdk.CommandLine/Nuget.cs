@@ -81,7 +81,7 @@ public static class Nuget
             var doc = JsonDocument.Parse(jsonResponse);
             versions = doc.RootElement.GetProperty("versions").EnumerateArray();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             yield break;
         }

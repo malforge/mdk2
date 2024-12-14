@@ -40,9 +40,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Mal.Mdk2.References" Version="2.2.2" />
-      <PackageReference Include="MSTest.TestAdapter" Version="3.6.0" />
-      <PackageReference Include="MSTest.TestFramework" Version="3.6.0" />
+      <PackageReference Include="Mal.Mdk2.References" Version="2.2.3" />
+      <PackageReference Include="Microsoft.IO.Redist" Version="6.1.0" />
+      <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
+      <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
       <PackageReference Include="NUnit" Version="4.2.2" />
       <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
     </ItemGroup>

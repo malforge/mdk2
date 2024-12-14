@@ -4,6 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <PathToMdkCommandLine>$(SolutionDir)Mdk.CommandLine\Mdk.CommandLine.csproj</PathToMdkCommandLine>
         <PathToMdkNotificationWindows>$(SolutionDir)Mdk.Notification.Windows\Mdk.Notification.Windows.csproj</PathToMdkNotificationWindows>
+        <PathToMdkNotification>$(SolutionDir)Mdk.Notification\Mdk.Notification.csproj</PathToMdkNotification>
         <RootNamespace>Mdk.Packager</RootNamespace>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../Mdk.CommandLine/PackageVersion.txt"))</Version>
@@ -21,10 +22,12 @@
     </PropertyGroup>
 
     <Target Name="BuildMdk" BeforeTargets="PreBuildEvent">
-        <Exec Command="dotnet publish &quot;$(PathToMdkCommandLine)&quot; -c Release --self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>
-        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release --self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>
+        <Exec Command="dotnet publish &quot;$(PathToMdkCommandLine)&quot; -c Release --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>
+        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>
+        <Exec Command="dotnet publish &quot;$(PathToMdkNotification)&quot; -c Release --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>
         <Copy SourceFiles="$(SolutionDir)Binaries\mdk.exe" DestinationFolder="$(ProjectDir)tools\"/>
         <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify-win.exe" DestinationFolder="$(ProjectDir)tools\"/>
+        <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify.exe" DestinationFolder="$(ProjectDir)tools\"/>
     </Target>
 
     <ItemGroup>

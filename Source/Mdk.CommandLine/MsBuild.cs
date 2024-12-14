@@ -18,7 +18,10 @@ public static class MsBuild
         if (MSBuildLocator.IsRegistered)
             return true;
         
-        var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToList();
+        var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances()
+            .Where(x => x.Version.Major >= 8) 
+            .OrderByDescending(x => x.Version)
+            .ToList();
         foreach (var instance in msbuildInstances)
             console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
         var selectedInstance = msbuildInstances.FirstOrDefault();
