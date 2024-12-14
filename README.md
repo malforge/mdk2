@@ -28,3 +28,5 @@ See the [wiki home page](https://github.com/malforge/mdk2/wiki) for instructions
 - - -
 
 _Space Engineers is trademarked to Keen Software House. This toolkit is fan-made, and its developer has no relation to Keen Software House._
+
+_<a href="https://www.flaticon.com/free-icons/toast" title="toast icons">Toast icons created by Freepik - Flaticon</a>_
