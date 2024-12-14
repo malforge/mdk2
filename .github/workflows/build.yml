@@ -43,7 +43,7 @@ jobs:
         $artifactName = ${{ matrix.project }}.Split("/")[-1].Split(".")[0]
         Write-Host "Artifact name: $artifactName"
         echo "ARTIFACT_NAME=$artifactName" >> $GITHUB_ENV
-
+  
     - name: Upload tool artifact
       uses: actions/upload-artifact@v4
       with:
