@@ -1,6 +1,7 @@
 name: Build Artefacts and Publish
 
 on:
+  pullrequest:
   workflow_dispatch:
     inputs:
       publishToNuGet:
