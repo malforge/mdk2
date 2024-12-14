@@ -43,7 +43,9 @@ jobs:
     - name: Build tool project
       run: |
         dotnet publish ${{ matrix.project }} -c Release -o ./output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
-
+        Write-Host "Contents of ./output:"
+        Get-ChildItem ./output -Recurse
+        
     - name: Prepare artifact name
       run: |
         $projectPath = '${{ matrix.project }}'
@@ -55,6 +57,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.ARTIFACT_NAME }}-artifact
+        if-no-files-found: error
         retention-days: 7
         path: ./output
 
