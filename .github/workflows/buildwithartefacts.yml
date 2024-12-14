@@ -42,9 +42,9 @@ jobs:
 
     - name: Build tool project
       run: |
-        dotnet publish ${{ matrix.project }} -c Release -o ./output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+        dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
         Write-Host "Contents of ./output:"
-        Get-ChildItem ./output -Recurse
+        Get-ChildItem ../output -Recurse
         
     - name: Prepare artifact name
       run: |
