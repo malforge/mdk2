@@ -45,7 +45,7 @@ jobs:
         echo "artifactName=$artifactName" >> $GITHUB_ENV
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.project | split: '/' | last | split: '.' | first }}-artifact
+        name: ${{ env.artifactName }}-artifact
         retention-days: 7
         path: ./output
 
