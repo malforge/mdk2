@@ -42,17 +42,18 @@ jobs:
 
     - name: Build tool project
       run: |
-        dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
-        Write-Host "Contents of ./output:"
-        Get-ChildItem ../output -Recurse
-        
-    - name: Prepare artifact name
-      run: |
-        $projectPath = '${{ matrix.project }}'
-        $artifactName = (Split-Path $projectPath -LeafBase)
-        Write-Host "Extracted artifact name: $artifactName"
+        dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None
+
+        # Find the generated executable
+        $outputDir = "../output"
+        $exeName = Get-ChildItem $outputDir -Filter *.exe | Select-Object -ExpandProperty Name
+
+        # Log and export the artifact name (without extension)
+        Write-Host "Generated executable: $exeName"
+        $artifactName = $exeName -replace '\.exe$', ''
+        Write-Host "Artifact name: $artifactName"
         echo "ARTIFACT_NAME=$artifactName" >> $GITHUB_ENV
-        
+                
     - name: Upload tool artifact
       uses: actions/upload-artifact@v4
       with:
