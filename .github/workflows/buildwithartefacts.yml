@@ -52,7 +52,7 @@ jobs:
         Write-Host "Generated executable: $exeName"
         $artifactName = $exeName -replace '\.exe$', ''
         Write-Host "Artifact name: $artifactName"
-        echo "ARTIFACT_NAME=$artifactName" >> $GITHUB_ENV
+        echo "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
                 
     - name: Debug artifact name
       run: |
