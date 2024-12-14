@@ -39,6 +39,10 @@ jobs:
         dotnet publish ${{ matrix.project }} -c Release -o ./output  -c Release --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
 
     - name: Upload tool artifact
+      run: |
+        $artifactName = ${{ matrix.project }}.Split("/")[-1].Split(".")[0]
+        Write-Host "Artifact name: $artifactName"
+        echo "artifactName=$artifactName" >> $GITHUB_ENV
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.project | split: '/' | last | split: '.' | first }}-artifact
