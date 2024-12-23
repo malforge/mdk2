@@ -6,6 +6,7 @@ using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.LegacyConversion;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Restore;
+using Mdk.CommandLine.Mod.Pack;
 using Mdk.CommandLine.SharedApi;
 
 namespace Mdk.CommandLine;
@@ -56,7 +57,7 @@ public static class Program
     /// </summary>
     /// <param name="peripherals"></param>
     /// <exception cref="Exception"></exception>
-    public static async Task<ImmutableArray<ScriptPacker.PackedProject>?> RunAsync(Peripherals peripherals)
+    public static async Task<ImmutableArray<PackedProject>?> RunAsync(Peripherals peripherals)
     {
         if (peripherals.IsEmpty())
             throw new ArgumentException("The peripherals must be set.", nameof(peripherals));
@@ -76,7 +77,7 @@ public static class Program
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="CommandLineException"></exception>
-    public static async Task<ImmutableArray<ScriptPacker.PackedProject>?> RunAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    public static async Task<ImmutableArray<PackedProject>?> RunAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
         switch (parameters.Verb)
         {
@@ -85,14 +86,62 @@ public static class Program
                 parameters.ShowHelp(console);
                 return null;
             case Verb.Pack:
-                var packer = new ScriptPacker();
-                return await packer.PackAsync(parameters, console, interaction);
+                return await PackAsync(parameters, console, httpClient, interaction);
             case Verb.Restore:
                 await RestoreAsync(parameters, console, httpClient, interaction);
                 return null;
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    static async Task<ImmutableArray<PackedProject>?> PackAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    {
+        if (parameters.PackVerb.ProjectFile is null) throw new CommandLineException(-1, "No project file specified.");
+        if (!File.Exists(parameters.PackVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.RestoreVerb.ProjectFile}' does not exist.");
+
+        if (parameters.PackVerb.DryRun)
+            console.Print("Currently performing a dry run. No changes will be made.");
+
+        var result = ImmutableArray.CreateBuilder<PackedProject>();
+        
+        await foreach (var project in MdkProject.LoadAsync(parameters.PackVerb.ProjectFile, console))
+        {
+            switch (project.Type)
+            {
+                case MdkProjectType.Mod:
+                {
+                    var packer = new ModPacker();
+                    var packed = await packer.PackAsync(parameters, console, interaction);
+                    
+                    if (!packed.IsDefaultOrEmpty)
+                        result.AddRange(packed);
+                    break;
+                }
+
+                case MdkProjectType.ProgrammableBlock:
+                {
+                    var packer = new ScriptPacker();
+                    var packed = await packer.PackAsync(parameters, console, interaction);
+                    
+                    if (!packed.IsDefaultOrEmpty)
+                        result.AddRange(packed);
+                    break;
+                }
+
+                case MdkProjectType.LegacyProgrammableBlock:
+                    console.Print($"The project file {project.Project.Name} is a legacy ingame script project and cannot be packed.");
+                    break;
+
+                case MdkProjectType.Unknown:
+                    console.Print($"The project file {project.Project.Name} does not seem to be an MDK project.");
+                    break;
+            }
+        }
+        
+        if (result.Count == 0)
+            return null;
+        return result.ToImmutable();
     }
 
     static async Task RestoreAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)

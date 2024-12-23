@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -15,7 +16,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 public class Producer : IScriptProducer
 {
     /// <inheritdoc />
-    public async Task<ImmutableArray<IScriptProducer.ProducedFile>> ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context)
+    public async Task<ImmutableArray<ProducedFile>> ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context)
     {
         if (context.Parameters.PackVerb.DryRun)
         {
@@ -25,7 +26,7 @@ public class Producer : IScriptProducer
         {
             context.Console.Trace("Writing the combined syntax tree to a file");
         }
-        var fileBuilder = ImmutableArray.CreateBuilder<IScriptProducer.ProducedFile>();
+        var fileBuilder = ImmutableArray.CreateBuilder<ProducedFile>();
         
         var outputPath = Path.Combine(outputDirectory.FullName, "script.cs");
         var buffer = new StringBuilder();
@@ -35,7 +36,7 @@ public class Producer : IScriptProducer
             buffer.Append("// " + string.Join("\n// ", readmeText.Lines.Select(l => l.ToString()))).Append('\n');
         }
         buffer.Append(script.ToString().Replace(Environment.NewLine, "\n"));
-        fileBuilder.Add(new IScriptProducer.ProducedFile("script.cs", outputPath, buffer.ToString()));
+        fileBuilder.Add(new ProducedFile("script.cs", outputPath, buffer.ToString()));
         if (!context.Parameters.PackVerb.DryRun)
         {
             await File.WriteAllTextAsync(outputPath, buffer.ToString());
@@ -48,7 +49,7 @@ public class Producer : IScriptProducer
         if (thumbnailDocument != null)
         {
             var thumbnailPath = Path.Combine(outputDirectory.FullName, "thumb.png");
-            fileBuilder.Add(new IScriptProducer.ProducedFile("thumb.png", thumbnailPath, null));
+            fileBuilder.Add(new ProducedFile("thumb.png", thumbnailPath, null));
             if (!context.Parameters.PackVerb.DryRun)
             {
                 File.Copy(thumbnailDocument.FilePath!, thumbnailPath, true);

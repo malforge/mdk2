@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Mdk.CommandLine.SharedApi;
@@ -81,7 +82,7 @@ public static class Nuget
             var doc = JsonDocument.Parse(jsonResponse);
             versions = doc.RootElement.GetProperty("versions").EnumerateArray();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             yield break;
         }
@@ -108,7 +109,7 @@ public static class Nuget
             try
             {
                 await using var stream = File.OpenRead(configPath);
-                document = await XDocument.LoadAsync(stream, LoadOptions.None, default);
+                document = await XDocument.LoadAsync(stream, LoadOptions.None, CancellationToken.None);
             }
             catch
             {

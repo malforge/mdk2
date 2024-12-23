@@ -21,26 +21,6 @@ namespace Mdk.CommandLine.Mod.Pack;
 /// </summary>
 public class ModPacker: ProjectJob
 {
-    const int MaxScriptLength = 100000;
-    
-    /// <summary>
-    /// A packed project.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="producedFiles"></param>
-    public readonly struct PackedProject(string name, ImmutableArray<IModProducer.ProducedFile> producedFiles)
-    {
-        /// <summary>
-        /// The name of the packed project.
-        /// </summary>
-        public string Name { get; } = name;
-        
-        /// <summary>
-        /// The files produced by the pack operation.
-        /// </summary>
-        public ImmutableArray<IModProducer.ProducedFile> ProducedFiles { get; } = producedFiles;
-    }
-    
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
     /// </summary>
@@ -124,7 +104,7 @@ public class ModPacker: ProjectJob
     /// <param name="interaction"></param>
     /// <returns></returns>
     /// <exception cref="CommandLineException"></exception>
-    public async Task<ImmutableArray<IModProducer.ProducedFile>> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
+    public async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
     {
         if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
             parameters.PackVerb.Output = resolveAutoOutputDirectory();
@@ -164,7 +144,7 @@ public class ModPacker: ProjectJob
             parameters.PackVerb.Macros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
     }
 
-    async Task<ImmutableArray<IModProducer.ProducedFile>> PackProjectAsync(Project project, PackContext context)
+    async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Project project, PackContext context)
     {
         var outputPath = Path.Combine(context.Parameters.PackVerb.Output!, project.Name);
         var outputDirectory = new DirectoryInfo(outputPath);
@@ -223,7 +203,7 @@ public class ModPacker: ProjectJob
         //
         // context.Interaction.Script(project.Name, outputDirectory.FullName);
 
-        return ImmutableArray<IModProducer.ProducedFile>.Empty;
+        return ImmutableArray<ProducedFile>.Empty;
     }
 
     async Task<Project> CompileAndValidateProjectAsync(Project project)
@@ -327,7 +307,7 @@ public class ModPacker: ProjectJob
         }
     }
 
-    static async Task<ImmutableArray<IModProducer.ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IModProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
+    static async Task<ImmutableArray<ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IModProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
     {
         context.Console.Trace($"Running producer {producer.GetType().Name}");
         context.Console.Trace($"Producing into {outputDirectory.FullName}");

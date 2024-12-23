@@ -21,25 +21,7 @@ namespace Mdk.CommandLine.IngameScript.Pack;
 public class ScriptPacker: ProjectJob
 {
     const int MaxScriptLength = 100000;
-    
-    /// <summary>
-    /// A packed project.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="producedFiles"></param>
-    public readonly struct PackedProject(string name, ImmutableArray<IScriptProducer.ProducedFile> producedFiles)
-    {
-        /// <summary>
-        /// The name of the packed project.
-        /// </summary>
-        public string Name { get; } = name;
-        
-        /// <summary>
-        /// The files produced by the pack operation.
-        /// </summary>
-        public ImmutableArray<IScriptProducer.ProducedFile> ProducedFiles { get; } = producedFiles;
-    }
-    
+
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
     /// </summary>
@@ -123,7 +105,7 @@ public class ScriptPacker: ProjectJob
     /// <param name="interaction"></param>
     /// <returns></returns>
     /// <exception cref="CommandLineException"></exception>
-    public async Task<ImmutableArray<IScriptProducer.ProducedFile>> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
+    public async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
     {
         if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
             parameters.PackVerb.Output = resolveAutoOutputDirectory();
@@ -163,7 +145,7 @@ public class ScriptPacker: ProjectJob
             parameters.PackVerb.Macros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
     }
 
-    async Task<ImmutableArray<IScriptProducer.ProducedFile>> PackProjectAsync(Project project, PackContext context)
+    async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Project project, PackContext context)
     {
         var outputPath = Path.Combine(context.Parameters.PackVerb.Output!, project.Name);
         var outputDirectory = new DirectoryInfo(outputPath);
@@ -378,7 +360,7 @@ public class ScriptPacker: ProjectJob
         return final;
     }
 
-    static async Task<ImmutableArray<IScriptProducer.ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
+    static async Task<ImmutableArray<ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
     {
         context.Console.Trace($"Running producer {producer.GetType().Name}");
         context.Console.Trace($"Producing into {outputDirectory.FullName}");
