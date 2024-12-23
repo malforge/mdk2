@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
