@@ -5,7 +5,9 @@ using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Shared.DefaultProcessors;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -13,7 +15,7 @@ namespace MDK.CommandLine.Tests.ScriptPreprocessors;
 
 [TestFixture]
 [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
-public class PreprocessorConditionalsTests : ScriptPreprocessorTests<PreprocessorConditionals>
+public class PreprocessorConditionalsTests : DocumentProcessorTests<PreprocessorConditionals>
 {
     [Test]
     public async Task ProcessAsync_WithSimpleDebugBlock_RemovesDebugBlock()
@@ -51,6 +53,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
@@ -111,6 +114,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             ImmutableHashSet.Create("DEBUG")
@@ -174,6 +178,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
         );
@@ -233,6 +238,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
@@ -297,6 +303,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             ImmutableHashSet.Create<string>()
         );
@@ -356,6 +363,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             ImmutableHashSet<string>.Empty
         );
@@ -404,6 +412,7 @@ public class PreprocessorConditionalsTests : ScriptPreprocessorTests<Preprocesso
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             ImmutableHashSet.Create("DEBUG", "TEST2")

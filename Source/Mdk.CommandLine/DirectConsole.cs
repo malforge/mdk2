@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.Extensions.Primitives;
 
 namespace Mdk.CommandLine;

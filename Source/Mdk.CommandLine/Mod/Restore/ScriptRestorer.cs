@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Mdk.CommandLine.CommandLine;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine.Mod.Restore;
 
@@ -36,7 +36,6 @@ public class ScriptRestorer : ProjectJob
             NugetVersionCheck.CheckAsync(document, projectFileName, "Mal.Mdk2.PbPackager", console, httpClient, interaction),
             NugetVersionCheck.CheckAsync(document, projectFileName, "Mal.Mdk2.PbAnalyzers", console, httpClient, interaction),
             NugetVersionCheck.CheckAsync(document, projectFileName, "Mal.Mdk2.References", console, httpClient, interaction),
-            BadIgnoresBugFix.CheckAsync(projectFileName, console)
         };
         
         await Task.WhenAll(tasks);

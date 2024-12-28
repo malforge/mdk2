@@ -1,5 +1,5 @@
 ﻿using System;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 

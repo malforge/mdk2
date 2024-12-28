@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <PackageId>Mal.Mdk2.ScriptTemplates</PackageId>
+        <PackageId>Mal.Mdk2.ModTemplates</PackageId>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
         <Title>Space Engineers Mod Templates</Title>
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
@@ -41,10 +41,10 @@
         <None Include="..\malware256.png" Pack="true" PackagePath=""/>
         <None Include="README.md" Pack="true" PackagePath=""/>
     </ItemGroup>
-
+    <!--
     <Target Name="UpdatePackageReferences" BeforeTargets="BeforeBuild">
         <Exec Command="powershell -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1" Condition="'$(OS)' == 'Windows_NT'" />
         <Exec Command="pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1" Condition="'$(OS)' != 'Windows_NT'" />
     </Target>    
-    
+    -->
 </Project>

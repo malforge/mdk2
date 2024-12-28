@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -18,7 +18,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///     size.
 /// </summary>
 [RunAfter<CommentStripper>]
-public partial class SymbolRenamer : IScriptPostprocessor
+public partial class SymbolRenamer : IDocumentProcessor
 {
     /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext context)

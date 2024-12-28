@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
@@ -14,7 +14,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///     The TypeTrimmer processor removes unused types from the script.
 /// </summary>
 [RunAfter<CodeSmallifier>]
-public class TypeTrimmer : IScriptPostprocessor
+public class TypeTrimmer : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {

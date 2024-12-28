@@ -2,7 +2,7 @@
 using System.Collections.Immutable;
 using Mdk.CommandLine.Mod.Pack.Api;
 using Mdk.CommandLine.Mod.Pack.DefaultProcessors;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine.Mod.Pack;
 
@@ -14,12 +14,7 @@ public class ModProcessingManager
     /// <summary>
     ///     A list of preprocessors to run before the script is combined, in workflow order.
     /// </summary>
-    public required ProcessorSet<IModScriptPreprocessor> Preprocessors { get; init; }
-
-    /// <summary>
-    ///     A list of postprocessors to run after the script is combined, in workflow order.
-    /// </summary>
-    public required ProcessorSet<IModScriptProcessor> Postprocessors { get; init; }
+    public required ProcessorSet<IDocumentProcessor> Processors { get; init; }
 
     /// <summary>
     ///     A producer to produce the files for the script, in the desired output folder.
@@ -31,13 +26,14 @@ public class ModProcessingManager
     ///     can either be used as-is, or modified to suit the needs of the user.
     /// </summary>
     /// <returns>A new <see cref="ProcessingManagerBuilder" />.</returns>
-    public static ProcessingManagerBuilder Create() =>
-        new()
+    public static ProcessingManagerBuilder Create()
+    {
+        return new ProcessingManagerBuilder
         {
-            Preprocessors = [..DefaultProcessorTypes.Preprocessors],
-            Postprocessors = [..DefaultProcessorTypes.Postprocessors],
+            Processors = [..DefaultProcessorTypes.Processors],
             Producer = DefaultProcessorTypes.Producer
         };
+    }
 
     /// <summary>
     ///     A builder for a <see cref="ModProcessingManager" />.
@@ -45,15 +41,10 @@ public class ModProcessingManager
     public readonly struct ProcessingManagerBuilder
     {
         /// <summary>
-        ///     A list of types to use as preprocessors (see <see cref="ModProcessingManager.Preprocessors" />).
+        ///     A list of types to use as preprocessors (see <see cref="ModProcessingManager.Processors" />).
         /// </summary>
-        public ImmutableArray<Type> Preprocessors { get; init; }
-
-        /// <summary>
-        ///     A list of types to use as postprocessors (see <see cref="ModProcessingManager.Postprocessors" />).
-        /// </summary>
-        public ImmutableArray<Type> Postprocessors { get; init; }
-
+        public ImmutableArray<Type> Processors { get; init; }
+        
         /// <summary>
         ///     A type to use as a producer (see <see cref="ModProcessingManager.Producer" />).
         /// </summary>
@@ -65,44 +56,23 @@ public class ModProcessingManager
         /// <param name="types"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public ProcessingManagerBuilder WithAdditionalPreprocessors(params Type[]? types)
+        public ProcessingManagerBuilder WithAdditionalProcessors(params Type[]? types)
         {
             if (types is null || types.Length == 0) return this;
             foreach (var type in types)
             {
-                if (!typeof(IModScriptPreprocessor).IsAssignableFrom(type))
-                    throw new InvalidOperationException($"Type {type.FullName} does not implement {typeof(IModScriptPreprocessor).FullName}.");
+                if (!typeof(IDocumentProcessor).IsAssignableFrom(type))
+                    throw new InvalidOperationException($"Type {type.FullName} does not implement {typeof(IDocumentProcessor).FullName}.");
                 if (type.GetConstructor(Type.EmptyTypes) == null)
                     throw new InvalidOperationException($"Type {type.FullName} does not have a parameterless constructor.");
             }
+
             return new ProcessingManagerBuilder
             {
-                Preprocessors = Preprocessors.AddRange(types)
+                Processors = Processors.AddRange(types)
             };
         }
-        
-        /// <summary>
-        ///     Add additional postprocessors to the builder.
-        /// </summary>
-        /// <param name="types"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        public ProcessingManagerBuilder WithAdditionalPostprocessors(params Type[]? types)
-        {
-            if (types is null || types.Length == 0) return this;
-            foreach (var type in types)
-            {
-                if (!typeof(IModScriptProcessor).IsAssignableFrom(type))
-                    throw new InvalidOperationException($"Type {type.FullName} does not implement {typeof(IModScriptProcessor).FullName}.");
-                if (type.GetConstructor(Type.EmptyTypes) == null)
-                    throw new InvalidOperationException($"Type {type.FullName} does not have a parameterless constructor.");
-            }
-            return new ProcessingManagerBuilder
-            {
-                Postprocessors = Postprocessors.AddRange(types)
-            };
-        }
-        
+
         /// <summary>
         ///     Replace the producer in the builder.
         /// </summary>
@@ -134,8 +104,7 @@ public class ModProcessingManager
 
             return new ModProcessingManager
             {
-                Preprocessors = new ProcessorSet<IModScriptPreprocessor>(Preprocessors),
-                Postprocessors = new ProcessorSet<IModScriptProcessor>(Postprocessors),
+                Processors = new ProcessorSet<IDocumentProcessor>(Processors),
                 Producer = (IModProducer?)Activator.CreateInstance(Producer) ?? throw new InvalidOperationException("Producer could not be created.")
             };
         }
@@ -143,8 +112,7 @@ public class ModProcessingManager
 
     static class DefaultProcessorTypes
     {
-        public static readonly Type[] Preprocessors = [typeof(PreprocessorConditionals)];
-        public static readonly Type[] Postprocessors = [typeof(RegionAnnotator)];
-        public static readonly Type Producer = typeof(Producer);
+        public static readonly Type[] Processors = [typeof(PreprocessorConditionals), typeof(ModRegionAnnotator)];
+        public static readonly Type Producer = typeof(ModProducer);
     }
 }

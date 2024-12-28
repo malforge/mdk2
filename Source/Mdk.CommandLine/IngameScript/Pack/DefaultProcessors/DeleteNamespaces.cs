@@ -2,7 +2,8 @@
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Shared.DefaultProcessors;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -18,7 +19,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///     Note: Will also convert tabs to spaces and unindent the code.
 /// </remarks>
 [RunAfter<PreprocessorConditionals>]
-public class DeleteNamespaces : IScriptPreprocessor
+public class DeleteNamespaces : IDocumentProcessor
 {
     // The default indent size. _Maybe_ we will make this configurable in the future.
     const int IndentSize = 4;

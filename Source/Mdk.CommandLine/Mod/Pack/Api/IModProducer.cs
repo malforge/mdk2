@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.Mod.Pack.Api;

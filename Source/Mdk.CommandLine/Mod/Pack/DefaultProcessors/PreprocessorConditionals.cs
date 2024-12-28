@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Mod.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Mdk.CommandLine.Utility;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -15,7 +16,7 @@ namespace Mdk.CommandLine.Mod.Pack.DefaultProcessors;
 /// <summary>
 ///     Removes code within #if DEBUG blocks
 /// </summary>
-public class PreprocessorConditionals : IModScriptPreprocessor
+public class PreprocessorConditionals : IDocumentProcessor
 {
     /// <summary>
     ///     Removes code within #if DEBUG blocks

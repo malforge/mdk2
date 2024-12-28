@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.Api;

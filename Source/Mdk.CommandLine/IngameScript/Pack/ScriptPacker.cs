@@ -6,7 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -125,12 +126,12 @@ public class ScriptPacker: ProjectJob
         ApplyDefaultMacros(parameters);
         parameters.DumpTrace(console);
 
-        var filter = new PackInclusionFilter(parameters, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
+        var filter = new FileFilter(parameters.PackVerb.Ignores, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
         var outputPath = Path.Combine(parameters.PackVerb.Output!, project.Name);
         var projectPath= Path.GetDirectoryName(project.FilePath)!;
         var tracePath = Path.Combine(projectPath, "obj");
         var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
-        var context = new PackContext(parameters, console, interaction, filter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
+        var context = new PackContext(parameters, console, interaction, filter, null, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
 
         return await PackProjectAsync(project, context);
     }
@@ -147,8 +148,7 @@ public class ScriptPacker: ProjectJob
 
     async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Project project, PackContext context)
     {
-        var outputPath = Path.Combine(context.Parameters.PackVerb.Output!, project.Name);
-        var outputDirectory = new DirectoryInfo(outputPath);
+        var outputDirectory = new DirectoryInfo(context.FileSystem.OutputDirectory);
 
         project = await CompileAndValidateProjectAsync(project);
 
@@ -201,6 +201,7 @@ public class ScriptPacker: ProjectJob
             .TraceIf(postCompositionProcessors.Count > 0, $"    {string.Join("\n    ", postCompositionProcessors.Select(p => p.GetType().Name))}")
             .Trace($"  producer {producer.GetType().Name}");
 
+        // TODO: Jobify this
         allDocuments = await PreprocessAsync(allDocuments, preprocessors, context);
         var scriptDocument = await CombineAsync(project, combiner, allDocuments, context);
         scriptDocument = await PostProcessAsync(scriptDocument, postprocessors, context);
@@ -247,7 +248,7 @@ public class ScriptPacker: ProjectJob
         throw new CommandLineException(-2, "Failed to compile the project.");
     }
 
-    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IScriptPreprocessor> preprocessors, PackContext context)
+    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IDocumentProcessor> preprocessors, PackContext context)
     {
         async Task<Document> preprocessSyntaxTree(Document document)
         {
@@ -286,7 +287,7 @@ public class ScriptPacker: ProjectJob
         return scriptDocument;
     }
 
-    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IScriptPostprocessor> postprocessors, PackContext context)
+    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IDocumentProcessor> postprocessors, PackContext context)
     {
         if (postprocessors.Count > 0)
         {

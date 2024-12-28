@@ -2,12 +2,11 @@
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
-using Mdk.CommandLine.IngameScript;
-using Mdk.CommandLine.Mod.Pack.Api;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Mod.Pack.Jobs;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -19,7 +18,7 @@ namespace Mdk.CommandLine.Mod.Pack;
 ///     Processes an MDK project and produces a single script file, which is made compatible with the
 ///     Space Engineers Programmable Block.
 /// </summary>
-public class ModPacker: ProjectJob
+public class ModPacker : ProjectJob
 {
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
@@ -37,6 +36,7 @@ public class ModPacker: ProjectJob
                 console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
             MSBuildLocator.RegisterInstance(msbuildInstances.First());
         }
+
         using var workspace = MSBuildWorkspace.Create();
 
         var projectPath = parameters.PackVerb.ProjectFile;
@@ -52,7 +52,7 @@ public class ModPacker: ProjectJob
             console.Print("The project was successfully packed.");
             return [new PackedProject(project.Name, result)];
         }
-        
+
         if (string.Equals(Path.GetExtension(projectPath), ".sln", StringComparison.OrdinalIgnoreCase))
         {
             console.Trace("Packaging a solution: " + projectPath);
@@ -69,9 +69,10 @@ public class ModPacker: ProjectJob
                     console.Print($"Successfully packed {packedProjects} projects.");
                     break;
             }
+
             return packedProjects;
         }
-        
+
         throw new CommandLineException(-1, "Unknown file type.");
     }
 
@@ -92,6 +93,7 @@ public class ModPacker: ProjectJob
             if (result.Any())
                 packedProjects.Add(new PackedProject(project.Name, result));
         }
+
         return packedProjects.ToImmutable();
     }
 
@@ -108,32 +110,34 @@ public class ModPacker: ProjectJob
     {
         if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
             parameters.PackVerb.Output = resolveAutoOutputDirectory();
-        
+
         string resolveAutoOutputDirectory()
         {
             console.Trace("Determining the output directory automatically...");
             if (!OperatingSystem.IsWindows())
                 throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
             var se = new SpaceEngineers();
-            var output = se.GetDataPath("IngameScripts", "local");
+            var output = se.GetDataPath("Mods");
             if (string.IsNullOrEmpty(output))
                 throw new CommandLineException(-1, "Failed to determine the output directory.");
             console.Trace("Output directory: " + output);
             return output;
         }
+
         ApplyDefaultMacros(parameters);
         parameters.DumpTrace(console);
 
-        var filter = new PackInclusionFilter(parameters, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
+        var filter = new FileFilter(parameters.PackVerb.Ignores, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
         var outputPath = Path.Combine(parameters.PackVerb.Output!, project.Name);
-        var projectPath= Path.GetDirectoryName(project.FilePath)!;
+        var outputCleanFilter = new FileFilter(parameters.PackVerb.DoNotClean, outputPath);
+        var projectPath = Path.GetDirectoryName(project.FilePath)!;
         var tracePath = Path.Combine(projectPath, "obj");
         var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
-        var context = new PackContext(parameters, console, interaction, filter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
+        var context = new PackContext(parameters, console, interaction, filter, outputCleanFilter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
 
         return await PackProjectAsync(project, context);
     }
-    
+
     static void ApplyDefaultMacros(Parameters parameters)
     {
         if (!parameters.PackVerb.Macros.ContainsKey("$MDK_DATETIME$"))
@@ -146,26 +150,15 @@ public class ModPacker: ProjectJob
 
     async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Project project, PackContext context)
     {
-        var outputPath = Path.Combine(context.Parameters.PackVerb.Output!, project.Name);
-        var outputDirectory = new DirectoryInfo(outputPath);
-
         project = await CompileAndValidateProjectAsync(project);
 
-        project.TryGetDocument("instructions.readme", out var readmeDocument);
-        if (readmeDocument != null)
-            context.Console.Trace("Found a readme file.");
-
-        project.TryGetDocument("thumb.png", out var thumbnailDocument);
-        if (thumbnailDocument != null)
-            context.Console.Trace("Found a thumbnail file.");
-
-        bool isNotIgnored(Document doc)
+        bool documentIsNotIgnored(TextDocument doc)
         {
             return context.FileFilter.IsMatch(doc.FilePath!);
         }
 
         // Remove ignored documents from the project
-        project = project.RemoveDocuments([..project.Documents.Where(doc => !isNotIgnored(doc)).Select(doc => doc.Id)]);
+        project = project.RemoveDocuments([..project.Documents.Where(doc => !documentIsNotIgnored(doc)).Select(doc => doc.Id)]);
 
         // Make sure the project is class library (convert it if necessary)
         if (project.CompilationOptions?.OutputKind != OutputKind.DynamicallyLinkedLibrary)
@@ -176,37 +169,31 @@ public class ModPacker: ProjectJob
             else
                 project = project.WithCompilationOptions(project.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary));
         }
-        
-        var allDocuments = project.Documents.ToImmutableArray(); // project.Documents.Where(isNotIgnored).ToImmutableArray();
-        
+
+        var codeDocuments = project.Documents.Where(documentIsNotIgnored).ToImmutableArray();
+        var contentDocuments = project.AdditionalDocuments.Where(documentIsNotIgnored).ToImmutableArray();
+
         var manager = ModProcessingManager.Create().Build();
 
-        var preprocessors = manager.Preprocessors;
-        var postprocessors = manager.Postprocessors;
-        var producer = manager.Producer;
+        var processors = manager.Processors;
 
-        context.Console.Trace("There are:")
-            .Trace($"  {allDocuments.Length} documents")
-            .Trace($"  {preprocessors.Count} preprocessors")
-            .TraceIf(preprocessors.Count > 0, $"    {string.Join("\n    ", preprocessors.Select(p => p.GetType().Name))}")
-            .Trace($"  {postprocessors.Count} postprocessors")
-            .TraceIf(postprocessors.Count > 0, $"    {string.Join("\n    ", postprocessors.Select(p => p.GetType().Name))}")
-            .Trace($"  producer {producer.GetType().Name}");
+        var modContext = new ModPackContext(context, project, codeDocuments, contentDocuments, processors);
+        modContext.Trace();
 
-        // allDocuments = await PreprocessAsync(allDocuments, preprocessors, context);
-        //
-        // var projectDir = Path.GetDirectoryName(project.FilePath)!;
-        // await VerifyAsync(context.Console, scriptDocument);
-        // var final = await ComposeAsync(scriptDocument, composer, context);
-        // final = await PostProcessComposition(final, postCompositionProcessors, context);
-        // var result = await ProduceAsync(projectDir, project.Name, outputDirectory, producer, final, readmeDocument, thumbnailDocument, context);
-        //
-        // context.Interaction.Script(project.Name, outputDirectory.FullName);
+        ModJob[] jobs =
+        [
+            new PrepareOutputJob(),
+            new CopyContentJob(),
+            new ProcessScriptsJob()
+        ];
 
-        return ImmutableArray<ProducedFile>.Empty;
+        foreach (var job in jobs)
+            await job.ExecuteAsync(modContext);
+
+        return ImmutableArray<ProducedFile>.Empty.Add(new ProducedFile());
     }
 
-    async Task<Project> CompileAndValidateProjectAsync(Project project)
+    static async Task<Project> CompileAndValidateProjectAsync(Project project)
     {
         foreach (var document in project.Documents)
         {
@@ -233,98 +220,4 @@ public class ModPacker: ProjectJob
             Console.WriteLine(diagnostic);
         throw new CommandLineException(-2, "Failed to compile the project.");
     }
-
-    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IModScriptPreprocessor> preprocessors, PackContext context)
-    {
-        async Task<Document> preprocessSyntaxTree(Document document)
-        {
-            foreach (var preprocessor in preprocessors)
-            {
-                context.Console.Trace($"Running {nameof(preprocessor)} {preprocessor.GetType().Name} on {document.Name}");
-                document = await preprocessor.ProcessAsync(document, context);
-            }
-            return document;
-        }
-
-        if (preprocessors.Count > 0)
-        {
-            context.Console.Trace("Preprocessing syntax trees");
-            allDocuments = [..await Task.WhenAll(allDocuments.Select(preprocessSyntaxTree))];
-        }
-        else
-            context.Console.Trace("No preprocessors found.");
-        return allDocuments;
-    }
-
-    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IModScriptProcessor> postprocessors, PackContext context)
-    {
-        if (postprocessors.Count > 0)
-        {
-            context.Console.Trace("Postprocessing syntax tree");
-            foreach (var postprocessor in postprocessors)
-            {
-                context.Console.Trace($"Running postprocessor {postprocessor.GetType().Name}");
-                scriptDocument = await postprocessor.ProcessAsync(scriptDocument, context);
-                scriptDocument = await scriptDocument.RemoveUnnecessaryUsingsAsync();
-                if (context.Console.TraceEnabled)
-                {
-                    var intermediateFileName = Path.ChangeExtension(scriptDocument.FilePath!, $"{postprocessor.GetType().Name}.cs");
-                    context.Console.Trace($"Writing intermediate script to {intermediateFileName}");
-                    await context.FileSystem.WriteTraceAsync(intermediateFileName, (await scriptDocument.GetTextAsync()).ToString());
-                }
-            }
-        }
-        else
-            context.Console.Trace("No postprocessors found.");
-        return scriptDocument;
-    }
-
-    static async Task VerifyAsync(IConsole console, TextDocument scriptDocument)
-    {
-        console.Trace("Verifying that nothing went wrong");
-        // if (console.TraceEnabled)
-        // {
-        //     console.Trace($"Writing intermediate script to {scriptDocument.FilePath}");
-        //     var script = (await scriptDocument.GetTextAsync()).ToString();
-        //     var objDirectory = Path.GetDirectoryName(scriptDocument.FilePath)!;
-        //     try
-        //     {
-        //         Directory.CreateDirectory(objDirectory);
-        //         await File.WriteAllTextAsync(scriptDocument.FilePath!, script);
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         console.Print($"Failed to write intermediate script: {e.Message}");
-        //     }
-        // }
-        var compilation = await scriptDocument.Project.GetCSharpCompilationAsync() ?? throw new CommandLineException(-1, "Failed to compile the project.");
-        var diagnostics = compilation.GetDiagnostics();
-        if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
-        {
-            foreach (var diagnostic in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
-                console.Print(diagnostic.ToString());
-            throw new CommandLineException(-2, "Failed to compile the project.");
-        }
-    }
-
-    static async Task<ImmutableArray<ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IModProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
-    {
-        context.Console.Trace($"Running producer {producer.GetType().Name}");
-        context.Console.Trace($"Producing into {outputDirectory.FullName}");
-        outputDirectory.Create();
-        var result = await producer.ProduceAsync(outputDirectory, final, readmeDocument, thumbnailDocument, context);
-        // get path relative to the project
-        var displayPath = Path.GetRelativePath(projectDirectory, outputDirectory.FullName);
-        context.Console.Print($"{projectName} => {displayPath}");
-        
-        return result;
-    }
-
-    // static bool ShouldInclude(Document document, ScriptProjectMetadata metadata)
-    // {
-    //     if (document.FilePath == null)
-    //         return false;
-    //
-    //     return !metadata.ShouldIgnore(document.FilePath);
-    // }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Mdk.CommandLine.CommandLine;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Mdk.CommandLine.Utility;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;

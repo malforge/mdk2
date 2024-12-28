@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
 [RunBefore<PartialMerger>]
-public partial class RegionAnnotator : IScriptPostprocessor
+public partial class RegionAnnotator : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {

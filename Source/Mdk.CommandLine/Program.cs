@@ -7,7 +7,7 @@ using Mdk.CommandLine.IngameScript.LegacyConversion;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Restore;
 using Mdk.CommandLine.Mod.Pack;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine;
 

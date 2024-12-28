@@ -6,7 +6,7 @@ using FluentAssertions;
 using Mdk.CommandLine;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.LegacyConversion;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using NUnit.Framework;
 using Mdk.CommandLine.Utility;
 
