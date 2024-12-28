@@ -6,12 +6,13 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace Mdk.CommandLine.Mod.Pack.Jobs;
 
 /// <summary>
-/// This job processes the scripts in the project using the processors provided, and writes the results to the output directory.
+///     This job processes the scripts in the project using the processors provided, and writes the results to the output
+///     directory.
 /// </summary>
 internal class ProcessScriptsJob : ModJob
 {
     /// <inheritdoc />
-    public override async Task ExecuteAsync(IModPackContext context)
+    public override async Task<ModPackContext> ExecuteAsync(ModPackContext context)
     {
         context.Console.Trace("Processing scripts");
         var projectDirectory = new DirectoryInfo(context.FileSystem.ProjectPath);
@@ -36,5 +37,7 @@ internal class ProcessScriptsJob : ModJob
             context.Console.Trace($"Writing {relativePath} to {outputDirectory.FullName}");
             await context.FileSystem.WriteAsync(outputPath, (await document.GetTextAsync()).ToString());
         }
+
+        return context;
     }
 }

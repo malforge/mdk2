@@ -32,12 +32,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="..\Mdk.PbPackager\ReleaseNotes.txt">
-            <Link>ReleaseNotes.txt</Link>
-        </Content>
-    </ItemGroup>
-
-    <ItemGroup>
         <Compile Update="IngameScript\Pack\DefaultProcessors\SymbolRenamer.SafeCharacters.cs">
             <DependentUpon>SymbolRenamer.cs</DependentUpon>
         </Compile>

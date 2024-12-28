@@ -19,10 +19,10 @@ namespace Mdk.CommandLine.Mod.Pack.Jobs;
 /// </remarks>
 internal class PrepareOutputJob : ModJob
 {
-    public override async Task ExecuteAsync(IModPackContext context)
+    public override async Task<ModPackContext> ExecuteAsync(ModPackContext context)
     {
         var outputDirectory = new DirectoryInfo(context.FileSystem.OutputDirectory);
-        context.Console.Trace($"Cleaning the output directory {outputDirectory.FullName}");
+        context.Console.Trace($"Preparing output directory {outputDirectory.FullName}");
         if (outputDirectory.FullName.Length <= 4)
             throw new CommandLineException(-1, "The output directory is the root of the drive.");
 
@@ -31,7 +31,7 @@ internal class PrepareOutputJob : ModJob
             context.Console.Trace("Output directory does not exist, creating it.");
             outputDirectory.Create();
             await MetaFile.WriteAsync(context.FileSystem, MdkProjectType.Mod);
-            return;
+            return context;
         }
 
         if (!context.FileSystem.HasMetaFile(outputDirectory.FullName) && outputDirectory.EnumerateFileSystemInfos().Any())
@@ -95,5 +95,7 @@ internal class PrepareOutputJob : ModJob
         }
 
         await MetaFile.WriteAsync(context.FileSystem, MdkProjectType.Mod);
+        
+        return context;
     }
 }

@@ -12,5 +12,5 @@ internal abstract class ModJob
     /// </summary>
     /// <param name="context"></param>
     /// <returns></returns>
-    public abstract Task ExecuteAsync(IModPackContext context);
+    public abstract Task<ModPackContext> ExecuteAsync(ModPackContext context);
 }

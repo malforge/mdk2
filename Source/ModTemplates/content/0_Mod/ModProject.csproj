@@ -19,5 +19,9 @@
     <PackageReference Include="Mal.Mdk2.References" Version="2.2.3" />
   </ItemGroup>
   <ItemGroup>
+      <AdditionalFiles Include="Data\**\*">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </AdditionalFiles>
+      <AdditionalFiles Remove="Data\SBC files can go here"/>
   </ItemGroup>
 </Project>

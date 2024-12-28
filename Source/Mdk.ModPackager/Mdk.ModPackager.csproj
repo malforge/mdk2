@@ -16,7 +16,7 @@
         <PackageId>Mal.Mdk2.ModPackager</PackageId>
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
-        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../Mdk.CommandLine/ReleaseNotes.txt"))</PackageReleaseNotes>
         <DevelopmentDependency>true</DevelopmentDependency>
     </PropertyGroup>
 
@@ -29,6 +29,7 @@
 
     <ItemGroup>
         <None Include="$(MSBuildProjectDirectory)/../Mdk.CommandLine/PackageVersion.txt" Pack="false"/>
+        <None Include="$(MSBuildProjectDirectory)/../Mdk.CommandLine/ReleaseNotes.txt" Pack="false"/>
         <None Include="..\malware256.png" Pack="true" PackagePath=""/>
         <None Include="readme.md" Pack="true" PackagePath=""/>
         <None Include="lib\netstandard2.0\_._" Pack="True" PackagePath="lib\netstandard2.0\"/>

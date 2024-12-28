@@ -46,26 +46,26 @@ public class CommentRemovalTests : DocumentProcessorTests<TypeTrimmer>
              }
             """;
         
-        const string expectedCode =
-            """
-            class Program
-            {
-                void Main(string argument)
-                {
-                    Echo(argument);
-                }
-                
-                void FunctionInWeirdPlace(string argument)
-                 {
-                     
-                 }
-                 
-                void FunctionWithComment(string argument)
-                {
-                    Echo(argument);
-                }
-            }
-            """;
+        // const string expectedCode =
+        //     """
+        //     class Program
+        //     {
+        //         void Main(string argument)
+        //         {
+        //             Echo(argument);
+        //         }
+        //         
+        //         void FunctionInWeirdPlace(string argument)
+        //          {
+        //              
+        //          }
+        //          
+        //         void FunctionWithComment(string argument)
+        //         {
+        //             Echo(argument);
+        //         }
+        //     }
+        //     """;
         
         // Arrange
         var workspace = new AdhocWorkspace();

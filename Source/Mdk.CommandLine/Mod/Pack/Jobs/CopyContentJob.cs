@@ -11,14 +11,14 @@ namespace Mdk.CommandLine.Mod.Pack.Jobs;
 internal class CopyContentJob : ModJob
 {
     /// <inheritdoc />
-    public override async Task ExecuteAsync(IModPackContext context)
+    public override async Task<ModPackContext> ExecuteAsync(ModPackContext context)
     {
         context.Console.Trace("Copying content");
         var projectDirectory = new DirectoryInfo(context.FileSystem.ProjectPath);
         var outputDirectory = new DirectoryInfo(context.FileSystem.OutputDirectory);
         var contentDocuments = context.ContentDocuments;
         if (contentDocuments.Length == 0)
-            return;
+            return context;
 
         foreach (var document in contentDocuments)
         {
@@ -29,5 +29,7 @@ internal class CopyContentJob : ModJob
             await context.FileSystem.CreateFolderAsync(outputDirectoryPath);
             await context.FileSystem.CopyAsync(document.FilePath!, outputPath, true);
         }
+        
+        return context;
     }
 }

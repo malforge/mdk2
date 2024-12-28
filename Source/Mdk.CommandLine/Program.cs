@@ -7,6 +7,7 @@ using Mdk.CommandLine.IngameScript.LegacyConversion;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Restore;
 using Mdk.CommandLine.Mod.Pack;
+using Mdk.CommandLine.Mod.Restore;
 using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine;
@@ -157,14 +158,20 @@ public static class Program
             switch (project.Type)
             {
                 case MdkProjectType.Mod:
-                    console.Print($"Mod projects are not yet implemented: {project.Project.Name}");
+                {
+                    console.Print($"MDK is restoring mod project: {project.Project.Name}");
+                    var restorer = new ModRestorer();
+                    await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
                     break;
+                }
 
                 case MdkProjectType.ProgrammableBlock:
+                {
                     console.Print($"MDK is restoring ingame script project: {project.Project.Name}");
                     var restorer = new ScriptRestorer();
                     await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
                     break;
+                }
 
                 case MdkProjectType.LegacyProgrammableBlock:
                     console.Print($"MDK is converting legacy ingame script project: {project.Project.Name}");

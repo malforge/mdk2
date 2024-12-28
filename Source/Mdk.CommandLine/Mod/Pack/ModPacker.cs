@@ -9,7 +9,6 @@ using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace Mdk.CommandLine.Mod.Pack;
@@ -133,9 +132,9 @@ public class ModPacker : ProjectJob
         var projectPath = Path.GetDirectoryName(project.FilePath)!;
         var tracePath = Path.Combine(projectPath, "obj");
         var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
-        var context = new PackContext(parameters, console, interaction, filter, outputCleanFilter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
+        var context = new ModPackContext(parameters, console, interaction, filter, outputCleanFilter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"), project, default, default, default);
 
-        return await PackProjectAsync(project, context);
+        return await PackProjectAsync(context);
     }
 
     static void ApplyDefaultMacros(Parameters parameters)
@@ -148,76 +147,21 @@ public class ModPacker : ProjectJob
             parameters.PackVerb.Macros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
     }
 
-    async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Project project, PackContext context)
+    async Task<ImmutableArray<ProducedFile>> PackProjectAsync(ModPackContext context)
     {
-        project = await CompileAndValidateProjectAsync(project);
-
-        bool documentIsNotIgnored(TextDocument doc)
-        {
-            return context.FileFilter.IsMatch(doc.FilePath!);
-        }
-
-        // Remove ignored documents from the project
-        project = project.RemoveDocuments([..project.Documents.Where(doc => !documentIsNotIgnored(doc)).Select(doc => doc.Id)]);
-
-        // Make sure the project is class library (convert it if necessary)
-        if (project.CompilationOptions?.OutputKind != OutputKind.DynamicallyLinkedLibrary)
-        {
-            context.Console.Trace("Converting the project to a class library (in memory only)");
-            if (project.CompilationOptions == null)
-                project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-            else
-                project = project.WithCompilationOptions(project.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary));
-        }
-
-        var codeDocuments = project.Documents.Where(documentIsNotIgnored).ToImmutableArray();
-        var contentDocuments = project.AdditionalDocuments.Where(documentIsNotIgnored).ToImmutableArray();
-
-        var manager = ModProcessingManager.Create().Build();
-
-        var processors = manager.Processors;
-
-        var modContext = new ModPackContext(context, project, codeDocuments, contentDocuments, processors);
-        modContext.Trace();
-
         ModJob[] jobs =
         [
+            new PrevalidateProjectJob(),
+            new FindAndFilterDocumentsJob(),
+            new LoadProcessorsJob(),
             new PrepareOutputJob(),
             new CopyContentJob(),
             new ProcessScriptsJob()
         ];
 
         foreach (var job in jobs)
-            await job.ExecuteAsync(modContext);
+            context = await job.ExecuteAsync(context);
 
         return ImmutableArray<ProducedFile>.Empty.Add(new ProducedFile());
-    }
-
-    static async Task<Project> CompileAndValidateProjectAsync(Project project)
-    {
-        foreach (var document in project.Documents)
-        {
-            var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
-            if (syntaxTree == null)
-                continue;
-            var newOptions = syntaxTree.Options.WithLanguageVersion(LanguageVersion.CSharp6);
-            syntaxTree = (CSharpSyntaxTree)CSharpSyntaxTree.ParseText(syntaxTree.GetTextAsync().Result, newOptions);
-            var root = await syntaxTree.GetRootAsync();
-            project = document.WithSyntaxRoot(root).Project;
-        }
-
-        var compilation = await project.GetCompilationAsync() as CSharpCompilation ?? throw new CommandLineException(-1, "Failed to compile the project.");
-        compilation = compilation.WithOptions(compilation.Options
-            .WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
-            .WithPlatform(Platform.X64));
-
-        var diagnostics = compilation.GetDiagnostics();
-
-        if (!diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
-            return project;
-
-        foreach (var diagnostic in diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))
-            Console.WriteLine(diagnostic);
-        throw new CommandLineException(-2, "Failed to compile the project.");
     }
 }
