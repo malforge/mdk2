@@ -34,8 +34,10 @@ public class FileFilter : IFileFilter
     }
 
     /// <inheritdoc />
-    public bool IsMatch(string path)
+    public bool IsMatch(string? path)
     {
+        if (string.IsNullOrEmpty(path))
+            return false;
         return !_ignoreMatcher.Match(_rootPath, path).HasMatches;
     }
 

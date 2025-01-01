@@ -52,7 +52,8 @@ public class ModPacker : ProjectJob
             return [new PackedProject(project.Name, result)];
         }
 
-        if (string.Equals(Path.GetExtension(projectPath), ".sln", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Path.GetExtension(projectPath), ".sln", StringComparison.OrdinalIgnoreCase)
+         || string.Equals(Path.GetExtension(projectPath), ".slnx", StringComparison.OrdinalIgnoreCase))
         {
             console.Trace("Packaging a solution: " + projectPath);
             var solution = await workspace.OpenSolutionAsync(projectPath);
@@ -151,7 +152,7 @@ public class ModPacker : ProjectJob
     {
         ModJob[] jobs =
         [
-            new PrevalidateProjectJob(),
+            new PrevalidateAndLoadFromProjectJob(),
             new FindAndFilterDocumentsJob(),
             new LoadProcessorsJob(),
             new PrepareOutputJob(),

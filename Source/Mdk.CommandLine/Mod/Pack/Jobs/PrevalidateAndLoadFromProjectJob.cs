@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace Mdk.CommandLine.Mod.Pack.Jobs;
 
-internal class PrevalidateProjectJob : ModJob
+internal class PrevalidateAndLoadFromProjectJob : ModJob
 {
     public override async Task<ModPackContext> ExecuteAsync(ModPackContext context)
     {
@@ -27,6 +28,7 @@ internal class PrevalidateProjectJob : ModJob
         }
 
         var compilation = await project.GetCompilationAsync() as CSharpCompilation ?? throw new CommandLineException(-1, "Failed to compile the project.");
+        
         compilation = compilation.WithOptions(compilation.Options
             .WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
             .WithPlatform(Platform.X64));
@@ -48,6 +50,18 @@ internal class PrevalidateProjectJob : ModJob
 
         if (!diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
         {
+            foreach (var tree in compilation.SyntaxTrees)
+            {
+                var existingDocument = project.GetDocument(tree);
+                if (existingDocument is SourceGeneratedDocument)
+                {
+                    var newFilePath =  Path.Combine(context.FileSystem.ProjectPath, Path.GetFileName(tree.FilePath));
+                    // var newFilePath =  Path.Combine(context.FileSystem.ProjectPath, $"{Guid.NewGuid():N}_{Path.GetFileName(tree.FilePath)}");
+                    existingDocument = project.AddDocument(existingDocument.Name, await tree.GetTextAsync(), filePath: newFilePath);
+                    project = existingDocument.Project;
+                }
+            }
+
             // Is there a folder named "Data/Scripts" in the project? If so we need to warn that this might cause issues.
             var path = Path.Combine(context.FileSystem.ProjectPath, "Data", "Scripts");
             if (project.AdditionalDocuments.Any(d => isIn(d.Folders, "Data", "Scripts")) || project.Documents.Any(d => isIn(d.Folders, "Data", "Scripts")))
