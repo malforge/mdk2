@@ -4,14 +4,15 @@ using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.ScriptPostProcessors;
 
 [TestFixture]
-public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
+public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
 {
     [Test]
     public async Task ProcessAsync_WhenAllTypesAreUsed_ReturnsDocument()
@@ -67,6 +68,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
@@ -120,6 +122,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
@@ -178,6 +181,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
@@ -234,6 +238,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
@@ -289,6 +294,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
@@ -340,6 +346,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
@@ -390,6 +397,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
@@ -481,6 +489,7 @@ public class TypeTrimmerTests : ScriptPostProcessorTests<TypeTrimmer>
             parameters,
             A.Fake<IConsole>(),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())

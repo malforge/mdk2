@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
@@ -8,7 +9,7 @@ using Microsoft.CodeAnalysis.Editing;
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
 [RunAfter<PartialMerger>]
-public class TypeSorter : IScriptPostprocessor
+public class TypeSorter : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {

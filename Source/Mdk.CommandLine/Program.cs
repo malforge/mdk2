@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.LegacyConversion;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Restore;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Mod.Pack;
+using Mdk.CommandLine.Mod.Restore;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine;
 
@@ -38,15 +41,21 @@ public static class Program
     /// <returns></returns>
     public static async Task<int> Main(string[] args)
     {
+        Debugger.Launch();
         var peripherals = Peripherals.Create().FromArguments(args).Build();
         try
         {
             await RunAsync(peripherals);
             return 0;
         }
-        catch (Exception e)
+        catch (CommandLineException e)
         {
             peripherals.Console.Print(e.Message);
+            return e.ErrorCode;
+        }
+        catch (Exception e)
+        {
+            peripherals.Console.Print(e.ToString());
             return -1;
         }
     }
@@ -56,7 +65,7 @@ public static class Program
     /// </summary>
     /// <param name="peripherals"></param>
     /// <exception cref="Exception"></exception>
-    public static async Task<ImmutableArray<ScriptPacker.PackedProject>?> RunAsync(Peripherals peripherals)
+    public static async Task<ImmutableArray<PackedProject>?> RunAsync(Peripherals peripherals)
     {
         if (peripherals.IsEmpty())
             throw new ArgumentException("The peripherals must be set.", nameof(peripherals));
@@ -76,7 +85,7 @@ public static class Program
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     /// <exception cref="CommandLineException"></exception>
-    public static async Task<ImmutableArray<ScriptPacker.PackedProject>?> RunAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    public static async Task<ImmutableArray<PackedProject>?> RunAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
         switch (parameters.Verb)
         {
@@ -85,14 +94,62 @@ public static class Program
                 parameters.ShowHelp(console);
                 return null;
             case Verb.Pack:
-                var packer = new ScriptPacker();
-                return await packer.PackAsync(parameters, console, interaction);
+                return await PackAsync(parameters, console, httpClient, interaction);
             case Verb.Restore:
                 await RestoreAsync(parameters, console, httpClient, interaction);
                 return null;
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    static async Task<ImmutableArray<PackedProject>?> PackAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    {
+        if (parameters.PackVerb.ProjectFile is null) throw new CommandLineException(-1, "No project file specified.");
+        if (!File.Exists(parameters.PackVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.RestoreVerb.ProjectFile}' does not exist.");
+
+        if (parameters.PackVerb.DryRun)
+            console.Print("Currently performing a dry run. No changes will be made.");
+
+        var result = ImmutableArray.CreateBuilder<PackedProject>();
+        
+        await foreach (var project in MdkProject.LoadAsync(parameters.PackVerb.ProjectFile, console))
+        {
+            switch (project.Type)
+            {
+                case MdkProjectType.Mod:
+                {
+                    var packer = new ModPacker();
+                    var packed = await packer.PackAsync(parameters, console, interaction);
+                    
+                    if (!packed.IsDefaultOrEmpty)
+                        result.AddRange(packed);
+                    break;
+                }
+
+                case MdkProjectType.ProgrammableBlock:
+                {
+                    var packer = new ScriptPacker();
+                    var packed = await packer.PackAsync(parameters, console, interaction);
+                    
+                    if (!packed.IsDefaultOrEmpty)
+                        result.AddRange(packed);
+                    break;
+                }
+
+                case MdkProjectType.LegacyProgrammableBlock:
+                    console.Print($"The project file {project.Project.Name} is a legacy ingame script project and cannot be packed.");
+                    break;
+
+                case MdkProjectType.Unknown:
+                    console.Print($"The project file {project.Project.Name} does not seem to be an MDK project.");
+                    break;
+            }
+        }
+        
+        if (result.Count == 0)
+            return null;
+        return result.ToImmutable();
     }
 
     static async Task RestoreAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
@@ -108,14 +165,20 @@ public static class Program
             switch (project.Type)
             {
                 case MdkProjectType.Mod:
-                    console.Print($"Mod projects are not yet implemented: {project.Project.Name}");
+                {
+                    console.Print($"MDK is restoring mod project: {project.Project.Name}");
+                    var restorer = new ModRestorer();
+                    await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
                     break;
+                }
 
                 case MdkProjectType.ProgrammableBlock:
+                {
                     console.Print($"MDK is restoring ingame script project: {project.Project.Name}");
                     var restorer = new ScriptRestorer();
                     await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
                     break;
+                }
 
                 case MdkProjectType.LegacyProgrammableBlock:
                     console.Print($"MDK is converting legacy ingame script project: {project.Project.Name}");

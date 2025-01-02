@@ -1,0 +1,68 @@
+﻿<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/Analyzers/">
+    <Project Path="Mdk.ModAnalyzers\Mdk.ModAnalyzers.csproj">
+        <Configuration Solution="Debug|x64" Project="Debug|x64" />
+        <Configuration Solution="Release|x64" Project="Release|x64" />
+    </Project>
+    <Project Path="Mdk.PbAnalyzers\Mdk.PbAnalyzers.csproj">
+        <Configuration Solution="Debug|x64" Project="Debug|x64" />
+        <Configuration Solution="Release|x64" Project="Release|x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/Packagers/">
+    <Project Path="Mdk.ModPackager\Mdk.ModPackager.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Mdk.PbPackager\Mdk.PbPackager.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/Shared Files/" />
+  <Folder Name="/Templates/">
+    <Project Path="ModTemplates\content\0_Mod\Mod.csproj">
+        <Configuration Solution="Debug|x64" Project="Debug|x64" />
+        <Configuration Solution="Release|x64" Project="Release|x64" />
+    </Project>
+    <Project Path="ModTemplates\ModTemplates.csproj">
+        <Configuration Solution="Debug|x64" Project="Debug|x64" />
+        <Configuration Solution="Release|x64" Project="Release|x64" />
+    </Project>
+    <Project Path="ScriptTemplates\content\0_Script\PbScript.csproj">
+        <Configuration Solution="Debug|x64" Project="Debug|x64" />
+        <Configuration Solution="Release|x64" Project="Release|x64" />
+    </Project>
+    <Project Path="ScriptTemplates\content\1_Mixin\PbMixin.shproj">
+      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="ScriptTemplates\ScriptTemplates.csproj">
+        <Configuration Solution="Debug|x64" Project="Debug|x64" />
+        <Configuration Solution="Release|x64" Project="Release|x64" />
+    </Project>
+  </Folder>
+  <Project Path="Mdk.CommandLine.Tests\Mdk.CommandLine.Tests.csproj">
+    <Configuration Solution="Debug|x64" Project="Debug|x64" />
+    <Configuration Solution="Release|x64" Project="Release|x64" />
+  </Project>
+  <Project Path="Mdk.CommandLine\Mdk.CommandLine.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|x64" />
+      <Configuration Solution="Release|x64" Project="Release|x64" />
+  </Project>
+  <Project Path="Mdk.Extractor\Mdk.Extractor.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|x64" />
+      <Configuration Solution="Release|x64" Project="Release|x64" />
+  </Project>
+  <Project Path="Mdk.Notification.Windows\Mdk.Notification.Windows.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|x64" />
+      <Configuration Solution="Release|x64" Project="Release|x64" />
+  </Project>
+  <Project Path="Mdk.References\Mdk.References.csproj">
+      <Configuration Solution="Debug|x64" Project="Debug|x64" />
+      <Configuration Solution="Release|x64" Project="Release|x64" />
+  </Project>
+</Solution>

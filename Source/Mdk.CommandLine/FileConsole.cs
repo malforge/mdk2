@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine;
 

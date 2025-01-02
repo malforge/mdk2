@@ -17,21 +17,20 @@
         <PackageId>Mal.Mdk2.PbPackager</PackageId>
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
-        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/ReleaseNotes.txt"))</PackageReleaseNotes>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../Mdk.CommandLine/ReleaseNotes.txt"))</PackageReleaseNotes>
         <DevelopmentDependency>true</DevelopmentDependency>
     </PropertyGroup>
 
 <!--    <Target Name="BuildMdk" BeforeTargets="PreBuildEvent">-->
-<!--        <Exec Command="dotnet publish &quot;$(PathToMdkCommandLine)&quot; -c Release &#45;&#45;self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>-->
-<!--        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release &#45;&#45;self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>-->
-<!--        <Exec Command="dotnet publish &quot;$(PathToMdkNotification)&quot; -c Release &#45;&#45;self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>-->
+<!--        <Exec Command="dotnet publish &quot;$(PathToMdkCommandLine)&quot; -c Release &#45;&#45;self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>-->
+<!--        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release &#45;&#45;self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;"/>-->
 <!--        <Copy SourceFiles="$(SolutionDir)Binaries\mdk.exe" DestinationFolder="$(ProjectDir)tools\"/>-->
 <!--        <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify-win.exe" DestinationFolder="$(ProjectDir)tools\"/>-->
-<!--        <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify.exe" DestinationFolder="$(ProjectDir)tools\"/>-->
 <!--    </Target>-->
 
     <ItemGroup>
         <None Include="$(MSBuildProjectDirectory)/../Mdk.CommandLine/PackageVersion.txt" Pack="false"/>
+        <None Include="$(MSBuildProjectDirectory)/../Mdk.CommandLine/ReleaseNotes.txt" Pack="false"/>
         <None Include="..\malware256.png" Pack="true" PackagePath=""/>
         <None Include="readme.md" Pack="true" PackagePath=""/>
         <None Include="lib\netstandard2.0\_._" Pack="True" PackagePath="lib\netstandard2.0\"/>

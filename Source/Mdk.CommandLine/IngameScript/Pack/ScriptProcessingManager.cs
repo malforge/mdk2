@@ -2,7 +2,8 @@
 using System.Collections.Immutable;
 using Mdk.CommandLine.IngameScript.Pack.Api;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Shared.DefaultProcessors;
 
 namespace Mdk.CommandLine.IngameScript.Pack;
 
@@ -14,7 +15,7 @@ public class ScriptProcessingManager
     /// <summary>
     ///     A list of preprocessors to run before the script is combined, in workflow order.
     /// </summary>
-    public required ProcessorSet<IScriptPreprocessor> Preprocessors { get; init; }
+    public required ProcessorSet<IDocumentProcessor> Preprocessors { get; init; }
 
     /// <summary>
     ///     A combiner to combine the script into a single document.
@@ -24,7 +25,7 @@ public class ScriptProcessingManager
     /// <summary>
     ///     A list of postprocessors to run after the script is combined, in workflow order.
     /// </summary>
-    public required ProcessorSet<IScriptPostprocessor> Postprocessors { get; init; }
+    public required ProcessorSet<IDocumentProcessor> Postprocessors { get; init; }
 
     /// <summary>
     ///     A composer to compose the final script.
@@ -104,8 +105,8 @@ public class ScriptProcessingManager
             if (types is null || types.Length == 0) return this;
             foreach (var type in types)
             {
-                if (!typeof(IScriptPreprocessor).IsAssignableFrom(type))
-                    throw new InvalidOperationException($"Type {type.FullName} does not implement {typeof(IScriptPreprocessor).FullName}.");
+                if (!typeof(IDocumentProcessor).IsAssignableFrom(type))
+                    throw new InvalidOperationException($"Type {type.FullName} does not implement {typeof(IDocumentProcessor).FullName}.");
                 if (type.GetConstructor(Type.EmptyTypes) == null)
                     throw new InvalidOperationException($"Type {type.FullName} does not have a parameterless constructor.");
             }
@@ -145,8 +146,8 @@ public class ScriptProcessingManager
             if (types is null || types.Length == 0) return this;
             foreach (var type in types)
             {
-                if (!typeof(IScriptPostprocessor).IsAssignableFrom(type))
-                    throw new InvalidOperationException($"Type {type.FullName} does not implement {typeof(IScriptPostprocessor).FullName}.");
+                if (!typeof(IDocumentProcessor).IsAssignableFrom(type))
+                    throw new InvalidOperationException($"Type {type.FullName} does not implement {typeof(IDocumentProcessor).FullName}.");
                 if (type.GetConstructor(Type.EmptyTypes) == null)
                     throw new InvalidOperationException($"Type {type.FullName} does not have a parameterless constructor.");
             }
@@ -232,9 +233,9 @@ public class ScriptProcessingManager
 
             return new ScriptProcessingManager
             {
-                Preprocessors = new ProcessorSet<IScriptPreprocessor>(Preprocessors),
+                Preprocessors = new ProcessorSet<IDocumentProcessor>(Preprocessors),
                 Combiner = (IScriptCombiner?)Activator.CreateInstance(Combiner) ?? throw new InvalidOperationException("Combiner could not be created."),
-                Postprocessors = new ProcessorSet<IScriptPostprocessor>(Postprocessors),
+                Postprocessors = new ProcessorSet<IDocumentProcessor>(Postprocessors),
                 Composer = (IScriptComposer?)Activator.CreateInstance(Composer) ?? throw new InvalidOperationException("Composer could not be created."),
                 PostCompositionProcessors = new ProcessorSet<IScriptPostCompositionProcessor>(PostCompositionProcessors),
                 Producer = (IScriptProducer?)Activator.CreateInstance(Producer) ?? throw new InvalidOperationException("Producer could not be created.")

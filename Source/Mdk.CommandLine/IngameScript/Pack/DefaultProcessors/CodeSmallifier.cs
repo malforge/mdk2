@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,7 +17,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 [RunAfter<RegionAnnotator>]
 [RunAfter<TypeSorter>]
 [RunAfter<SymbolProtectionAnnotator>]
-public class CodeSmallifier : IScriptPostprocessor
+public class CodeSmallifier : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {

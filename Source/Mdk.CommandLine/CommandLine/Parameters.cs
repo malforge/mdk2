@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Mdk.CommandLine.IngameScript.Pack;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Mdk.CommandLine.Utility;
 
 namespace Mdk.CommandLine.CommandLine;
@@ -189,6 +189,14 @@ public class Parameters : TracksPropertyChanges, IParameters
                         PackVerb.Ignores.AddRange(ignores);
                         continue;
                     }
+                    if (matches("-donotclean"))
+                    {
+                        if (!queue.TryDequeue(out var ignore))
+                            throw new CommandLineException(-1, "No donotclean specified.");
+                        var ignores = ignore.Split(';');
+                        PackVerb.DoNotClean.AddRange(ignores);
+                        continue;
+                    }
                     if (matches("-configuration"))
                     {
                         if (!queue.TryDequeue(out var configuration))
@@ -289,6 +297,12 @@ public class Parameters : TracksPropertyChanges, IParameters
             var ignores = section["ignores"].ToString()?.Split(',');
             if (ignores is { Length: > 0 })
                 PackVerb.Ignores.AddRange(ignores);
+        }
+        if (section.HasKey("donotclean"))
+        {
+            var ignores = section["donotclean"].ToString()?.Split(',');
+            if (ignores is { Length: > 0 })
+                PackVerb.DoNotClean.AddRange(ignores);
         }
         if (section.HasKey("macros"))
         {
@@ -453,6 +467,7 @@ public class Parameters : TracksPropertyChanges, IParameters
                     .TraceIf(PackVerb.Output != null, $"> Pack.Output: {PackVerb.Output}")
                     .TraceIf(PackVerb.MinifierLevel != MinifierLevel.None, $"> Pack.MinifierLevel: {PackVerb.MinifierLevel}")
                     .TraceIf(PackVerb.Ignores.Count > 0, $"> Pack.Ignores: {string.Join(", ", PackVerb.Ignores)}")
+                    .TraceIf(PackVerb.DoNotClean.Count > 0, $"> Pack.DoNotClean: {string.Join(", ", PackVerb.DoNotClean)}")
                     .TraceIf(PackVerb.Macros.Count > 0, $"> Pack.Macros: {string.Join(", ", PackVerb.Macros)}")
                     .TraceIf(PackVerb.Configuration != "Release", $"> Pack.Configuration: {PackVerb.Configuration}");
                 break;
@@ -494,6 +509,9 @@ public class Parameters : TracksPropertyChanges, IParameters
 
         /// <inheritdoc cref="IParameters.IPackVerbParameters.Ignores" />
         public List<string> Ignores { get; } = new();
+        
+        /// <inheritdoc cref="IParameters.IPackVerbParameters.DoNotClean" />
+        public List<string> DoNotClean { get; } = new();
 
         /// <inheritdoc cref="IParameters.IPackVerbParameters.Macros" />
         public Dictionary<string, string> Macros { get; } = new(StringComparer.OrdinalIgnoreCase);
@@ -542,6 +560,9 @@ public class Parameters : TracksPropertyChanges, IParameters
 
         /// <inheritdoc />
         IReadOnlyList<string> IParameters.IPackVerbParameters.Ignores => Ignores;
+
+        /// <inheritdoc />
+        IReadOnlyList<string> IParameters.IPackVerbParameters.DoNotClean => DoNotClean;
 
         /// <inheritdoc />
         IReadOnlyDictionary<string, string> IParameters.IPackVerbParameters.Macros => Macros;
