@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "github.com/malware-dev/mdk2",
+  "classifications": ["MDK: Space Engineers"],
+  "name": "Mod (MDK2)",
+  "description": "A mod for the game Space Engineers by Keen Software House.",
+  "identity": "Mal.Mdk2.ModTemplate",
+  "shortName": "mdk2mod",
+  "defaultName": "Mdk.Mod",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "ModProject",
+  "symbols": {
+  }
+}

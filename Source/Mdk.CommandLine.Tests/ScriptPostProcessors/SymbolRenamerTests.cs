@@ -4,14 +4,13 @@ using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
-using Mdk.CommandLine.SharedApi;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.ScriptPostProcessors;
 
 [TestFixture]
-public class SymbolRenamerTests : ScriptPostProcessorTests<SymbolRenamer>
+public class SymbolRenamerTests : DocumentProcessorTests<SymbolRenamer>
 {
 //     [Test]
 //     public async Task Regression__InheritedSymbolDidNotRename()

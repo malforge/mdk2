@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Mdk.CommandLine.CommandLine;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Mdk.CommandLine.Utility;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -30,7 +30,11 @@ public readonly struct MdkProject
         if (!MsBuild.Install(console))
             throw new CommandLineException(-1, "Unable to find a valid MSBuild instance. Please install Visual Studio or the .NET SDK.");
 
-        using var workspace = MSBuildWorkspace.Create();
+        using var workspace = MSBuildWorkspace.Create(new Dictionary<string, string>
+        {
+            { "Configuration", "Debug" },  // Or "Release"
+            { "TargetFramework", "net48" }  // Match the target framework of the project
+        });
         if (string.Equals(Path.GetExtension(fileName), ".csproj", StringComparison.OrdinalIgnoreCase))
         {
             var project = await workspace.OpenProjectAsync(fileName);

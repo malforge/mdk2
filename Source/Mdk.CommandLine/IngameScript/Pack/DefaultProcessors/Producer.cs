@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -15,17 +16,13 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 public class Producer : IScriptProducer
 {
     /// <inheritdoc />
-    public async Task<ImmutableArray<IScriptProducer.ProducedFile>> ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context)
+    public async Task<ImmutableArray<ProducedFile>> ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context)
     {
         if (context.Parameters.PackVerb.DryRun)
-        {
             context.Console.Trace("Dry run mode is enabled, so the script will not be written to disk");
-        }
         else
-        {
             context.Console.Trace("Writing the combined syntax tree to a file");
-        }
-        var fileBuilder = ImmutableArray.CreateBuilder<IScriptProducer.ProducedFile>();
+        var fileBuilder = ImmutableArray.CreateBuilder<ProducedFile>();
         
         var outputPath = Path.Combine(outputDirectory.FullName, "script.cs");
         var buffer = new StringBuilder();
@@ -35,7 +32,7 @@ public class Producer : IScriptProducer
             buffer.Append("// " + string.Join("\n// ", readmeText.Lines.Select(l => l.ToString()))).Append('\n');
         }
         buffer.Append(script.ToString().Replace(Environment.NewLine, "\n"));
-        fileBuilder.Add(new IScriptProducer.ProducedFile("script.cs", outputPath, buffer.ToString()));
+        fileBuilder.Add(new ProducedFile("script.cs", outputPath, buffer.ToString()));
         if (!context.Parameters.PackVerb.DryRun)
         {
             await File.WriteAllTextAsync(outputPath, buffer.ToString());
@@ -48,16 +45,14 @@ public class Producer : IScriptProducer
         if (thumbnailDocument != null)
         {
             var thumbnailPath = Path.Combine(outputDirectory.FullName, "thumb.png");
-            fileBuilder.Add(new IScriptProducer.ProducedFile("thumb.png", thumbnailPath, null));
+            fileBuilder.Add(new ProducedFile("thumb.png", thumbnailPath, null));
             if (!context.Parameters.PackVerb.DryRun)
             {
-                File.Copy(thumbnailDocument.FilePath!, thumbnailPath, true);
+                await context.FileSystem.CopyAsync(thumbnailDocument.FilePath!, thumbnailPath, true);
                 context.Console.Trace($"The thumbnail was written to {thumbnailPath}");
             }
             else
-            {
                 context.Console.Trace($"The thumbnail would have been written to {thumbnailPath}");
-            }
         }
         
         return fileBuilder.ToImmutable();

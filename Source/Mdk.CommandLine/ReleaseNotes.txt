@@ -1,0 +1,105 @@
+﻿v.2.1.0
+   - Mod Packer is now available: Use `mdk2 pack` to pack your mod for distribution the same way you can pack your 
+     scripts.
+
+v.2.0.15
+   - DotNet 9 Compatibility
+
+v.2.0.14
+   - Fixed a problem where references to nested types would be replaced by a "var" by the minifier.
+
+v.2.0.13
+   - Readded missing binaries
+
+v.2.0.12
+   - Fixed test that failed due to missing references. Attempt to clean up files that shouldn't be committed.
+   - Update to gitignore
+   - Fixed a problem where object-initializing a generic type would cause a compile error after minification.
+
+v.2.0.11
+   - Ignored documents were not always properly ignored in the project, which in certain rare cases could cause a 
+     compile error.
+
+v.2.0.10
+   - Fixed nuget version checks not working properly.
+   - Much improved qualified name handling in the minifier + leaving `var` as is.
+
+v.2.0.9
+   - Fixed #40: missing MSBuild instance just crashing MDK rather than giving a meaningful error message.
+   - Fixed #42 verbatim variables was not renamed correctly in the minifier
+
+v.2.0.8
+   - Added symbol map generation to trace mode to help with debugging minification issues.
+   - Fixed more problems with minifier not renaming things it should have and vice versa.
+
+v.2.0.7
+   - Fixed a problem where the minifier replaced a `var` with an incorrect type reference. Now leaving `var` as is.
+   - Now removing `private` and `internal` access modifiers where they are redundant.
+
+v.2.0.6
+   - Fixed a problem where a quirk in Roslyn behavior for indexers would cause a compile error after minification.
+   - Added the missing <mdk sortorder="#"/> feature.
+
+v.2.0.5
+    - Package was not defined as a development dependency
+
+v.2.0.4
+ - Reverted a convenience fix that caused more trouble than convenience...
+ 
+v.2.0.3
+ - Fixed a problem where references to generic methods would not be renamed with the full minifier.
+ - Fixed a problem where delegates would not be renamed with the full minifier.
+ - Intermediate code files are now written to the \obj folder when trace is enabled.
+ 
+v.2.0.2
+ - Fixed a problem where generic method declarations didn't get their generic parameters renamed with the full minifier.
+ - Fixed a problem where the full minifier did not rename catch clause variables
+ - Fixed a problem where the full minifier would rename references to protected symbols
+ 
+v.2.0.1
+ - Simplified how project properties are defined and used as their complexity was unnecessary.
+ - Restore now checks the other packages for updates as well.
+
+v.2.0.0
+ - Official release of MDK2 (Programmable Block Edition)
+
+v.2.0.0-alpha073
+ - Minifiers Ahoy! (the two last major minifier components are now in place)
+
+v.2.0.0-alpha072
+ - Fixed a bug where references to sub-namespaces would cause compile errors. 
+
+v.2.0.0-alpha061
+ - Fixed warning about unusable minifier
+
+v.2.0.0-alpha060
+ - Wrong / confusing error message for a part of the minifier that isn't finished yet
+  
+v.2.0.0-alpha059
+ - Fixed type trimmer removing types it shouldn't have, and vice versa.
+  
+v.2.0.0-alpha058
+ - Fixed minifier specification being wrongly named in the package arguments (minifier instead of minify).
+
+v.2.0.0-alpha057
+ - Fixed minifier specification being wrongly named in the MDK2 command line (minifier instead of minify).
+
+v.2.0.0-alpha056
+ - Added the type trimmer minifier level to the MDK2 command line.
+ - Added the comment removal minifier level to the MDK2 command line.
+
+v.2.0.0-alpha054
+ - Fixed an issue where the mdk2 .ini file ignores were made with ; as a separator rather than ,.
+
+v.2.0.0-alpha052
+ - Added a warning if the final composed script exceeds the maximum allowed character count of the programmable block.
+
+v.2.0.0-alpha051
+ - Final structure (I think) for MDK2 command line.
+ - Now notifying when new nuget packages are available (currently just Mal.MDK2.PbPackager).
+ - Changed to an .ini based configuration rather than an msbuild based one.
+ - Added an auto-migrator to add MDK2 support to MDK1 projects.
+
+v.2.0.0-alpha1
+ - Emergency publish of a very early build due to the problems with MDK1 and the new version of Visual Studio 2022.
+ - This version is highly untested, and is missing the minifier.

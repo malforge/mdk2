@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+    <PropertyGroup>
+        <MdkBuildConfiguration>all</MdkBuildConfiguration>
+        <MdkArguments />
+        <MdkInteractive>-interactive</MdkInteractive>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="**\*.ini" />
+    </ItemGroup>
+
+    <Target Name="MdkRestore" BeforeTargets="PreBuildEvent">
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore &quot;$(MSBuildProjectFullPath)&quot; $(MdkInteractive)" />
+    </Target>
+    
+    <Target Name="MdkPack" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; pack &quot;$(MSBuildProjectFullPath)&quot; $(MdkArguments) -configuration $(Configuration) $(MdkInteractive)" />
+    </Target>
+    
+    <Target Name="MdkDidNotPack" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' != '$(MdkBuildConfiguration)' And '$(MdkBuildConfiguration)' != 'all'">
+        <Exec Command="echo MDK did not pack, because the current configuration is '$(Configuration)', not '$(MdkBuildConfiguration)'." />
+    </Target>   
+
+</Project>

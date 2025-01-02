@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.Build.Locator;
 
 namespace Mdk.CommandLine;

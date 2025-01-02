@@ -1,0 +1,5 @@
+﻿> If your package does not contain any assemblies, such as a meta-package, 
+> consider adding an empty _._ file to the lib/<tfm>/ directories for the 
+> TFMs listed in the warning message. For example, if the warning says to 
+> add assemblies for the netstandard2.0 target framework, create an empty 
+> lib/netstandard2.0/_._ file in your package.

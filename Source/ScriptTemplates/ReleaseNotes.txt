@@ -1,3 +1,24 @@
+v.2.0.18
+ - Updated the package versions in the template.
+
+v.2.0.17
+ - Updated the package versions in the template.
+
+v.2.0.16
+ - Updated the package versions in the template.
+
+v.2.0.15
+ - Updated the package versions in the template.
+
+v.2.0.14
+ - Updated the package versions in the template.
+
+v.2.0.13
+ - Updated the package versions in the template.
+
+v.2.0.12
+ - Updated the package versions in the template.
+
 v.2.0.11
  - Updated the package versions in the template.
 
