@@ -99,11 +99,11 @@ jobs:
 
     # Restore dependencies for the whole solution
     - name: Restore dependencies
-      run: dotnet restore MDK-Packages.sln
+      run: dotnet restore MDK-Packages.slnx
 
     # Build the primary solution
     - name: Build solution
-      run: dotnet build MDK-Packages.sln --configuration Release
+      run: dotnet build MDK-Packages.slnx --configuration Release
 
     # Collect NuGet packages
     - name: Collect NuGet packages
