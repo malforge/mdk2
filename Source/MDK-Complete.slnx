@@ -22,7 +22,9 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
     </Project>
   </Folder>
-  <Folder Name="/Shared Files/" />
+  <Folder Name="/Shared Files/">
+    <File Path="..\.github\workflows\buildwithartefacts.yml" />
+  </Folder>
   <Folder Name="/Templates/">
     <Project Path="ModTemplates\content\0_Mod\Mod.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|x64" />
