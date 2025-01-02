@@ -97,6 +97,19 @@ jobs:
         name: mdknotify-artifact
         path: ./Source/Mdk.PbPackager/tools
 
+    # Download artifacts from the tool projects
+    - name: Download tool artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: mdk-artifact
+        path: ./Source/Mdk.ModPackager/tools
+
+    - name: Download tool artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: mdknotify-artifact
+        path: ./Source/Mdk.ModPackager/tools
+
     # Restore dependencies for the whole solution
     - name: Restore dependencies
       run: dotnet restore MDK-Packages.sln
