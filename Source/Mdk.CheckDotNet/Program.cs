@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using CheckDotNet;
 
 Version noVersion = new(0, 0);
-Version requiredVersion = new(10, 0);
+Version requiredVersion = new(9, 0);
 
 var interactive = args.Length > 0 && args[0] == "-interactive";
 
