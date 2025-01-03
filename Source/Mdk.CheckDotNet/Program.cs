@@ -23,7 +23,7 @@ try
 
         if (interactive)
         {
-            if (MessageBox.Confirm("Missing .NET SDK", message))
+            if (MessageBox.Confirm($"MDK requires {requiredVersion}", message))
                 openBrowser("https://dotnet.microsoft.com/download/dotnet");
         }
         else
