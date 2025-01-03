@@ -43,7 +43,7 @@ jobs:
 
       - name: Build tool project
         run: |
-          dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 /p:DebugType=None
+          dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 -p:DebugType=None
 
       - name: Prepare artifact name
         run: |
@@ -65,7 +65,7 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}-artifact
           if-no-files-found: error
           retention-days: 7
-          path: ./output/*
+          path: ./output/**/*
 
   # Job to build the primary project
   build-primary:
