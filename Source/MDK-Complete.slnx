@@ -47,6 +47,10 @@
       <Configuration Solution="Release|x64" Project="Release|x64" />
     </Project>
   </Folder>
+  <Project Path="Mdk.CheckDotNet\Mdk.CheckDotNet.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+  </Project>
   <Project Path="Mdk.CommandLine.Tests\Mdk.CommandLine.Tests.csproj">
     <Configuration Solution="Debug|x64" Project="Debug|x64" />
     <Configuration Solution="Release|x64" Project="Release|x64" />

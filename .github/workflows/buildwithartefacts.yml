@@ -20,7 +20,7 @@ env:
 
 jobs:
   # Job to build individual tool projects
-  build-tools:
+  build-dependent:
     runs-on: ubuntu-latest
 
     defaults:
@@ -32,7 +32,7 @@ jobs:
       matrix:
         project:
           - "Mdk.CommandLine/Mdk.CommandLine.csproj"
-          - "Mdk.Notification/Mdk.Notification.csproj"
+          - "Mdk.Notification.Windows/Mdk.Notification.Windows.csproj"
     steps:
       - uses: actions/checkout@v4
 
@@ -60,6 +60,58 @@ jobs:
           Write-Host "Artifact name: $artifactName"
           echo "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
           
+      - name: Debug artifact name
+        run: |
+          echo "ARTIFACT_NAME is: ${{ env.ARTIFACT_NAME }}"
+
+      - name: Upload tool artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}-artifact
+          if-no-files-found: error
+          retention-days: 7
+          path: ./output/**/*
+
+  # Job to build individual tool projects
+  build-self-contained:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./Source
+        shell: pwsh
+    
+    strategy:
+      matrix:
+        project:
+          - "Mdk.DotNetChecker/Mdk.DotNetChecker.csproj"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.x
+
+      - name: Build tool project
+        run: |
+          dotnet publish ${{ matrix.project }} -c Release -o ./output -c Release --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None
+
+      - name: Prepare artifact name
+        run: |
+          $outputDir = "../output"
+          $exePath = Get-ChildItem $outputDir -Filter *.exe | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          
+          if (-not $exePath) {
+            Write-Error "No executable found in output directory!"
+            exit 1
+          }
+          
+          Write-Host "Generated executable: $exePath"
+          $artifactName = $exePath.BaseName
+          Write-Host "Artifact name: $artifactName"
+          echo "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
       - name: Debug artifact name
         run: |
           echo "ARTIFACT_NAME is: ${{ env.ARTIFACT_NAME }}"
@@ -100,10 +152,15 @@ jobs:
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
         with:
-          name: mdknotify-artifact
+          name: mdknotify-win-artifact
           path: ./Source/Mdk.PbPackager/tools
       
-      # Download artifacts from the tool projects
+      - name: Download tool artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: checkdotnet-artifact
+          path: ./Source/Mdk.PbPackager/tools
+      
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
         with:
@@ -113,7 +170,13 @@ jobs:
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
         with:
-          name: mdknotify-artifact
+          name: mdknotify-win-artifact
+          path: ./Source/Mdk.ModPackager/tools
+
+      - name: Download tool artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: checkdotnet-artifact
           path: ./Source/Mdk.ModPackager/tools
       
       # Restore dependencies for the whole solution
