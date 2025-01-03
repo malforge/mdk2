@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
 using CheckDotNet;
 
 Version noVersion = new(0, 0);
@@ -29,21 +28,17 @@ try
         else
             Console.WriteLine(message);
 
-        Environment.Exit(1); // Signal failure to MSBuild script
+        return 1;
     }
-    else
-    {
-        Console.WriteLine("Required .NET SDK is installed.");
-        Environment.Exit(0); // Signal success
-    }
+
+    Console.WriteLine("Required .NET SDK is installed.");
+    return 0;
 }
 catch (Exception ex)
 {
     Console.WriteLine($"An unexpected error occurred: {ex.Message}");
-    Environment.Exit(1); // Signal failure in case of exceptions
+    return 1;
 }
-
-return;
 
 Version getInstalledSdkVersion()
 {
@@ -75,14 +70,6 @@ Version? getVersionFromLine(string line)
     if (Version.TryParse(line, out var version))
         return version;
     return noVersion;
-}
-
-void showDialog(string title, string message)
-{
-    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        Win32.MessageBox(IntPtr.Zero, message, title, 0);
-    else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        Process.Start("zenity", $"--error --title=\"{title}\" --text=\"{message}\"");
 }
 
 void openBrowser(string url)

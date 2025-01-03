@@ -2,26 +2,34 @@
 <Project>
     <PropertyGroup>
         <MdkBuildConfiguration>all</MdkBuildConfiguration>
-        <MdkArguments />
+        <MdkArguments/>
         <MdkInteractive>-interactive</MdkInteractive>
     </PropertyGroup>
-    
+
     <ItemGroup>
-        <None Include="**\*.ini" />
+        <None Include="**\*.ini"/>
     </ItemGroup>
 
     <Target Name="MdkRestore" BeforeTargets="PreBuildEvent">
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\checkdotnet.exe&quot; -interactive" />
-        <Error Condition="'%(Exec.ExitCode)' != '0'" Text="Required .NET SDK is missing. Please install it." />
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore &quot;$(MSBuildProjectFullPath)&quot; $(MdkInteractive)" />
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\checkdotnet.exe&quot; -interactive" ContinueOnError="true">
+            <Output TaskParameter="ExitCode" PropertyName="MdkExitCode"/>
+        </Exec>
+        <Error Condition="'$(MdkExitCode)' != '0'" Text="Required .NET SDK is missing. Please install it."/>
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore &quot;$(MSBuildProjectFullPath)&quot; $(MdkInteractive)" ContinueOnError="true">
+            <Output TaskParameter="ExitCode" PropertyName="MdkExitCode"/>
+        </Exec>
+        <Error Condition="'$(MdkExitCode)' != '0'" Text="MDK could not restore the project. Please check the build output."/>
     </Target>
-    
+
     <Target Name="MdkPack" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; pack &quot;$(MSBuildProjectFullPath)&quot; $(MdkArguments) -configuration $(Configuration) $(MdkInteractive)" />
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; pack &quot;$(MSBuildProjectFullPath)&quot; $(MdkArguments) -configuration $(Configuration) $(MdkInteractive)" ContinueOnError="true">
+            <Output TaskParameter="ExitCode" PropertyName="MdkExitCode"/>
+        </Exec>
+        <Error Condition="'$(MdkExitCode)' != '0'" Text="MDK could not package the project. Please check the build output."/>
     </Target>
-    
+
     <Target Name="MdkDidNotPack" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' != '$(MdkBuildConfiguration)' And '$(MdkBuildConfiguration)' != 'all'">
-        <Exec Command="echo MDK did not pack, because the current configuration is '$(Configuration)', not '$(MdkBuildConfiguration)'." />
-    </Target>   
+        <Exec Command="echo MDK did not pack, because the current configuration is '$(Configuration)', not '$(MdkBuildConfiguration)'."/>
+    </Target>
 
 </Project>
