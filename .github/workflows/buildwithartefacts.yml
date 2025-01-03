@@ -48,16 +48,15 @@ jobs:
       - name: Prepare artifact name
         run: |
           $outputDir = "../output"
-          $assemblyName = dotnet msbuild ${{ matrix.project }} /t:GetAssemblyName /nologo /v:q
-          $exePath = Join-Path $outputDir "$assemblyName.exe"
+          $exePath = Get-ChildItem $outputDir -Filter *.exe | Sort-Object LastWriteTime -Descending | Select-Object -First 1
       
-          if (-not (Test-Path $exePath)) {
-              Write-Error "Executable $assemblyName.exe not found!"
-              exit 1
+          if (-not $exePath) {
+            Write-Error "No executable found in output directory!"
+            exit 1
           }
       
           Write-Host "Generated executable: $exePath"
-          $artifactName = [System.IO.Path]::GetFileNameWithoutExtension($exePath)
+          $artifactName = $exePath.BaseName
           Write-Host "Artifact name: $artifactName"
           echo "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
           
