@@ -43,7 +43,7 @@ jobs:
 
       - name: Build tool project
         run: |
-          dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None
+          dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:IncludeAllContentForSelfExtract=true -p:DebugType=None
 
       - name: Prepare artifact name
         run: |
