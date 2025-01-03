@@ -16,10 +16,10 @@
         <Platforms>x64</Platforms>
     </PropertyGroup>
 
-    <Target Name="BuildMdk" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">
-        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release --self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;" />
-        <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify-win.exe" DestinationFolder="$(OutputPath)" />
-    </Target>
+<!--    <Target Name="BuildMdk" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">-->
+<!--        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release &#45;&#45;self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;" />-->
+<!--        <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify-win.exe" DestinationFolder="$(OutputPath)" />-->
+<!--    </Target>-->
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
