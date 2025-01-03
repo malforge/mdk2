@@ -84,7 +84,7 @@ jobs:
     strategy:
       matrix:
         project:
-          - "Mdk.DotNetChecker/Mdk.DotNetChecker.csproj"
+          - "Mdk.CheckDotNet/Mdk.CheckDotNet.csproj"
     steps:
       - uses: actions/checkout@v4
 
