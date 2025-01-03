@@ -11,6 +11,8 @@
     </ItemGroup>
 
     <Target Name="MdkRestore" BeforeTargets="PreBuildEvent">
+        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\checkdotnet.exe&quot; -interactive" />
+        <Error Condition="'%(Exec.ExitCode)' != '0'" Text="Required .NET SDK is missing. Please install it." />
         <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore &quot;$(MSBuildProjectFullPath)&quot; $(MdkInteractive)" />
     </Target>
     
