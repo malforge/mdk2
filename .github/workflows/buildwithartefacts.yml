@@ -127,8 +127,10 @@ jobs:
   # Job to build the primary project
   build-primary:
     runs-on: ubuntu-latest
-    needs: build-tools
-
+    needs:
+      - build-dependent
+      - build-self-contained
+      
     defaults:
       run:
         working-directory: ./Source
