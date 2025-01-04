@@ -7,16 +7,17 @@ on:
       publishToNuGet:
         description: 'Publish to NuGet (y/n)'
         required: true
-        default: 'n'
+        default: 'y'
+  
   push:
     branches:
-      - dotnet9
+      - main
     paths:
       - 'Source/**/PackageVersion.txt'
 
 env:
   NuGetDirectory: ${{ github.workspace }}/nuget
-  NuGetPublishEnabled: false
+  NuGetPublishEnabled: true
 
 jobs:
   # Job to build individual tool projects

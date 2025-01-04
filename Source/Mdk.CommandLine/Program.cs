@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
@@ -93,7 +92,7 @@ public static class Program
                 parameters.ShowHelp(console);
                 return null;
             case Verb.Pack:
-                return await PackAsync(parameters, console, httpClient, interaction);
+                return await PackAsync(parameters, console, interaction);
             case Verb.Restore:
                 await RestoreAsync(parameters, console, httpClient, interaction);
                 return null;
@@ -102,7 +101,7 @@ public static class Program
         }
     }
 
-    static async Task<ImmutableArray<PackedProject>?> PackAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
+    static async Task<ImmutableArray<PackedProject>?> PackAsync(Parameters parameters, IConsole console, IInteraction interaction)
     {
         if (parameters.PackVerb.ProjectFile is null) throw new CommandLineException(-1, "No project file specified.");
         if (!File.Exists(parameters.PackVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.RestoreVerb.ProjectFile}' does not exist.");
@@ -111,16 +110,17 @@ public static class Program
             console.Print("Currently performing a dry run. No changes will be made.");
 
         var result = ImmutableArray.CreateBuilder<PackedProject>();
-        
+
         await foreach (var project in MdkProject.LoadAsync(parameters.PackVerb.ProjectFile, console))
         {
             switch (project.Type)
             {
                 case MdkProjectType.Mod:
                 {
+                    console.Print("Warning: Mod projects are currently in beta. Please report any issues you encounter.");
                     var packer = new ModPacker();
                     var packed = await packer.PackAsync(parameters, console, interaction);
-                    
+
                     if (!packed.IsDefaultOrEmpty)
                         result.AddRange(packed);
                     break;
@@ -130,7 +130,7 @@ public static class Program
                 {
                     var packer = new ScriptPacker();
                     var packed = await packer.PackAsync(parameters, console, interaction);
-                    
+
                     if (!packed.IsDefaultOrEmpty)
                         result.AddRange(packed);
                     break;
@@ -145,7 +145,7 @@ public static class Program
                     break;
             }
         }
-        
+
         if (result.Count == 0)
             return null;
         return result.ToImmutable();
@@ -165,6 +165,7 @@ public static class Program
             {
                 case MdkProjectType.Mod:
                 {
+                    console.Print("Warning: Mod projects are currently in beta. Please report any issues you encounter.");
                     console.Print($"MDK is restoring mod project: {project.Project.Name}");
                     var restorer = new ModRestorer();
                     await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
@@ -206,7 +207,10 @@ public static class Program
         ///     Start building a new set of peripherals.
         /// </summary>
         /// <returns></returns>
-        public static Builder Create() => new();
+        public static Builder Create()
+        {
+            return new Builder();
+        }
 
         readonly Parameters? _parameters = parameters;
         readonly IConsole? _console = console;
@@ -238,7 +242,10 @@ public static class Program
         /// </summary>
         public Exception? Exception { get; } = exception;
 
-        public bool IsEmpty() => _parameters == null && _console == null && _interaction == null && _httpClient == null && Exception == null;
+        public bool IsEmpty()
+        {
+            return _parameters == null && _console == null && _interaction == null && _httpClient == null && Exception == null;
+        }
 
         /// <summary>
         ///     A builder for creating a new set of peripherals.
@@ -262,35 +269,50 @@ public static class Program
             /// </summary>
             /// <param name="args"></param>
             /// <returns></returns>
-            public Builder FromArguments(string[] args) => new(_parameters, _console, _interaction, _httpClient, args);
+            public Builder FromArguments(string[] args)
+            {
+                return new Builder(_parameters, _console, _interaction, _httpClient, args);
+            }
 
             /// <summary>
             ///     Use the specified parameters for the peripherals, regardless of the arguments in <see cref="FromArguments" />.
             /// </summary>
             /// <param name="parameters"></param>
             /// <returns></returns>
-            public Builder WithParameters(Parameters parameters) => new(parameters, _console, _interaction, _httpClient, _args);
+            public Builder WithParameters(Parameters parameters)
+            {
+                return new Builder(parameters, _console, _interaction, _httpClient, _args);
+            }
 
             /// <summary>
             ///     Use the specified console for the peripherals, regardless of the arguments in <see cref="FromArguments" />.
             /// </summary>
             /// <param name="console"></param>
             /// <returns></returns>
-            public Builder WithConsole(IConsole console) => new(_parameters, console, _interaction, _httpClient, _args);
+            public Builder WithConsole(IConsole console)
+            {
+                return new Builder(_parameters, console, _interaction, _httpClient, _args);
+            }
 
             /// <summary>
             ///     Use the specified interaction for the peripherals, regardless of the arguments in <see cref="FromArguments" />.
             /// </summary>
             /// <param name="interaction"></param>
             /// <returns></returns>
-            public Builder WithInteraction(IInteraction interaction) => new(_parameters, _console, interaction, _httpClient, _args);
+            public Builder WithInteraction(IInteraction interaction)
+            {
+                return new Builder(_parameters, _console, interaction, _httpClient, _args);
+            }
 
             /// <summary>
             ///     Use the specified HTTP client for the peripherals, regardless of the arguments in <see cref="FromArguments" />.
             /// </summary>
             /// <param name="client"></param>
             /// <returns></returns>
-            public Builder WithHttpClient(IHttpClient client) => new(_parameters, _console, _interaction, client, _args);
+            public Builder WithHttpClient(IHttpClient client)
+            {
+                return new Builder(_parameters, _console, _interaction, client, _args);
+            }
 
             /// <summary>
             ///     Build the peripherals. Make sure you have set all the required peripherals before calling this method, either
@@ -316,6 +338,7 @@ public static class Program
                         return new Peripherals(null, CreateConsole(), null, null, e);
                     }
                 }
+
                 console ??= CreateConsole(parameters);
                 interaction ??= new Interaction(console, parameters.Interactive);
                 httpClient ??= new WebHttpClient();
