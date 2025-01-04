@@ -155,6 +155,7 @@ jobs:
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         run: |
+          Write-Host "Key length is: ${{ env.NUGET_KEY }}"
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
             dotnet nuget push $file --api-key "${{ env.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
           }
