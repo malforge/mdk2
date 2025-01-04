@@ -22,7 +22,6 @@ env:
 jobs:
   build-tools:
     runs-on: ubuntu-latest
-    environment: Deploy
 
     defaults:
       run:
@@ -76,6 +75,8 @@ jobs:
 
   build-primary:
     runs-on: ubuntu-latest
+    environment: Deploy
+    
     needs:
       - build-tools
     
