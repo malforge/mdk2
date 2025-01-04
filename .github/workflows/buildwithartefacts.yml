@@ -22,6 +22,7 @@ env:
 jobs:
   build-tools:
     runs-on: ubuntu-latest
+    environment: Deploy
 
     defaults:
       run:
@@ -152,11 +153,8 @@ jobs:
 
       - name: Publish NuGet packages
         if: ${{ env.NuGetPublishEnabled == 'true' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.publishToNuGet == 'y') || github.event_name == 'push') }}
-        env:
-          NUGET_KEY: ${{ secrets.NUGET_KEY }}
         run: |
-          Write-Host "Key length is: ${{ env.NUGET_KEY }}"
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-            dotnet nuget push $file --api-key "${{ env.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+            dotnet nuget push $file --api-key "${{ secrets.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
           }
 
