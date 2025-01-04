@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "github.com/malware-dev/MDK-SE",
+  "classifications": ["MDK: Space Engineers"],
+  "name": "MDK Mixin (MDK2)",
+  "description": "A mixin extension for MDK2 projects.",
+  "identity": "Mal.Mdk2.MdkMixinTemplate",
+  "shortName": "mdk2mixin",
+  "defaultName": "Mdk.Mixin",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "MixinProject",
+  "symbols": {
+  }
+}

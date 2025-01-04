@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "github.com/malware-dev/MDK-SE",
+  "classifications": ["MDK: Space Engineers"],
+  "name": "Programmable Block Script (MDK2)",
+  "description": "A script for the programmable block in the game Space Engineers by Keen Software House.",
+  "identity": "Mal.Mdk2.IngameScriptTemplate",
+  "shortName": "mdk2pbscript",
+  "defaultName": "Mdk.PbScript",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "PbScript",
+  "symbols": {
+  }
+}
