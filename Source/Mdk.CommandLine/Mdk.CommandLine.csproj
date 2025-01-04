@@ -14,7 +14,7 @@
         <Copyright>2024 Morten "Malware" Aune Lyrstad</Copyright>
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
-        <PublishSingleFile>true</PublishSingleFile>
+        <PublishSingleFile>false</PublishSingleFile>
         <SelfContained>false</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>

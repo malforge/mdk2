@@ -14,10 +14,10 @@ namespace Mdk.CommandLine;
 /// </summary>
 public static class MsBuild
 {
-    /// <summary>
-    /// Determines if MSBuild is registered.
-    /// </summary>
-    public static bool IsRegistered { get; private set; }
+    // /// <summary>
+    // /// Determines if MSBuild is registered.
+    // /// </summary>
+    // public static bool IsRegistered { get; private set; }
 
     /// <summary>
     ///     Installs the MSBuild instance available on the system.
@@ -25,34 +25,34 @@ public static class MsBuild
     /// <param name="console"></param>
     public static bool Install(IConsole console)
     {
-        if (IsRegistered)
-            return true;
-
-        var minVersion = new Version(8, 0);
-        var locator = new Locator();
-        if (!locator.TryFindDotNet(minVersion, out var paths))
-            return false;
-
-        foreach (var (version, path) in paths)
-            console.Trace($"Found .NET SDK: {version} at {path}");
-
-        var selectedPath = paths.FirstOrDefault();
-        MSBuildLocator.RegisterMSBuildPath(selectedPath.path);
-        IsRegistered = true;
-        // Register(selectedPath.path);
-
-        // if (MSBuildLocator.IsRegistered)
+        // if (IsRegistered)
         //     return true;
         //
-        // var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances()
-        //     .Where(x => x.Version.Major >= 8) 
-        //     .OrderByDescending(x => x.Version)
-        //     .ToList();
-        // foreach (var instance in msbuildInstances)
-        //     console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
-        // var selectedInstance = msbuildInstances.FirstOrDefault();
-        // if (selectedInstance == null) return false;
-        // MSBuildLocator.RegisterInstance(selectedInstance);
+        // var minVersion = new Version(8, 0);
+        // var locator = new Locator();
+        // if (!locator.TryFindDotNet(minVersion, out var paths))
+        //     return false;
+        //
+        // foreach (var (version, path) in paths)
+        //     console.Trace($"Found .NET SDK: {version} at {path}");
+        //
+        // var selectedPath = paths.FirstOrDefault();
+        // MSBuildLocator.RegisterMSBuildPath(selectedPath.path);
+        // IsRegistered = true;
+        // // Register(selectedPath.path);
+
+        if (MSBuildLocator.IsRegistered)
+            return true;
+        
+        var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances()
+            .Where(x => x.Version.Major >= 8) 
+            .OrderByDescending(x => x.Version)
+            .ToList();
+        foreach (var instance in msbuildInstances)
+            console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
+        var selectedInstance = msbuildInstances.FirstOrDefault();
+        if (selectedInstance == null) return false;
+        MSBuildLocator.RegisterInstance(selectedInstance);
         return true;
     }
 
