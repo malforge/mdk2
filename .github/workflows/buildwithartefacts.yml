@@ -150,15 +150,6 @@ jobs:
           retention-days: 7
           path: ${{ env.NuGetDirectory }}/*.nupkg
 
-      - name: Check if NuGet Key is Set
-        run: |
-          if [ -z "${{ secrets.NUGET_KEY }}" ]; then
-            echo "NuGet Key is not set or is empty!"
-            exit 1
-          else
-            echo "NuGet Key is set and has a non-zero length."
-          fi
-
       - name: Publish NuGet packages
         if: ${{ env.NuGetPublishEnabled == 'true' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.publishToNuGet == 'y') || github.event_name == 'push') }}
         run: |

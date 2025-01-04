@@ -12,6 +12,9 @@
       <Configuration Solution="Release|x64" Project="Release|x64" />
     </Project>
   </Folder>
+  <Folder Name="/GitHub Actions/">
+    <File Path="..\.github\workflows\buildwithartefacts.yml" />
+  </Folder>
   <Folder Name="/Packagers/">
     <Project Path="Mdk.ModPackager\Mdk.ModPackager.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
@@ -21,9 +24,6 @@
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
     </Project>
-  </Folder>
-  <Folder Name="/Shared Files/">
-    <File Path="..\.github\workflows\buildwithartefacts.yml" />
   </Folder>
   <Folder Name="/Templates/">
     <Project Path="ModTemplates\content\0_Mod\Mod.csproj">
