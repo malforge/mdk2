@@ -1,5 +1,5 @@
-This template sets up a project for scripting in Space Engineers using the MDK2 toolkits. It will automatically
-add the required nuget packages.
+These templates sets up projects for scripting or modding in Space Engineers using the MDK2 toolkits. It 
+will automatically add the required nuget packages.
 
 Please remember that you need the Space Engineers game installed on your computer to use the MDK2 toolkits.
 

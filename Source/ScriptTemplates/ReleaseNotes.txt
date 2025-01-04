@@ -1,3 +1,6 @@
+v.2.1.0
+ - Added mod template. Renamed the mixin to MDK Mixin because it can be used for both mods and scripts.
+
 v.2.0.22
  - Updated the package versions in the template.
 

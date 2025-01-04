@@ -1,8 +1,0 @@
-v.1.0.1
- - Fixed bad description in the mdk.ini file.
-
-v.1.0.0-alpha1
- - Updated the package versions in the template.
-
-v.1.0.0-alpha1
- - Initial release

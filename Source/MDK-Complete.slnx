@@ -26,19 +26,19 @@
     </Project>
   </Folder>
   <Folder Name="/Templates/">
-    <Project Path="Templates\content\0_Script\PbScript.csproj">
+    <Project Path="ScriptTemplates\ScriptTemplates.csproj" Type="Classic C#" />
+    <Project Path="ScriptTemplates\content\0_Script\PbScript.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|x64" />
       <Configuration Solution="Release|x64" Project="Release|x64" />
     </Project>
-    <Project Path="Templates\content\1_Mod\ModProject.csproj">
+    <Project Path="ScriptTemplates\content\1_Mod\ModProject.csproj">
       <Configuration Solution="Debug|x64" Project="Debug|x64" />
       <Configuration Solution="Release|x64" Project="Release|x64" />
     </Project>
-    <Project Path="Templates\content\2_Mixin\MixinProject.shproj">
+    <Project Path="ScriptTemplates\content\2_Mixin\MixinProject.shproj">
       <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Templates\Templates.csproj" Type="Classic C#" />
   </Folder>
   <Project Path="Mdk.CheckDotNet\Mdk.CheckDotNet.csproj" Type="Classic C#">
     <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />

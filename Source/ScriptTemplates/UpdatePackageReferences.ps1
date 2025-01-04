@@ -2,6 +2,7 @@
 $pbPackagerVersionFile = "../Mdk.CommandLine/PackageVersion.txt"
 $referencesVersionFile = "../Mdk.References/PackageVersion.txt"
 $pbAnalyzersVersionFile = "../Mdk.PbAnalyzers/PackageVersion.txt"
+$modAnalyzersVersionFile = "../Mdk.ModAnalyzers/PackageVersion.txt"
 
 # Path to the .csproj file (relative to the ScriptTemplates project)
 $projectFile = "content/0_Script/PbScript.csproj"
@@ -41,8 +42,7 @@ function Update-PackageVersion {
     $packageRef = $xml.Project.ItemGroup.PackageReference | Where-Object { $_.Include -eq $packageName }
 
     if (-not $packageRef) {
-        Write-Host "Error: Package $packageName not found in the project file" -ForegroundColor Red
-        exit 1
+        return;
     }
 
     # Check if the version is different
@@ -121,6 +121,7 @@ $versionChanged = $false
 $versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.PbPackager" $pbPackagerVersionFile)
 $versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.References" $referencesVersionFile)
 $versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.PbAnalyzers" $pbAnalyzersVersionFile)
+$versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.ModAnalyzers" $modAnalyzersVersionFile)
 
 # If any package versions were updated, bump this package's version and update release notes
 if ($versionChanged) {
