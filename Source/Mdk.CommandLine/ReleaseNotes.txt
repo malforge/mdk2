@@ -1,4 +1,7 @@
-﻿v.2.1.0
+﻿v.2.1.1
+   - Missing files, missing files, missing files... Microsoft, you'll end me.
+
+v.2.1.0
    - DotNet 9 Compatibility _for real_ this time... and also a little less iffy for the .net 8 users (they'll be told
      to update rather than just crash).
    - Mod Packer is now available: Use `mdk2 pack` to pack your mod for distribution the same way you can pack your 
