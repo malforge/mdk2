@@ -20,7 +20,6 @@ env:
   NuGetPublishEnabled: true
 
 jobs:
-  # Job to build individual tool projects
   build-tools:
     runs-on: ubuntu-latest
 
@@ -51,17 +50,17 @@ jobs:
         run: |
           $outputDir = "../output"
           $exePath = Get-ChildItem $outputDir -Filter *.exe | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-      
+          
           if (-not $exePath) {
             Write-Error "No executable found in output directory!"
             exit 1
           }
-      
+          
           Write-Host "Generated executable: $exePath"
           $artifactName = $exePath.BaseName
           Write-Host "Artifact name: $artifactName"
           echo "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-          
+
       - name: Debug artifact name
         run: |
           echo "ARTIFACT_NAME is: ${{ env.ARTIFACT_NAME }}"
@@ -74,12 +73,11 @@ jobs:
           retention-days: 7
           path: ./output/**/*
 
-  # Job to build the primary project
   build-primary:
     runs-on: ubuntu-latest
     needs:
       - build-tools
-      
+    
     defaults:
       run:
         working-directory: ./Source
@@ -92,8 +90,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.x
-      
-      # Download artifacts from the tool projects
+
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
         with:
@@ -105,13 +102,13 @@ jobs:
         with:
           name: mdknotify-win-artifact
           path: ./Source/Mdk.PbPackager/tools
-      
+
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
         with:
           name: checkdotnet-artifact
           path: ./Source/Mdk.PbPackager/tools
-      
+
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
         with:
@@ -129,16 +126,13 @@ jobs:
         with:
           name: checkdotnet-artifact
           path: ./Source/Mdk.ModPackager/tools
-      
-      # Restore dependencies for the whole solution
+
       - name: Restore dependencies
         run: dotnet restore MDK-Packages.sln
-      
-      # Build the primary solution
+
       - name: Build solution
         run: dotnet build MDK-Packages.sln --configuration Release
-      
-      # Collect NuGet packages
+
       - name: Collect NuGet packages
         run: |
           New-Item -ItemType Directory -Force -Path ${{ env.NuGetDirectory }}
@@ -148,16 +142,23 @@ jobs:
             Write-Host "Copying file: $file"
             Copy-Item -Path $file.FullName -Destination ${{ env.NuGetDirectory }}
           }
-      
-      # Upload NuGet packages as an artifact
+
       - uses: actions/upload-artifact@v4
         with:
           name: nuget
           if-no-files-found: error
           retention-days: 7
           path: ${{ env.NuGetDirectory }}/*.nupkg
-      
-      # Publish NuGet packages to NuGet.org
+
+      - name: Check if NuGet Key is Set
+        run: |
+          if [ -z "${{ secrets.NUGET_KEY }}" ]; then
+            echo "NuGet Key is not set or is empty!"
+            exit 1
+          else
+            echo "NuGet Key is set and has a non-zero length."
+          fi
+
       - name: Publish NuGet packages
         if: ${{ env.NuGetPublishEnabled == 'true' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.publishToNuGet == 'y') || github.event_name == 'push') }}
         run: |
