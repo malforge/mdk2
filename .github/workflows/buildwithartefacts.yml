@@ -43,7 +43,8 @@ jobs:
 
       - name: Build tool project
         run: |
-          dotnet publish ${{ matrix.project }} -c Release -o ../output -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None
+          dotnet publish ${{ matrix.project }} -c Release -o ../output -r win-x64 -p:DebugType=None
+#        dotnet publish ${{ matrix.project }} -c Release -o ../output -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None
 
       - name: Prepare artifact name
         run: |
@@ -210,7 +211,7 @@ jobs:
       
       # Publish NuGet packages to NuGet.org
       - name: Publish NuGet packages
-        if: ${{ (env.NuGetPublishEnabled) && ((github.event_name == 'workflow_dispatch' && github.event.inputs.publishToNuGet == 'y') || github.event_name == 'push') }}
+        if: ${{ env.NuGetPublishEnabled == 'true' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.publishToNuGet == 'y') || github.event_name == 'push') }}
         run: |
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
             dotnet nuget push $file --api-key "${{ secrets.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
