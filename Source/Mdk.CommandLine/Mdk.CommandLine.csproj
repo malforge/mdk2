@@ -15,7 +15,7 @@
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
         <PublishSingleFile>true</PublishSingleFile>
-        <SelfContained>true</SelfContained>
+        <SelfContained>false</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
 
