@@ -1,4 +1,4 @@
-﻿v.2.0.15
+﻿v.2.1.0
    - DotNet 9 Compatibility
 
 v.2.0.14

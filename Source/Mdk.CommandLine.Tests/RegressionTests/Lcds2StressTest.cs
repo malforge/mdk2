@@ -1,6 +1,6 @@
 ﻿using FakeItEasy;
 using Mdk.CommandLine;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.RegressionTests;

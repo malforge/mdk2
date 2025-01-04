@@ -4,7 +4,8 @@ using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -34,6 +35,7 @@ public abstract class ScriptPostProcessorTests<T> where T : class, IScriptPostpr
             parameters,
             A.Fake<IConsole>(),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())

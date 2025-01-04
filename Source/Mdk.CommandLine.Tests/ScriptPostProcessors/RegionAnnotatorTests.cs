@@ -4,7 +4,8 @@ using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -12,7 +13,7 @@ using NUnit.Framework;
 namespace MDK.CommandLine.Tests.ScriptPostProcessors;
 
 [TestFixture]
-public class RegionAnnotatorTests : ScriptPostProcessorTests<RegionAnnotator>
+public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
 {
     [Test]
     public void ProcessAsync_WithoutAnyAnnotations_ReturnsDocument()
@@ -36,6 +37,7 @@ public class RegionAnnotatorTests : ScriptPostProcessorTests<RegionAnnotator>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
@@ -88,6 +90,7 @@ public class RegionAnnotatorTests : ScriptPostProcessorTests<RegionAnnotator>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())

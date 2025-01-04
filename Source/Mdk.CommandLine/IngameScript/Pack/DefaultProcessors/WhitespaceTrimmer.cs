@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -9,7 +10,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///     A processor that removes whitespace from the script.
 /// </summary>
 [RunAfter<SymbolRenamer>]
-public class WhitespaceTrimmer : IScriptPostprocessor
+public class WhitespaceTrimmer : IDocumentProcessor
 {
     /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext context)

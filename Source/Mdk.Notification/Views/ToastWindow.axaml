@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Mdk.Notification.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Mdk.Notification.Views.ToastWindow"
+        x:DataType="vm:ToastWindowViewModel"
+        Icon="/Assets/appicon.ico"
+        Title="Mdk.Notification"
+        SystemDecorations="None"
+        ShowInTaskbar="False"
+        Topmost="True"
+        CanResize="True"
+        MinHeight="0"
+        MinWidth="0"
+        SizeToContent="WidthAndHeight"
+        Background="Transparent"
+        TransparencyBackgroundFallback="Black"
+        CornerRadius="32"
+        Padding="0"
+        Margin="0"
+        Opacity="0">
+
+    <Design.DataContext>
+        <vm:ToastWindowViewModel />
+    </Design.DataContext>
+
+    <ContentControl x:Name="Panel"
+                    Content="{Binding Toast}"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Padding="0"
+                    Margin="0" />
+
+</Window>

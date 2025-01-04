@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 

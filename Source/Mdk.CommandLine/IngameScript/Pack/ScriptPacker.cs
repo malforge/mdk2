@@ -6,8 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack.Api;
-using Mdk.CommandLine.SharedApi;
-using Microsoft.Build.Locator;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
+// using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -21,25 +22,7 @@ namespace Mdk.CommandLine.IngameScript.Pack;
 public class ScriptPacker: ProjectJob
 {
     const int MaxScriptLength = 100000;
-    
-    /// <summary>
-    /// A packed project.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <param name="producedFiles"></param>
-    public readonly struct PackedProject(string name, ImmutableArray<IScriptProducer.ProducedFile> producedFiles)
-    {
-        /// <summary>
-        /// The name of the packed project.
-        /// </summary>
-        public string Name { get; } = name;
-        
-        /// <summary>
-        /// The files produced by the pack operation.
-        /// </summary>
-        public ImmutableArray<IScriptProducer.ProducedFile> ProducedFiles { get; } = producedFiles;
-    }
-    
+
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
     /// </summary>
@@ -49,13 +32,13 @@ public class ScriptPacker: ProjectJob
     /// <exception cref="CommandLineException"></exception>
     public async Task<ImmutableArray<PackedProject>> PackAsync(Parameters parameters, IConsole console, IInteraction interaction)
     {
-        if (!MSBuildLocator.IsRegistered)
-        {
-            var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToArray();
-            foreach (var instance in msbuildInstances)
-                console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
-            MSBuildLocator.RegisterInstance(msbuildInstances.First());
-        }
+        // if (!MSBuildLocator.IsRegistered)
+        // {
+        //     var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToArray();
+        //     foreach (var instance in msbuildInstances)
+        //         console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
+        //     MSBuildLocator.RegisterInstance(msbuildInstances.First());
+        // }
         using var workspace = MSBuildWorkspace.Create();
 
         var projectPath = parameters.PackVerb.ProjectFile;
@@ -123,7 +106,7 @@ public class ScriptPacker: ProjectJob
     /// <param name="interaction"></param>
     /// <returns></returns>
     /// <exception cref="CommandLineException"></exception>
-    public async Task<ImmutableArray<IScriptProducer.ProducedFile>> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
+    public async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Parameters parameters, Project project, IConsole console, IInteraction interaction)
     {
         if (parameters.PackVerb.Output == null || string.Equals(parameters.PackVerb.Output, "auto", StringComparison.OrdinalIgnoreCase))
             parameters.PackVerb.Output = resolveAutoOutputDirectory();
@@ -143,12 +126,12 @@ public class ScriptPacker: ProjectJob
         ApplyDefaultMacros(parameters);
         parameters.DumpTrace(console);
 
-        var filter = new PackInclusionFilter(parameters, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
+        var filter = new FileFilter(parameters.PackVerb.Ignores, Path.GetDirectoryName(project.FilePath) ?? throw new InvalidOperationException("Project directory not set"));
         var outputPath = Path.Combine(parameters.PackVerb.Output!, project.Name);
         var projectPath= Path.GetDirectoryName(project.FilePath)!;
         var tracePath = Path.Combine(projectPath, "obj");
         var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
-        var context = new PackContext(parameters, console, interaction, filter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
+        var context = new PackContext(parameters, console, interaction, filter, null, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
 
         return await PackProjectAsync(project, context);
     }
@@ -163,10 +146,9 @@ public class ScriptPacker: ProjectJob
             parameters.PackVerb.Macros["$MDK_TIME$"] = DateTime.Now.ToString("HH:mm");
     }
 
-    async Task<ImmutableArray<IScriptProducer.ProducedFile>> PackProjectAsync(Project project, PackContext context)
+    async Task<ImmutableArray<ProducedFile>> PackProjectAsync(Project project, PackContext context)
     {
-        var outputPath = Path.Combine(context.Parameters.PackVerb.Output!, project.Name);
-        var outputDirectory = new DirectoryInfo(outputPath);
+        var outputDirectory = new DirectoryInfo(context.FileSystem.OutputDirectory);
 
         project = await CompileAndValidateProjectAsync(project);
 
@@ -219,6 +201,7 @@ public class ScriptPacker: ProjectJob
             .TraceIf(postCompositionProcessors.Count > 0, $"    {string.Join("\n    ", postCompositionProcessors.Select(p => p.GetType().Name))}")
             .Trace($"  producer {producer.GetType().Name}");
 
+        // TODO: Jobify this
         allDocuments = await PreprocessAsync(allDocuments, preprocessors, context);
         var scriptDocument = await CombineAsync(project, combiner, allDocuments, context);
         scriptDocument = await PostProcessAsync(scriptDocument, postprocessors, context);
@@ -265,7 +248,7 @@ public class ScriptPacker: ProjectJob
         throw new CommandLineException(-2, "Failed to compile the project.");
     }
 
-    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IScriptPreprocessor> preprocessors, PackContext context)
+    static async Task<ImmutableArray<Document>> PreprocessAsync(ImmutableArray<Document> allDocuments, ProcessorSet<IDocumentProcessor> preprocessors, PackContext context)
     {
         async Task<Document> preprocessSyntaxTree(Document document)
         {
@@ -304,7 +287,7 @@ public class ScriptPacker: ProjectJob
         return scriptDocument;
     }
 
-    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IScriptPostprocessor> postprocessors, PackContext context)
+    static async Task<Document> PostProcessAsync(Document scriptDocument, ProcessorSet<IDocumentProcessor> postprocessors, PackContext context)
     {
         if (postprocessors.Count > 0)
         {
@@ -378,7 +361,7 @@ public class ScriptPacker: ProjectJob
         return final;
     }
 
-    static async Task<ImmutableArray<IScriptProducer.ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
+    static async Task<ImmutableArray<ProducedFile>> ProduceAsync(string projectDirectory, string projectName, DirectoryInfo outputDirectory, IScriptProducer producer, StringBuilder final, TextDocument? readmeDocument, TextDocument? thumbnailDocument, PackContext context)
     {
         context.Console.Trace($"Running producer {producer.GetType().Name}");
         context.Console.Trace($"Producing into {outputDirectory.FullName}");

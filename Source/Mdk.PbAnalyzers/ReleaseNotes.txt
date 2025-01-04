@@ -1,3 +1,6 @@
+v.2.1.11
+    - Package updates
+    
 v.2.1.10
     - Strange whitelist failure causing ImmutableArray to be considered illegal
 

@@ -8,15 +8,15 @@
     <Platforms>x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Mal.Mdk2.PbAnalyzers" Version="2.1.10">
+    <PackageReference Include="Mal.Mdk2.PbAnalyzers" Version="2.1.11">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Mal.Mdk2.PbPackager" Version="2.0.13">
+    <PackageReference Include="Mal.Mdk2.PbPackager" Version="2.1.0-alpha.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Mal.Mdk2.References" Version="2.2.3" />
+    <PackageReference Include="Mal.Mdk2.References" Version="2.2.4" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Instructions.readme" />
