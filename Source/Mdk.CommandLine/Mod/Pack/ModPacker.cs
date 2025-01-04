@@ -7,7 +7,7 @@ using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.Mod.Pack.Jobs;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
-using Microsoft.Build.Locator;
+// using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -28,13 +28,13 @@ public class ModPacker : ProjectJob
     /// <exception cref="CommandLineException"></exception>
     public async Task<ImmutableArray<PackedProject>> PackAsync(Parameters parameters, IConsole console, IInteraction interaction)
     {
-        if (!MSBuildLocator.IsRegistered)
-        {
-            var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToArray();
-            foreach (var instance in msbuildInstances)
-                console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
-            MSBuildLocator.RegisterInstance(msbuildInstances.First());
-        }
+        // if (!MSBuildLocator.IsRegistered)
+        // {
+        //     var msbuildInstances = MSBuildLocator.QueryVisualStudioInstances().OrderByDescending(x => x.Version).ToArray();
+        //     foreach (var instance in msbuildInstances)
+        //         console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
+        //     MSBuildLocator.RegisterInstance(msbuildInstances.First());
+        // }
 
         using var workspace = MSBuildWorkspace.Create();
 
