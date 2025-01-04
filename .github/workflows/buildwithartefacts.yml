@@ -45,7 +45,6 @@ jobs:
       - name: Build tool project
         run: |
           dotnet publish ${{ matrix.project }} -c Release -o ../output -r win-x64 -p:DebugType=None
-#        dotnet publish ${{ matrix.project }} -c Release -o ../output -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None
 
       - name: Prepare artifact name
         run: |
@@ -74,64 +73,11 @@ jobs:
           retention-days: 7
           path: ./output/**/*
 
-#  # Job to build individual tool projects
-#  build-self-contained:
-#    runs-on: ubuntu-latest
-#
-#    defaults:
-#      run:
-#        working-directory: ./Source
-#        shell: pwsh
-#    
-#    strategy:
-#      matrix:
-#        project:
-#          - "Mdk.CheckDotNet/Mdk.CheckDotNet.csproj"
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - name: Setup .NET
-#        uses: actions/setup-dotnet@v4
-#        with:
-#          dotnet-version: 9.x
-#
-#      - name: Build tool project
-#        run: |
-#          dotnet publish ${{ matrix.project }} -c Release -o ../output --self-contained true -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None
-#
-#      - name: Prepare artifact name
-#        run: |
-#          $outputDir = "../output"
-#          $exePath = Get-ChildItem $outputDir -Filter *.exe | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-#          
-#          if (-not $exePath) {
-#            Write-Error "No executable found in output directory!"
-#            exit 1
-#          }
-#          
-#          Write-Host "Generated executable: $exePath"
-#          $artifactName = $exePath.BaseName
-#          Write-Host "Artifact name: $artifactName"
-#          echo "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-#
-#      - name: Debug artifact name
-#        run: |
-#          echo "ARTIFACT_NAME is: ${{ env.ARTIFACT_NAME }}"
-#
-#      - name: Upload tool artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: ${{ env.ARTIFACT_NAME }}-artifact
-#          if-no-files-found: error
-#          retention-days: 7
-#          path: ./output/**/*
-
   # Job to build the primary project
   build-primary:
     runs-on: ubuntu-latest
     needs:
       - build-tools
-#    - build-self-contained
       
     defaults:
       run:

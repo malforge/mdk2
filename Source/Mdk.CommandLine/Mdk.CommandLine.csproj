@@ -19,11 +19,6 @@
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
 
-<!--    <Target Name="BuildMdk" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Debug'">-->
-<!--        <Exec Command="dotnet publish &quot;$(PathToMdkNotificationWindows)&quot; -c Release &#45;&#45;self-contained false -r win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o &quot;$(SolutionDir)Binaries&quot;" />-->
-<!--        <Copy SourceFiles="$(SolutionDir)Binaries\mdknotify-win.exe" DestinationFolder="$(OutputPath)" />-->
-<!--    </Target>-->
-
     <ItemGroup>
         <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
