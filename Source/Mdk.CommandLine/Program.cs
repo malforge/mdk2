@@ -41,7 +41,6 @@ public static class Program
     /// <returns></returns>
     public static async Task<int> Main(string[] args)
     {
-        Debugger.Launch();
         var peripherals = Peripherals.Create().FromArguments(args).Build();
         try
         {
