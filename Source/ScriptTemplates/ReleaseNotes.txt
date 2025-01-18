@@ -1,3 +1,6 @@
+v.2.1.1
+ - Fixed dumb error in the mod template causing it to not be able to copy files from any other folder but the Data folder
+
 v.2.1.0
  - Added mod template. Renamed the mixin to MDK Mixin because it can be used for both mods and scripts.
 
