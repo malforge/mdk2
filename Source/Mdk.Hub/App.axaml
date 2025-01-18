@@ -1,0 +1,155 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
+             x:Class="Mdk.Hub.App"
+             xmlns:local="using:Mdk.Hub"
+             xmlns:controls="clr-namespace:Mdk.Hub.Views"
+             RequestedThemeVariant="Dark">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+    
+    <Application.Resources>
+        <ControlTemplate x:Key="templates/window" TargetType="Window">
+            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+                <Grid>
+                    <ContentPresenter Content="{TemplateBinding Content}" 
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Center" />
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right"
+                                VerticalAlignment="Top">
+                        <Button Classes="windowbutton" >
+                            <avalonia:Icon Value="mdi-window-minimize"
+                                           HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Stretch" />
+                        </Button>
+                        <Button Classes="windowbutton" >
+                            <avalonia:Icon Value="mdi-close"
+                                           HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Stretch" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </ControlTemplate>
+    </Application.Resources>
+  
+    <Application.Styles>
+        <FluentTheme />
+        
+        <Style Selector=":is(controls|DialogWindow)">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="SystemDecorations" Value="None" />
+            <Setter Property="CanResize" Value="False" />
+            <Setter Property="WindowStartupLocation" Value="CenterOwner" />
+            <Setter Property="TransparencyBackgroundFallback" Value="Black" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Template" Value="{StaticResource templates/window}" />
+            <!-- <Setter Property="Template"> -->
+            <!--     <ControlTemplate> -->
+            <!--         <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" -->
+            <!--                 CornerRadius="{TemplateBinding CornerRadius}"> -->
+            <!--             <ContentPresenter Content="{TemplateBinding Content}"  -->
+            <!--                               VerticalAlignment="Center" -->
+            <!--                               HorizontalAlignment="Center" /> -->
+            <!--         </Border> -->
+            <!--     </ControlTemplate> -->
+            <!-- </Setter> -->
+        </Style>
+        
+        <!--
+            <Setter Property="Background" Value="{DynamicResource SystemRegionBrush}"/>
+    <Setter Property="TransparencyBackgroundFallback" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+
+        -->
+        
+        <Style Selector=":is(Window)">
+            <Setter Property="SystemDecorations" Value="None" />
+            <Setter Property="CanResize" Value="False" />
+            <Setter Property="WindowStartupLocation" Value="CenterScreen" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="TransparencyBackgroundFallback" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
+            <Setter Property="Template" Value="{StaticResource templates/window}" />
+            <!-- <Setter Property="Template"> -->
+            <!--     <ControlTemplate> -->
+            <!--         <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" -->
+            <!--                 CornerRadius="{TemplateBinding CornerRadius}"> -->
+            <!--             <Grid> -->
+            <!--                 <ContentPresenter Content="{TemplateBinding Content}"  -->
+            <!--                                   VerticalAlignment="Center" -->
+            <!--                                   HorizontalAlignment="Center" /> -->
+            <!--                 <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right" -->
+            <!--                             VerticalAlignment="Top"> -->
+            <!--                     <Button Classes="windowbutton" > -->
+            <!--                         <avalonia:Icon Value="mdi-window-minimize" -->
+            <!--                                        HorizontalAlignment="Stretch" -->
+            <!--                                        VerticalAlignment="Stretch" /> -->
+            <!--                     </Button> -->
+            <!--                     <Button Classes="windowbutton" > -->
+            <!--                         <avalonia:Icon Value="mdi-close" -->
+            <!--                                        HorizontalAlignment="Stretch" -->
+            <!--                                        VerticalAlignment="Stretch" /> -->
+            <!--                     </Button> -->
+            <!--                 </StackPanel> -->
+            <!--             </Grid> -->
+            <!--         </Border> -->
+            <!--     </ControlTemplate> -->
+            <!-- </Setter> -->
+        </Style>
+        
+        <Style Selector=".mainwindow Border.background">
+            <Setter Property="Background" Value="{DynamicResource SystemRegionBrush}"/>
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        
+        <Style Selector="Button.windowbutton">
+            <Setter Property="Background" Value="{DynamicResource AccentButtonBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentButtonForeground}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border CornerRadius="4" Background="{TemplateBinding Background}" Padding="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        
+        <Style Selector="Button.windowbutton > > :is(InputElement)">
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        
+        <Style Selector="Button.windowbutton > > :is(TemplatedControl)">
+            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+        </Style>
+        
+        <Style Selector="Button.windowbutton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AccentButtonBackgroundPointerOver}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentButtonForegroundPointerOver}" />
+         </Style> 
+        
+        <Style Selector="Button.windowbutton:pressed">
+            <Setter Property="Background" Value="{DynamicResource AccentButtonBackgroundPressed}" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentButtonForegroundPressed}" />
+        </Style>
+        
+        <Style Selector="TextBlock.h1">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        
+        <Style Selector="TextBlock.body">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+    </Application.Styles>
+             
+             
+</Application>

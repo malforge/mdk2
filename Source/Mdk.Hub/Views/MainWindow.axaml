@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Mdk.Hub.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Mdk.Hub.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/icon.ico"
+        Title="Mdk.Hub"
+        Width="400"
+        Height="256"
+        Classes="mainwindow">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Border x:Name="Border"
+            Classes="background"
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch"
+            ClipToBounds="True"
+            Padding="0"
+            Margin="0">
+        <Grid ColumnDefinitions="16*,84*">
+            <Image Source="avares://Mdk.Hub/Assets/sidebar.png" HorizontalAlignment="Stretch"
+                   VerticalAlignment="Stretch" />
+            <!-- <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" -->
+            <!--             VerticalAlignment="Top"> -->
+            <!--     <Button Classes="windowbutton" Click="OnMinifyButtonClick"> -->
+            <!--         <avalonia:Icon Value="mdi-window-minimize" -->
+            <!--                        HorizontalAlignment="Stretch" -->
+            <!--                        VerticalAlignment="Stretch" /> -->
+            <!--     </Button> -->
+            <!--     <Button Classes="windowbutton" Click="OnCloseButtonClick"> -->
+            <!--         <avalonia:Icon Value="mdi-close" -->
+            <!--                        HorizontalAlignment="Stretch" -->
+            <!--                        VerticalAlignment="Stretch" /> -->
+            <!--     </Button> -->
+            <!-- </StackPanel> -->
+        </Grid>
+    </Border>
+
+</Window>
