@@ -1,3 +1,6 @@
+v.2.2.7
+ - Removed the "Main" method test from the testing project as it caused more problems than it solved.
+
 v.2.2.6
  - Added a readme file to the script testing template to inform users of the template how to use it.
 

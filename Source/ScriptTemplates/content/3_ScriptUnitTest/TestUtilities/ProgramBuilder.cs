@@ -58,13 +58,13 @@ namespace PbScriptTests.TestUtilities
         /// 
         /// The `Build` method finalizes the construction, initializing the script with the provided dependencies.
         /// </remarks>
-        public readonly struct ProgramBuilder<T> where T : MyGridProgram
+        public readonly struct ProgramBuilder<T> where T : MyGridProgram, new()
         {
             /// <summary>
             /// Builds the final instance of the script with the configured dependencies.
             /// </summary>
             /// <returns>An initialized instance of type <typeparamref name="T"/>.</returns>
-            /// <exception cref="InvalidOperationException">Thrown if the script lacks a parameterless constructor or the required interface.</exception>
+            /// <exception cref="InvalidOperationException">Thrown if the script type or instance fails to be created.</exception>
             public T Build()
             {
                 // Create an uninitialized instance (bypasses constructor)
@@ -85,9 +85,6 @@ namespace PbScriptTests.TestUtilities
                 backend.Storage = GetStorage();
                 backend.GridTerminalSystem = GetGridTerminalSystem();
                 backend.IGC_ContextGetter = GetIgcContextGetter();
-
-                if (!backend.HasMainMethod)
-                    throw new InvalidOperationException("No valid Main method found.");
 
                 return (T)program;
             }
