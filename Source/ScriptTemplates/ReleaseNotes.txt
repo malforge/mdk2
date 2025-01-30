@@ -1,3 +1,6 @@
+v.2.2.2
+ - Test project was misnamed.
+
 v.2.2.1
  - Updated the package versions in the template.
 
