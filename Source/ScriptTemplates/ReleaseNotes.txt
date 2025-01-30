@@ -1,3 +1,6 @@
+v.2.2.0
+ - Added a unit test template for programmable block scripts
+ 
 v.2.1.1
  - Fixed dumb error in the mod template causing it to not be able to copy files from any other folder but the Data folder
 

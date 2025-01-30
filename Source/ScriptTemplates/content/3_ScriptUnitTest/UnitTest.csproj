@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <SpaceEngineersBinCopyLocal>true</SpaceEngineersBinCopyLocal>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FakeItEasy" Version="8.3.0" />
+      <PackageReference Include="FakeItEasy.Analyzer.CSharp" Version="6.1.1">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Mal.Mdk2.References" Version="2.2.4">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="NUnit" Version="4.3.2" />
+    </ItemGroup>
+
+</Project>
