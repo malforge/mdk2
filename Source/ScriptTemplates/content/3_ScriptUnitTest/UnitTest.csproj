@@ -3,6 +3,8 @@
     <PropertyGroup>
         <TargetFramework>net48</TargetFramework>
         <SpaceEngineersBinCopyLocal>true</SpaceEngineersBinCopyLocal>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

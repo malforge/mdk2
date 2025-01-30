@@ -39,8 +39,8 @@
       <Configuration Solution="Release|x64" Project="Release|Any CPU" />
     </Project>
     <Project Path="ScriptTemplates\content\3_ScriptUnitTest\UnitTest.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Configuration Solution="Debug|x64" Project="Debug|x64" />
+      <Configuration Solution="Release|x64" Project="Release|x64" />
     </Project>
     <Project Path="ScriptTemplates\ScriptTemplates.csproj" Type="Classic C#" />
   </Folder>

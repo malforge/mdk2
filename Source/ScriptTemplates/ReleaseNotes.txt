@@ -1,3 +1,6 @@
+v.2.2.1
+ - Updated the package versions in the template.
+
 v.2.2.0
  - Added a unit test template for programmable block scripts
  

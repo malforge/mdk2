@@ -20,6 +20,7 @@
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
         <DevelopmentDependency>true</DevelopmentDependency>
+        <NoWarn>NU5118</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
