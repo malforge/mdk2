@@ -1,3 +1,6 @@
+v.2.2.8
+ - Fixed compile error because one should never code while tired, or be so arrogant as to think that one can publish without testing.
+
 v.2.2.7
  - Removed the "Main" method test from the testing project as it caused more problems than it solved.
 

@@ -42,7 +42,7 @@ namespace PbScriptTests.TestUtilities
         /// </code>
         /// </example>
         public static ProgramBuilder<T> CreateProgram<T>()
-            where T : MyGridProgram
+            where T : MyGridProgram, new()
         {
             return new ProgramBuilder<T>(null, null, null, null, null, null);
         }
