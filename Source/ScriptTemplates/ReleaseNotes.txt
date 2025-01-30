@@ -1,3 +1,6 @@
+v.2.2.5
+ - Added a comment to tell users of the PBScriptTests template to make their Program field public.
+
 v.2.2.4
  - No comment. Just... no comment. (made the Program in the script template public to make it easier to write tests for + that's how it is in the game anyway)
  
