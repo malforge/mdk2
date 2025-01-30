@@ -1,3 +1,6 @@
+v.2.2.6
+ - Added a readme file to the script testing template to inform users of the template how to use it.
+
 v.2.2.5
  - Added a comment to tell users of the PBScriptTests template to make their Program field public.
 
