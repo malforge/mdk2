@@ -1,3 +1,6 @@
+v.2.2.3
+ - Forgot the default namespace :facepalm:
+
 v.2.2.2
  - Test project was misnamed.
 

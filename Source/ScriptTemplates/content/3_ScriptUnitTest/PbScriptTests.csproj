@@ -5,7 +5,6 @@
         <SpaceEngineersBinCopyLocal>true</SpaceEngineersBinCopyLocal>
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
-        <RootNamespace>UnitTest</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
