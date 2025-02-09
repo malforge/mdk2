@@ -1,3 +1,6 @@
+v.2.2.9
+ - Added ItemGroup to mixin template to make it easier to add files to the project in VSCode (thank you annabunches)
+ 
 v.2.2.8
  - Fixed compile error because one should never code while tired, or be so arrogant as to think that one can publish without testing.
 
