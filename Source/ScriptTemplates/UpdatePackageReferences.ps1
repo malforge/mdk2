@@ -122,11 +122,11 @@ function Update-ReleaseNotes {
 # Track if any package versions changed
 $versionChanged = $false
 
-$versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.PbPackager"   $pbPackagerVersionFile   $projectFiles)
-$versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.ModPackager"    $pbPackagerVersionFile   $projectFiles)
-$versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.References"     $referencesVersionFile   $projectFiles)
-$versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.PbAnalyzers"    $pbAnalyzersVersionFile  $projectFiles)
-$versionChanged = $versionChanged -or (Update-PackageVersion "Mal.Mdk2.ModAnalyzers"   $modAnalyzersVersionFile $projectFiles)
+$versionChanged = $versionChanged -bor (Update-PackageVersion "Mal.Mdk2.PbPackager"     $pbPackagerVersionFile   $projectFiles)
+$versionChanged = $versionChanged -bor (Update-PackageVersion "Mal.Mdk2.ModPackager"    $pbPackagerVersionFile   $projectFiles)
+$versionChanged = $versionChanged -bor (Update-PackageVersion "Mal.Mdk2.References"     $referencesVersionFile   $projectFiles)
+$versionChanged = $versionChanged -bor (Update-PackageVersion "Mal.Mdk2.PbAnalyzers"    $pbAnalyzersVersionFile  $projectFiles)
+$versionChanged = $versionChanged -bor (Update-PackageVersion "Mal.Mdk2.ModAnalyzers"   $modAnalyzersVersionFile $projectFiles)
 
 if ($versionChanged) {
     Bump-PackageVersion
