@@ -16,15 +16,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Mal.Mdk2.References" Version="2.2.3" />
+    <PackageReference Include="Mal.Mdk2.References" Version="2.2.4" />
   </ItemGroup>
   <ItemGroup>
-      <AdditionalFiles Include="*\**\*">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </AdditionalFiles>
-      <AdditionalFiles Remove="*\**\*.cs"/>
-      <AdditionalFiles Remove="obj\**\*"/>
-      <AdditionalFiles Remove="bin\**\*"/>
-      <AdditionalFiles Remove="Data\SBC files can go here"/>
+    <AdditionalFiles Include="*\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </AdditionalFiles>
+    <AdditionalFiles Remove="*\**\*.cs" />
+    <AdditionalFiles Remove="obj\**\*" />
+    <AdditionalFiles Remove="bin\**\*" />
+    <AdditionalFiles Remove="Data\SBC files can go here" />
   </ItemGroup>
 </Project>

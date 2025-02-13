@@ -1,4 +1,7 @@
-﻿v.2.1.1
+﻿v.2.1.2
+   - Mod packing: When copying mixin code, relative paths (..\ etc) were not forced into the mod folder.
+
+v.2.1.1
    - Missing files, missing files, missing files... Microsoft, you'll end me.
 
 v.2.1.0

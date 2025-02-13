@@ -1,3 +1,33 @@
+v.2.2.19
+ - Updated the package versions in the template.
+
+v.2.2.18
+ - Updated the package versions in the template.
+
+v.2.2.17
+ - Updated the package versions in the template.
+
+v.2.2.16
+ - Updated the package versions in the template.
+
+v.2.2.15
+ - Updated the package versions in the template.
+
+v.2.2.14
+ - Updated the package versions in the template.
+
+v.2.2.13
+ - Updated the package versions in the template.
+
+v.2.2.12
+ - Updated the package versions in the template.
+
+v.2.2.11
+ - Updated the package versions in the template.
+
+v.2.2.10
+ - Updated the package versions in the template.
+
 v.2.2.9
  - Added ItemGroup to mixin template to make it easier to add files to the project in VSCode (thank you annabunches)
  

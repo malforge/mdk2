@@ -22,6 +22,9 @@ internal class ProcessScriptsJob : ModJob
         {
             var document = doc;
             var relativePath = new FileInfo(document.FilePath!).GetPathRelativeTo(projectDirectory);
+            // Remove any initial ..\'s from the path
+
+
             var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
             if (syntaxTree == null)
                 continue;
@@ -33,7 +36,8 @@ internal class ProcessScriptsJob : ModJob
                 document = await processor.ProcessAsync(document, context);
             }
 
-            var outputPath = Path.Combine(outputDirectory.FullName, relativePath);
+
+            var outputPath = PathEx.CombineInside(outputDirectory.FullName, relativePath);
             context.Console.Trace($"Writing {relativePath} to {outputDirectory.FullName}");
             await context.FileSystem.WriteAsync(outputPath, (await document.GetTextAsync()).ToString());
         }
