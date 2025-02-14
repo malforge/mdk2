@@ -5,7 +5,4 @@
     <HasSharedItems>true</HasSharedItems>
     <SharedGUID>8a3cdcc5-4b55-4d87-a415-698a0e1ff06f</SharedGUID>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)/**/*.cs" Visible=" '$(ShowCommonFiles)' == 'true' " />
-  </ItemGroup>
 </Project>
