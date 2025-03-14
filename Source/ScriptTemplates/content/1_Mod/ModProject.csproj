@@ -1,30 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netframework48</TargetFramework>
-    <RootNamespace>ModProject</RootNamespace>
-    <LangVersion>6</LangVersion>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Configurations>Release;Debug</Configurations>
-    <Platforms>x64</Platforms>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Mal.Mdk2.ModAnalyzers" Version="2.1.10">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Mal.Mdk2.ModPackager" Version="2.1.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Mal.Mdk2.References" Version="2.2.4" />
-  </ItemGroup>
-  <ItemGroup>
-    <AdditionalFiles Include="*\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </AdditionalFiles>
-    <AdditionalFiles Remove="*\**\*.cs" />
-    <AdditionalFiles Remove="obj\**\*" />
-    <AdditionalFiles Remove="bin\**\*" />
-    <AdditionalFiles Remove="Data\SBC files can go here" />
-  </ItemGroup>
+    <PropertyGroup>
+        <TargetFramework>netframework48</TargetFramework>
+        <RootNamespace>ModProject</RootNamespace>
+        <LangVersion>6</LangVersion>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Mal.Mdk2.ModAnalyzers" Version="2.1.10">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Mal.Mdk2.ModPackager" Version="2.1.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Mal.Mdk2.References" Version="2.2.4"/>
+    </ItemGroup>
+    <ItemGroup>
+        <AdditionalFiles Include="*\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </AdditionalFiles>
+        <AdditionalFiles Include="thumb.png" Condition="Exists('thumb.png')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </AdditionalFiles>
+        <AdditionalFiles Remove="*\**\*.cs"/>
+        <AdditionalFiles Remove="obj\**\*"/>
+        <AdditionalFiles Remove="bin\**\*"/>
+        <AdditionalFiles Remove="Data\SBC files can go here"/>
+        <None Remove="thumb.png" />
+    </ItemGroup>
 </Project>
