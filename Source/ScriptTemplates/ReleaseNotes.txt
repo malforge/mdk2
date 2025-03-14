@@ -1,3 +1,6 @@
+v.2.2.25
+ - Forgot to actually run the script program's constructor in the test template.
+
 v.2.2.24
  - Added support for thumb.png in mod projects, and updated both default thumbnails.
  

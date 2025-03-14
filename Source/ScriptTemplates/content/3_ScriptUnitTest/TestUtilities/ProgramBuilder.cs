@@ -86,6 +86,8 @@ namespace PbScriptTests.TestUtilities
                 backend.GridTerminalSystem = GetGridTerminalSystem();
                 backend.IGC_ContextGetter = GetIgcContextGetter();
 
+                // Run constructor
+                constructor.Invoke(program, null);
                 return (T)program;
             }
 
