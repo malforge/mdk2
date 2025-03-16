@@ -156,7 +156,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: Deploy
     needs: build-primary
-    shell: pwsh
+
+    defaults:
+      run:
+        shell: pwsh
+
     steps:
       - name: Download NuGet artifact
         uses: actions/download-artifact@v4
