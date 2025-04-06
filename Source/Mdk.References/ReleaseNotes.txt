@@ -1,3 +1,6 @@
+v.2.2.4
+ - Package updates
+
 v.2.2.3
  - Package was not defined as a development dependency
 

@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -8,7 +9,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///     A processor that removes comments from the script.
 /// </summary>
 [RunAfter<TypeTrimmer>]
-public class CommentStripper : IScriptPostprocessor
+public class CommentStripper : IDocumentProcessor
 {
     /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext context)

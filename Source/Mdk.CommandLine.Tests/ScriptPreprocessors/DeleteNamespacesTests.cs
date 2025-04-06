@@ -4,14 +4,15 @@ using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.ScriptPreprocessors;
 
 [TestFixture]
-public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
+public class DeleteNamespacesTests : DocumentProcessorTests<DeleteNamespaces>
 {
     [Test]
     public async Task ProcessAsync_WithNoNamespace_ReturnsDocument()
@@ -35,6 +36,7 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
@@ -69,6 +71,7 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
@@ -105,6 +108,7 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())
@@ -147,6 +151,7 @@ public class DeleteNamespacesTests : ScriptPreprocessorTests<DeleteNamespaces>
             parameters,
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
             A.Fake<IImmutableSet<string>>(o => o.Strict())

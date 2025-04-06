@@ -1,3 +1,135 @@
+v.2.2.25
+ - Forgot to actually run the script program's constructor in the test template.
+
+v.2.2.24
+ - Added support for thumb.png in mod projects, and updated both default thumbnails.
+ 
+v.2.2.23
+ - Updated the package versions in the template.
+
+v.2.2.22
+ - Updated the package versions in the template.
+
+v.2.2.21
+ - Updated the package versions in the template.
+
+v.2.2.20
+ - Updated the package versions in the template.
+
+v.2.2.19
+ - Updated the package versions in the template.
+
+v.2.2.18
+ - Updated the package versions in the template.
+
+v.2.2.17
+ - Updated the package versions in the template.
+
+v.2.2.16
+ - Updated the package versions in the template.
+
+v.2.2.15
+ - Updated the package versions in the template.
+
+v.2.2.14
+ - Updated the package versions in the template.
+
+v.2.2.13
+ - Updated the package versions in the template.
+
+v.2.2.12
+ - Updated the package versions in the template.
+
+v.2.2.11
+ - Updated the package versions in the template.
+
+v.2.2.10
+ - Updated the package versions in the template.
+
+v.2.2.9
+ - Added ItemGroup to mixin template to make it easier to add files to the project in VSCode (thank you annabunches)
+ 
+v.2.2.8
+ - Fixed compile error because one should never code while tired, or be so arrogant as to think that one can publish without testing.
+
+v.2.2.7
+ - Removed the "Main" method test from the testing project as it caused more problems than it solved.
+
+v.2.2.6
+ - Added a readme file to the script testing template to inform users of the template how to use it.
+
+v.2.2.5
+ - Added a comment to tell users of the PBScriptTests template to make their Program field public.
+
+v.2.2.4
+ - No comment. Just... no comment. (made the Program in the script template public to make it easier to write tests for + that's how it is in the game anyway)
+ 
+v.2.2.3
+ - Forgot the default namespace :facepalm:
+
+v.2.2.2
+ - Test project was misnamed.
+
+v.2.2.1
+ - Updated the package versions in the template.
+
+v.2.2.0
+ - Added a unit test template for programmable block scripts
+ 
+v.2.1.1
+ - Fixed dumb error in the mod template causing it to not be able to copy files from any other folder but the Data folder
+
+v.2.1.0
+ - Added mod template. Renamed the mixin to MDK Mixin because it can be used for both mods and scripts.
+
+v.2.0.22
+ - Updated the package versions in the template.
+
+v.2.0.21
+ - Updated the package versions in the template.
+
+v.2.0.20
+ - Updated the package versions in the template.
+
+v.2.0.19
+ - Updated the package versions in the template.
+
+v.2.0.18
+ - Updated the package versions in the template.
+
+v.2.0.17
+ - Updated the package versions in the template.
+
+v.2.0.16
+ - Updated the package versions in the template.
+
+v.2.0.15
+ - Updated the package versions in the template.
+
+v.2.0.14
+ - Updated the package versions in the template.
+
+v.2.0.13
+ - Updated the package versions in the template.
+
+v.2.0.12
+ - Updated the package versions in the template.
+
+v.2.0.11
+ - Updated the package versions in the template.
+
+v.2.0.10
+ - Updated the package versions in the template.
+
+v.2.0.9
+ - Updated the package versions in the template.
+
+v.2.0.8
+ - Updated the package versions in the template.
+ 
+v.2.0.7
+ - Updated the package versions in the template.
+ 
 v.2.0.6
  - Updated the package versions in the template.
 

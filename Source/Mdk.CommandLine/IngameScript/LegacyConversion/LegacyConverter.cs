@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Mdk.CommandLine.CommandLine;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 using Mdk.CommandLine.Utility;
 
 namespace Mdk.CommandLine.IngameScript.LegacyConversion;

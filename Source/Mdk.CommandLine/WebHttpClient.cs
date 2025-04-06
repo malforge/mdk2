@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Mdk.CommandLine.SharedApi;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine;
 

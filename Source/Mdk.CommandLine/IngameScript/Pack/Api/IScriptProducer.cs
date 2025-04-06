@@ -1,6 +1,8 @@
-﻿using System.IO;
+﻿using System.Collections.Immutable;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 
 namespace Mdk.CommandLine.IngameScript.Pack.Api;
@@ -19,5 +21,5 @@ public interface IScriptProducer
     /// <param name="thumbnailDocument">An optional thumbnail document to output.</param>
     /// <param name="context">The context for the pack command, containing parameters and services useful for the producer.</param>
     /// <returns></returns>
-    Task ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context);
+    Task<ImmutableArray<ProducedFile>> ProduceAsync(DirectoryInfo outputDirectory, StringBuilder script, TextDocument? readmeDocument, TextDocument? thumbnailDocument, IPackContext context);
 }

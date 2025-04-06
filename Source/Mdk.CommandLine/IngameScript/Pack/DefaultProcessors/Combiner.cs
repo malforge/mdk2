@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -23,7 +24,7 @@ public class Combiner : IScriptCombiner
     {
         var trees = (await Task.WhenAll(documents.Select(async d => await d.GetSyntaxTreeAsync())))
             .Where(t => t is not null)
-            .Select((t, i) => new TreeWithWeight(t!))
+            .Select((t, _) => new TreeWithWeight(t!))
             .OrderBy(t => t.Weight)
             .ToList();
 

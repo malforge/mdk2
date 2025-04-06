@@ -1,0 +1,14 @@
+﻿Packer utility for Space Engineers mods.
+
+---
+
+This is part of the MDK2 project.
+
+---
+
+Disclaimer:
+
+These tools are an independent creation and is not endorsed, sponsored, nor affiliated with Keen Software House. 
+"Space Engineers" is a trademark of Keen Software House. All trademarks and copyrights used are properties of their 
+respective owners. The use of "Space Engineers" in these tools is for reference purposes only and does not imply 
+any association or endorsement.

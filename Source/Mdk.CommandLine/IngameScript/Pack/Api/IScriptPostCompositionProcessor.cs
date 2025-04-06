@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Threading.Tasks;
+using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine.IngameScript.Pack.Api;
 

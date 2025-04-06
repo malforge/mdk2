@@ -1,0 +1,3 @@
+Defining things like blocks, items, etc is done through .sbc files which have to be in the Data folder (or any subfolder).
+
+Read about them at: https://spaceengineers.wiki.gg/wiki/Modding/Reference/SBC

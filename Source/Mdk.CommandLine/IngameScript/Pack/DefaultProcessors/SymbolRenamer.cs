@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -17,7 +18,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///     size.
 /// </summary>
 [RunAfter<CommentStripper>]
-public partial class SymbolRenamer : IScriptPostprocessor
+public partial class SymbolRenamer : IDocumentProcessor
 {
     /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
@@ -205,10 +206,13 @@ public partial class SymbolRenamer : IScriptPostprocessor
             // as it's likely to be either as short, or shorter than the original type name.
             if (newNode?.Type is QualifiedNameSyntax qualifiedName)
             {
-                var varType = SyntaxFactory.IdentifierName("var")
-                    .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
-                    .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
-                return newNode.WithType(varType);
+                if (IsVarAllowedFor(qualifiedName))
+                {
+                    var varType = SyntaxFactory.IdentifierName("var")
+                        .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
+                        .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
+                    return newNode.WithType(varType);
+                }
             }
 
             return newNode!;
@@ -600,10 +604,10 @@ public partial class SymbolRenamer : IScriptPostprocessor
             if (nodeId == null)
                 return;
             var symbolInfo = _semanticModel.GetSymbolInfo(node);
-            var symbol = symbolInfo.Symbol;
+            var symbol = symbolInfo.Symbol?.OriginalDefinition ?? symbolInfo.Symbol;
             if (symbol is IMethodSymbol { MethodKind: MethodKind.ReducedExtension } methodSymbol)
                 symbol = methodSymbol.ReducedFrom ?? symbol;
-
+            
             switch (symbol)
             {
                 // If the symbol is generic, we need to find the original definition

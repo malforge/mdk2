@@ -1,7 +1,7 @@
 # MDK²-SE
 _(Malware's Development Kit for SE)_
 
-[![Build and Deploy](https://github.com/malware-dev/mdk2/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/malware-dev/mdk2/actions/workflows/dotnet.yml)
+[![Build and Deploy](https://github.com/malware-dev/mdk2/actions/workflows/buildwithartefacts.yml/badge.svg?branch=main)](https://github.com/malware-dev/mdk2/actions/workflows/dotnet.yml)
 
 A toolkit to help with ingame script (programmable block) development for Keen Software House's space sandbox Space Engineers. It helps you create a ready-to-code project for writing ingame scripts, and provides an analyzer which warns you if you're trying to use something that is not allowed in Space Engineers. It also provides a code minifier to make your deployed script as small as possible - albeit somewhat unreadable.
 
@@ -28,3 +28,5 @@ See the [wiki home page](https://github.com/malforge/mdk2/wiki) for instructions
 - - -
 
 _Space Engineers is trademarked to Keen Software House. This toolkit is fan-made, and its developer has no relation to Keen Software House._
+
+_<a href="https://www.flaticon.com/free-icons/toast" title="toast icons">Toast icons created by Freepik - Flaticon</a>_

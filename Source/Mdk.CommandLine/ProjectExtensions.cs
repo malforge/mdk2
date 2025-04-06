@@ -80,6 +80,13 @@ public static class ProjectExtensions
         // Filter for CS0246 errors
         var invalidNamespaceDiagnostics = diagnostics.Where(d => d.Id == "CS0246");
         
+        var compilerErrors = diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).ToList();
+        if (compilerErrors.Any())
+        {
+            var messages = string.Join(Environment.NewLine, compilerErrors.Select(d => d.GetMessage()));
+            throw new InvalidOperationException("Compilation failed with errors." + Environment.NewLine + messages);
+        }
+
         var root = await document.GetSyntaxRootAsync();
         if (root == null)
             throw new InvalidOperationException("Failed to get syntax root.");
