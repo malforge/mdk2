@@ -54,8 +54,9 @@ public class MinifierSubsystemsTests
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
-            ImmutableHashSet.Create<string>()
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
         // Act
@@ -124,8 +125,9 @@ public class MinifierSubsystemsTests
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
-            ImmutableHashSet.Create<string>()
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
         // Act
@@ -190,8 +192,9 @@ public class MinifierSubsystemsTests
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
-            ImmutableHashSet.Create<string>()
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
         // Act
@@ -249,8 +252,9 @@ public class MinifierSubsystemsTests
             A.Fake<IConsole>(o => o.Strict()),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileSystem>(),
-            ImmutableHashSet.Create<string>()
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
         );
 
         // Act
