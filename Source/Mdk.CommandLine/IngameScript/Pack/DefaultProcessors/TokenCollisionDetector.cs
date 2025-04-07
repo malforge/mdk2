@@ -8,6 +8,8 @@ static class TokenCollisionDetector
     {
         if (IsWord(firstKind) && IsWord(secondKind))
             return true;
+        if((firstKind == SyntaxKind.MinusToken) && (secondKind == SyntaxKind.MinusToken))
+            return true;
         return false;
     }
 
