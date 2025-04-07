@@ -1,4 +1,7 @@
-﻿v.2.1.0
+v.2.1.1
+  - Fixed a problem where the minifier compacted "- -" (minus + negate) into "--" (decrement): Thanks gg64du02
+
+v.2.1.0
    - DotNet 9 Compatibility
 
 v.2.0.14
