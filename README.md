@@ -3,15 +3,17 @@ _(Malware's Development Kit for SE)_
 
 [![Build and Deploy](https://github.com/malware-dev/mdk2/actions/workflows/buildwithartefacts.yml/badge.svg?branch=main)](https://github.com/malware-dev/mdk2/actions/workflows/dotnet.yml)
 
-A toolkit to help with ingame script (programmable block) development for Keen Software House's space sandbox Space Engineers. It helps you create a ready-to-code project for writing ingame scripts, and provides an analyzer which warns you if you're trying to use something that is not allowed in Space Engineers. It also provides a code minifier to make your deployed script as small as possible - albeit somewhat unreadable.
+A toolkit to help with developing both **programmable block scripts** and **mods** for Keen Software House’s space sandbox *Space Engineers*. It sets up a ready-to-code Visual Studio project, checks for disallowed code, and includes a script minifier for programmable blocks.
 
 ### General features
-* Helps you create a fully connected script project in Visual Studio, with all references in place
-* Class templates for normal utility classes and extension classes
-* Tells you if you're using code that's not allowed in Space Engineers (whitelist checker)
-* Deploys multiple classes into a single PB script, which then is placed in the local Workshop space for easy access in-game - no copy/paste needed
-* Supports optional code minifying: Fit more code within the limits of the programmable block
-* Allows real reusable code libraries through the use of Visual Studio's Shared Project
+* Supports both programmable block scripts and mods
+* Creates a fully connected project in Visual Studio with all references set up
+* Includes an analyzer that warns when you're using code that isn’t allowed in *Space Engineers*
+* Supports Visual Studio Shared Projects for reusable code across scripts and mods
+
+## For programmable block scripts
+* Deploys your script into a single file and places it in your local Workshop folder — no copy/paste needed
+* Optional code minifier to help stay within the programmable block's size and instruction limits
 
 ### Remarks:
 * Requires that you have the game installed, but does _not_ require you to have it running
