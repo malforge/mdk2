@@ -1,4 +1,9 @@
-﻿v.2.1.2
+﻿v.2.1.4
+   - Now supports a Content folder in the mod folder, instead of copying everything from the root. This update is
+     not breaking, as the project file still determines what the content files are, but any new projects created
+     from the updated template will use the new folder structure.
+
+v.2.1.2
    - Mod packing: When copying mixin code, relative paths (..\ etc) were not forced into the mod folder.
 
 v.2.1.1

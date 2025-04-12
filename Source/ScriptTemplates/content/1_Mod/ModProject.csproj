@@ -19,16 +19,15 @@
         <PackageReference Include="Mal.Mdk2.References" Version="2.2.4"/>
     </ItemGroup>
     <ItemGroup>
-        <AdditionalFiles Include="*\**\*">
+        <AdditionalFiles Include="Content\*\**\*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </AdditionalFiles>
         <AdditionalFiles Include="thumb.png" Condition="Exists('thumb.png')">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </AdditionalFiles>
-        <AdditionalFiles Remove="*\**\*.cs"/>
-        <AdditionalFiles Remove="obj\**\*"/>
-        <AdditionalFiles Remove="bin\**\*"/>
-        <AdditionalFiles Remove="Data\SBC files can go here"/>
+        <AdditionalFiles Remove="Content\*\**\*.cs"/>
+        <AdditionalFiles Remove="Content\Other content folders"/>
+        <AdditionalFiles Remove="Content\Data\SBC files can go here"/>
         <None Remove="thumb.png" />
     </ItemGroup>
 </Project>

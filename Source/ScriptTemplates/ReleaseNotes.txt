@@ -1,3 +1,6 @@
+v.2.2.26
+ - New folder structure for the mod template.
+
 v.2.2.25
  - Forgot to actually run the script program's constructor in the test template.
 
