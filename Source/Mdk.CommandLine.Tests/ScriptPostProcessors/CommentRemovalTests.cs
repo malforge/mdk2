@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -100,6 +99,6 @@ public class CommentRemovalTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
 }

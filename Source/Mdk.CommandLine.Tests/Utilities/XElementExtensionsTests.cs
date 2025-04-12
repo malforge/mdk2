@@ -1,5 +1,4 @@
 ﻿using System.Xml.Linq;
-using FluentAssertions;
 using Mdk.CommandLine.Utility;
 using NUnit.Framework;
 
@@ -19,8 +18,8 @@ public class XElementExtensionsTests
         var result = element.Element("", "child", "grandchild");
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be(XName.Get("grandchild"));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Name, Is.EqualTo(XName.Get("grandchild")));
     }
 
     [Test]
@@ -34,9 +33,9 @@ public class XElementExtensionsTests
         var result = element.Elements("", "child", "grandchild").ToList();
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.Should().HaveCount(2);
-        result.Should().OnlyContain(x => x.Name == XName.Get("grandchild"));
+        Assert.That(result, Is.Not.Empty);
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result, Has.All.Matches<XElement>(x => x.Name == XName.Get("grandchild")));
     }
 
     [Test]
@@ -50,8 +49,8 @@ public class XElementExtensionsTests
         var result = element.Element("", "child", "grandchild");
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Name.Should().Be(XName.Get("grandchild"));
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Name, Is.EqualTo(XName.Get("grandchild")));
     }
     
     [Test]
@@ -65,9 +64,9 @@ public class XElementExtensionsTests
         var result = element.Elements("", "child", "grandchild").ToList();
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.Should().HaveCount(1);
-        result.Should().OnlyContain(x => x.Name == XName.Get("grandchild"));
+        Assert.That(result, Is.Not.Empty);
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result, Has.All.Matches<XElement>(x => x.Name == XName.Get("grandchild")));
     }
     
     [Test]
@@ -81,7 +80,7 @@ public class XElementExtensionsTests
         var result = element.Element("", "child", "grandchild");
 
         // Assert
-        result.Should().BeNull();
+        Assert.That(result, Is.Null);
     }
     
     [Test]
@@ -95,6 +94,6 @@ public class XElementExtensionsTests
         var result = element.Elements("", "child", "grandchild").ToList();
 
         // Assert
-        result.Should().BeEmpty();
+        Assert.That(result, Is.Empty);
     }
 }

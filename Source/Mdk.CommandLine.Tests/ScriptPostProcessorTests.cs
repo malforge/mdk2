@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -45,6 +44,6 @@ public abstract class ScriptPostProcessorTests<T> where T : class, IScriptPostpr
         var result = await annotator.ProcessAsync(document, context);
 
         // Assert
-        result.Should().BeSameAs(document);
+        Assert.That(result, Is.EqualTo(document));
     }
 }

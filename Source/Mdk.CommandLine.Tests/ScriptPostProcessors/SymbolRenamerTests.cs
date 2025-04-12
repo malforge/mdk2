@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;

@@ -2,7 +2,6 @@
 using System.Text;
 using System.Xml.Linq;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.LegacyConversion;
@@ -47,8 +46,8 @@ public class LegacyConverterTests
             CreateLocalProjectCopy(projectDirectory);
 
             var mdkProject = await MdkProject.LoadAsync(projectFileName, console).SingleAsync();
-            mdkProject.Type.Should().Be(MdkProjectType.LegacyProgrammableBlock);
-            mdkProject.Project.Should().NotBeNull();
+            Assert.That(mdkProject.Type, Is.EqualTo(MdkProjectType.LegacyProgrammableBlock));
+            Assert.That(mdkProject.Project, Is.Not.Null);
             
             var converter = new LegacyConverter();
             var parameters = new Parameters()
@@ -70,19 +69,19 @@ public class LegacyConverterTests
             var document = XDocument.Parse(projectFileContent);
 
             var mainIniFileName = Path.Combine(projectDirectory, "LegacyScriptProject.mdk.ini");
-            File.Exists(mainIniFileName).Should().BeTrue();
+            Assert.That(File.Exists(mainIniFileName), Is.True);
             var iniContent = await File.ReadAllTextAsync(mainIniFileName);
             Console.WriteLine($"--- {mainIniFileName} ---");
             Console.WriteLine(iniContent);
             
             var localIniFileName = Path.Combine(projectDirectory, "LegacyScriptProject.mdk.local.ini");
-            File.Exists(localIniFileName).Should().BeTrue();
+            Assert.That(File.Exists(localIniFileName), Is.True);
             iniContent = await File.ReadAllTextAsync(localIniFileName);
             Console.WriteLine($"--- {localIniFileName} ---");
             Console.WriteLine(iniContent);
             
             var gitIgnoreFileName = Path.Combine(projectDirectory, ".gitignore");
-            File.Exists(gitIgnoreFileName).Should().BeTrue();
+            Assert.That(File.Exists(gitIgnoreFileName), Is.True);
             var gitIgnoreContent = await File.ReadAllTextAsync(gitIgnoreFileName);
             Console.WriteLine($"--- {gitIgnoreFileName} ---");
             Console.WriteLine(gitIgnoreContent);
@@ -109,7 +108,7 @@ public class LegacyConverterTests
             //     .WithAttribute("SourceFiles", a => ((string?)a)?.EndsWith("mdk.paths.props", StringComparison.OrdinalIgnoreCase) == true).Should().BeEmpty();
             
             // document should contain a reference to the Mal.Mdk2.PbPackager package
-            document.Elements(MsbuildNs, "Project", "ItemGroup", "PackageReference").WithAttribute("Include", "Mal.Mdk2.PbPackager").Should().HaveCount(1);
+            Assert.That(document.Elements(MsbuildNs, "Project", "ItemGroup", "PackageReference").WithAttribute("Include", "Mal.Mdk2.PbPackager").Count(), Is.EqualTo(1));
             
             // // document should contain a reference to the Mal.Mdk2.References package
             // document.Elements(MsbuildNs, "Project", "ItemGroup", "PackageReference").WithAttribute("Include", "Mal.Mdk2.References").Should().HaveCount(1);

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -56,7 +55,7 @@ public class PartialMergerTests : DocumentProcessorTests<PartialMerger>
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
                 class Program
                 {
@@ -64,7 +63,7 @@ public class PartialMergerTests : DocumentProcessorTests<PartialMerger>
                     void Method2() {}
                 }
 
-                """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n")));
     }
 
     [Test]
@@ -110,14 +109,14 @@ public class PartialMergerTests : DocumentProcessorTests<PartialMerger>
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
                 struct Program
                 {
                     void Method1() {}
                     void Method2() {}
                 }
-                """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n")));
     }
 
     [Test]
@@ -163,14 +162,14 @@ public class PartialMergerTests : DocumentProcessorTests<PartialMerger>
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
                 interface IProgram
                 {
                     void Method1();
                     void Method2();
                 }
-                """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n")));
     }
 
     [Test]
@@ -220,7 +219,7 @@ public class PartialMergerTests : DocumentProcessorTests<PartialMerger>
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
                 class PartialClassOne
                 {
@@ -232,6 +231,6 @@ public class PartialMergerTests : DocumentProcessorTests<PartialMerger>
                     void Method2() {}
                 }
 
-                """.Replace("\r\n", "\n"));
+                """.Replace("\r\n", "\n")));
     }
 }

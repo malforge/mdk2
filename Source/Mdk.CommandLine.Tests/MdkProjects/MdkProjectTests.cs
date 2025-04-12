@@ -1,5 +1,4 @@
 ﻿using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine;
 using Mdk.CommandLine.Shared.Api;
 using NUnit.Framework;
@@ -17,10 +16,10 @@ public class MdkProjectTests
         var n = 0;
         await foreach (var project in MdkProject.LoadAsync("TestData/LegacyScriptProject/LegacyScriptProject.csproj", console))
         {
-            project.Type.Should().Be(MdkProjectType.LegacyProgrammableBlock);
+            Assert.That(project.Type, Is.EqualTo(MdkProjectType.LegacyProgrammableBlock));
             n++;
         }
         
-        n.Should().Be(1);
+        Assert.That(n, Is.EqualTo(1));
     }
 }

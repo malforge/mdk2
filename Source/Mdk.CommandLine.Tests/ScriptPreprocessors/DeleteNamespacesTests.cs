@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -46,7 +45,7 @@ public class DeleteNamespacesTests : DocumentProcessorTests<DeleteNamespaces>
         var result = await processor.ProcessAsync(document, context);
 
         // Assert
-        result.Should().BeSameAs(document);
+        Assert.That(result, Is.SameAs(document));
     }
 
     [Test]
@@ -82,7 +81,7 @@ public class DeleteNamespacesTests : DocumentProcessorTests<DeleteNamespaces>
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(" class Program {}".Replace("\r\n", "\n"));
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(" class Program {}".Replace("\r\n", "\n")));
     }
 
     [Test]
@@ -119,7 +118,7 @@ public class DeleteNamespacesTests : DocumentProcessorTests<DeleteNamespaces>
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(" class Program {}".Replace("\r\n", "\n"));
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(" class Program {}".Replace("\r\n", "\n")));
     }
     [Test]
     public async Task ProcessAsync_WithNamespace_WillUnindent()
@@ -162,11 +161,11 @@ public class DeleteNamespacesTests : DocumentProcessorTests<DeleteNamespaces>
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be("""
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo("""
                                                           class Program
                                                           {
                                                           }
-
-                                                          """.Replace("\r\n", "\n"));
+                                                          
+                                                          """.Replace("\r\n", "\n")));
     }
 }

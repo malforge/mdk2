@@ -1,5 +1,4 @@
 ﻿using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine;
 using Mdk.CommandLine.Shared.Api;
 using NUnit.Framework;
@@ -25,11 +24,11 @@ public class ProjectBasedRegressionTests
             .Build();
 
         var result = await Program.RunAsync(peripherals);
-        result.HasValue.Should().BeTrue();
-        result!.Value.Length.Should().Be(1);
+        Assert.That(result.HasValue, Is.True);
+        Assert.That(result!.Value.Length, Is.EqualTo(1));
         var project = result.Value[0];
-        project.Name.Should().NotBeNullOrEmpty();
-        project.ProducedFiles.Should().NotBeEmpty();
-        project.ProducedFiles.Should().ContainSingle(f => f.Id == "script.cs");
+        Assert.That(project.Name, Is.Not.Null.Or.Empty);
+        Assert.That(project.ProducedFiles, Is.Not.Empty);
+        Assert.That(project.ProducedFiles.Count(f => f.Id == "script.cs"), Is.EqualTo(1));
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -81,7 +80,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
     
     [Test]
@@ -136,7 +135,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
     
     [Test]
@@ -194,7 +193,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
     
     [Test]
@@ -251,7 +250,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
     
     [Test]
@@ -307,7 +306,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
     
     [Test]
@@ -359,7 +358,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
     
     [Test]
@@ -411,7 +410,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await document.GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
 
     [Test]
@@ -503,6 +502,6 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
         var actual = await result.GetTextAsync();
 
-        actual.ToString().Should().Be(expected.ToString());
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
     }
 }

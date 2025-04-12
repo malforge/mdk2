@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -26,7 +25,7 @@ public class TypeSorterTests : DocumentProcessorTests<TypeSorter>
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
@@ -47,7 +46,7 @@ public class TypeSorterTests : DocumentProcessorTests<TypeSorter>
         var result = await processor.ProcessAsync(document, context);
 
         // Assert
-        result.Should().BeSameAs(document);
+        Assert.That(result, Is.SameAs(document));
     }
 
     [Test]
@@ -61,7 +60,7 @@ public class TypeSorterTests : DocumentProcessorTests<TypeSorter>
         var parameters = new Parameters
         {
             Verb = Verb.Pack,
-            PackVerb = 
+            PackVerb =
             {
                 MinifierLevel = MinifierLevel.None,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
@@ -83,7 +82,7 @@ public class TypeSorterTests : DocumentProcessorTests<TypeSorter>
 
         // Assert
         var syntaxRoot = await result.GetSyntaxRootAsync();
-        syntaxRoot.Should().NotBeNull();
-        syntaxRoot!.ChildNodes().OfType<TypeDeclarationSyntax>().Select(t => t.Identifier.Text).Should().Equal("Program", "A", "B");
+        Assert.That(syntaxRoot, Is.Not.Null);
+        Assert.That(syntaxRoot!.ChildNodes().OfType<TypeDeclarationSyntax>().Select(t => t.Identifier.Text), Is.EqualTo(new[] { "Program", "A", "B" }));
     }
 }

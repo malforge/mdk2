@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -33,7 +32,7 @@ public abstract class DocumentProcessorTests<T> where T : class, IDocumentProces
         };
         var context = new PackContext(
             parameters,
-            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IConsole>(),
             A.Fake<IInteraction>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
             A.Fake<IFileFilter>(o => o.Strict()),
@@ -45,6 +44,6 @@ public abstract class DocumentProcessorTests<T> where T : class, IDocumentProces
         var result = await annotator.ProcessAsync(document, context);
 
         // Assert
-        result.Should().BeSameAs(document);
+        Assert.That(result, Is.SameAs(document));
     }
 }

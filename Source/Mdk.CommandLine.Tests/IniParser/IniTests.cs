@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-using Mdk.CommandLine;
-using Mdk.CommandLine.Utility;
+﻿using Mdk.CommandLine.Utility;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.IniParser;
@@ -19,12 +17,12 @@ output=bin
 interactive=false
 ";
         var result = Ini.TryParse(ini, out var parsed);
-        result.Should().BeTrue();
-        parsed["mdk2"].Keys.Should().NotBeEmpty();
-        parsed["mdk2"]["minifier"].ToString().Should().Be("advanced");
-        parsed["mdk2"]["trimUnusedTypes"].ToBool().Should().BeTrue();
-        parsed["mdk2"]["output"].ToString().Should().Be("bin");
-        parsed["mdk2"]["interactive"].ToBool().Should().BeFalse();
+        Assert.That(result, Is.True);
+        Assert.That(parsed["mdk2"].Keys, Is.Not.Empty);
+        Assert.That(parsed["mdk2"]["minifier"].ToString(), Is.EqualTo("advanced"));
+        Assert.That(parsed["mdk2"]["trimUnusedTypes"].ToBool(), Is.True);
+        Assert.That(parsed["mdk2"]["output"].ToString(), Is.EqualTo("bin"));
+        Assert.That(parsed["mdk2"]["interactive"].ToBool(), Is.False);
 
         Console.WriteLine(parsed);
     }
@@ -32,17 +30,22 @@ interactive=false
     [Test]
     public void TryParse_ForSectionWithLeadingComment_ReturnsTrue()
     {
-        var ini = @"
-; This is a comment
-[a-section]
-key=value
-";
+        var ini = """
+
+                  ; This is a comment
+                  [a-section]
+                  key=value
+
+                  """;
         var result = Ini.TryParse(ini, out var parsed);
-        result.Should().BeTrue();
-        parsed["a-section"].Keys.Should().NotBeEmpty();
-        parsed["a-section"]["key"].ToString().Should().Be("value");
-        parsed["a-section"].LeadingComment!.Replace("\r", "").Should().Be(@"
-; This is a comment".Replace("\r", ""));
+        Assert.That(result, Is.True);
+        Assert.That(parsed["a-section"].Keys, Is.Not.Empty);
+        Assert.That(parsed["a-section"]["key"].ToString(), Is.EqualTo("value"));
+        Assert.That(parsed["a-section"].LeadingComment!.Replace("\r", ""), Is.EqualTo(
+            """
+            
+            ; This is a comment
+            """.Replace("\r", "")));
 
         Console.WriteLine(parsed);
     }
@@ -55,10 +58,10 @@ key=value
 key=value
 ";
         var result = Ini.TryParse(ini, out var parsed);
-        result.Should().BeTrue();
-        parsed["non-existing-section"].Keys.Should().BeEmpty();
-        parsed["a-section"]["non-existing-key"].ToString("default").Should().Be("default");
-        parsed["non-existing-section"]["non-existing-key"].ToString("default").Should().Be("default");
+        Assert.That(result, Is.True);
+        Assert.That(parsed["non-existing-section"].Keys, Is.Empty);
+        Assert.That(parsed["a-section"]["non-existing-key"].ToString("default"), Is.EqualTo("default"));
+        Assert.That(parsed["non-existing-section"]["non-existing-key"].ToString("default"), Is.EqualTo("default"));
     }
 
     [Test]
@@ -69,8 +72,8 @@ key=value
 key=EnumValue
 ";
         var result = Ini.TryParse(ini, out var parsed);
-        result.Should().BeTrue();
-        parsed["a-section"]["key"].ToEnum<EnumType>().Should().Be(EnumType.EnumValue);
+        Assert.That(result, Is.True);
+        Assert.That(parsed["a-section"]["key"].ToEnum<EnumType>(), Is.EqualTo(EnumType.EnumValue));
     }
 
     [Test]
@@ -81,8 +84,8 @@ key=EnumValue
 key=InvalidValue
 ";
         var result = Ini.TryParse(ini, out var parsed);
-        result.Should().BeTrue();
-        parsed["a-section"]["key"].ToEnum(EnumType.Default).Should().Be(EnumType.Default);
+        Assert.That(result, Is.True);
+        Assert.That(parsed["a-section"]["key"].ToEnum(EnumType.Default), Is.EqualTo(EnumType.Default));
     }
 
     [Test]
@@ -121,7 +124,7 @@ key=InvalidValue
             sbyte-key=42
             
             """;
-        ini.ToString().Replace("\r", "").Should().Be(expected.Replace("\r", ""));
+        Assert.That(ini.ToString().Replace("\r", ""), Is.EqualTo(expected.Replace("\r", "")));
     }
 
     enum EnumType

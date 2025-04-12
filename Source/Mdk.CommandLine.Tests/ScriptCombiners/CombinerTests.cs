@@ -2,7 +2,6 @@
 using System.Reflection;
 using System.Text;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -127,13 +126,13 @@ public class CombinerTests
         var result = await combiner.CombineAsync(project, new[] { document1, document2, document3, document4, document5 }, context);
 
         // Assert
-        result.Should().NotBeNull();
+        Assert.That(result, Is.Not.Null);
         var syntaxTree = await result.GetSyntaxTreeAsync();
-        syntaxTree.Should().NotBeNull();
+        Assert.That(syntaxTree, Is.Not.Null);
         var root = await syntaxTree!.GetRootAsync();
-        root.Should().NotBeNull();
+        Assert.That(root, Is.Not.Null);
         var usingDirectives = root.DescendantNodes().OfType<UsingDirectiveSyntax>().Select(u => u.Name?.ToString()).ToList();
-        usingDirectives.Should().HaveCount(5);
-        usingDirectives.Should().BeEquivalentTo("System", "System.Collections.Generic", "System.Linq", "System.Text", "System.Threading.Tasks");
+        Assert.That(usingDirectives, Has.Count.EqualTo(5));
+        Assert.That(usingDirectives, Is.EquivalentTo(new[] { "System", "System.Collections.Generic", "System.Linq", "System.Text", "System.Threading.Tasks" }));
     }
 }

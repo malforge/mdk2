@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -47,7 +46,7 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
         var result = processor.ProcessAsync(document, context).Result;
 
         // Assert
-        result.Should().BeSameAs(document);
+        Assert.That(result, Is.EqualTo(document));
     }
 
     [Test]
@@ -100,23 +99,23 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
         var result = processor.ProcessAsync(document, context).Result;
 
         // Assert
-        result.Should().NotBeSameAs(document);
+        Assert.That(result, Is.Not.SameAs(document));
         var root = await result.GetSyntaxRootAsync();
-        root.Should().NotBeNull();
-
+        Assert.That(root, Is.Not.Null);
+        
         var unAnnotatedClass = root!.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "UnAnnotatedClass");
         var annotations = unAnnotatedClass.GetAnnotations("MDK");
-        annotations.Should().BeEmpty();
-
+        Assert.That(annotations, Is.Empty);
+        
         var annotatedClass = root.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "AnnotatedClass");
         annotations = annotatedClass.GetAnnotations("MDK");
-        annotations.Should().NotBeEmpty();
-
+        Assert.That(annotations, Is.Not.Empty);
+        
         var classWithInternalRegion = root.DescendantNodes().OfType<ClassDeclarationSyntax>().First(c => c.Identifier.Text == "ClassWithInternalRegion");
         annotations = classWithInternalRegion.GetAnnotations("MDK");
-        annotations.Should().BeEmpty();
+        Assert.That(annotations, Is.Empty);
         var annotatedProperty = classWithInternalRegion.DescendantNodes().OfType<PropertyDeclarationSyntax>().First(p => p.Identifier.Text == "AnnotatedProperty");
         annotations = annotatedProperty.GetAnnotations("MDK");
-        annotations.Should().NotBeEmpty();
+        Assert.That(annotations, Is.Not.Empty);
     }
 }

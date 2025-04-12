@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Mdk.CommandLine;
+﻿using Mdk.CommandLine;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.SemanticVersionParser;
@@ -12,8 +11,8 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse("1.0.0", out var version);
         Console.WriteLine(version);
-        result.Should().BeTrue();
-        version.ToString().Should().Be("1.0.0");
+        Assert.That(result, Is.True);
+        Assert.That(version.ToString(), Is.EqualTo("1.0.0"));
     }
 
     [Test]
@@ -21,8 +20,8 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse("1.0.0-alpha", out var version);
         Console.WriteLine(version);
-        result.Should().BeTrue();
-        version.ToString().Should().Be("1.0.0-alpha");
+        Assert.That(result, Is.True);
+        Assert.That(version.ToString(), Is.EqualTo("1.0.0-alpha"));
     }
 
     [Test]
@@ -30,8 +29,8 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse("1.0.0-alpha+build", out var version);
         Console.WriteLine(version);
-        result.Should().BeTrue();
-        version.ToString().Should().Be("1.0.0-alpha+build");
+        Assert.That(result, Is.True);
+        Assert.That(version.ToString(), Is.EqualTo("1.0.0-alpha+build"));
     }
 
     [Test]
@@ -39,7 +38,7 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse("1.0", out var version);
         Console.WriteLine(version);
-        result.Should().BeFalse();
+        Assert.That(result, Is.False);
     }
 
     [Test]
@@ -48,7 +47,7 @@ public class SemanticVersionTests
         var version1 = new SemanticVersion(1, 0, 0);
         var version2 = new SemanticVersion(1, 0, 0);
 
-        version1.CompareTo(version2).Should().Be(0);
+        Assert.That(version1.CompareTo(version2), Is.EqualTo(0));
     }
     
     [Test]
@@ -57,8 +56,8 @@ public class SemanticVersionTests
         var normalVersion = new SemanticVersion(1, 0, 0);
         var prereleaseVersion = new SemanticVersion(1, 0, 0, "alpha");
 
-        normalVersion.CompareTo(prereleaseVersion).Should().BeGreaterThan(0);
-        prereleaseVersion.CompareTo(normalVersion).Should().BeLessThan(0);
+        Assert.That(normalVersion.CompareTo(prereleaseVersion), Is.GreaterThan(0));
+        Assert.That(prereleaseVersion.CompareTo(normalVersion), Is.LessThan(0));
     }
 
     [Test]
@@ -67,8 +66,8 @@ public class SemanticVersionTests
         var version1 = new SemanticVersion(1, 0, 0, "alpha.1");
         var version2 = new SemanticVersion(1, 0, 0, "alpha.2");
 
-        version1.CompareTo(version2).Should().BeLessThan(0);
-        version2.CompareTo(version1).Should().BeGreaterThan(0);
+        Assert.That(version1.CompareTo(version2), Is.LessThan(0));
+        Assert.That(version2.CompareTo(version1), Is.GreaterThan(0));
     }
 
     [Test]
@@ -77,8 +76,8 @@ public class SemanticVersionTests
         var version1 = new SemanticVersion(1, 0, 0, "alpha.beta");
         var version2 = new SemanticVersion(1, 0, 0, "alpha.gamma");
 
-        version1.CompareTo(version2).Should().BeLessThan(0);
-        version2.CompareTo(version1).Should().BeGreaterThan(0);
+        Assert.That(version1.CompareTo(version2), Is.LessThan(0));
+        Assert.That(version2.CompareTo(version1), Is.GreaterThan(0));
     }
     
     [Test]
@@ -86,9 +85,10 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse("*", out var version);
         Console.WriteLine(version);
-        result.Should().BeTrue();
-        version.ToString().Should().Be("*");
-        version.Wildcard.Should().BeTrue();
+        
+        Assert.That(result, Is.True);
+        Assert.That(version.ToString(), Is.EqualTo("*"));
+        Assert.That(version.Wildcard, Is.True);
     }
     
     [Test]
@@ -96,12 +96,12 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse("2.*", out var version);
         Console.WriteLine(version);
-        result.Should().BeTrue();
-        version.ToString().Should().Be("2.*");
-        version.Major.Should().Be(2);
-        version.Minor.Should().Be(-1);
-        version.Patch.Should().Be(-1);
-        version.Wildcard.Should().BeTrue();
+        Assert.That(result, Is.True);
+        Assert.That(version.ToString(), Is.EqualTo("2.*"));
+        Assert.That(version.Major, Is.EqualTo(2));
+        Assert.That(version.Minor, Is.EqualTo(-1));
+        Assert.That(version.Patch, Is.EqualTo(-1));
+        Assert.That(version.Wildcard, Is.True);
     }
     
     [Test]
@@ -109,12 +109,13 @@ public class SemanticVersionTests
     {
         var result = SemanticVersion.TryParse("2.1.*", out var version);
         Console.WriteLine(version);
-        result.Should().BeTrue();
-        version.ToString().Should().Be("2.1.*");
-        version.Major.Should().Be(2);
-        version.Minor.Should().Be(1);
-        version.Patch.Should().Be(-1);
-        version.Wildcard.Should().BeTrue();
+        
+        Assert.That(result, Is.True);
+        Assert.That(version.ToString(), Is.EqualTo("2.1.*"));
+        Assert.That(version.Major, Is.EqualTo(2));
+        Assert.That(version.Minor, Is.EqualTo(1));
+        Assert.That(version.Patch, Is.EqualTo(-1));
+        Assert.That(version.Wildcard, Is.True);
     }
     
     [Test]
@@ -127,9 +128,9 @@ public class SemanticVersionTests
         
         var starVersion = new SemanticVersion(2, -1, -1, wildcard: true);
         
-        version1.CompareTo(starVersion).Should().BeLessThan(0);
-        version2.CompareTo(starVersion).Should().Be(0);
-        version3.CompareTo(starVersion).Should().Be(0);
-        version4.CompareTo(starVersion).Should().Be(0);
+        Assert.That(version1.CompareTo(starVersion), Is.LessThan(0));
+        Assert.That(version2.CompareTo(starVersion), Is.EqualTo(0));
+        Assert.That(version3.CompareTo(starVersion), Is.EqualTo(0));
+        Assert.That(version4.CompareTo(starVersion), Is.EqualTo(0));
     }
 }

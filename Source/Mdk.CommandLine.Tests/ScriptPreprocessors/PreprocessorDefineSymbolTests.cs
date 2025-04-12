@@ -1,7 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -67,7 +66,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
         // Assert
         var text = await result.GetTextAsync();
         //Console.WriteLine(text);
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
@@ -78,7 +77,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
                     var y = 2;
                 }
             }
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
     [Test]
@@ -128,7 +127,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
@@ -139,7 +138,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
                     var y = 2;
                 }
             }
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
 
@@ -191,7 +190,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
@@ -203,7 +202,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
                     var y = 2;
                 }
             }
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
 
@@ -254,7 +253,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
@@ -265,7 +264,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
                     var y = 2;
                 }
             }
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
 
@@ -317,7 +316,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
@@ -329,7 +328,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
                     var y = 2;
                 }
             }
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
 
@@ -381,7 +380,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
@@ -392,7 +391,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
                     var y = 2;
                 }
             }
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
 
@@ -448,7 +447,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
 
         // Assert
         var text = await result.GetTextAsync();
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
@@ -461,7 +460,7 @@ public class PreprocessorDefineSymbolTests : DocumentProcessorTests<Preprocessor
                     var z = 3;
                 }
             }
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
 }

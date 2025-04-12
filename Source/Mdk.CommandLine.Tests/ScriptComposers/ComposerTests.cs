@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -113,7 +112,7 @@ public class ComposerTests
 
         // Assert
         var str = result.ToString();
-        str.Should().Be(expected.Replace("\r\n", "\n"));
-        str.Should().NotContain("\r\n");
+        Assert.That(str, Is.EqualTo(expected.Replace("\r\n", "\n")));
+        Assert.That(str, Does.Not.Contain("\r\n"));
     }
 }
