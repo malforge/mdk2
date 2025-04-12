@@ -1,7 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using FakeItEasy;
-using FluentAssertions;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
 using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
@@ -10,7 +9,7 @@ using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
-namespace MDK.CommandLine.Tests.MinifierSubsystemsTests;
+namespace MDK.CommandLine.Tests.ScriptMinifier;
 
 [TestFixture]
 [SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
@@ -66,14 +65,14 @@ public class MinifierSubsystemsTests
         // Assert
         var text = await result.GetTextAsync();
         Console.WriteLine("full minifier is on:" + text + " does it look minified ?");
-        text.ToString().Replace("\r\n", "\n").Should().Be(
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(
             """
             using System;
 
             public class Program
             {
             public void Main(){var y=2;}}
-            """.Replace("\r\n", "\n"));
+            """.Replace("\r\n", "\n")));
     }
 
     //==================
@@ -137,7 +136,7 @@ public class MinifierSubsystemsTests
         // Assert
         var text = await result.GetTextAsync();
         Console.WriteLine("full minifier is on:" + text + " does it look minified ?");
-        text.ToString().Replace("\r\n", "\n").Should().Be(expectedDocument.Replace("\r\n", "\n"));
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(expectedDocument.Replace("\r\n", "\n")));
     }
 
     //==================
@@ -204,7 +203,7 @@ public class MinifierSubsystemsTests
         // Assert
         var text = await result.GetTextAsync();
         Console.WriteLine("full minifier is on:" + text + " does it look minified ?");
-        text.ToString().Replace("\r\n", "\n").Should().Be(expectedDocument.Replace("\r\n", "\n"));
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(expectedDocument.Replace("\r\n", "\n")));
     }
 
     [Test]
@@ -264,7 +263,7 @@ public class MinifierSubsystemsTests
         // Assert
         var text = await result.GetTextAsync();
         Console.WriteLine("full minifier is on:" + text + " does it look minified ?");
-        text.ToString().Replace("\r\n", "\n").Should().Be(expectedDocument.Replace("\r\n", "\n"));
+        Assert.That(text.ToString().Replace("\r\n", "\n"), Is.EqualTo(expectedDocument.Replace("\r\n", "\n")));
     }
 
 
