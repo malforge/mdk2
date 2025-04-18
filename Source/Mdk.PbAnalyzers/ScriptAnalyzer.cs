@@ -18,18 +18,30 @@ using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Mdk2.PbAnalyzers
 {
+    /// <summary>
+    /// Analyzes ingame scripts for compliance with Space Engineers' restrictions and conventions.
+    /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     [SuppressMessage("MicrosoftCodeAnalysisReleaseTracking", "RS2008:Enable analyzer release tracking")]
     public class ScriptAnalyzer : DiagnosticAnalyzer
     {
         const string DefaultNamespaceName = "IngameScript";
 
+        /// <summary>
+        /// Diagnostic rule for prohibited types or members.
+        /// </summary>
         internal static readonly DiagnosticDescriptor ProhibitedMemberRule
             = new DiagnosticDescriptor("MDK01", "Prohibited Type Or Member", "The type or member '{0}' is prohibited in Space Engineers", "Whitelist", DiagnosticSeverity.Error, true);
 
+        /// <summary>
+        /// Diagnostic rule for prohibited types or members.
+        /// </summary>
         internal static readonly DiagnosticDescriptor ProhibitedLanguageElementRule
             = new DiagnosticDescriptor("MDK02", "Prohibited Language Element", "The language element '{0}' is prohibited in Space Engineers", "Whitelist", DiagnosticSeverity.Error, true);
 
+        /// <summary>
+        /// Diagnostic rule for inconsistent namespace declarations.
+        /// </summary>
         internal static readonly DiagnosticDescriptor InconsistentNamespaceDeclarationRule
             = new DiagnosticDescriptor("MDK03", "Inconsistent Namespace Declaration", "All ingame script code should be within the {0} namespace in order to avoid problems", "Whitelist", DiagnosticSeverity.Warning, true);
 
@@ -42,12 +54,19 @@ namespace Mdk2.PbAnalyzers
         string _projectDir;
         Matcher _mdkIgnorePaths;
 
+        /// <summary>
+        /// Gets the list of supported diagnostics for this analyzer.
+        /// </summary>
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
             = ImmutableArray.Create(
                 ProhibitedMemberRule,
                 ProhibitedLanguageElementRule,
                 InconsistentNamespaceDeclarationRule);
 
+        /// <summary>
+        /// Initializes the analyzer and registers the necessary actions.
+        /// </summary>
+        /// <param name="context">The analysis context.</param>
         public override void Initialize(AnalysisContext context)
         {
             context.EnableConcurrentExecution();

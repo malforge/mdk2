@@ -1,3 +1,6 @@
+v.2.2.27
+ - Updated the package versions in the template.
+
 v.2.2.26
  - New folder structure for the mod template.
 
