@@ -44,11 +44,6 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="MSTest.TestAdapter" Version="3.7.0" />
-      <PackageReference Include="MSTest.TestFramework" Version="3.7.0" />
-      <PackageReference Include="NUnit" Version="4.3.2" />
-      <PackageReference Include="Microsoft.IO.Redist" Version="6.1.0" />
-      <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
     </ItemGroup>
     
 </Project>
