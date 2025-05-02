@@ -322,3 +322,4 @@ VRage.Game.Components.MyResourceSinkComponentBase.SuppliedRatioByType(VRage.Game
 System.ArrayExtensions, VRage.Library
 System.ArrayExtensions.Contains<T>(T[], T), VRage.Library
 VRage.Game.ModAPI.Ingame.MyPhysicalInventoryItemExtensions_ModAPI+*, Sandbox.Game
+System.Collections.Immutable.*, System.Collections.Immutable

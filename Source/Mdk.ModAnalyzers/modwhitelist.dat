@@ -383,3 +383,9 @@ ParallelTasks.WorkData.FlagAsFailed(), VRage.Library
 System.ArrayExtensions, VRage.Library
 System.ArrayExtensions.Contains<T>(T[], T), VRage.Library
 VRage.Game.ModAPI.Ingame.MyPhysicalInventoryItemExtensions_ModAPI+*, Sandbox.Game
+System.Collections.Immutable.*, System.Collections.Immutable
+VRage.Game.ModAPI.Network.*, VRage.Game
+VRage.Sync.SyncDirection.BothWays+*, VRage
+VRage.Sync.SyncDirection.FromServer+*, VRage
+VRage.Sync.SyncExtensions+*, VRage
+VRage.Network.IMyEventProxy+*, VRage

@@ -8,7 +8,7 @@
     <Platforms>x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Mal.Mdk2.ModAnalyzers" Version="2.1.11">
+    <PackageReference Include="Mal.Mdk2.ModAnalyzers" Version="2.1.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
