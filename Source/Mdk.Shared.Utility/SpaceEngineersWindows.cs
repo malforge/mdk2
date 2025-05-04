@@ -2,14 +2,14 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using Mdk2.References.Utility;
 
-namespace Mdk.CommandLine
+namespace Mdk2.Shared.Utility
 {
     /// <summary>
     /// Utility service to retrieve information about Space Engineers (copyright Keen Software House, no affiliation)
     /// </summary>
-    [SupportedOSPlatform("windows")]
-    class SpaceEngineers
+    class SpaceEngineersWindows : ISpaceEngineers
     {
         /// <summary>
         /// The <see cref="Steam"/> service
@@ -24,16 +24,22 @@ namespace Mdk.CommandLine
         /// <summary>
         /// Attempts to get the install path of Space Engineers.
         /// </summary>
+        /// <returns></returns>
+        public string GetInstallPath() => GetInstallPath(Array.Empty<string>());
+
+        /// <summary>
+        /// Attempts to get the install path of Space Engineers.
+        /// </summary>
         /// <param name="subfolders">The desired subfolder path, if any</param>
         /// <returns></returns>
-        public string? GetInstallPath(params string[]? subfolders)
+        public string GetInstallPath(params string[] subfolders)
         {
             if (!Steam.Exists)
-                return null;
+                throw new Exception("Steam doesn't exist");
             var installFolder = Steam.GetInstallFolder("SpaceEngineers", "Bin64\\SpaceEngineers.exe");
             if (string.IsNullOrEmpty(installFolder))
-                return null;
-            if (subfolders == null || subfolders.Length == 0)
+                throw new Exception("Steam isn't installed");
+            if (subfolders.Length == 0)
                 return Path.GetFullPath(installFolder);
 
             subfolders = new[] {installFolder}.Concat(subfolders).ToArray();
@@ -43,12 +49,18 @@ namespace Mdk.CommandLine
         /// <summary>
         /// Attempts to get the default data path for Space Engineers.
         /// </summary>
+        /// <returns></returns>
+        public string GetDataPath() => GetDataPath(Array.Empty<string>());
+
+        /// <summary>
+        /// Attempts to get the default data path for Space Engineers.
+        /// </summary>
         /// <param name="subfolders">The desired subfolder path, if any</param>
         /// <returns></returns>
-        public string GetDataPath(params string[]? subfolders)
+        public string GetDataPath(params string[] subfolders)
         {
             var dataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SpaceEngineers");
-            if (subfolders == null || subfolders.Length <= 0)
+            if (subfolders.Length <= 0)
                 return Path.GetFullPath(dataFolder);
 
             subfolders = new[] {dataFolder}.Concat(subfolders).ToArray();

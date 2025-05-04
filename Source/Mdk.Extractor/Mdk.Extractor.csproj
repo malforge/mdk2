@@ -6,6 +6,7 @@
         <AssemblyName>mdkx</AssemblyName>
         <LangVersion>latest</LangVersion>
         <Configurations>Release;Debug</Configurations>
+        <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
         <Platforms>x64</Platforms>
     </PropertyGroup>
 
@@ -40,10 +41,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Mal.Mdk2.References" Version="2.2.3">
+      <PackageReference Include="Mal.Mdk2.References" Version="2.2.4">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
     </ItemGroup>
+
+    <Import Project="..\Mdk.Shared.Utility\Mdk.Shared.Utility.projitems" Label="Shared" />
     
 </Project>

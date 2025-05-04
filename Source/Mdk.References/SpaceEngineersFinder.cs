@@ -6,6 +6,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Mdk2.References.Utility;
+using Mdk2.Shared.Utility;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 
@@ -41,18 +42,22 @@ namespace Mdk2.References
                     if (LoadFromIni(iniFileName)) return true;
                 }
             }
-            
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+
+            try
             {
-                Log.LogWarning("Unable to determine the location of Space Engineers, because we're not running on Windows. If you have a .mdk.local.ini file, you can specify the BinaryPath there.");
+                ISpaceEngineers se = SpaceEngineersFactory.Create();
+                DataPath = se.GetDataPath();
+                BinaryPath = se.GetInstallPath();
+            }
+            catch (Exception e)
+            {
+                Log.LogWarning("Unable to determine the location of Space Engineers. If you have a .mdk.local.ini file, you can specify the BinaryPath there.");
+                Log.LogErrorFromException(e, false);
                 return false;
             }
             
-            var se = new SpaceEngineers();
-            DataPath = se.GetDataPath();
-            if (se.TryGetInstallPath("Bin64", out var installPath))
+            if (BinaryPath != null)
             {
-                BinaryPath = installPath;
                 Log.LogMessage(MessageImportance.High, $"Successfully determined the binary path of Space Engineers: {BinaryPath}");
                 return true;
             }

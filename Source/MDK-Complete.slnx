@@ -72,4 +72,8 @@
     <Configuration Solution="Debug|x64" Project="Debug|x64" />
     <Configuration Solution="Release|x64" Project="Release|x64" />
   </Project>
+  <Project Path="Mdk.Shared.Utility/Mdk.Shared.Utility.shproj">
+    <Configuration Solution="Debug|x64" Project="Debug|x64" />
+    <Configuration Solution="Release|x64" Project="Release|x64" />
+  </Project>
 </Solution>

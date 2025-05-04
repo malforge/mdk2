@@ -19,6 +19,7 @@ public class LegacyConverterTests
     [Test]
     public async Task ConvertAsync_WithValidOldProject_ConvertsProject()
     {
+        Console.WriteLine("Starting...");
         // Arrange
         var console = A.Fake<IConsole>();
         var httpClient = A.Fake<IHttpClient>();
@@ -43,6 +44,7 @@ public class LegacyConverterTests
         var projectFileName = Path.Combine(projectDirectory, "LegacyScriptProject.csproj");
         try
         {
+            Console.WriteLine("Entering try block");
             CreateLocalProjectCopy(projectDirectory);
 
             var mdkProject = await MdkProject.LoadAsync(projectFileName, console).SingleAsync();
@@ -60,6 +62,7 @@ public class LegacyConverterTests
             };
 
             // Act
+            Console.WriteLine("Starting to ACT");
             await converter.ConvertAsync(parameters, mdkProject, console, httpClient);
             var projectFileContent = await File.ReadAllTextAsync(projectFileName);
             Console.WriteLine($"--- {projectFileName} ---");

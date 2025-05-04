@@ -1,0 +1,1 @@
+﻿A project to generalise utilities used throughout Mdk2 to provide a single source of truth for implementations and enable platform specific implementations to be provided to all other projects without them needing any knowledge of what platform they are running on.

@@ -7,7 +7,6 @@
         <AssemblyName>mdk</AssemblyName>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
         <InformationalVersion>$(Version)</InformationalVersion>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <Title>MDK2 CLI</Title>
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <Description>This is part of the MDK2 project.</Description>
@@ -16,7 +15,7 @@
         <Platforms>x64</Platforms>
         <PublishSingleFile>false</PublishSingleFile>
         <SelfContained>true</SelfContained>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>
@@ -45,5 +44,7 @@
     <ItemGroup>
       <None Remove="SourceGeneratorSupport\**" />
     </ItemGroup>
+
+    <Import Project="..\Mdk.Shared.Utility\Mdk.Shared.Utility.projitems" Label="Shared" />
 
 </Project>

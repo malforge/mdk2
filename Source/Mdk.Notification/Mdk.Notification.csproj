@@ -10,7 +10,7 @@
         <AssemblyName>mdknotify</AssemblyName>
         <PublishSingleFile>false</PublishSingleFile>
         <SelfContained>true</SelfContained>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>

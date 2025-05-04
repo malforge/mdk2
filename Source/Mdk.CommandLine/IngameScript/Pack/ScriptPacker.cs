@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,8 @@ using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack.Api;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Utility;
+using Mdk2.Shared.Utility;
 // using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -114,10 +117,7 @@ public class ScriptPacker: ProjectJob
         string resolveAutoOutputDirectory()
         {
             console.Trace("Determining the output directory automatically...");
-            if (!OperatingSystem.IsWindows())
-                throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
-            var se = new SpaceEngineers();
-            var output = se.GetDataPath("IngameScripts", "local");
+            var output = SpaceEngineersFactory.Create().GetDataPath();
             if (string.IsNullOrEmpty(output))
                 throw new CommandLineException(-1, "Failed to determine the output directory.");
             console.Trace("Output directory: " + output);
@@ -135,6 +135,7 @@ public class ScriptPacker: ProjectJob
 
         return await PackProjectAsync(project, context);
     }
+
     
     static void ApplyDefaultMacros(Parameters parameters)
     {

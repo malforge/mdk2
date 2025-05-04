@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Mdk2.Shared.Utility;
 #pragma warning disable CS0028
 
 namespace Mdk.Extractor;
@@ -16,8 +17,8 @@ public partial class Program
         modWhitelist = Path.GetFullPath(modWhitelist);
         pbWhitelist = Path.GetFullPath(pbWhitelist);
         terminal = Path.GetFullPath(terminal);
-        
-        var se = new SpaceEngineers();
+
+        var se = SpaceEngineersFactory.Create();
         sePath ??= se.GetInstallPath("Bin64");
 
         if (string.IsNullOrEmpty(sePath) || !Directory.Exists(sePath))

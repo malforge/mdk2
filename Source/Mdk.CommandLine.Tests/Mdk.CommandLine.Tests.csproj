@@ -29,4 +29,6 @@
         <None Include="TestData\**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     
+    <Import Project="..\Mdk.Shared.Utility\Mdk.Shared.Utility.projitems" Label="Shared" />
+    
 </Project>

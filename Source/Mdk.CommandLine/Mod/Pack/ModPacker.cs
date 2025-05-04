@@ -7,6 +7,8 @@ using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.Mod.Pack.Jobs;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Utility;
+using Mdk2.Shared.Utility;
 // using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -116,7 +118,7 @@ public class ModPacker : ProjectJob
             console.Trace("Determining the output directory automatically...");
             if (!OperatingSystem.IsWindows())
                 throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
-            var se = new SpaceEngineers();
+            var se = SpaceEngineersFactory.Create();
             var output = se.GetDataPath("Mods");
             if (string.IsNullOrEmpty(output))
                 throw new CommandLineException(-1, "Failed to determine the output directory.");
