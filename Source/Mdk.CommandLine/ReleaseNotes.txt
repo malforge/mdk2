@@ -1,4 +1,7 @@
-﻿v.2.1.4
+﻿v.2.1.5
+   - Removed a bad compilation stage which caused custom namespace usings to fail a build rather than just being renoved.
+
+v.2.1.4
    - Now supports a Content folder in the mod folder, instead of copying everything from the root. This update is
      not breaking, as the project file still determines what the content files are, but any new projects created
      from the updated template will use the new folder structure.
