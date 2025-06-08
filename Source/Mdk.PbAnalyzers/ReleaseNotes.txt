@@ -1,3 +1,6 @@
+v.2.1.13
+    - Fixed broken whitelist
+
 v.2.1.12
     - Whitelist update
 
