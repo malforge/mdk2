@@ -45,6 +45,12 @@ namespace Mdk2.PbAnalyzers
         internal static readonly DiagnosticDescriptor InconsistentNamespaceDeclarationRule
             = new DiagnosticDescriptor("MDK03", "Inconsistent Namespace Declaration", "All ingame script code should be within the {0} namespace in order to avoid problems", "Whitelist", DiagnosticSeverity.Warning, true);
 
+        /// <summary>
+        /// Diagnostic rule for referencing custom namespaces.
+        /// </summary>
+        internal static readonly DiagnosticDescriptor ReferenceOfCustomNamespaceRule
+            = new DiagnosticDescriptor("MDK04", "Reference of Custom Namespace", "The programmable block does not use namespaces, so referencing custom namespaces (like {0}) will cause errors", "Whitelist", DiagnosticSeverity.Error, true);
+        
         readonly Whitelist _whitelist = new Whitelist();
 
         // readonly List<Uri> _ignoredFolders = new List<Uri>();

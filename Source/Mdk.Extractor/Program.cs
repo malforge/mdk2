@@ -6,8 +6,7 @@ namespace Mdk.Extractor;
 
 public partial class Program
 {
-    [Verb, Default]
-    public static void Main([Switch] string modWhitelist = null, [Switch] string pbWhitelist = null, [Switch] string terminal = null, [Switch] string sePath = null)
+    public static void Main(string modWhitelist = null, string pbWhitelist = null, string terminal = null, string sePath = null)
     {
         modWhitelist ??= "modwhitelist.dat";
         pbWhitelist ??= "pbwhitelist.dat";

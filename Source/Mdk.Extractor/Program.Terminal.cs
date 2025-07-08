@@ -134,56 +134,6 @@ public class TerminalException : Exception
     }
 }
 
-/// <summary>
-///     Mark static methods in your <see cref="Program" /> class to create verbs.
-/// </summary>
-[AttributeUsage(AttributeTargets.Method)]
-public class VerbAttribute : Attribute
-{
-    /// <summary>
-    ///     Creates a new <see cref="VerbAttribute" />.
-    /// </summary>
-    /// <param name="name">Use this name instead of the method name</param>
-    public VerbAttribute(string name = null)
-    {
-        Name = name;
-    }
-
-    /// <summary>
-    ///     If <c>null</c>, use the method name as the verb. Otherwise use the value of this property.
-    /// </summary>
-    public string Name { get; }
-}
-
-/// <summary>
-///     Mark a verb method as being default - meaning, it will be called if no verb is given. There must only be one
-///     default verb method.
-/// </summary>
-[AttributeUsage(AttributeTargets.Method)]
-public class DefaultAttribute : Attribute
-{ }
-
-/// <summary>
-///     Mark a parameter in your verb method as being a console switch.
-/// </summary>
-[AttributeUsage(AttributeTargets.Parameter)]
-public class SwitchAttribute : Attribute
-{
-    /// <summary>
-    ///     Creates a new <see cref="SwitchAttribute" />.
-    /// </summary>
-    /// <param name="name">Use this name instead of the parameter name</param>
-    public SwitchAttribute(string name = null)
-    {
-        Name = name;
-    }
-
-    /// <summary>
-    ///     If <c>null</c>, use the parameter name as the switch name. Otherwise use the value of this property.
-    /// </summary>
-    public string Name { get; }
-}
-
 partial class Program
 {
     /// <summary>
