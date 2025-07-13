@@ -1,37 +1,31 @@
 ﻿using Mdk.DocGen3.CodeDoc;
-using Mdk.DocGen3.CodeSecurity;
 using Mdk.DocGen3.Support;
 using Mono.Cecil;
 
 namespace Mdk.DocGen3.Types;
 
-public class TypeDocumentation(TypeDefinition type, DocMember? documentation): IMemberDocumentation
+public class TypeDocumentation(TypeDefinition type, DocMember? documentation, string? obsoleteMessage = null) :
+    MemberDocumentation(type, documentation, obsoleteMessage)
 {
     string? _shortSignature;
     public TypeDefinition Type { get; } = type;
-    MemberReference IMemberDocumentation.Member => Type;
-    public DocMember? Documentation { get; } = documentation;
-    public string WhitelistKey { get; } = Whitelist.GetTypeKey(type);
-    public string DocKey { get; } = Doc.GetDocKey(type);
-    public string FullName { get; } = type.GetCSharpName();
-    public string AssemblyName { get; } = type.Module.Assembly.Name.Name;
-    public string Namespace { get; } = type.Namespace;
-    public string Title { get; }  = $"{type.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics | CSharpNameFlags.NestedParent)} {type.GetMemberTypeName()}{(type.IsObsolete()? " (Obsolete)" : "")}";
-    public string Name { get; } = type.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
-    public string ShortSignature()
-    {
-        if (_shortSignature is not null)
-            return _shortSignature;
-        return _shortSignature = Type.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
-    }
+    public override bool IsPublic { get; } = type.IsPublic || type.IsNestedPublic;
+    public override sealed string Title { get; } = $"{type.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics | CSharpNameFlags.NestedParent)} {type.GetMemberTypeName()}{(type.IsObsolete() ? " (Obsolete)" : "")}";
 
     public List<FieldDocumentation> Fields { get; } = new();
     public List<PropertyDocumentation> Properties { get; } = new();
     public List<MethodDocumentation> Methods { get; } = new();
     public List<EventDocumentation> Events { get; } = new();
     public List<TypeDocumentation> NestedTypes { get; } = new();
-    
-    public IEnumerable<IMemberDocumentation> Members(bool inherited=false)
+
+    public override sealed string ShortSignature()
+    {
+        if (_shortSignature is not null)
+            return _shortSignature;
+        return _shortSignature = Type.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
+    }
+
+    public IEnumerable<IMemberDocumentation> Members(bool inherited = false)
     {
         foreach (var field in Fields)
             yield return field;
@@ -44,8 +38,6 @@ public class TypeDocumentation(TypeDefinition type, DocMember? documentation): I
         foreach (var nestedType in NestedTypes)
             yield return nestedType;
 
-        if (inherited)
-        {
-        }
+        if (inherited) { }
     }
 }

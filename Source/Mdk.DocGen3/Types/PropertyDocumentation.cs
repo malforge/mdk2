@@ -1,26 +1,19 @@
 ﻿using System.Text;
 using Mdk.DocGen3.CodeDoc;
-using Mdk.DocGen3.CodeSecurity;
 using Mdk.DocGen3.Support;
 using Mono.Cecil;
 
 namespace Mdk.DocGen3.Types;
 
-public class PropertyDocumentation(PropertyDefinition property, DocMember? documentation)
-    : IMemberDocumentation
+public class PropertyDocumentation(PropertyDefinition property, DocMember? documentation, string? obsoleteMessage = null)
+    : MemberDocumentation(property, documentation, obsoleteMessage)
 {
     string? _shortSignature;
     public PropertyDefinition Property { get; } = property;
-    MemberReference IMemberDocumentation.Member => Property;
-    public DocMember? Documentation { get; } = documentation;
-    public string WhitelistKey { get; } = Whitelist.GetPropertyKey(property);
-    public string DocKey { get; } = Doc.GetDocKey(property);
-    public string FullName { get; } = property.GetCSharpName();
-    public string AssemblyName { get; } = property.Module.Assembly.Name.Name;
-    public string Namespace { get; } = property.DeclaringType.Namespace;
-    public string Title { get; } = $"{property.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.NestedParent)} {property.PropertyType.GetMemberTypeName()}{(property.IsObsolete()? " (Obsolete)" : "")}";
-    public string Name { get; } = property.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
-    public string ShortSignature()
+    public override sealed string Title { get; } = $"{property.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.NestedParent)} {property.PropertyType.GetMemberTypeName()}{(property.IsObsolete() ? " (Obsolete)" : "")}";
+    public override sealed bool IsPublic => Property.GetMethod?.IsPublic == true || Property.SetMethod?.IsPublic == true;
+
+    public override sealed string ShortSignature()
     {
         if (_shortSignature is not null)
             return _shortSignature;
@@ -40,6 +33,4 @@ public class PropertyDocumentation(PropertyDefinition property, DocMember? docum
         }
         return _shortSignature = builder.ToString();
     }
-
-    public bool IsPublic => Property.GetMethod?.IsPublic == true || Property.SetMethod?.IsPublic == true;
 }

@@ -14,6 +14,9 @@ public interface IMemberDocumentation
     string Namespace { get; }
     string Title { get; }
     string Name { get; }
+    bool IsPublic { get; }
+    bool IsObsolete { get; }
+    string? ObsoleteMessage { get; }
     string ShortSignature();
    
 }
