@@ -8,12 +8,32 @@ $footer-border-color: #444;
 
 
 /* Dark Theme Stylesheet */
-body {
+html, body {
     font-family: Arial, sans-serif;
-    margin: 20px;
+    margin: 0;
+    padding: 0;
+    height: 100%;
     color: $primary-color;
     background-color: $background-color;
     line-height: 1.6;
+}
+
+.layout {
+    display: flex;        /* side-by-side panels */
+    height: 100vh;        /* full viewport height */
+}
+
+.sidebar {
+    flex: 0 0 250px;      /* fixed width */
+    overflow-y: auto;     /* independent scroll */
+    border-right: 1px solid #ddd;
+    padding: 1rem;
+}
+
+.content {
+    flex: 1;              /* fill remaining width */
+    overflow-y: auto;     /* its own scroll */
+    padding: 1rem;
 }
 
 h1 {
@@ -76,14 +96,45 @@ footer {
     margin-bottom: 1rem;
     border: 1px solid $table-border-color;
     
+    td {
+        padding: 0.5rem 0;
+        vertical-align: top;
+    }
+    
     /* The first column should have a right-side padding of 3rem */
     td.member-name {
+        font-family: Consolas, Menlo, Monaco, 'Courier New', monospace;
         padding-right: 3rem;
         width: auto;
+        font-size: 0.875rem;
         white-space: nowrap;
     }
     
     td.member-description {
         width: 100%;
+        line-height: 1.4;
     }
+    
+    tr {
+        border-bottom: 1px solid $table-border-color;
+    }
+}
+
+/* Dark-mode warning box */
+.warning {
+    background-color: #5e3600;
+    color:            #ffcc80;
+    padding:          1rem;
+    border-radius:    4px;
+    margin-bottom:    1rem;
+    border-left:      4px solid #ffa000; 
+}
+
+.info {
+    background-color: #004d40;
+    color:            #b2dfdb;
+    padding:          1rem;
+    border-radius:    4px;
+    margin-bottom:    1rem;
+    border-left:      4px solid #00796b; 
 }

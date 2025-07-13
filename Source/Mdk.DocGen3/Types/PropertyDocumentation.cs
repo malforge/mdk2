@@ -11,7 +11,7 @@ public class PropertyDocumentation(PropertyDefinition property, DocMember? docum
 {
     string? _shortSignature;
     public PropertyDefinition Property { get; } = property;
-    IMemberDefinition IMemberDocumentation.Member => Property;
+    MemberReference IMemberDocumentation.Member => Property;
     public DocMember? Documentation { get; } = documentation;
     public string WhitelistKey { get; } = Whitelist.GetPropertyKey(property);
     public string DocKey { get; } = Doc.GetDocKey(property);
@@ -19,7 +19,7 @@ public class PropertyDocumentation(PropertyDefinition property, DocMember? docum
     public string AssemblyName { get; } = property.Module.Assembly.Name.Name;
     public string Namespace { get; } = property.DeclaringType.Namespace;
     public string Title { get; } = $"{property.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.NestedParent)} {property.PropertyType.GetMemberTypeName()}{(property.IsObsolete()? " (Obsolete)" : "")}";
-
+    public string Name { get; } = property.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
     public string ShortSignature()
     {
         if (_shortSignature is not null)

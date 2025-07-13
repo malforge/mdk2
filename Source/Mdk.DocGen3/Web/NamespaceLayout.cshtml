@@ -1,0 +1,30 @@
+﻿@model Mdk.DocGen3.Web.Namespace
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>@Model.Title</title>
+    <link rel="stylesheet" href="@Model.CssSlug"/>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div><a href="@Model.IndexSlug">@Model.IndexName</a></div>
+        @foreach(var type in Model.Types)
+        {
+        <div><a href="@type.Slug">@type.Name</a></div>
+        }
+    </aside>
+    <main class="content">
+        @{
+        @RenderBody()
+        }
+    </main>
+</div>
+</body>
+</html>

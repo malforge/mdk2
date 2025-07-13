@@ -2,10 +2,10 @@
 
 namespace Mdk.DocGen3.Pages;
 
-public class PropertyPage(PropertyDocumentation propertyDocumentation) : Page
+public class PropertyPage(PropertyDocumentation propertyDocumentation) : DocumentationPage
 {
     public PropertyDocumentation PropertyDocumentation { get; } = propertyDocumentation;
 
-    protected override IMemberDocumentation GetMemberDocumentation() =>
+    public override IMemberDocumentation GetMemberDocumentation() =>
         PropertyDocumentation;
 }

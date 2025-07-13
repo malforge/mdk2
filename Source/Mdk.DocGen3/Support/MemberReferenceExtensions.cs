@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using Mono.Cecil;
 
 namespace Mdk.DocGen3.Support;
@@ -20,13 +21,37 @@ public static class MemberReferenceExtensions
 //         return companyName.Contains("Microsoft", StringComparison.OrdinalIgnoreCase);
 //     }
      */
-    
-    public static bool IsMsType(this TypeReference type)
-    {
-        if (type.Scope is not AssemblyNameReference asmRef)
-            return false;
 
-        var n = asmRef.Name;
+    public static bool IsMsType(this MemberReference member)
+    {
+        return member switch
+        {
+            TypeReference typeReference => IsMsType(typeReference),
+            MethodReference methodReference => IsMsType(methodReference.DeclaringType),
+            FieldReference fieldReference => IsMsType(fieldReference.DeclaringType),
+            PropertyReference propertyReference => IsMsType(propertyReference.DeclaringType),
+            EventReference eventReference => IsMsType(eventReference.DeclaringType),
+            _ => false
+        };
+    }
+    
+    static bool IsMsType(TypeReference type)
+    {
+        string n;
+        if (type.Scope is AssemblyNameReference asmRef)
+        {
+            n = asmRef.Name;
+        }
+        else if (type.Scope is ModuleDefinition modDef)
+        {
+            n = modDef.Name;
+        }
+        else
+        {
+            Debugger.Break();
+            n = null!;
+        }
+
         if (n == "mscorlib"
             || n == "System"
             || n.StartsWith("System.", StringComparison.Ordinal)

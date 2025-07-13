@@ -2,8 +2,8 @@
 
 namespace Mdk.DocGen3.Pages;
 
-public class FieldPage(FieldDocumentation fieldDocumentation) : Page
+public class FieldPage(FieldDocumentation fieldDocumentation) : DocumentationPage
 {
     public FieldDocumentation FieldDocumentation { get; } = fieldDocumentation;
-    protected override IMemberDocumentation GetMemberDocumentation() => FieldDocumentation;
+    public override IMemberDocumentation GetMemberDocumentation() => FieldDocumentation;
 }

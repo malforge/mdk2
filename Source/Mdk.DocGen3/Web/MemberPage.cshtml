@@ -1,0 +1,52 @@
+﻿@model Mdk.DocGen3.Web.MemberPage
+
+@{
+Layout = "NamespaceLayout.cshtml";
+}
+<div class="breadcrumbs">
+    @foreach (var item in Model.Breadcrumbs)
+    {
+        <a href="@item.Slug">@item.Name</a>
+        @if (item != Model.Breadcrumbs.Last())
+        {
+            <span class="separator">/</span>
+        }
+    }
+</div>
+<h1>@Model.Title</h1>
+<h2>Definition</h2>
+<div class="definition">
+    <span>Namespace:</span> <span class="value">@Model.Namespace</span><br/>
+    <span>Assembly:</span> <span class="value">@Model.Assembly</span><br/>
+</div>
+@if (!string.IsNullOrEmpty(Model.Summary))
+{
+    <p class="summary">@Raw(Model.Summary)</p>
+}
+@if (!string.IsNullOrEmpty(Model.Remarks))
+{
+    <p class="remarks">@Raw(Model.Remarks)</p>
+}
+@if (!string.IsNullOrEmpty(Model.CommunityRemarks))
+{
+    <p class="remarks">@Raw(Model.CommunityRemarks)</p>
+}
+@foreach (var memberTable in Model.MemberTables)
+{
+    <h2>@memberTable.Title</h2>
+    <table class="member-list">
+        <tbody>
+            @foreach (var member in memberTable.Members)
+            {
+                <tr>
+                    <td class="member-name"><a href="@member.Slug">@member.Name</a></td>
+                    <td class="member-description">@Raw(member.Summary)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<footer>
+    <p>Updated @Model.Date</p>
+</footer>

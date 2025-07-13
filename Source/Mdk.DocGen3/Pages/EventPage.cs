@@ -2,8 +2,8 @@
 
 namespace Mdk.DocGen3.Pages;
 
-public class EventPage(EventDocumentation eventDocumentation) : Page
+public class EventPage(EventDocumentation eventDocumentation) : DocumentationPage
 {
     public EventDocumentation EventDocumentation { get; } = eventDocumentation;
-    protected override IMemberDocumentation GetMemberDocumentation() => EventDocumentation;
+    public override IMemberDocumentation GetMemberDocumentation() => EventDocumentation;
 }

@@ -20,4 +20,6 @@ public class DocMember
     public List<DocParam> Params { get; } = new();
 
     public string? RenderSummary() => Summary?.Render();
+    public string? RenderRemarks() => Remarks?.Render();
+    public string? RenderReturns() => Returns?.Render();
 }

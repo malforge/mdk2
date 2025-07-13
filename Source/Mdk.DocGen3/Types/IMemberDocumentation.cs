@@ -5,7 +5,7 @@ namespace Mdk.DocGen3.Types;
 
 public interface IMemberDocumentation
 {
-    IMemberDefinition Member { get; }
+    MemberReference Member { get; }
     DocMember? Documentation { get; }
     string WhitelistKey { get; }
     string DocKey { get; }
@@ -13,5 +13,7 @@ public interface IMemberDocumentation
     string AssemblyName { get; }
     string Namespace { get; }
     string Title { get; }
+    string Name { get; }
     string ShortSignature();
+   
 }

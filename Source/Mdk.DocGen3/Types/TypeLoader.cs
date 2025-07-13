@@ -106,7 +106,7 @@ public class TypeLoader
                         }
                     }
                     docKey = Doc.GetDocKey(field);
-                    var fieldDoc = new FieldDocumentation(field, doc?.GetDocumentation(docKey));
+                    var fieldDoc = new FieldDocumentation(field, doc?.GetDocumentation(docKey), obsoleteMessage);
                     typeDoc.Fields.Add(fieldDoc);
                     // var fieldPage = new FieldPage(fieldKey, docKey, doc?.GetDocumentation(docKey), field, obsoleteMessage);
                     // contentPage.Fields.Add(fieldPage);

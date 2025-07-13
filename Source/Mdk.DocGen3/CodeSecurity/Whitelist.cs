@@ -117,6 +117,19 @@ public class Whitelist
         return typeName;
     }
 
+    public static string GetKey(MemberReference member)
+    {
+        return member switch
+        {
+            TypeDefinition type => GetTypeKey(type),
+            MethodDefinition method => GetMethodKey(method),
+            FieldDefinition field => GetFieldKey(field),
+            PropertyDefinition property => GetPropertyKey(property),
+            EventDefinition eventDef => GetEventKey(eventDef),
+            _ => throw new ArgumentException($"Unsupported member type: {member.GetType()}", nameof(member))
+        };
+    }
+    
     public static string GetTypeKey(TypeDefinition type) => GetExpectedTypeName(type) + ", " + type.Module.Assembly.Name.Name;
 
     public static string GetMethodKey(MethodDefinition method)

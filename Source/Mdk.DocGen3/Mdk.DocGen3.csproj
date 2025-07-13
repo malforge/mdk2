@@ -7,6 +7,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>docgen</AssemblyName>
         <DartSassMessageLevel>High</DartSassMessageLevel>
+        <PreserveCompilationContext>True</PreserveCompilationContext>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,12 +20,29 @@
 
     <ItemGroup>
       <None Remove="style.css" />
-      <EmbeddedResource Include="style.css" />
       <Compile Remove="Features\ApiGenerator\ApiGeneratorView.axaml.cs" />
+      <None Update="Web\MemberPage.cshtml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Web\Index.cshtml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Web\Namespace.cshtml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Web\NamespaceLayout.cshtml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="style.scss" />
+      <Content Include="Web\style.scss" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Web\style.css">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </EmbeddedResource>
     </ItemGroup>
 
 </Project>

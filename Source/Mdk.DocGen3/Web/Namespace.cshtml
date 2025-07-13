@@ -1,0 +1,37 @@
+﻿@model Mdk.DocGen3.Web.Namespace
+
+@{
+Layout = "NamespaceLayout.cshtml";
+}
+<div class="breadcrumbs">
+    @foreach (var item in Model.Breadcrumbs)
+    {
+        <a href="@item.Slug">@item.Name</a>
+        @if (item != Model.Breadcrumbs.Last())
+        {
+            <span class="separator">/</span>
+        }
+    }
+</div>
+<h1>@Model.Title Namespace</h1>
+@if (!string.IsNullOrEmpty(Model.Summary))
+{
+    <p class="summary">@Raw(Model.Summary)</p>
+}
+@if (!string.IsNullOrEmpty(Model.Remarks))
+{
+    <p class="remarks">@Raw(Model.Remarks)</p>
+}
+@if (!string.IsNullOrEmpty(Model.CommunityRemarks))
+{
+    <p class="remarks">@Raw(Model.CommunityRemarks)</p>
+}
+<table>
+    @foreach(var type in Model.Types)
+    {
+    <tr>
+        <td><a href="@type.Slug">@type.Name</a></td>
+        <td>@Raw(type.Summary)</td>
+    </tr>
+    }
+</table>

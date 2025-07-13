@@ -9,7 +9,7 @@ public class TypeDocumentation(TypeDefinition type, DocMember? documentation): I
 {
     string? _shortSignature;
     public TypeDefinition Type { get; } = type;
-    IMemberDefinition IMemberDocumentation.Member => Type;
+    MemberReference IMemberDocumentation.Member => Type;
     public DocMember? Documentation { get; } = documentation;
     public string WhitelistKey { get; } = Whitelist.GetTypeKey(type);
     public string DocKey { get; } = Doc.GetDocKey(type);
@@ -17,7 +17,7 @@ public class TypeDocumentation(TypeDefinition type, DocMember? documentation): I
     public string AssemblyName { get; } = type.Module.Assembly.Name.Name;
     public string Namespace { get; } = type.Namespace;
     public string Title { get; }  = $"{type.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics | CSharpNameFlags.NestedParent)} {type.GetMemberTypeName()}{(type.IsObsolete()? " (Obsolete)" : "")}";
-
+    public string Name { get; } = type.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
     public string ShortSignature()
     {
         if (_shortSignature is not null)
@@ -31,7 +31,7 @@ public class TypeDocumentation(TypeDefinition type, DocMember? documentation): I
     public List<EventDocumentation> Events { get; } = new();
     public List<TypeDocumentation> NestedTypes { get; } = new();
     
-    public IEnumerable<IMemberDocumentation> Members()
+    public IEnumerable<IMemberDocumentation> Members(bool inherited=false)
     {
         foreach (var field in Fields)
             yield return field;
@@ -43,5 +43,9 @@ public class TypeDocumentation(TypeDefinition type, DocMember? documentation): I
             yield return evt;
         foreach (var nestedType in NestedTypes)
             yield return nestedType;
+
+        if (inherited)
+        {
+        }
     }
 }

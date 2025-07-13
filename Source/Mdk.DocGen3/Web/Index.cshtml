@@ -1,0 +1,48 @@
+﻿@model Mdk.DocGen3.Web.Index
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>API Index</title>
+    <link rel="stylesheet" href="/css/style.css"/>
+    <link rel="stylesheet"
+          href='@("https://cdn.jsdelivr.net/npm/@docsearch/css@3")'/>
+</head>
+<body>
+<h1>API Index</h1>
+<p>Description</p>
+
+<!-- Algolia DocSearch -->
+<input id="docsearch"
+       type="search"
+       placeholder="Search the docs…"
+       aria-label="Search the docs"/>
+
+<h2>Namespaces</h2>
+<table>
+    @foreach(var ns in Model.Namespaces)
+    {
+    <tr>
+        <td><a href="@ns.Slug">@ns.Name</a></td>
+        <td>@Raw(ns.Summary)</td>
+    </tr>
+    }
+</table>
+
+<script src='@("https://cdn.jsdelivr.net/npm/@docsearch/js@3")'></script>
+<script>
+    docsearch({
+        container: '#docsearch',
+        appId: 'YOUR_APP_ID',
+        apiKey: 'YOUR_SEARCH_API_KEY',
+        indexName: 'YOUR_INDEX_NAME'
+    });
+</script>
+</body>
+</html>

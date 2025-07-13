@@ -13,7 +13,7 @@ public class MethodDocumentation(MethodDefinition method, DocMember? documentati
     public MethodDefinition Method { get; } = method;
     public bool IsConstructor => Method.IsConstructor;
     public bool IsPublic => Method.IsPublic;
-    IMemberDefinition IMemberDocumentation.Member => Method;
+    MemberReference IMemberDocumentation.Member => Method;
     public DocMember? Documentation { get; } = documentation;
     public string WhitelistKey { get; } = Whitelist.GetMethodKey(method);
     public string DocKey { get; } = Doc.GetDocKey(method);
@@ -21,7 +21,7 @@ public class MethodDocumentation(MethodDefinition method, DocMember? documentati
     public string AssemblyName { get; } = method.Module.Assembly.Name.Name;
     public string Namespace { get; } = method.DeclaringType.Namespace;
     public string Title { get; } = $"{method.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.NestedParent)} {(method.IsObsolete() ? " (Obsolete)" : "")}";
-
+    public string Name { get; } = method.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
     public string ShortSignature()
     {
         if (_shortSignature is not null)
