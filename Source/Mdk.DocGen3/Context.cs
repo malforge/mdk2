@@ -1,15 +1,40 @@
-﻿using System.Text;
-using Mdk.DocGen3.Pages;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using Mdk.DocGen3.CodeSecurity;
+using Mdk.DocGen3.Types;
 using RazorLight;
 
 namespace Mdk.DocGen3;
 
-public class Context(RazorLightEngine engine, string outputFolder, IEnumerable<DocumentationPage> pages)
+public class Context
 {
     readonly HtmlPrettyPrinter _printer = new();
-    public RazorLightEngine Engine { get; } = engine;
-    public string OutputFolder { get; } = outputFolder;
-    public IReadOnlyList<DocumentationPage> Pages { get; } = pages.ToList();
+    readonly Dictionary<string, string> _slugLookup = new();
+
+    public Context(string name, string rootSlug, RazorLightEngine engine, Whitelist whitelist, string outputFolder, IEnumerable<MemberDocumentation> pages)
+    {
+        Name = name;
+        RootSlug = rootSlug;
+        Engine = engine;
+        Whitelist = whitelist;
+        OutputFolder = outputFolder;
+        Pages = pages.ToList();
+        
+        foreach (var page in Pages)
+        {
+            if (page.IsExternal()) continue;
+            if (!_slugLookup.ContainsKey(page.Namespace))
+                _slugLookup[page.Namespace] = rootSlug + "/" + page.Namespace + "/index.html";
+            _slugLookup.Add(page.FullName, page.Slug);
+        }
+    }
+
+    public string Name { get; }
+    public string RootSlug { get; }
+    public RazorLightEngine Engine { get; }
+    public Whitelist Whitelist { get; }
+    public string OutputFolder { get; }
+    public IReadOnlyList<MemberDocumentation> Pages { get; }
 
     public void WriteHtml(string fileName, string content) => WriteAllText(fileName, _printer.Reformat(content));
 
@@ -59,4 +84,21 @@ public class Context(RazorLightEngine engine, string outputFolder, IEnumerable<D
     }
 
     public string? GetCommunityRemarksHtml(string docKey) => null;
+
+    public bool TryGetAddressOf(string fullname, [MaybeNullWhen(false)] out string slug)
+    {
+        if (_slugLookup.TryGetValue(fullname, out slug))
+        {
+            return true;
+        }
+        slug = null;
+        return false;
+    }
+    
+    public string GetAddressOf(string fullname)
+    {
+        if (TryGetAddressOf(fullname, out var slug))
+            return slug;
+        throw new KeyNotFoundException($"No address found for '{fullname}'");
+    }
 }

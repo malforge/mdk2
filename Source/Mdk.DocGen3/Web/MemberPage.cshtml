@@ -6,11 +6,11 @@ Layout = "NamespaceLayout.cshtml";
 <div class="breadcrumbs">
     @foreach (var item in Model.Breadcrumbs)
     {
-        <a href="@item.Slug">@item.Name</a>
-        @if (item != Model.Breadcrumbs.Last())
-        {
-            <span class="separator">/</span>
-        }
+    <a href="@item.Slug">@item.Name</a>
+    @if (item != Model.Breadcrumbs.Last())
+    {
+    <span class="separator">/</span>
+    }
     }
 </div>
 <h1>@Model.Title</h1>
@@ -18,33 +18,53 @@ Layout = "NamespaceLayout.cshtml";
 <div class="definition">
     <span>Namespace:</span> <span class="value">@Model.Namespace</span><br/>
     <span>Assembly:</span> <span class="value">@Model.Assembly</span><br/>
+    @if (Model.Interfaces?.Any() ?? false)
+    {
+    <span>Interfaces:</span> @foreach (var iface in Model.Interfaces)
+    {
+    <span class="value"><a href="@iface.Slug">@iface.Name</a></span>
+    @if (iface != Model.Interfaces.Last())
+    {
+    <span class="separator">, </span>
+    }
+    }
+    }
 </div>
+<p>
+    <button id="toggleNonPublic" class="toggle-btn">
+        Show non-public
+    </button>
+</p>
 @if (!string.IsNullOrEmpty(Model.Summary))
 {
-    <p class="summary">@Raw(Model.Summary)</p>
+<p class="summary">@Raw(Model.Summary)</p>
 }
 @if (!string.IsNullOrEmpty(Model.Remarks))
 {
-    <p class="remarks">@Raw(Model.Remarks)</p>
+<p class="remarks">@Raw(Model.Remarks)</p>
 }
 @if (!string.IsNullOrEmpty(Model.CommunityRemarks))
 {
-    <p class="remarks">@Raw(Model.CommunityRemarks)</p>
+<p class="remarks">@Raw(Model.CommunityRemarks)</p>
 }
 @foreach (var memberTable in Model.MemberTables)
 {
+<div
+    class="@string.Join(" ", new[]{ "member-list" }.Concat(memberTable.CustomCssClasses ?? Enumerable.Empty<string>()))">
     <h2>@memberTable.Title</h2>
-    <table class="member-list">
+    <table>
         <tbody>
-            @foreach (var member in memberTable.Members)
-            {
-                <tr>
-                    <td class="member-name"><a href="@member.Slug">@member.Name</a></td>
-                    <td class="member-description">@Raw(member.Summary)</td>
-                </tr>
-            }
+        @foreach (var member in memberTable.Members)
+        {
+        <tr>
+            <td class="@string.Join(" ", new[]{ "member-name" }.Concat(member.CustomCssClasses ?? Enumerable.Empty<string>()))">
+                <a href="@member.Slug">@member.Name</a></td>
+            <td class="member-description">@Raw(member.Summary)</td>
+        </tr>
+        }
         </tbody>
     </table>
+</div>
 }
 
 <footer>

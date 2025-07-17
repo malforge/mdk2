@@ -1,4 +1,4 @@
-﻿using Mdk.DocGen3.Pages;
+﻿using Mdk.DocGen3.Types;
 
 namespace Mdk.DocGen3.Web;
 
@@ -9,7 +9,7 @@ public class Namespace : MemberPageModel
     public string? CommunityRemarks { get; set; }
     public IEnumerable<TypeItemModel>? Types { get; set; }
 
-    public void Generate(Context context, string ns, IEnumerable<DocumentationPage> pages)
+    public void Generate(Context context, string ns, IEnumerable<MemberDocumentation> pages)
     {
         Title = ns;
         Slug = ns.Replace('.', '/') + "/index.html";
@@ -17,9 +17,11 @@ public class Namespace : MemberPageModel
         IndexName = Title;
         HomeSlug = context.ToRelative(Slug, "/index.html");
         CssSlug = context.ToRelative(Slug, "/css/style.css");
+        JsSlug = context.ToRelative(Slug, "/js/script.js");
         Breadcrumbs =
         [
-            new Breadcrumb(HomeSlug, "Home")
+            new Breadcrumb(context.ToRelative(Slug, "../index.html"), "Home"),
+            new Breadcrumb(HomeSlug, context.Name)
         ];
 
         Summary = $"Documentation for the {ns} namespace.";
@@ -28,7 +30,7 @@ public class Namespace : MemberPageModel
         {
             Name = p.Name,
             Slug = p.Name + ".html",
-            Summary = p.GetMemberDocumentation().Documentation?.RenderSummary() ?? ""
+            Summary = p.Documentation?.RenderSummary() ?? ""
         }).ToList();
 
         var result = context.Engine.CompileRenderAsync("Namespace.cshtml", this).GetAwaiter().GetResult();

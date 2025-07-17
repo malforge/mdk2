@@ -5,14 +5,15 @@ using Mono.Cecil;
 
 namespace Mdk.DocGen3.Types;
 
-public class MethodDocumentation(MethodDefinition method, DocMember? documentation, string? obsoleteMessage = null)
-    : MemberDocumentation(method, documentation, obsoleteMessage)
+public class MethodDocumentation(TypeDocumentation type, MethodDefinition method, DocMember? documentation, string? obsoleteMessage = null)
+    : MemberDocumentation(type, method, documentation, obsoleteMessage)
 {
     string? _shortSignature;
     public MethodDefinition Method { get; } = method;
     public bool IsConstructor => Method.IsConstructor;
-    public override sealed bool IsPublic => Method.IsPublic;
     public override sealed string Title { get; } = $"{method.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.NestedParent)} {(method.IsObsolete() ? " (Obsolete)" : "")}";
+    public override bool IsPublic() => Method.IsPublic;
+    public override bool IsExternal() => false;
 
     public override sealed string ShortSignature()
     {

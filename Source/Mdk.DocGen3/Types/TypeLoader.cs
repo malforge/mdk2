@@ -1,8 +1,8 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Xml;
 using System.Xml.Serialization;
 using Mdk.DocGen3.CodeDoc;
-using Mdk.DocGen3.CodeSecurity;
 using Mdk.DocGen3.Support;
 using Microsoft.Win32;
 using Mono.Cecil;
@@ -24,43 +24,141 @@ public class TypeLoader
         return value;
     }
 
-    public static Documentation LoadTypeInfo(string binFolder, Whitelist whitelist)
+    static IEnumerable<AssemblyDefinition> FindAssemblies(string binFolder, IAssemblyResolver ar)
+    {
+        var dllFiles = Directory.GetFiles(binFolder, "*.dll", SearchOption.TopDirectoryOnly);
+        var readerParams = new ReaderParameters
+        {
+            AssemblyResolver = ar,
+            InMemory = true
+        };
+
+        foreach (var dllFile in dllFiles)
+        {
+            AssemblyDefinition? assembly;
+            try
+            {
+                assembly = AssemblyDefinition.ReadAssembly(dllFile, readerParams);
+            }
+            catch (BadImageFormatException)
+            {
+                // Ignore assemblies that cannot be resolved
+                continue;
+            }
+            if (assembly != null)
+                yield return assembly;
+        }
+    }
+
+    public static Documentation LoadTypeInfo(string binFolder)
     {
         var ar = new DefaultAssemblyResolver();
         ar.AddSearchDirectory(binFolder);
         ar.AddSearchDirectory(Path.Combine(GetFrameworkInstallRoot(), "v4.0.30319"));
-        var exePath = Path.Combine(binFolder, "SpaceEngineers.exe");
-        if (!File.Exists(exePath)) throw new FileNotFoundException($"SpaceEngineers.exe not found in {binFolder}");
-        var assembly = AssemblyDefinition.ReadAssembly(exePath);
-        var context = new Context();
-        ScanAssembly(assembly, context, ar);
-        List<TypeDocumentation> types = new();
-        while (context.AssembliesToProcess.TryDequeue(out var assemblyToProcess))
-        {
-            Doc? doc = null;
-            context.VisitedAssemblies.TryAdd(assemblyToProcess.FullName, 0);
-            // Try to find the xml documentation file
-            var xmlDocPath = Path.ChangeExtension(assemblyToProcess.MainModule.FileName, ".xml");
-            if (File.Exists(xmlDocPath))
-            {
-                // Deserialize the XML documentation file into a Doc instance
-                var deserializer = new XmlSerializer(typeof(Doc));
-                using var xmlStream = new FileStream(xmlDocPath, FileMode.Open, FileAccess.Read);
-                using var xmlReader = XmlReader.Create(xmlStream);
-                doc = (Doc?)deserializer.Deserialize(xmlReader);
-            }
 
-            void scanType(TypeDefinition type, ParallelLoopState _)
+        var assemblies = FindAssemblies(binFolder, ar).ToList();
+        // Stage 0: Collect documentation for all assemblies
+        if (assemblies.Count == 0)
+            throw new InvalidOperationException($"No assemblies found in {binFolder}");
+        var assemblyDocs = new Dictionary<AssemblyDefinition, Doc>(assemblies.Count);
+        foreach (var assembly in assemblies)
+        {
+            var xmlDocPath = Path.ChangeExtension(assembly.MainModule.FileName, ".xml");
+            if (!File.Exists(xmlDocPath)) continue;
+            var deserializer = new XmlSerializer(typeof(Doc));
+            using var xmlStream = new FileStream(xmlDocPath, FileMode.Open, FileAccess.Read);
+            using var xmlReader = XmlReader.Create(xmlStream);
+            var doc = (Doc?) deserializer.Deserialize(xmlReader);
+            if (doc != null)
+                assemblyDocs[assembly] = doc;
+        }
+
+        int progress = 0, max;
+        var stopwatch = Stopwatch.StartNew();
+
+        var types = assemblies.SelectMany(assembly => assembly.MainModule.Types.Where(t => t.IsPublic || (t.IsNestedPublic && !t.IsMsType()))).ToList();
+        max = types.Count;
+
+        void progressed(string step)
+        {
+            progress++;
+            if (stopwatch.ElapsedMilliseconds > 1000)
             {
-                var typeKey = Whitelist.GetTypeKey(type);
-                // if (!whitelist.IsAllowed(typeKey))
-                //     return;
-                if (!context.VisitedKeys.TryAdd(typeKey, 0))
-                    return;
-                string? obsoleteMessage = null;
-                if (type.HasCustomAttributes)
+                Console.WriteLine($"{step}: {progress}/{max} ({(double) progress / max:P2})");
+                stopwatch.Restart();
+            }
+        }
+
+        Dictionary<string, NamespaceDocumentation.Builder> namespaces = new Dictionary<string, NamespaceDocumentation.Builder>(StringComparer.OrdinalIgnoreCase);
+        var visitedTypes = new HashSet<TypeDefinition>(types);
+        var typeDocs = new List<TypeDocumentation.Builder>(types.Count);
+        // Stage 1: Collect all types
+        for (var index = 0; index < types.Count; index++)
+        {
+            var type = types[index];
+            string? obsoleteMessage = null;
+            if (type.HasCustomAttributes)
+            {
+                foreach (var attribute in type.CustomAttributes)
                 {
-                    foreach (var attribute in type.CustomAttributes)
+                    if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
+                    {
+                        if (attribute.ConstructorArguments.Count > 0)
+                            obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
+                        break;
+                    }
+                }
+            }
+            visitedTypes.Add(type);
+            var baseType = type.BaseType?.Resolve();
+            if (baseType != null && visitedTypes.Add(baseType))
+                types.Add(baseType);
+            if (!namespaces.TryGetValue(type.Namespace, out var ns))
+            {
+                ns = new NamespaceDocumentation.Builder(type.Namespace, type.Module.Assembly.Name.Name);
+                namespaces[type.Namespace] = ns;
+            }
+            var typeDoc = new TypeDocumentation.Builder(ns, type, obsoleteMessage);
+            typeDocs.Add(typeDoc);
+            progressed("Collecting types");
+        }
+        // Stage 2: Resolve base types and add documentation
+        progress = 0;
+        max = typeDocs.Count;
+        foreach (var typeDoc in typeDocs)
+        {
+            var baseType = typeDoc.Type.BaseType?.Resolve();
+            if (baseType != null && visitedTypes.Contains(baseType))
+                typeDoc.WithBaseType(typeDocs.FirstOrDefault(t => t.Type.FullName == baseType.FullName));
+            
+            if (namespaces.TryGetValue(typeDoc.Type.Namespace, out var nsDoc))
+                nsDoc.WithAdditionalType(typeDoc.Type);
+            
+            var interfaces = typeDoc.Type.Interfaces;
+            foreach (var iface in interfaces)
+            {
+                var ifaceType = iface.InterfaceType.Resolve();
+                if (ifaceType != null && visitedTypes.Contains(ifaceType))
+                {
+                    var ifaceDoc = typeDocs.FirstOrDefault(t => t.Type.FullName == ifaceType.FullName);
+                    typeDoc.WithInterface(ifaceDoc ?? TypeDocumentation.Builder.ForExternalType(ifaceType));
+                }
+            }
+            
+            assemblyDocs.TryGetValue(typeDoc.Type.Module.Assembly, out var doc);
+
+            var type = typeDoc.Type;
+            string? obsoleteMessage;
+
+            foreach (var field in type.Fields)
+            {
+                if (field is {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false})
+                    continue;
+                
+                obsoleteMessage = null;
+                if (field.HasCustomAttributes)
+                {
+                    foreach (var attribute in field.CustomAttributes)
                     {
                         if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
                         {
@@ -70,213 +168,90 @@ public class TypeLoader
                         }
                     }
                 }
-
-                var docKey = Doc.GetDocKey(type);
-                var typeDoc = new TypeDocumentation(type, doc?.GetDocumentation(docKey));
-                types.Add(typeDoc);
-                // var contentPage = new TypePage(typeKey, docKey, doc?.GetDocumentation(docKey), type, obsoleteMessage);
-                // context.Pages.TryAdd(Guid.NewGuid().ToString(), contentPage);
-
-                void addTypeAssemblyIfNecessary(TypeDefinition typeDef)
-                {
-                    if (context.VisitedAssemblies.TryAdd(typeDef.Module.Assembly.FullName, 0))
-                        context.AssembliesToProcess.Enqueue(typeDef.Module.Assembly);
-                }
-                
-                foreach (var field in type.Fields)
-                {
-                    if (!field.IsPublic && !field.IsFamily)
-                        continue;
-                    var fieldKey = Whitelist.GetFieldKey(field);
-                    // if (!whitelist.IsAllowed(fieldKey))
-                    //     continue;
-                    if (!context.VisitedKeys.TryAdd(fieldKey, 0))
-                        continue;
-                    obsoleteMessage = null;
-                    if (field.HasCustomAttributes)
-                    {
-                        foreach (var attribute in field.CustomAttributes)
-                        {
-                            if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
-                            {
-                                if (attribute.ConstructorArguments.Count > 0)
-                                    obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
-                                break;
-                            }
-                        }
-                    }
-                    docKey = Doc.GetDocKey(field);
-                    var fieldDoc = new FieldDocumentation(field, doc?.GetDocumentation(docKey), obsoleteMessage);
-                    typeDoc.Fields.Add(fieldDoc);
-                    // var fieldPage = new FieldPage(fieldKey, docKey, doc?.GetDocumentation(docKey), field, obsoleteMessage);
-                    // contentPage.Fields.Add(fieldPage);
-                    // context.Pages.TryAdd(Guid.NewGuid().ToString(), fieldPage);
-
-                    var fieldType = field.FieldType.Resolve();
-                    if (fieldType is { IsGenericParameter: false })
-                        addTypeAssemblyIfNecessary(fieldType);
-                }
-
-                foreach (var property in type.Properties)
-                {
-                    if (!property.GetMethod?.IsPublic == true && !property.GetMethod?.IsFamily == true)
-                        continue;
-                    var propertyKey = Whitelist.GetPropertyKey(property);
-                    // if (!whitelist.IsAllowed(propertyKey))
-                    //     continue;
-                    if (!context.VisitedKeys.TryAdd(propertyKey, 0))
-                        continue;
-                    obsoleteMessage = null;
-                    if (property.HasCustomAttributes)
-                    {
-                        foreach (var attribute in property.CustomAttributes)
-                        {
-                            if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
-                            {
-                                if (attribute.ConstructorArguments.Count > 0)
-                                    obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
-                                break;
-                            }
-                        }
-                    }
-                    var propertyType = property.PropertyType.Resolve();
-                    docKey = Doc.GetDocKey(property);
-                    var propertyDoc = new PropertyDocumentation(property, doc?.GetDocumentation(docKey));
-                    typeDoc.Properties.Add(propertyDoc);
-                    // var propertyPage = new PropertyPage(propertyKey, docKey, doc?.GetDocumentation(docKey), property, obsoleteMessage);
-                    // contentPage.Properties.Add(propertyPage);
-                    // context.Pages.TryAdd(Guid.NewGuid().ToString(), propertyPage);
-
-                    if (propertyType is { IsGenericParameter: false })
-                        addTypeAssemblyIfNecessary(propertyType);
-                }
-
-                foreach (var method in type.Methods)
-                {
-                    if (!method.IsPublic && !method.IsFamily)
-                        continue;
-                    if (method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
-                        continue;
-
-                    var methodKey = Whitelist.GetMethodKey(method);
-                    // if (!whitelist.IsAllowed(methodKey))
-                    //     continue;
-                    if (!context.VisitedKeys.TryAdd(methodKey, 0))
-                        continue;
-                    obsoleteMessage = null;
-                    if (method.HasCustomAttributes)
-                    {
-                        foreach (var attribute in method.CustomAttributes)
-                        {
-                            if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
-                            {
-                                if (attribute.ConstructorArguments.Count > 0)
-                                    obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
-                                break;
-                            }
-                        }
-                    }
-                    docKey = Doc.GetDocKey(method);
-                    var methodDoc = new MethodDocumentation(method, doc?.GetDocumentation(docKey));
-                    typeDoc.Methods.Add(methodDoc);
-                    // var methodPageId = method.GetCSharpName(CSharpNameFlags.Namespace | CSharpNameFlags.NestedParent | CSharpNameFlags.Name);
-                    // // Is there an existing method with the same name?
-                    // if (context.Pages.TryGetValue(methodPageId, out var existingPage) && existingPage is MethodPage methodPage)
-                    // {
-                    //     // If so, add this method as an overload
-                    //     methodPage.Overloads.Add(method);
-                    // }
-                    // else
-                    // {
-                    //     methodPage = new MethodPage(methodPageId, methodKey, docKey, doc?.GetDocumentation(docKey), method, obsoleteMessage);
-                    //     contentPage.Methods.Add(methodPage);
-                    //     context.Pages.TryAdd(methodPageId, methodPage);
-                    // }
-                    var returnType = method.ReturnType.Resolve();
-                    if (returnType is { IsGenericParameter: false })
-                        addTypeAssemblyIfNecessary(returnType);
-
-                    foreach (var parameter in method.Parameters)
-                    {
-                        var parameterType = parameter.ParameterType.Resolve();
-                        if (parameterType is { IsGenericParameter: false })
-                            addTypeAssemblyIfNecessary(parameterType);
-                    }
-                }
-
-                foreach (var evt in type.Events)
-                {
-                    if (!evt.AddMethod?.IsPublic == true && !evt.AddMethod?.IsFamily == true)
-                        continue;
-                    var eventKey = Whitelist.GetEventKey(evt);
-                    // if (!whitelist.IsAllowed(eventKey))
-                    //     continue;
-                    if (!context.VisitedKeys.TryAdd(eventKey, 0))
-                        continue;
-                    obsoleteMessage = null;
-                    if (evt.HasCustomAttributes)
-                    {
-                        foreach (var attribute in evt.CustomAttributes)
-                        {
-                            if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
-                            {
-                                if (attribute.ConstructorArguments.Count > 0)
-                                    obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
-                                break;
-                            }
-                        }
-                    }
-                    docKey = Doc.GetDocKey(evt);
-                    var eventDoc = new EventDocumentation(evt, doc?.GetDocumentation(docKey));
-                    typeDoc.Events.Add(eventDoc);
-                    // var eventPage = new EventPage(eventKey, docKey, doc?.GetDocumentation(docKey), evt, obsoleteMessage);
-                    // contentPage.Events.Add(eventPage);
-                    // context.Pages.TryAdd(Guid.NewGuid().ToString(), eventPage);
-                    var eventType = evt.EventType.Resolve();
-                    if (eventType is { IsGenericParameter: false })
-                        addTypeAssemblyIfNecessary(eventType);
-                }
+                var docKey = Doc.GetDocKey(field);
+                var fieldDoc = new FieldDocumentation(typeDoc.Instance, field, doc?.GetDocumentation(docKey), obsoleteMessage);
+                typeDoc.WithAdditionalMember(fieldDoc);
+                // TODO: Link to MS documentation where possible
             }
 
-            Parallel.ForEach(assemblyToProcess.Modules,
-                (module, _) => { Parallel.ForEach(module.Types, scanType); });
-        }
-
-        foreach (var type in types)
-        {
-            if (type.Type.DeclaringType != null)
+            foreach (var property in type.Properties)
             {
-                var parentType = types.FirstOrDefault(t => t.Type.FullName == type.Type.DeclaringType.FullName);
-                parentType?.NestedTypes.Add(type);
-            }
-        }
-        
-        return new Documentation(types);
-        // return new TypeInfo(context.Pages.Values);
-    }
-
-    static void ScanAssembly(AssemblyDefinition assembly, Context context, DefaultAssemblyResolver ar)
-    {
-        foreach (var module in assembly.Modules)
-        {
-            foreach (var assemblyName in module.AssemblyReferences)
-            {
-                var fullName = assemblyName.FullName;
-                if (context.VisitedKeys.ContainsKey(fullName))
+                if (property.GetMethod is null or {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false} && property.SetMethod is null or {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false})
                     continue;
-                var referencedAssembly = ar.Resolve(assemblyName);
-                context.AssembliesToProcess.Enqueue(referencedAssembly);
-                context.VisitedKeys.TryAdd(fullName, 0);
-            }
-        }
-    }
 
-    class Context
-    {
-        public ConcurrentQueue<AssemblyDefinition> AssembliesToProcess { get; } = new();
-        public ConcurrentQueue<TypeDefinition> TypesToProcess { get; } = new();
-        public ConcurrentDictionary<string, byte> VisitedAssemblies { get; } = new();
-        public ConcurrentDictionary<string, byte> VisitedKeys { get; } = new();
-        // public ConcurrentDictionary<string, Page> Pages { get; } = new();
+                if (property.Name.IndexOf('.') >= 0) Debugger.Break();
+                
+                obsoleteMessage = null;
+                if (property.HasCustomAttributes)
+                {
+                    foreach (var attribute in property.CustomAttributes)
+                    {
+                        if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
+                        {
+                            if (attribute.ConstructorArguments.Count > 0)
+                                obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
+                            break;
+                        }
+                    }
+                }
+                var docKey = Doc.GetDocKey(property);
+                var propertyDoc = new PropertyDocumentation(typeDoc.Instance, property, doc?.GetDocumentation(docKey), obsoleteMessage);
+                typeDoc.WithAdditionalMember(propertyDoc);
+                // TODO: Link to MS documentation where possible
+            }
+
+            foreach (var method in type.Methods)
+            {
+                if (method is {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false})
+                    continue;
+                if (method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
+                    continue;
+
+                obsoleteMessage = null;
+                if (method.HasCustomAttributes)
+                {
+                    foreach (var attribute in method.CustomAttributes)
+                    {
+                        if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
+                        {
+                            if (attribute.ConstructorArguments.Count > 0)
+                                obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
+                            break;
+                        }
+                    }
+                }
+                var docKey = Doc.GetDocKey(method);
+                var methodDoc = new MethodDocumentation(typeDoc.Instance, method, doc?.GetDocumentation(docKey), obsoleteMessage);
+                typeDoc.WithAdditionalMember(methodDoc);
+                // TODO: Link to MS documentation where possible
+            }
+
+            foreach (var evt in type.Events)
+            {
+                if (!evt.AddMethod?.IsPublic == true && !evt.AddMethod?.IsFamily == true)
+                    continue;
+                obsoleteMessage = null;
+                if (evt.HasCustomAttributes)
+                {
+                    foreach (var attribute in evt.CustomAttributes)
+                    {
+                        if (attribute.AttributeType.FullName == "System.ObsoleteAttribute")
+                        {
+                            if (attribute.ConstructorArguments.Count > 0)
+                                obsoleteMessage = attribute.ConstructorArguments[0].Value as string;
+                            break;
+                        }
+                    }
+                }
+                var docKey = Doc.GetDocKey(evt);
+                var eventDoc = new EventDocumentation(typeDoc.Instance, evt, doc?.GetDocumentation(docKey), obsoleteMessage);
+                typeDoc.WithAdditionalMember(eventDoc);
+                // TODO: Link to MS documentation where possible
+            }
+
+            progressed("Producing documentation");
+        }
+
+        return new Documentation(typeDocs.Select(t => t.Build()).ToList());
     }
 }

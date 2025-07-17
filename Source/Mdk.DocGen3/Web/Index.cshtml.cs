@@ -1,5 +1,4 @@
-﻿using Mdk.DocGen3.Pages;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Mdk.DocGen3.Web;
 
@@ -9,9 +8,11 @@ public class Index : PageModel
 
     public void Generate(Context context)
     {
+        Title = context.Name;
         Slug = "index.html";
         var engine = context.Engine;
         var namespaceGroups = context.Pages
+            .Where(p => !p.IsExternal())
             .GroupBy(p => p.Namespace)
             .OrderBy(g => g.Key)
             .ToList();
@@ -29,7 +30,7 @@ public class Index : PageModel
         foreach (var ns in namespaceGroups)
         {
             var nsModel = new Namespace();
-            nsModel.Generate(context, ns.Key, ns);            
+            nsModel.Generate(context, ns.Key, ns.Where(m => !m.IsExternal()).Where(m => context.Whitelist.IsAllowed(m.WhitelistKey)));
         }
     }
 }

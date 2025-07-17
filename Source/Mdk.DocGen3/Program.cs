@@ -1,12 +1,10 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.ComponentModel;
-using System.Web;
 using JetBrains.Annotations;
 using Mdk.DocGen3.CodeSecurity;
 using Mdk.DocGen3.Pages;
 using Mdk.DocGen3.Types;
-using Mdk.DocGen3.Web;
 using RazorLight;
 using Index = Mdk.DocGen3.Web.Index;
 
@@ -42,7 +40,7 @@ public static partial class Program
         var modWhitelistInstance = Whitelist.Load(modWhitelist);
         var terminalsInstance = Terminals.Load(terminals);
 
-        var typeInfo = TypeLoader.LoadTypeInfo(@"C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\", pbWhitelistInstance);
+        var typeInfo = TypeLoader.LoadTypeInfo(@"C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\");
 
         var modOutputFolder = Path.Combine(outputFolder, "Mods");
         var pbOutputFolder = Path.Combine(outputFolder, "ProgrammableBlocks");
@@ -64,145 +62,84 @@ public static partial class Program
         Console.Write("Generating... ");
 
         // generate a list of Pages.Page from the types.
-        var pages = typeInfo.Types.SelectMany(ResolvePages).ToList();
+        var pages = typeInfo.Types;
 
-        var consolePos = (Console.CursorLeft, Console.CursorTop);
-        var n = 0;
-        var maxText = $"100% ({pages.Count}/{pages.Count})";
-        var maxTextLength = maxText.Length;
-        var skippedCount = 0;
-        var generatedCount = 0;
-
-        // // For the sake of testing: Find a page that has a representation of every type of member
-        // // and generate it alone
-        //  var testPage = pages.OfType<TypePage>()
-        //      .FirstOrDefault(p => p.TypeDocumentation.Fields.Count > 0 && 
-        //                           p.TypeDocumentation.Properties.Count > 0 && 
-        //                           p.TypeDocumentation.Methods.Count > 0 && 
-        //                           p.TypeDocumentation.Events.Count > 0 /*&&
-        //                           p.TypeDocumentation.NestedTypes.Count > 0*/);
-        //
-        // Find the typepage for "MyFueledPowerProducer" to use as a test page
-        // var testPage = pages.OfType<TypePage>()
-        //     .FirstOrDefault(p => p.Url.EndsWith("TextPtr_struct.html", StringComparison.OrdinalIgnoreCase));
-        //
-        // Directory.CreateDirectory(modOutputFolder);
-        // StyleSheet.Write(Path.Combine(modOutputFolder, "style.css"));
-        // testPage.Generate(typeInfo, modOutputFolder);
-
+        // Copy index.html and index.css to the main output folder
+        var indexHtml = Path.Combine(outputFolder, "index.html");
+        var indexCss = Path.Combine(outputFolder, "index.css");
+        Directory.CreateDirectory(Path.GetDirectoryName(indexHtml)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(indexCss)!);
+        File.Copy(Path.Combine("Web", "boot.html"), indexHtml, true);
+        File.Copy(Path.Combine("Web", "boot.css"), indexCss, true);
+        
         Directory.CreateDirectory(modOutputFolder);
         Directory.CreateDirectory(pbOutputFolder);
-        List<DocumentationPage> pbPages = new List<DocumentationPage>();
-        List<DocumentationPage> modPages = new List<DocumentationPage>();
+        List<MemberDocumentation> pbPages = new List<MemberDocumentation>();
+        List<MemberDocumentation> modPages = new List<MemberDocumentation>();
 
         foreach (var page in pages)
         {
-            n++;
-            if (n % 100 == 0)
+            if (modWhitelistInstance.IsAllowed(page.WhitelistKey))
             {
-                var pct = n * 100 / pages.Count;
-                Console.SetCursorPosition(consolePos.Item1, consolePos.Item2);
-                var text = $"{pct}% ({n}/{pages.Count})".PadRight(maxTextLength);
-                Console.Write(text);
-            }
-            bool wasGenerated = false;
-            if (!page.IsIgnored(modWhitelistInstance))
-            {
-                // Add this only if it's not a nested type
-                if (page is TypePage {TypeDocumentation.Type.IsNested: false})
+                if (!page.IsNested)
                     modPages.Add(page);
             }
-            if (!page.IsIgnored(pbWhitelistInstance))
+            if (pbWhitelistInstance.IsAllowed(page.WhitelistKey))
             {
-                if (page is TypePage {TypeDocumentation.Type.IsNested: false})
+                if (!page.IsNested)
                     pbPages.Add(page);
             }
-            //
-            // if (page.IsMicrosoftType())
-            // {
-            //     skippedCount++;
-            //     continue; // Skip Microsoft types
-            // }
-            //
-            // var wasGenerated = false;
-            // if (page.IsWhitelisted(modWhitelistInstance))
-            // {
-            //     page.Generate(typeInfo, modOutputFolder);
-            //     wasGenerated = true;
-            // }
-            // if (page.IsWhitelisted(pbWhitelistInstance))
-            // {
-            //     page.Generate(typeInfo, pbOutputFolder);
-            //     wasGenerated = true;
-            // }
-
-            if (wasGenerated)
-            {
-                generatedCount++;
-            }
-            else
-            {
-                skippedCount++;
-            }
         }
-        Console.SetCursorPosition(consolePos.Item1, consolePos.Item2);
-        Console.WriteLine($"100% ({pages.Count}/{pages.Count})");
-        Console.WriteLine($"Generated {generatedCount} pages, skipped {skippedCount} pages.");
-
         // Sort the modPages and pbPages by their type name
-        modPages.Sort((a, b) =>
-            string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
-        pbPages.Sort((a, b) =>
-            string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        modPages.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+        pbPages.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
         var engine = new RazorLightEngineBuilder()
             .UseFileSystemProject(Path.Combine(Directory.GetCurrentDirectory(), "Web"))
             .UseMemoryCachingProvider()
             .Build();
 
-        // Copy style.css to the output folder /css
-        
-        // var context = new Context(engine, modOutputFolder, modPages);
-        // var cssFile = Path.Combine(modOutputFolder, "css", "style.css");
-        // Directory.CreateDirectory(Path.GetDirectoryName(cssFile)!);
-        // File.Copy(Path.Combine("Web", "style.css"), cssFile, true);
+        GenerateApiDocumentation("Mod API", "Mods", engine, modOutputFolder, modWhitelistInstance, modPages);
+        GenerateApiDocumentation("Programmable Block API", "ProgrammableBlocks", engine, pbOutputFolder, pbWhitelistInstance, pbPages);
+    }
+
+    static void GenerateApiDocumentation(string name, string rootSlug, RazorLightEngine engine, string pbOutputFolder, Whitelist whitelist, List<MemberDocumentation> pbPages)
+    {
+        // var index = new NamespaceIndexPage();
         // var index = new Index();
-        // index.Generate(context);
-        
-        GenerateApiDocumentation(engine, modOutputFolder, modPages);
-        GenerateApiDocumentation(engine, pbOutputFolder, pbPages);
-    }
-
-    static void GenerateApiDocumentation(RazorLightEngine engine, string pbOutputFolder, List<DocumentationPage> pbPages)
-    {
-        var index = new Index();
-        var context = new Context(engine, pbOutputFolder, pbPages);
+        var context = new Context(name, rootSlug, engine, whitelist, pbOutputFolder, pbPages);
         var cssFile = Path.Combine(pbOutputFolder, "css", "style.css");
+        var jsFile = Path.Combine(pbOutputFolder, "js", "script.js");
+        var jsMapFile = Path.Combine(pbOutputFolder, "js", "script.js.map");
         Directory.CreateDirectory(Path.GetDirectoryName(cssFile)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(jsFile)!);
         File.Copy(Path.Combine("Web", "style.css"), cssFile, true);
-        index.Generate(context);
+        File.Copy(Path.Combine("Web", "script.js"), jsFile, true);
+        File.Copy(Path.Combine("Web", "script.js.map"), jsMapFile, true);
+        ApiIndexPage.Generate(context);
+        // index.Generate(context);
     }
 
-    static IEnumerable<DocumentationPage> ResolvePages(TypeDocumentation td)
-    {
-        var page = new TypePage(td);
-        yield return page;
-        foreach (var field in td.Fields)
-            yield return new FieldPage(field);
-        foreach (var property in td.Properties)
-            yield return new PropertyPage(property);
-        var methodsByName = td.Methods.GroupBy(m => m.Name).ToList();
-        if (methodsByName.Count > 0)
-        {
-            foreach (var methodGroup in methodsByName)
-                yield return new MethodPage(methodGroup);
-        }
-        foreach (var eventDef in td.Events)
-            yield return new EventPage(eventDef);
-        foreach (var nestedType in td.NestedTypes)
-        foreach (var nestedPage in ResolvePages(nestedType))
-            yield return nestedPage;
-    }
+    // static IEnumerable<DocumentationPage> ResolvePages(TypeDocumentation td)
+    // {
+    //     var page = new TypePage(td);
+    //     yield return page;
+    //     foreach (var field in td.Fields)
+    //         yield return new FieldPage(field);
+    //     foreach (var property in td.Properties)
+    //         yield return new PropertyPage(property);
+    //     var methodsByName = td.Methods.GroupBy(m => m.Name).ToList();
+    //     if (methodsByName.Count > 0)
+    //     {
+    //         foreach (var methodGroup in methodsByName)
+    //             yield return new MethodPage(methodGroup);
+    //     }
+    //     foreach (var eventDef in td.Events)
+    //         yield return new EventPage(eventDef);
+    //     foreach (var nestedType in td.NestedTypes)
+    //     foreach (var nestedPage in ResolvePages(nestedType))
+    //         yield return nestedPage;
+    // }
 
     static string ToValidFileName(string docKey) =>
         // Replace invalid characters with underscores

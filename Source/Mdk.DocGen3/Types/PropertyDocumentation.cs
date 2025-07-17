@@ -5,13 +5,13 @@ using Mono.Cecil;
 
 namespace Mdk.DocGen3.Types;
 
-public class PropertyDocumentation(PropertyDefinition property, DocMember? documentation, string? obsoleteMessage = null)
-    : MemberDocumentation(property, documentation, obsoleteMessage)
+public class PropertyDocumentation(TypeDocumentation type, PropertyDefinition property, DocMember? documentation, string? obsoleteMessage = null)
+    : MemberDocumentation(type, property, documentation, obsoleteMessage)
 {
     string? _shortSignature;
+
     public PropertyDefinition Property { get; } = property;
     public override sealed string Title { get; } = $"{property.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.NestedParent)} {property.PropertyType.GetMemberTypeName()}{(property.IsObsolete() ? " (Obsolete)" : "")}";
-    public override sealed bool IsPublic => Property.GetMethod?.IsPublic == true || Property.SetMethod?.IsPublic == true;
 
     public override sealed string ShortSignature()
     {
@@ -33,4 +33,7 @@ public class PropertyDocumentation(PropertyDefinition property, DocMember? docum
         }
         return _shortSignature = builder.ToString();
     }
+
+    public override bool IsPublic() => Property.GetMethod?.IsPublic == true || Property.SetMethod?.IsPublic == true;
+    public override bool IsExternal() => false;
 }

@@ -1,104 +1,162 @@
 ﻿using Mdk.DocGen3.Types;
+using Mdk.DocGen3.Web;
 
-namespace Mdk.DocGen3.Web;
+namespace Mdk.DocGen3.Pages;
 
-public class MemberPage : Namespace
+public class MemberPage : MemberPageGenerator
 {
-    bool _isSpaceText;
     public string? Namespace { get; set; }
     public string? Assembly { get; set; }
-    public string? Date { get; set; }
     public string? Returns { get; set; }
     public IEnumerable<Breadcrumb>? Interfaces { get; set; }
-
     public IEnumerable<MemberTable>? MemberTables { get; set; }
 
-    public void Generate(Context context, Namespace ns, MemberDocumentation page)
+    string RenderBreadcrumbs() => Join(" ( ", Breadcrumbs?.Select(b => $"<a href=\"{b.Slug}\">{Esc(b.Name)}</a>") ?? []);
+
+    string RenderInterfaces() =>
+        Interfaces is not null && Interfaces.Any()
+            ? $"<span>Interfaces:</span> <span>{Join(", ", Interfaces.Select(iface => $"<a href=\"{iface.Slug}\">{Esc(iface.Name)}</a>"))}</span>"
+            : string.Empty;
+
+    string RenderIf(string cssClass, string? content) =>
+        !string.IsNullOrEmpty(content)
+            ? $"<p class=\"{cssClass}\">{content}</p>"
+            : string.Empty;
+
+    string RenderTables() =>
+        MemberTables is not null && MemberTables.Any()
+            ? Join("\n", MemberTables.Select(RenderTable))
+            : "<p>No member tables available.</p>";
+
+    string RenderTable(MemberTable arg) =>
+        $"""
+         <div class="{Css("member-list", arg.CustomCssClasses)}">
+             <h2>{Esc(arg.Title)}</h2>
+             <table>
+                 <tbody>
+                     {RenderTableRows(arg.Members?.ToList())}
+                 </tbody>
+             </table>
+         </div>
+         """;
+
+    string RenderTableRows(IReadOnlyList<MemberTableRow>? members) =>
+        members is not null && members.Any()
+            ? Join("\n", members.Select(RenderMemberRow))
+            : "<tr><td colspan=\"2\">No members found.</td></tr>";
+
+    string RenderMemberRow(MemberTableRow row) =>
+        $"""
+         <tr>
+             <td class="{Css("member-name", row.CustomCssClasses)}">
+                 <a href="{row.Slug}">{Esc(row.Name)}</a>
+             </td>
+             <td class="member-description">{row.Summary}</td>
+         </tr>
+         """;
+
+    protected override string OnRender() =>
+        $"""
+         <div class="breadcrumbs">{RenderBreadcrumbs()}</div>
+         <h1>{Esc(Title)}</h1>
+         <h2>Definition</h2>
+         <div class="definition">
+            <span>Namespace:</span> <span class="value">@Model.Namespace</span><br/>
+            <span>Assembly:</span> <span class="value">@Model.Assembly</span><br/>
+            {RenderInterfaces()}
+         </div>
+         <p>
+            <button id="toggleNonPublic" class="toggle-btn">
+                Show non-public
+            </button>
+         </p>
+         {RenderIf("summary", Summary)}
+         {RenderIf("remarks", Remarks)}
+         {RenderIf("community-remarks", CommunityRemarks)}
+         {RenderTables()}
+         <footer>
+            <div>Updated {Date:u}</div>
+         </footer>
+
+         """;
+
+    public static void Generate(Context context, NamespaceLayout layout, MemberDocumentation page)
     {
-        _isSpaceText = page.FullName == "Sandbox.Game.Localization.MySpaceTexts" || page.FullName == "Sandbox.Game.Localization.MyCoreTexts";
-
-        Title = page.Title;
-        Namespace = page.Namespace;
-        Assembly = page.AssemblyName;
-        Date = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
-        var nsPath = Path.GetDirectoryName(ns.Slug);
-        Slug = $"{nsPath}/{context.ToSafeFileName(page.Name)}.html";
-        IndexSlug = context.ToRelative(Slug, "/index.html");
-        IndexName = ns.Title ?? "Parent";
-        CssSlug = context.ToRelative(Slug, "/css/style.css");
-        JsSlug = context.ToRelative(Slug, "/js/script.js");
-        var nsIndexSlug = context.ToRelative(Slug, $"{nsPath}/index.html");
-        Breadcrumbs =
-        [
-            new Breadcrumb(context.ToRelative(Slug, "../index.html"), "Home"),
-            new Breadcrumb(IndexSlug, context.Name),
-            new Breadcrumb(nsIndexSlug, ns.Title ?? "Parent")
-        ];
-        Summary = page.Documentation?.RenderSummary() ?? "";
-        // If this is the space texts, we want to add a blob to the summary explaining that we will
-        // not list all the members of this type because there's too many of them.
-        if (_isSpaceText)
+        var pge = new MemberPage
         {
-            Summary += """
-                       <p class="warning">
-                         This is a generated localization file. It contains a lot of members, 
-                         so we will not list them all here. Please refer to the source code 
-                         or your IDE intellisense for more details.
-                       </p>
-                       """;
-        }
-
-        Remarks = page.Documentation?.RenderRemarks() ?? "";
-        CommunityRemarks = context.GetCommunityRemarksHtml(page.DocKey);
-        Types = ns.Types;
+            Layout = layout,
+            Title = page.Title,
+            CssSlug = context.ToRelative(page.Slug, "/css/style.css"),
+            JsSlug = context.ToRelative(page.Slug, "/js/script.js"),
+            Breadcrumbs =
+            [
+                new Breadcrumb(context.ToRelative(page.Slug, "/index.html"), "Home"),
+                new Breadcrumb(context.ToRelative(page.Slug, page.Parent!.Slug), page.Parent?.Title ?? "Parent")
+            ],
+            Summary = page.Documentation?.RenderSummary() ?? "",
+            Remarks = page.Documentation?.RenderRemarks() ?? "",
+            CommunityRemarks = context.GetCommunityRemarksHtml(page.DocKey),
+            Namespace = page.Namespace,
+            Assembly = page.AssemblyName
+        };
 
         switch (page)
         {
             case TypeDocumentation typePage:
-                Generate(context, typePage);
+                Generate(context, pge, typePage);
                 break;
             case MethodDocumentation methodPage:
-                Generate(context, methodPage);
+                Generate(context, pge, methodPage);
                 break;
             case PropertyDocumentation propertyPage:
-                Generate(context, propertyPage);
+                Generate(context, pge, propertyPage);
                 break;
             case EventDocumentation eventPage:
-                Generate(context, eventPage);
+                Generate(context, pge, eventPage);
                 break;
             case FieldDocumentation fieldPage:
-                Generate(context, fieldPage);
+                Generate(context, pge, fieldPage);
                 break;
         }
 
-        var result = context.Engine.CompileRenderAsync("MemberPage.cshtml", this).GetAwaiter().GetResult();
-        context.WriteHtml(Slug, result);
+        var result = pge.Render();
+        context.WriteHtml(page.Slug, result);
     }
 
-    void Generate(Context context, FieldDocumentation fieldPage) => Returns = fieldPage.Documentation?.RenderReturns();
+    static void Generate(Context context, MemberPage pge, FieldDocumentation fieldPage) => pge.Returns = fieldPage.Documentation?.RenderReturns();
 
-    void Generate(Context context, EventDocumentation eventPage) { }
+    static void Generate(Context context, MemberPage pge, EventDocumentation eventPage) { }
 
-    void Generate(Context context, PropertyDocumentation propertyPage) => Returns = propertyPage.Documentation?.RenderReturns();
+    static void Generate(Context context, MemberPage pge, PropertyDocumentation propertyPage) => pge.Returns = propertyPage.Documentation?.RenderReturns();
 
-    void Generate(Context context, MethodDocumentation methodPage) => Returns = methodPage.Documentation?.RenderReturns();
+    static void Generate(Context context, MemberPage pge, MethodDocumentation methodPage) => pge.Returns = methodPage.Documentation?.RenderReturns();
 
-    void Generate(Context context, TypeDocumentation typePage)
+    static void Generate(Context context, MemberPage pge, TypeDocumentation typePage)
     {
-        if (_isSpaceText)
+        var isSpaceText = typePage.FullName is "Sandbox.Game.Localization.MySpaceTexts" or "Sandbox.Game.Localization.MyCoreTexts";
+
+        // If this is the space texts, we want to add a blob to the summary explaining that we will
+        // not list all the members of this type because there's too many of them.
+        if (isSpaceText)
         {
-            MemberTables = [];
+            pge.Summary += """
+                           <p class="warning">
+                             This is a generated localization file. It contains a lot of members, 
+                             so we will not list them all here. Please refer to the source code 
+                             or your IDE intellisense for more details.
+                           </p>
+                           """;
+            pge.MemberTables = [];
             return;
         }
 
-        Interfaces = typePage.Interfaces
+        pge.Interfaces = typePage.Interfaces
             .Where(i => context.Whitelist.IsAllowed(i.WhitelistKey))
             .Select(i => new Breadcrumb(
-                context.ToRelative(Slug, $"{i.Name}.html"),
+                context.ToRelative(typePage.Slug, $"{i.Name}.html"),
                 i.ShortSignature()
             )).ToList();
-        
+
         List<MemberTable> memberTables = [];
 
         var constructors = typePage.Constructors().Where(c => context.Whitelist.IsAllowed(c.WhitelistKey)).ToList();
@@ -267,23 +325,7 @@ public class MemberPage : Namespace
                 }).ToList()
             });
         }
-        
-        MemberTables = memberTables.Where(t => !t.IsEmpty).ToList();
+
+        pge.MemberTables = memberTables.Where(t => !t.IsEmpty).ToList();
     }
-}
-
-public class MemberTable
-{
-    public IEnumerable<string>? CustomCssClasses { get; set; }
-    public string? Title { get; set; }
-    public IEnumerable<MemberTableRow>? Members { get; set; }
-    public bool IsEmpty => Members == null || !Members.Any();
-}
-
-public class MemberTableRow
-{
-    public IEnumerable<string>? CustomCssClasses { get; set; }
-    public string? Name { get; set; }
-    public string? Slug { get; set; }
-    public string? Summary { get; set; }
 }

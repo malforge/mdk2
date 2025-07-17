@@ -9,11 +9,20 @@
         <DartSassMessageLevel>High</DartSassMessageLevel>
         <PreserveCompilationContext>True</PreserveCompilationContext>
     </PropertyGroup>
-
+    
+    <ItemGroup>
+        <!-- not a PackageReference! -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+    
     <ItemGroup>
       <PackageReference Include="DartSassBuilder" Version="1.1.0" />
       <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
       <PackageReference Include="Mal.OnyxTemplate" Version="1.2.1" />
+      <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.8.3">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
       <PackageReference Include="Mono.Cecil" Version="0.11.6" />
       <PackageReference Include="RazorLight" Version="2.3.1" />
     </ItemGroup>
@@ -33,9 +42,22 @@
       <None Update="Web\NamespaceLayout.cshtml">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="Web\script.js">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Web\boot.css">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Web\boot.html">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Web\script.js.map">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>
+      <Content Include="Web\boot.scss" />
       <Content Include="Web\style.scss" />
     </ItemGroup>
 

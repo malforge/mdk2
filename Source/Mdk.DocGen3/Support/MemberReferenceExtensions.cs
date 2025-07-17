@@ -22,6 +22,24 @@ public static class MemberReferenceExtensions
 //     }
      */
 
+    public static bool IsSuperTypeOf(this TypeReference potentialSuperType, TypeReference subType)
+    {
+       // Check if the type is the same or a base type of the typePage
+        if (potentialSuperType == subType)
+            return true;
+
+        // Check if the type is a base type of the typePage
+        var currentType = subType;
+        while (currentType != null)
+        {
+            if (currentType == potentialSuperType)
+                return true;
+            currentType = currentType.Resolve()?.BaseType;
+        }
+
+        return false;
+    }
+
     public static bool IsMsType(this MemberReference member)
     {
         return member switch
@@ -253,9 +271,14 @@ public static class MemberReferenceExtensions
             case MetadataType.Object:
                 return "object";
         }
-        
-        if (type is GenericInstanceType genericInstanceType && flags.HasFlag(CSharpNameFlags.Generics))
-            return $"{genericInstanceType.ElementType.GetCSharpName(flags)}<{string.Join(", ", genericInstanceType.GenericArguments.Select(g => g.GetCSharpName(flags)))}>";
+
+        if (flags.HasFlag(CSharpNameFlags.Generics))
+        {
+            if (type is GenericInstanceType genericInstanceType)
+                return $"{genericInstanceType.ElementType.GetCSharpName(flags)}<{string.Join(", ", genericInstanceType.GenericArguments.Select(g => g.GetCSharpName(flags)))}>";
+            if (type.HasGenericParameters)
+                return $"{type.GetCSharpName(flags & ~CSharpNameFlags.Generics)}<{string.Join(", ", type.GenericParameters.Select(gp => gp.Name))}>";
+        }
 
         if (type.IsArray)
             return $"{GetCSharpName(type.GetElementType(), flags)}[]";
