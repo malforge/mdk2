@@ -1,10 +1,13 @@
-﻿using Mdk.DocGen3.Web;
+﻿using Mdk.DocGen3.Pages.Base;
+using Mdk.DocGen3.Web;
 
 namespace Mdk.DocGen3.Pages;
 
-public class NamespaceLayout : MemberPageGenerator
+public class NamespaceLayout : PageGeneratorLayout<NamespaceModel>
 {
     public IEnumerable<TypeItemModel>? Types { get; set; }
+
+    protected MemberPageModelBase Main => GetSubModel<MemberPageModelBase>("main");
 
     protected override string OnRender() =>
         $"""
@@ -12,9 +15,9 @@ public class NamespaceLayout : MemberPageGenerator
          <html lang="en">
          <head>
              <meta charset="utf-8"/>
-             <title>{Esc(this["main"].Title)}</title>
-             <link rel="stylesheet" href="{Esc(this["main"].CssSlug)}"/>
-             <script src="{Esc(this["main"].JsSlug)}" type="module" defer="defer"></script>
+             <title>{Esc(Main.Title)}</title>
+             <link rel="stylesheet" href="{Esc(Main.CssSlug)}"/>
+             <script src="{Esc(Main.JsSlug)}" type="module" defer="defer"></script>
          </head>
          <body>
          <div class="layout">
@@ -33,12 +36,12 @@ public class NamespaceLayout : MemberPageGenerator
 
     string RenderBasicLinks() =>
         Join("\n",
-            this["main"].Breadcrumbs?.Select(b => $"""
-                                                   <div class="type-breadcrumb">
-                                                       <a href=\"{b.Slug}\">{Esc(b.Name)}</a>
-                                                   </div>
+            Main.Breadcrumbs?.Select(b => $"""
+                                           <div class="type-breadcrumb">
+                                               <a href="{b.Slug}">{Esc(b.Name)}</a>
+                                           </div>
 
-                                                   """)
+                                           """)
             ?? []);
 
     string RenderTypes() =>

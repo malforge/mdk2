@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Xml;
 using System.Xml.Serialization;
 using Mdk.DocGen3.CodeDoc;
@@ -8,6 +7,21 @@ using Microsoft.Win32;
 using Mono.Cecil;
 
 namespace Mdk.DocGen3.Types;
+
+public class TypeLoadingContext(string binFolder, Func<TypeDefinition, bool> typeFilterFn) : ContextBase
+{
+    readonly Func<TypeDefinition, bool> _typeFilterFn = typeFilterFn;
+    
+    public string BinFolder { get; } = binFolder ?? throw new ArgumentNullException(nameof(binFolder), "Bin folder cannot be null.");
+
+    public void Print(string text) => Console.WriteLine(text);
+    
+    public bool PassesFilter(TypeDefinition type)
+    {
+        if (type == null) throw new ArgumentNullException(nameof(type), "Type cannot be null.");
+        return _typeFilterFn(type);
+    }
+}
 
 public class TypeLoader
 {
@@ -50,16 +64,20 @@ public class TypeLoader
         }
     }
 
-    public static Documentation LoadTypeInfo(string binFolder)
+    public static Documentation LoadTypeInfo(TypeLoadingContext context)
     {
         var ar = new DefaultAssemblyResolver();
-        ar.AddSearchDirectory(binFolder);
+        ar.AddSearchDirectory(context.BinFolder);
         ar.AddSearchDirectory(Path.Combine(GetFrameworkInstallRoot(), "v4.0.30319"));
 
-        var assemblies = FindAssemblies(binFolder, ar).ToList();
-        // Stage 0: Collect documentation for all assemblies
+        context.Print($"Loading assemblies from {context.BinFolder}");
+        var assemblies = FindAssemblies(context.BinFolder, ar).ToList();
         if (assemblies.Count == 0)
-            throw new InvalidOperationException($"No assemblies found in {binFolder}");
+            throw new InvalidOperationException($"No assemblies found in {context.BinFolder}");
+
+        // Remove generated serialization assemblies
+        assemblies.RemoveAll(a => a.Name.Name.StartsWith("Microsoft.Xml.Serialization.GeneratedAssembly", StringComparison.OrdinalIgnoreCase));
+
         var assemblyDocs = new Dictionary<AssemblyDefinition, Doc>(assemblies.Count);
         foreach (var assembly in assemblies)
         {
@@ -68,34 +86,60 @@ public class TypeLoader
             var deserializer = new XmlSerializer(typeof(Doc));
             using var xmlStream = new FileStream(xmlDocPath, FileMode.Open, FileAccess.Read);
             using var xmlReader = XmlReader.Create(xmlStream);
-            var doc = (Doc?) deserializer.Deserialize(xmlReader);
+            var doc = (Doc?)deserializer.Deserialize(xmlReader);
             if (doc != null)
                 assemblyDocs[assembly] = doc;
         }
 
-        int progress = 0, max;
-        var stopwatch = Stopwatch.StartNew();
+#if DEBUG
 
-        var types = assemblies.SelectMany(assembly => assembly.MainModule.Types.Where(t => t.IsPublic || (t.IsNestedPublic && !t.IsMsType()))).ToList();
-        max = types.Count;
+        // Are there any duplicate assemblies?
+        var duplicateAssemblies = assemblies
+            .GroupBy(a => a.Name.Name)
+            .Where(g => g.Count() > 1)
+            .ToList();
 
-        void progressed(string step)
+        if (duplicateAssemblies.Any())
         {
-            progress++;
-            if (stopwatch.ElapsedMilliseconds > 1000)
-            {
-                Console.WriteLine($"{step}: {progress}/{max} ({(double) progress / max:P2})");
-                stopwatch.Restart();
-            }
+            var duplicatesStr = string.Join(", ", duplicateAssemblies.Select(g => $"{g.Key} ({g.Count()} duplicates)"));
+            Debug.Assert(false, $"Duplicate assemblies found: {duplicatesStr}. Assemblies must be unique.");
         }
 
-        Dictionary<string, NamespaceDocumentation.Builder> namespaces = new Dictionary<string, NamespaceDocumentation.Builder>(StringComparer.OrdinalIgnoreCase);
-        var visitedTypes = new HashSet<TypeDefinition>(types);
+#endif
+
+        var types = assemblies.SelectMany(assembly => assembly.MainModule.Types.Where(t => t.IsPublic || (t.IsNestedPublic && !t.IsMsType()))).ToList();
+        context.BeginProgress("Process types for documentation", types.Count);
+
+#if DEBUG
+
+        // Check for duplicate types
+        var duplicates = types
+            .GroupBy(t => t.GetFullyQualifiedName())
+            .Where(g => g.Count() > 1)
+            .ToList();
+
+        if (duplicates.Any())
+        {
+            var duplicatesStr = string.Join(", ", duplicates.Select(g => $"{g.Key} ({g.Count()} duplicates)"));
+            Debug.Assert(false, $"Duplicate types found: {duplicatesStr}. Types must be unique.");
+        }
+
+#endif
+
+        var namespaces = new Dictionary<string, NamespaceDocumentation.Builder>(StringComparer.OrdinalIgnoreCase);
+        var visitedTypes = new HashSet<string>(types.Select(t => t.GetFullyQualifiedName()), StringComparer.OrdinalIgnoreCase);
         var typeDocs = new List<TypeDocumentation.Builder>(types.Count);
         // Stage 1: Collect all types
         for (var index = 0; index < types.Count; index++)
         {
             var type = types[index];
+            
+            if (!context.PassesFilter(type))
+            {
+                context.Progress();
+                continue; // Skip types that do not pass the filter
+            }
+            
             string? obsoleteMessage = null;
             if (type.HasCustomAttributes)
             {
@@ -109,9 +153,9 @@ public class TypeLoader
                     }
                 }
             }
-            visitedTypes.Add(type);
+            visitedTypes.Add(type.GetFullyQualifiedName());
             var baseType = type.BaseType?.Resolve();
-            if (baseType != null && visitedTypes.Add(baseType))
+            if (baseType != null && visitedTypes.Add(baseType.GetFullyQualifiedName()))
                 types.Add(baseType);
             if (!namespaces.TryGetValue(type.Namespace, out var ns))
             {
@@ -120,31 +164,54 @@ public class TypeLoader
             }
             var typeDoc = new TypeDocumentation.Builder(ns, type, obsoleteMessage);
             typeDocs.Add(typeDoc);
-            progressed("Collecting types");
+            context.Progress();
         }
+
+        context.EndProgress();
+
+#if DEBUG
+
+        var duplicates2 = typeDocs
+            .GroupBy(t => t.FullyQualifiedName)
+            .Where(g => g.Count() > 1)
+            .ToList();
+        if (duplicates2.Any())
+            Debug.Assert(false, $"Duplicate types found: {string.Join(", ", duplicates2.Select(d => d.Key))}. Types must be unique.");
+
+#endif
+
         // Stage 2: Resolve base types and add documentation
-        progress = 0;
-        max = typeDocs.Count;
+        context.BeginProgress("Resolve members", typeDocs.Count);
+
+#if DEBUG
+        var processedTypes = new HashSet<TypeDefinition>();
+#endif
+
         foreach (var typeDoc in typeDocs)
         {
+#if DEBUG
+            if (!processedTypes.Add(typeDoc.Type))
+                Debug.Assert(false, $"Type {typeDoc.Type.FullName} has already been processed. This should not happen.");
+#endif
+
             var baseType = typeDoc.Type.BaseType?.Resolve();
-            if (baseType != null && visitedTypes.Contains(baseType))
-                typeDoc.WithBaseType(typeDocs.FirstOrDefault(t => t.Type.FullName == baseType.FullName));
-            
+            if (baseType != null && visitedTypes.Contains(baseType.GetFullyQualifiedName()))
+                typeDoc.WithBaseType(typeDocs.FirstOrDefault(t => t.FullyQualifiedName == baseType.GetFullyQualifiedName()));
+
             if (namespaces.TryGetValue(typeDoc.Type.Namespace, out var nsDoc))
                 nsDoc.WithAdditionalType(typeDoc.Type);
-            
+
             var interfaces = typeDoc.Type.Interfaces;
             foreach (var iface in interfaces)
             {
                 var ifaceType = iface.InterfaceType.Resolve();
-                if (ifaceType != null && visitedTypes.Contains(ifaceType))
+                if (ifaceType != null && visitedTypes.Contains(ifaceType.GetFullyQualifiedName()))
                 {
                     var ifaceDoc = typeDocs.FirstOrDefault(t => t.Type.FullName == ifaceType.FullName);
                     typeDoc.WithInterface(ifaceDoc ?? TypeDocumentation.Builder.ForExternalType(ifaceType));
                 }
             }
-            
+
             assemblyDocs.TryGetValue(typeDoc.Type.Module.Assembly, out var doc);
 
             var type = typeDoc.Type;
@@ -152,9 +219,9 @@ public class TypeLoader
 
             foreach (var field in type.Fields)
             {
-                if (field is {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false})
+                if (field is { IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false })
                     continue;
-                
+
                 obsoleteMessage = null;
                 if (field.HasCustomAttributes)
                 {
@@ -176,11 +243,11 @@ public class TypeLoader
 
             foreach (var property in type.Properties)
             {
-                if (property.GetMethod is null or {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false} && property.SetMethod is null or {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false})
+                if (property.GetMethod is null or { IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false } && property.SetMethod is null or { IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false })
                     continue;
 
                 if (property.Name.IndexOf('.') >= 0) Debugger.Break();
-                
+
                 obsoleteMessage = null;
                 if (property.HasCustomAttributes)
                 {
@@ -202,9 +269,9 @@ public class TypeLoader
 
             foreach (var method in type.Methods)
             {
-                if (method is {IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false})
+                if (method is { IsPublic: false, IsFamily: false, IsFamilyOrAssembly: false })
                     continue;
-                if (method.IsSpecialName && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_")))
+                if (method.IsSpecialName /* && (method.Name.StartsWith("get_") || method.Name.StartsWith("set_"))*/)
                     continue;
 
                 obsoleteMessage = null;
@@ -248,8 +315,7 @@ public class TypeLoader
                 typeDoc.WithAdditionalMember(eventDoc);
                 // TODO: Link to MS documentation where possible
             }
-
-            progressed("Producing documentation");
+            context.Progress();
         }
 
         return new Documentation(typeDocs.Select(t => t.Build()).ToList());

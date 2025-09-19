@@ -1,93 +1,52 @@
-﻿using System.Collections;
-using System.Web;
+﻿namespace Mdk.DocGen3.Pages.Base;
 
-namespace Mdk.DocGen3.Pages.Base;
-
-public abstract class PageGenerator : IGenerator
+public abstract class PageGenerator<TModel> : CodeGenerator, IPageGenerator //: IGenerator
 {
     protected const string DefaultContentName = "main";
 
-    readonly HtmlPrettyPrinter _prettyPrinter = new();
-    IReadOnlyDictionary<string, PageGenerator>? _context;
+    TModel? _model;
 
-    public PageGenerator? Layout { get; set; }
-
-    protected PageGenerator this[string key] => _context?[key] ?? throw new KeyNotFoundException("PageGenerator is not correctly initialized.");
-
-    protected abstract string OnRender();
-
-    protected static string? Esc(string? input) => HttpUtility.HtmlEncode(input);
-
-    static IEnumerable<string> EvaluateStrings(IEnumerable<object?> cssClasses)
+    public TModel Model
     {
-        return cssClasses
-            .SelectMany(c => c switch
-            {
-                string str => [str.Trim()],
-                IEnumerable enumerable => enumerable.Cast<object?>()
-                    .SelectMany(inner => EvaluateStrings([inner])),
-                null => [],
-                _ => [c.ToString() ?? string.Empty]
-            })
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .Distinct();
+        get => _model ?? throw new InvalidOperationException("Model is not set.");
+        set => _model = value ?? throw new ArgumentNullException(nameof(value));
     }
+    
+    object? IPageGenerator.Model => _model;
 
-    protected static string Join(string? separator, params IEnumerable<object?>? items) => items is null? "" : string.Join(separator ?? "", EvaluateStrings(items));
+    public IPageGeneratorLayout? Layout { get; set; }
 
-    protected static string Css(params IEnumerable<object?>? cssClasses) => Join(" ", cssClasses);
-
-    public string Render() => Render(new Dictionary<string, PageGenerator>());
-
-    string IGenerator.Render(IGenerator content) =>
-        content is PageGenerator pageGenerator
-            ? Render(new Dictionary<string, PageGenerator> {[DefaultContentName] = pageGenerator})
-            : throw new ArgumentException("Content must be of type PageGenerator.", nameof(content));
-
-    public string Render(IReadOnlyDictionary<string, IGenerator> content) => throw new NotImplementedException();
-
-    public string Render(PageGenerator content) => Render(new Dictionary<string, PageGenerator> {[DefaultContentName] = content});
-
-    public string Render(IReadOnlyDictionary<string, PageGenerator> content)
+    public string Render()
     {
-        _context = content;
         try
         {
-            var html = OnRender();
+            string? html;
+            if (Layout is not null)
+            {
+                html = Layout.Render(new Dictionary<string, IPageGenerator> { [DefaultContentName] = this });
+                if (string.IsNullOrWhiteSpace(html))
+                    throw new InvalidOperationException("Rendered HTML is empty or null.");
+                return PrettyPrint(html);
+            }
+            html = OnRender();
             if (string.IsNullOrWhiteSpace(html))
                 throw new InvalidOperationException("Rendered HTML is empty or null.");
-            var layout = Layout;
-            if (layout is not null)
-                html = layout.Render(this);
-
-            var formattedHtml = _prettyPrinter.Reformat(html);
-            return formattedHtml;
+            return PrettyPrint(html);
         }
         finally
         {
-            _context = null;
+            _model = default;
         }
     }
 
-    protected PageGenerator Content(string name = DefaultContentName)
-    {
-        if (_context == null)
-            throw new InvalidOperationException("PageGeneratorLayout is not correctly initialized.");
-
-        if (string.IsNullOrEmpty(name)) throw new ArgumentException("Value cannot be null or empty.", nameof(name));
-
-        if (!_context.TryGetValue(name, out var content))
-            throw new KeyNotFoundException($"Content with name '{name}' not found in the context.");
-
-        return content;
-    }
-
-    protected string RenderBody(string name = DefaultContentName) => Content(name).Render();
+    public string RenderSegment() => OnRender();
+    
+    string IPageGenerator.Render() => Render();
 }
 
-public abstract class PageGenerator<T> : PageGenerator where T : PageGenerator
-{
-    protected new T this[string key] => (T) base[key];
-
-    protected new T Content(string name = DefaultContentName) => (T) base.Content(name);
-}
+// public abstract class PageGenerator<T> : PageGenerator where T : PageGenerator
+// {
+//     protected new T this[string key] => (T) base[key];
+//
+//     protected new T Content(string name = DefaultContentName) => (T) base.Content(name);
+// }

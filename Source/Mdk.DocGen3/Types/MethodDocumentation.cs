@@ -29,7 +29,7 @@ public class MethodDocumentation(TypeDocumentation type, MethodDefinition method
             if (i > 0)
                 builder.Append(", ");
             var parameter = parameters[i];
-            builder.Append(parameter.ParameterType.GetCSharpName(CSharpNameFlags.Name));
+            builder.Append(parameter.ParameterType.GetCSharpName(CSharpNameFlags.FullName & ~CSharpNameFlags.Namespace));
         }
         builder.Append(')');
         return _shortSignature = builder.ToString();

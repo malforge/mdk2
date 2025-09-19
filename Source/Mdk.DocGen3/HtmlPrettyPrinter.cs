@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Web;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Mvc;
@@ -138,7 +139,7 @@ public class HtmlPrettyPrinter
             case XText txt:
                 var text = txt.Value;
                 if (isInlineContext)
-                    sb.Append(text.Trim());
+                    sb.Append(HttpUtility.HtmlEncode(text.Trim()));
                 else
                 {
                     var lines = text.Split(NewLines, StringSplitOptions.RemoveEmptyEntries);
@@ -146,7 +147,7 @@ public class HtmlPrettyPrinter
                     {
                         sb.AppendLine()
                             .Append(indent)
-                            .Append(line.Trim());
+                            .Append(HttpUtility.HtmlEncode(line.Trim()));
                     }
                 }
                 break;

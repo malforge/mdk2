@@ -10,6 +10,5 @@ public enum CSharpNameFlags
     Generics = 0b00001000,
     Parameters = 0b00010000,
 
-
     FullName = Namespace | NestedParent | Name | Generics | Parameters
 }

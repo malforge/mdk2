@@ -6,25 +6,53 @@ namespace Mdk.DocGen3.Support;
 
 public static class MemberReferenceExtensions
 {
-    /*
-     *  public bool IsMicrosoftType()
-//     {
-//         var assembly = DeclaringType?.Module?.Assembly;
-//         if (assembly is null)
-//             return false;
-//         var companyAttribute = assembly.CustomAttributes.FirstOrDefault(attr => attr.AttributeType.Name == "AssemblyCompanyAttribute");
-//         if (companyAttribute is null)
-//             return false;
-//         var companyName = companyAttribute.ConstructorArguments.FirstOrDefault().Value as string;
-//         if (string.IsNullOrEmpty(companyName))
-//             return false;
-//         return companyName.Contains("Microsoft", StringComparison.OrdinalIgnoreCase);
-//     }
-     */
+    public static AssemblyNameReference GetAssemblyName(this MemberReference member)
+    {
+        if (member is TypeReference typeReference)
+        {
+            if (typeReference.Scope is ModuleDefinition moduleDefinition)
+                return moduleDefinition.Assembly.Name;
+            if (typeReference.Scope is AssemblyNameReference assemblyNameReference)
+                return assemblyNameReference;
+            throw new InvalidOperationException("TypeReference does not have a valid scope.");
+        }
+
+        if (member is MethodReference methodReference)
+            return methodReference.DeclaringType.GetAssemblyName();
+
+        if (member is FieldReference fieldReference)
+            return fieldReference.DeclaringType.GetAssemblyName();
+
+        if (member is PropertyReference propertyReference)
+            return propertyReference.DeclaringType.GetAssemblyName();
+
+        if (member is EventReference eventReference)
+            return eventReference.DeclaringType.GetAssemblyName();
+
+        throw new ArgumentOutOfRangeException(nameof(member), member, "Unsupported member type");
+    }
+
+    public static string GetFullyQualifiedName(this MemberReference member)
+    {
+        var stringBuilder = new StringBuilder(member.GetCSharpName());
+        if (member is MethodReference methodReference) // If this is a method, we need to include the parameter signatures
+        {
+            var parameters = string.Join(", ", methodReference.Parameters.Select(p => p.ParameterType.GetCSharpName(CSharpNameFlags.FullName & ~CSharpNameFlags.Namespace)));
+            stringBuilder.Append('(')
+                .Append(parameters)
+                .Append(')');
+        }
+
+        var assembly = member.GetAssemblyName();
+        stringBuilder
+            .Append(", assembly=")
+            .Append(assembly.Name);
+        return stringBuilder.ToString();
+    }
 
     public static bool IsSuperTypeOf(this TypeReference potentialSuperType, TypeReference subType)
     {
-       // Check if the type is the same or a base type of the typePage
+        // Check if the type is the same or a base type of the typePage
         if (potentialSuperType == subType)
             return true;
 
@@ -40,9 +68,8 @@ public static class MemberReferenceExtensions
         return false;
     }
 
-    public static bool IsMsType(this MemberReference member)
-    {
-        return member switch
+    public static bool IsMsType(this MemberReference member) =>
+        member switch
         {
             TypeReference typeReference => IsMsType(typeReference),
             MethodReference methodReference => IsMsType(methodReference.DeclaringType),
@@ -51,19 +78,14 @@ public static class MemberReferenceExtensions
             EventReference eventReference => IsMsType(eventReference.DeclaringType),
             _ => false
         };
-    }
-    
+
     static bool IsMsType(TypeReference type)
     {
         string n;
         if (type.Scope is AssemblyNameReference asmRef)
-        {
             n = asmRef.Name;
-        }
         else if (type.Scope is ModuleDefinition modDef)
-        {
             n = modDef.Name;
-        }
         else
         {
             Debugger.Break();
@@ -74,9 +96,7 @@ public static class MemberReferenceExtensions
             || n == "System"
             || n.StartsWith("System.", StringComparison.Ordinal)
             || n.StartsWith("Microsoft.", StringComparison.Ordinal))
-        {
             return true;
-        }
 
         var assemblyCompanyAttribute = type.Module.Assembly.CustomAttributes
             .FirstOrDefault(attr => attr.AttributeType.FullName == "System.Reflection.AssemblyCompanyAttribute");
@@ -236,7 +256,7 @@ public static class MemberReferenceExtensions
     {
         if (type.IsGenericParameter)
             return type.Name;
-        
+
         // If the type is one of the built-in types, return its name directly
         switch (type.MetadataType)
         {
@@ -275,7 +295,11 @@ public static class MemberReferenceExtensions
         if (flags.HasFlag(CSharpNameFlags.Generics))
         {
             if (type is GenericInstanceType genericInstanceType)
-                return $"{genericInstanceType.ElementType.GetCSharpName(flags)}<{string.Join(", ", genericInstanceType.GenericArguments.Select(g => g.GetCSharpName(flags)))}>";
+            {
+                var x = type.GenericParameters;
+                var y = genericInstanceType.GenericArguments;
+                return $"{genericInstanceType.ElementType.GetCSharpName(flags & ~CSharpNameFlags.Generics)}<{string.Join(", ", genericInstanceType.GenericArguments.Select(g => g.GetCSharpName(flags)))}>";
+            }
             if (type.HasGenericParameters)
                 return $"{type.GetCSharpName(flags & ~CSharpNameFlags.Generics)}<{string.Join(", ", type.GenericParameters.Select(gp => gp.Name))}>";
         }
@@ -304,7 +328,7 @@ public static class MemberReferenceExtensions
             sb.Append(type.Namespace).Append('.');
 
         if (flags.HasFlag(CSharpNameFlags.Name) && !string.IsNullOrEmpty(type.Name))
-            sb.Append(type.HasGenericParameters? filter(type.Name) : type.Name);
+            sb.Append(type.HasGenericParameters ? filter(type.Name) : type.Name);
 
         return sb.ToString();
     }

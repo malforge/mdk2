@@ -75,6 +75,7 @@ public class TypeDocumentation : MemberDocumentation
         readonly List<TypeDocumentation> _interfaces = new();
         readonly List<MemberDocumentation> _members = new();
         Builder? _baseTypeBuilder;
+        string? _fullyQualifiedName;
 
         public Builder(NamespaceDocumentation.Builder ns, TypeDefinition type, string? obsoleteMessage = null) : this(ns, type, obsoleteMessage, false) { }
 
@@ -87,6 +88,7 @@ public class TypeDocumentation : MemberDocumentation
         public TypeDocumentation Instance => _doc;
         
         public TypeDefinition Type => _doc.Type;
+        public string FullyQualifiedName => _fullyQualifiedName ??= Type.GetFullyQualifiedName();
         // public string WhitelistKey => _doc.WhitelistKey;
         // public string DocKey => _doc.DocKey;
 
@@ -96,6 +98,12 @@ public class TypeDocumentation : MemberDocumentation
         {
             if (member is null)
                 throw new ArgumentNullException(nameof(member));
+            var existingMember = _members.FirstOrDefault(m => m.FullyQualifiedName == member.FullyQualifiedName);
+            if (existingMember != null)
+            {
+                // If the existing member is different, throw an exception.
+                throw new InvalidOperationException($"Member with name '{member.ShortSignature()}' already exists in type '{_doc.Type.FullName}'.");
+            }
             _members.Add(member);
             return this;
         }
@@ -110,6 +118,9 @@ public class TypeDocumentation : MemberDocumentation
         {
             if (interfaceBuilder is null)
                 throw new ArgumentNullException(nameof(interfaceBuilder));
+            // Check if the interface is already added
+            if (_interfaceBuilders.Any(b => b.FullyQualifiedName == interfaceBuilder.FullyQualifiedName))
+                throw new InvalidOperationException($"Interface '{interfaceBuilder.Type.FullName}' is already added to type '{_doc.Type.FullName}'.");
             _interfaceBuilders.Add(interfaceBuilder);
             return this;
         }

@@ -2,11 +2,11 @@
 
 using System.ComponentModel;
 using JetBrains.Annotations;
+using Mdk.DocGen3.CodeDoc;
 using Mdk.DocGen3.CodeSecurity;
 using Mdk.DocGen3.Pages;
 using Mdk.DocGen3.Types;
 using RazorLight;
-using Index = Mdk.DocGen3.Web.Index;
 
 namespace Mdk.DocGen3;
 
@@ -40,7 +40,21 @@ public static partial class Program
         var modWhitelistInstance = Whitelist.Load(modWhitelist);
         var terminalsInstance = Terminals.Load(terminals);
 
-        var typeInfo = TypeLoader.LoadTypeInfo(@"C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\");
+        // Install SteamCmd and the game under the running program's directory
+        var steamCmdInstallPath = Path.Combine(Directory.GetCurrentDirectory(), "SteamCmd");
+        var gameInstallPath = Path.Combine(Directory.GetCurrentDirectory(), "SpaceEngineersDedicated");
+        SteamCmd.Instance.DownloadOrUpdateGame(steamCmdInstallPath, gameInstallPath).GetAwaiter().GetResult();
+
+        var context = new TypeLoadingContext(Path.Combine(gameInstallPath, "DedicatedServer64"),
+            type =>
+            {
+                return true;
+                // // Passes either the mod- or pb-whitelist key to the type.
+                // var docKey = Doc.GetDocKey(type);
+                // return pbWhitelistInstance.IsAllowed(docKey) || modWhitelistInstance.IsAllowed(docKey);
+            });
+        
+        var typeInfo = TypeLoader.LoadTypeInfo(context);
 
         var modOutputFolder = Path.Combine(outputFolder, "Mods");
         var pbOutputFolder = Path.Combine(outputFolder, "ProgrammableBlocks");
@@ -71,11 +85,11 @@ public static partial class Program
         Directory.CreateDirectory(Path.GetDirectoryName(indexCss)!);
         File.Copy(Path.Combine("Web", "boot.html"), indexHtml, true);
         File.Copy(Path.Combine("Web", "boot.css"), indexCss, true);
-        
+
         Directory.CreateDirectory(modOutputFolder);
         Directory.CreateDirectory(pbOutputFolder);
-        List<MemberDocumentation> pbPages = new List<MemberDocumentation>();
-        List<MemberDocumentation> modPages = new List<MemberDocumentation>();
+        var pbPages = new List<MemberDocumentation>();
+        var modPages = new List<MemberDocumentation>();
 
         foreach (var page in pages)
         {
@@ -99,7 +113,7 @@ public static partial class Program
             .UseMemoryCachingProvider()
             .Build();
 
-        GenerateApiDocumentation("Mod API", "Mods", engine, modOutputFolder, modWhitelistInstance, modPages);
+        // GenerateApiDocumentation("Mod API", "Mods", engine, modOutputFolder, modWhitelistInstance, modPages);
         GenerateApiDocumentation("Programmable Block API", "ProgrammableBlocks", engine, pbOutputFolder, pbWhitelistInstance, pbPages);
     }
 
@@ -116,7 +130,17 @@ public static partial class Program
         File.Copy(Path.Combine("Web", "style.css"), cssFile, true);
         File.Copy(Path.Combine("Web", "script.js"), jsFile, true);
         File.Copy(Path.Combine("Web", "script.js.map"), jsMapFile, true);
-        ApiIndexPage.Generate(context);
+
+        Dictionary<string, Action<Context, string>> generators = new();
+        ApiIndexPage.Collect(context, generators);
+        
+        foreach (var (slug, generate) in generators)
+        {
+            generate(context, slug);
+        }
+        
+        
+        //ApiIndexPage.Generate(context);
         // index.Generate(context);
     }
 

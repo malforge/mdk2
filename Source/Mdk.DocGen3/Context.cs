@@ -6,7 +6,7 @@ using RazorLight;
 
 namespace Mdk.DocGen3;
 
-public class Context
+public class Context: ContextBase
 {
     readonly HtmlPrettyPrinter _printer = new();
     readonly Dictionary<string, string> _slugLookup = new();
@@ -19,12 +19,21 @@ public class Context
         Whitelist = whitelist;
         OutputFolder = outputFolder;
         Pages = pages.ToList();
-        
+
+        // Find all pages with duplicate slugs
+        var duplicates = Pages
+            .GroupBy(p => p.FullName)
+            .Where(g => g.Count() > 1)
+            .ToList();
+        if (duplicates.Any())
+            throw new InvalidOperationException($"Duplicate slugs found: {string.Join(", ", duplicates.Select(d => d.Key))}. Slugs must be unique.");
+
         foreach (var page in Pages)
         {
             if (page.IsExternal()) continue;
             if (!_slugLookup.ContainsKey(page.Namespace))
                 _slugLookup[page.Namespace] = rootSlug + "/" + page.Namespace + "/index.html";
+
             _slugLookup.Add(page.FullName, page.Slug);
         }
     }
@@ -88,17 +97,22 @@ public class Context
     public bool TryGetAddressOf(string fullname, [MaybeNullWhen(false)] out string slug)
     {
         if (_slugLookup.TryGetValue(fullname, out slug))
-        {
             return true;
-        }
         slug = null;
         return false;
     }
-    
+
     public string GetAddressOf(string fullname)
     {
         if (TryGetAddressOf(fullname, out var slug))
             return slug;
         throw new KeyNotFoundException($"No address found for '{fullname}'");
+    }
+
+    readonly HashSet<string> _generatedKeys = new();
+    
+    public bool TryRegisterGenerated(MemberDocumentation page)
+    {
+        return _generatedKeys.Add(page.Slug);
     }
 }

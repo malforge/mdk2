@@ -33,7 +33,7 @@ public abstract class MemberDocumentation : IMemberDocumentation
         WhitelistKey = Whitelist.GetKey(memberReference);
         DocKey = Doc.GetDocKey(memberReference);
         FullName = memberReference.GetCSharpName();
-        AssemblyName = memberReference.Module.Assembly.Name.Name ?? string.Empty;
+        AssemblyName = memberReference.GetAssemblyName().Name;
         Namespace = memberReference is TypeReference typeReference ? typeReference.Namespace : memberReference.DeclaringType?.Namespace ?? string.Empty;
         Name = memberReference.GetCSharpName(CSharpNameFlags.Name | CSharpNameFlags.Generics);
     }
@@ -53,14 +53,19 @@ public abstract class MemberDocumentation : IMemberDocumentation
     public abstract string ShortSignature();
     public abstract bool IsPublic();
     string? _slug;
+    string? _fullyQualifiedName;
 
     protected virtual string GenerateSlug()
     {
         var type = _member?.DeclaringType ?? throw new InvalidOperationException("Member does not have a declaring type.");
-        return HttpUtility.UrlEncode(type.Namespace) + "/" + HttpUtility.UrlEncode(type.GetCSharpName(CSharpNameFlags.NestedParent | CSharpNameFlags.Name | CSharpNameFlags.Generics)) + ".html";
+        return HttpUtility.UrlEncode(type.Namespace) + "/" + 
+               HttpUtility.UrlEncode(type.GetCSharpName(CSharpNameFlags.NestedParent | CSharpNameFlags.Name | CSharpNameFlags.Generics))
+               + "?#" + HttpUtility.UrlEncode(ShortSignature()) + ".html";
     }
     
     public string Slug => _slug ??= GenerateSlug();
+    
+    public string FullyQualifiedName => _fullyQualifiedName ??= _member?.GetFullyQualifiedName() ?? throw new InvalidOperationException("Member does not have a fully qualified name.");
 
     public bool IsInheritedFor(TypeDocumentation typePage)
     {
