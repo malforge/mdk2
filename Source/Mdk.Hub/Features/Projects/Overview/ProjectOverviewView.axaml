@@ -1,0 +1,158 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:overview="clr-namespace:Mdk.Hub.Features.Projects.Overview"
+             xmlns:m="clr-namespace:Mdk.Hub.Markup"
+             xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Mdk.Hub.Features.Projects.Overview.ProjectOverviewView"
+             x:DataType="overview:ProjectOverviewViewModel">
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <overview:ProjectOverviewViewModel />
+    </Design.DataContext>
+    <UserControl.Styles>
+        <Style Selector="ItemsControl.project-list">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0,4,0,4" />
+            <Setter Property="Margin" Value="0" />
+
+            <Style Selector="^ .project-icon icons|Symbol">
+                <Setter Property="Width" Value="48" />
+                <Setter Property="Height" Value="48" />
+                <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+                <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
+                <Setter Property="Margin" Value="4" />
+            </Style>
+
+            <Style Selector="^ Border.project-item">
+                <Setter Property="Padding" Value="8" />
+                <Setter Property="Margin" Value="8,4,8,4" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+                <Setter Property="Cursor" Value="Hand" />
+
+                <Style Selector="^:pointerover">
+                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
+                </Style>
+
+                <Style Selector="^:pressed">
+                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}" />
+                </Style>
+
+                <Style Selector="^ TextBlock.title">
+                    <Setter Property="FontSize" Value="16" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                    <Setter Property="Margin" Value="16,0,0,8" />
+                    <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
+
+                    <Style Selector="^:pointerover">
+                        <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundPointerOver}" />
+                    </Style>
+
+                    <Style Selector="^:pressed">
+                        <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundPressed}" />
+                    </Style>
+                </Style>
+
+                <Style Selector="^ TextBlock.last-referenced">
+                    <Setter Property="FontSize" Value="10" />
+                    <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}" />
+                    <Setter Property="Margin" Value="16,8,0,0" />
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Bottom" />
+                </Style>
+            </Style>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <icons:SymbolSelector>
+            <icons:ProjectTypeDefinition Type="IngameScript">
+                <DataTemplate>
+                    <icons:ProgrammableBlockSymbol />
+                </DataTemplate>
+            </icons:ProjectTypeDefinition>
+            <icons:ProjectTypeDefinition Type="Mod">
+                <DataTemplate>
+                    <icons:ModSymbol />
+                </DataTemplate>
+            </icons:ProjectTypeDefinition>
+        </icons:SymbolSelector>
+    </UserControl.DataTemplates>
+
+    <Grid 
+        RowDefinitions="Auto,*"
+        ColumnDefinitions="*,Auto,Auto,Auto">
+        
+        <TextBox
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="8"
+            Watermark="Search..."
+            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+        <RadioButton
+            Grid.Row="0"
+            Grid.Column="1"
+            Margin="0,8,8,8"
+            Content="All"
+            GroupName="FilterGroup"
+            IsChecked="{Binding ShowAll }" />
+        <RadioButton
+            Grid.Row="0"
+            Grid.Column="2"
+            Margin="0,8,8,8"
+            Content="Mods"
+            GroupName="FilterGroup"
+            IsChecked="{Binding FilterScriptsOnly }" />
+        <RadioButton
+            Grid.Row="0"
+            Grid.Column="3"
+            Margin="0,8,8,8"
+            Content="Scripts"
+            GroupName="FilterGroup"
+            IsChecked="{Binding FilterModsOnly }" />
+        
+        <ScrollViewer
+            Grid.ColumnSpan="4"
+            Grid.Column="0"
+            Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+            <ItemsControl
+                Classes="project-list"
+                ItemsSource="{Binding Projects}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Classes="project-item" HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+                                <ContentControl Classes="project-icon" Content="{Binding Type}"
+                                                Grid.RowSpan="2" />
+
+                                <TextBlock
+                                    Classes="title"
+                                    Grid.Column="1"
+                                    Grid.Row="0"
+                                    Text="{Binding Name}" />
+
+                                <TextBlock
+                                    Classes="last-referenced"
+                                    Grid.Column="1"
+                                    Grid.Row="1"
+                                    Text="{Binding LastReferenced, Converter={m:SmartDate}}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
