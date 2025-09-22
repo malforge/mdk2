@@ -1,0 +1,29 @@
+﻿<icons:Symbol xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+              xmlns:i="https://github.com/projektanker/icons.avalonia"
+              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+              mc:Ignorable="d" d:DesignWidth="100" d:DesignHeight="100"
+              x:Class="Mdk.Hub.Features.Projects.Overview.Icons.ProgrammableBlockSymbol">
+    <Border
+        Width="48"
+        Height="48"
+        CornerRadius="5"
+        Background="{Binding Background, RelativeSource={RelativeSource AncestorType=icons:Symbol}}"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+        <Grid>
+            <i:Icon Value="fa-solid fa-laptop"
+                    FontSize="32"
+                    Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=icons:Symbol}}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+            <i:Icon Value="fa-solid fa-code"
+                    FontSize="16"
+                    Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=icons:Symbol}}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+        </Grid>
+    </Border>
+</icons:Symbol>
