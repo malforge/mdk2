@@ -151,11 +151,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (LabeledStatementSyntax?)base.VisitLabeledStatement(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -164,11 +167,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (ConstructorDeclarationSyntax?)base.VisitConstructorDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -177,11 +183,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (TypeParameterSyntax?)base.VisitTypeParameter(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -190,17 +199,21 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (CatchDeclarationSyntax?)base.VisitCatchDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
         public override SyntaxNode VisitVariableDeclaration(VariableDeclarationSyntax node)
         {
             var newNode = (VariableDeclarationSyntax?)base.VisitVariableDeclaration(node);
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             
             // If the type is a qualified name (containing a dot) replace it with a `var` type
             // as it's likely to be either as short, or shorter than the original type name.
@@ -211,6 +224,8 @@ public partial class SymbolRenamer : IDocumentProcessor
                     var varType = SyntaxFactory.IdentifierName("var")
                         .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
                         .WithTrailingTrivia(qualifiedName.GetTrailingTrivia());
+                    if (shouldBePreserved)
+                        varType = varType.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
                     return newNode.WithType(varType);
                 }
             }
@@ -223,13 +238,15 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (VariableDeclaratorSyntax?)base.VisitVariableDeclarator(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
-            
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -238,12 +255,15 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (ParameterSyntax?)base.VisitParameter(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
 
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -253,11 +273,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (MethodDeclarationSyntax?)base.VisitMethodDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -266,11 +289,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (ClassDeclarationSyntax?)base.VisitClassDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -279,11 +305,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (StructDeclarationSyntax?)base.VisitStructDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -292,11 +321,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (InterfaceDeclarationSyntax?)base.VisitInterfaceDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -305,11 +337,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (EnumDeclarationSyntax?)base.VisitEnumDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -318,11 +353,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (EnumMemberDeclarationSyntax?)base.VisitEnumMemberDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -331,11 +369,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (PropertyDeclarationSyntax?)base.VisitPropertyDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -344,11 +385,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (EventDeclarationSyntax?)base.VisitEventDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -357,11 +401,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (DelegateDeclarationSyntax?)base.VisitDelegateDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
@@ -370,22 +417,29 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (ForEachStatementSyntax?)base.VisitForEachStatement(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
 
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 
         public override SyntaxNode? VisitQualifiedName(QualifiedNameSyntax node)
         {
+            var shouldBePreserved = node!.ShouldBePreserved();
             if (IsVarAllowedFor(node))
             {
-                return SyntaxFactory.IdentifierName("var")
+                var varNode = SyntaxFactory.IdentifierName("var")
                     .WithLeadingTrivia(node.GetLeadingTrivia())
                     .WithTrailingTrivia(node.GetTrailingTrivia());
+                if (shouldBePreserved)
+                    varNode = varNode.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
+                return varNode;
             }
             
             return base.VisitQualifiedName(node);
@@ -485,9 +539,10 @@ public partial class SymbolRenamer : IDocumentProcessor
         public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
         {
             var newNode = (IdentifierNameSyntax?)base.VisitIdentifierName(node);
-        
+            var shouldBePreserved = newNode!.ShouldBePreserved();
+
             // If this is a `var` identifier, don't rename it
-            if (newNode?.Identifier.Text == "var" && (newNode.Parent is VariableDeclarationSyntax || newNode.Parent is ForEachStatementSyntax))
+            if (newNode?.Identifier.Text == "var" && newNode.Parent is VariableDeclarationSyntax or ForEachStatementSyntax)
                 return newNode;
             
             if (!TryGetSymbol(newNode, out var symbol))
@@ -497,6 +552,8 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode!.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
         
@@ -505,11 +562,14 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (GenericNameSyntax?)base.VisitGenericName(node);
             if (!TryGetSymbol(newNode, out var symbol))
                 return newNode;
+            var shouldBePreserved = newNode!.ShouldBePreserved();
             var oldName = symbol.Name;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
                 .WithLeadingTrivia(newNode!.Identifier.LeadingTrivia)
                 .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
             return newNode.WithIdentifier(newIdentifier);
         }
 

@@ -1,4 +1,7 @@
-﻿v.2.1.5
+﻿v.2.1.6
+   - Fixed minifier newline handling breaking when referencing minified code from preserved code.
+   
+v.2.1.5
    - Removed a bad compilation stage which caused custom namespace usings to fail a build rather than just being renoved.
 
 v.2.1.4
