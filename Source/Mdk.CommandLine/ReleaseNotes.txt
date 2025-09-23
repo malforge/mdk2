@@ -1,4 +1,4 @@
-﻿v.2.1.6-alpha.1
+﻿v.2.1.6
    - Fixed minifier newline handling breaking when referencing minified code from preserved code.
    
 v.2.1.5
