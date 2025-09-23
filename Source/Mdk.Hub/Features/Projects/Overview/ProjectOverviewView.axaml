@@ -5,6 +5,7 @@
              xmlns:overview="clr-namespace:Mdk.Hub.Features.Projects.Overview"
              xmlns:m="clr-namespace:Mdk.Hub.Markup"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+             xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Mdk.Hub.Features.Projects.Overview.ProjectOverviewView"
              x:DataType="overview:ProjectOverviewViewModel">
@@ -27,27 +28,22 @@
                 <Setter Property="Margin" Value="4" />
             </Style>
 
-            <Style Selector="^ Border.project-item">
-                <Setter Property="Padding" Value="8" />
+            <Style Selector="^ Button.project-item">
                 <Setter Property="Margin" Value="8,4,8,4" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="CornerRadius" Value="4" />
-                <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
-                <Setter Property="Cursor" Value="Hand" />
 
-                <Style Selector="^:pointerover">
-                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
+                <Style Selector="^.left">
+                    <Setter Property="Margin" Value="8,4,4,4" />
                 </Style>
-
-                <Style Selector="^:pressed">
-                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}" />
+                <Style Selector="^.right">
+                    <Setter Property="Margin" Value="4,4,8,4" />
                 </Style>
 
                 <Style Selector="^ TextBlock.title">
                     <Setter Property="FontSize" Value="16" />
                     <Setter Property="FontWeight" Value="Bold" />
-                    <Setter Property="Margin" Value="16,0,0,8" />
+                    <Setter Property="Margin" Value="16,0,0,2" />
                     <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
+                    <Setter Property="TextWrapping" Value="Wrap" />
 
                     <Style Selector="^:pointerover">
                         <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundPointerOver}" />
@@ -61,9 +57,10 @@
                 <Style Selector="^ TextBlock.last-referenced">
                     <Setter Property="FontSize" Value="10" />
                     <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}" />
-                    <Setter Property="Margin" Value="16,8,0,0" />
+                    <Setter Property="Margin" Value="16,2,0,0" />
                     <Setter Property="HorizontalAlignment" Value="Right" />
                     <Setter Property="VerticalAlignment" Value="Bottom" />
+                    <Setter Property="TextWrapping" Value="Wrap" />
                 </Style>
             </Style>
         </Style>
@@ -82,18 +79,106 @@
                 </DataTemplate>
             </icons:ProjectTypeDefinition>
         </icons:SymbolSelector>
+
+        <DataTemplate DataType="overview:ProjectModel">
+            <Button Classes="project-item" HorizontalAlignment="Stretch">
+                <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
+                <Grid ColumnDefinitions="Auto,*">
+                    <ContentControl
+                        Classes="project-icon"
+                        Content="{Binding Type}"
+                        Grid.RowSpan="2" />
+
+                    <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                        <TextBlock
+                            Classes="title"
+                            Grid.Row="0"
+                            Text="{Binding Name}" />
+
+                        <TextBlock
+                            Classes="last-referenced"
+                            Grid.Row="1"
+                            Text="{Binding LastReferenced, Converter={m:SmartDate}}" />
+                    </Grid>
+
+                    <!-- "Delete" button -->
+                    <Button Grid.Column="1" 
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,2,2,0"
+                            ToolTip.Tip="Delete Project">
+                        <avalonia:Icon Value="fa-solid fa-trash" Width="12" Height="12" />
+                    </Button>
+                </Grid>
+            </Button>
+        </DataTemplate>
+        <DataTemplate DataType="overview:NewProjectModel">
+            <Grid ColumnDefinitions="*, *">
+                <Button Classes="project-item left"
+                        HorizontalAlignment="Stretch"
+                        IsEnabled="{Binding CanMakeScript}">
+                    <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
+                    <Grid ColumnDefinitions="Auto,*">
+                        <ContentControl Grid.Column="0" Grid.Row="0" Classes="project-icon">
+                            <overview:ProjectType>IngameScript</overview:ProjectType>
+                        </ContentControl>
+                        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                            <TextBlock
+                                Classes="title"
+                                Grid.Row="0"
+                                Text="New Script" />
+
+                            <TextBlock
+                                Classes="last-referenced"
+                                Grid.Row="1"
+                                Text="Create a new Programmable Block Script project" />
+                        </Grid>
+                    </Grid>
+                </Button>
+                <Button Classes="project-item right"
+                        Grid.Column="1"
+                        HorizontalAlignment="Stretch"
+                        IsEnabled="{Binding CanMakeMod}">
+                    <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
+                    <Grid ColumnDefinitions="Auto,*">
+                        <ContentControl Grid.Column="0" Grid.Row="0" Classes="project-icon">
+                            <overview:ProjectType>IngameScript</overview:ProjectType>
+                        </ContentControl>
+                        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                            <TextBlock
+                                Classes="title"
+                                Grid.Row="0"
+                                Text="New Mod" />
+
+                            <TextBlock
+                                Classes="last-referenced"
+                                Grid.Row="1"
+                                Text="Create a new Mod project" />
+                        </Grid>
+                    </Grid>
+                </Button>
+            </Grid>
+        </DataTemplate>
     </UserControl.DataTemplates>
 
-    <Grid 
+    <Grid
         RowDefinitions="Auto,*"
         ColumnDefinitions="*,Auto,Auto,Auto">
-        
+
         <TextBox
             Grid.Row="0"
             Grid.Column="0"
             Margin="8"
             Watermark="Search..."
             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+        <Button
+            Grid.Row="0"
+            Grid.Column="0"
+            HorizontalAlignment="Right"
+            Margin="0,8,8,8"
+            Command="{Binding ClearSearchCommand}">
+            <avalonia:Icon Value="fa-solid fa-xmark" Width="16" Height="16" />
+        </Button>
         <RadioButton
             Grid.Row="0"
             Grid.Column="1"
@@ -115,7 +200,7 @@
             Content="Scripts"
             GroupName="FilterGroup"
             IsChecked="{Binding FilterModsOnly }" />
-        
+
         <ScrollViewer
             Grid.ColumnSpan="4"
             Grid.Column="0"
@@ -130,28 +215,6 @@
                         <VirtualizingStackPanel Orientation="Vertical" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Classes="project-item" HorizontalAlignment="Stretch">
-                            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
-                                <ContentControl Classes="project-icon" Content="{Binding Type}"
-                                                Grid.RowSpan="2" />
-
-                                <TextBlock
-                                    Classes="title"
-                                    Grid.Column="1"
-                                    Grid.Row="0"
-                                    Text="{Binding Name}" />
-
-                                <TextBlock
-                                    Classes="last-referenced"
-                                    Grid.Column="1"
-                                    Grid.Row="1"
-                                    Text="{Binding LastReferenced, Converter={m:SmartDate}}" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
     </Grid>

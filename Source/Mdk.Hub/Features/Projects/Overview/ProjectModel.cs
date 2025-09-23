@@ -1,10 +1,8 @@
 ﻿using System;
-using Mal.DependencyInjection;
-using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
-public class ProjectModel(ProjectType type, string name, DateTimeOffset lastReferenced) : ViewModel
+public class ProjectModel(ProjectType type, string name, DateTimeOffset lastReferenced) : ProjectListItem
 {
     DateTimeOffset _lastReferenced = lastReferenced;
     string _name = name;
@@ -26,5 +24,16 @@ public class ProjectModel(ProjectType type, string name, DateTimeOffset lastRefe
     {
         get => _lastReferenced;
         private set => SetProperty(ref _lastReferenced, value);
+    }
+
+    public override bool MatchesFilter(string searchText, bool mustBeMod, bool mustBeScript)
+    {
+        if (mustBeMod && Type != ProjectType.Mod)
+            return false;
+        if (mustBeScript && Type != ProjectType.IngameScript)
+            return false;
+        if (!string.IsNullOrWhiteSpace(searchText) && !Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            return false;
+        return true;
     }
 }
