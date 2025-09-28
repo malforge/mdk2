@@ -1,0 +1,29 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Normal (neutral/info) -->
+    <StaticResource x:Key="MessageBoxNormalBackgroundBrush" ResourceKey="ThemeBackgroundBrush" />
+    <StaticResource x:Key="MessageBoxNormalBorderBrush" ResourceKey="ThemeBorderLowBrush" />
+    <StaticResource x:Key="MessageBoxNormalForegroundBrush" ResourceKey="ThemeForegroundBrush" />
+    <StaticResource x:Key="MessageBoxNormalIconBrush" ResourceKey="ThemeForegroundLowBrush" />
+
+    <!-- DANGER (destructive) — solid reds per theme; text/contrast from base palette -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <!-- Soft danger background + subtle red border for Light -->
+            <SolidColorBrush x:Key="MessageBoxDangerBackgroundBrush" Color="#FFFDE7E9" />
+            <SolidColorBrush x:Key="MessageBoxDangerBorderBrush" Color="#FFF1B2B5" />
+            <SolidColorBrush x:Key="MessageBoxDangerForegroundBrush" Color="{DynamicResource SystemBaseHighColor}" />
+            <SolidColorBrush x:Key="MessageBoxDangerIconBrush" Color="#FFB10E0E" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Dark">
+            <!-- Deep danger background + stronger border for Dark -->
+            <SolidColorBrush x:Key="MessageBoxDangerBackgroundBrush" Color="#FF2C1B1B" />
+            <SolidColorBrush x:Key="MessageBoxDangerBorderBrush" Color="#FF803232" />
+            <SolidColorBrush x:Key="MessageBoxDangerForegroundBrush" Color="{DynamicResource SystemBaseHighColor}" />
+            <SolidColorBrush x:Key="MessageBoxDangerIconBrush" Color="#FFD13438" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+</ResourceDictionary>

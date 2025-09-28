@@ -3,7 +3,7 @@
              x:Class="Mdk.Hub.App"
              xmlns:local="using:Mdk.Hub"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
-             RequestedThemeVariant="Dark" >
+             RequestedThemeVariant="Default" >
     <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
@@ -11,10 +11,16 @@
 
     </Application.DataTemplates>
 
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+
     <Application.Resources>
-        <!-- The default template for the Symbol control: A plain presenter which 
-        does not utilize the Background and Foreground properties, as those are left
-        to the actual icon representation in the content.-->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <MergeResourceInclude Source="avares://Mdk.Hub/Theme/FluentExtensionResources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
         <ControlTheme x:Key="{x:Type icons:Symbol}" TargetType="icons:Symbol">
             <Setter Property="Template">
                 <ControlTemplate>
@@ -30,8 +36,4 @@
             </Setter>
         </ControlTheme>
     </Application.Resources>
-
-    <Application.Styles>
-        <FluentTheme />
-    </Application.Styles>
 </Application>

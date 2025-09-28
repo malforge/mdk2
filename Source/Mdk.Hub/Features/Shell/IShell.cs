@@ -3,4 +3,5 @@
 public interface IShell
 {
     void Start();
+    void AddOverlay(OverlayModel model);
 }

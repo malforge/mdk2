@@ -1,0 +1,76 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Mdk.Hub.Features.CommonDialogs"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Mdk.Hub.Features.CommonDialogs.DangerBoxView"
+             x:DataType="local:DangerBoxViewModel">
+    <UserControl.Styles>
+        <!-- Styles: Background panel, all text blocks -->
+        <Style Selector="Border.panel">
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource MessageBoxDangerBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="16" />
+
+            <Style Selector="^ TextBlock">
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Foreground" Value="{DynamicResource MessageBoxDangerForegroundBrush}" />
+                <Setter Property="FontSize" Value="14" />
+
+                <Style Selector="^.header">
+                    <Setter Property="FontSize" Value="20" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </Style>
+            </Style>
+            <Style Selector="^ Button">
+                <Setter Property="FontFamily" Value="Segoe UI" />
+            </Style>
+            <Style Selector="^ TextBox">
+                <Setter Property="FontFamily" Value="Segoe UI" />
+            </Style>
+        </Style>
+    </UserControl.Styles>
+    <Grid ColumnDefinitions="10*, Auto, 10*">
+        <Border Classes="panel"
+                Grid.Column="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel>
+                <TextBlock Classes="header"
+                           Text="{Binding Title}"
+                           Margin="0,0,0,8" />
+                <TextBlock Text="{Binding Message}"
+                           Foreground="{DynamicResource MessageBoxDangerForegroundBrush}"
+                           Margin="0,0,0,16" />
+
+                <TextBox Text="{Binding KeyPhrase}"
+                         Watermark="{Binding KeyPhraseWatermark}"
+                         HorizontalAlignment="Stretch"
+                         TabIndex="0"
+                         Margin="0,0,0,16" />
+
+                <ItemsControl ItemsSource="{Binding Choices}"
+                              HorizontalAlignment="Right">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:IMessageBoxChoice">
+                            <Button Content="{Binding Text}"
+                                    Command="{Binding Command}"
+                                    IsDefault="{Binding IsDefault}"
+                                    IsCancel="{Binding IsCancel}"
+                                    MinWidth="75" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
