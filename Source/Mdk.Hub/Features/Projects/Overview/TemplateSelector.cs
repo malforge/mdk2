@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Metadata;
@@ -27,12 +26,4 @@ public class TemplateSelector : IDataTemplate
     }
 
     public bool Match(object? data) => data is ProjectType;
-}
-
-public class TypeMap
-{
-    public Type Type { get; set; }
-    
-    [Content]
-    public IDataTemplate? Template { get; set; }
 }

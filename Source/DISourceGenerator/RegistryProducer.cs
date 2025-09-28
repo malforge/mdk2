@@ -63,6 +63,8 @@ public class RegistryProducer
                 return instance;
             }}
             
+            HashSet<Type> _resolving = new();
+            
             /// <inheritdoc/>
             public bool TryResolve(Type serviceType, [MaybeNullWhen(false)] out object instance)
             {{
@@ -74,7 +76,20 @@ public class RegistryProducer
                     instance = null;
                     return false;
                 }}
-                instance = factory(this);
+                if (!_resolving.Add(serviceType))
+                    throw new InvalidOperationException($"Circular dependency detected while resolving service of type {{serviceType}}.");
+                try
+                {{
+                    instance = factory(this);
+                }}
+                catch
+                {{
+                    throw;
+                }}
+                finally
+                {{
+                    _resolving.Remove(serviceType);
+                }}
                 _singletons[serviceType] = instance;
                 return true;
             }}

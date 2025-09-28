@@ -16,9 +16,37 @@
         <vm:ShellViewModel />
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
-        <ContentControl Grid.Column="0" Content="{Binding NavigationView}" />
-        <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />
+    <Window.Styles>
+        <Style Selector="Grid.main-content.has-overlays">
+            <Setter Property="IsEnabled" Value="False" />
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <BlurEffect Radius="5" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Grid Classes="main-content" 
+              Classes.has-overlays="{Binding HasOverlays}"
+              ColumnDefinitions="Auto,*" RowDefinitions="*">
+            <ContentControl Grid.Column="0" Content="{Binding NavigationView}" />
+            <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />
+        </Grid>
+        <ItemsControl Classes="overlay-content" 
+                      Grid.Column="0"
+                      Grid.Row="0"
+                      IsVisible="{Binding HasOverlays}"
+                      ItemsSource="{Binding OverlayViews}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
     </Grid>
 
 </Window>

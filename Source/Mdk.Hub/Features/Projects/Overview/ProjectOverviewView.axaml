@@ -15,55 +15,7 @@
         <overview:ProjectOverviewViewModel />
     </Design.DataContext>
     <UserControl.Styles>
-        <Style Selector="ItemsControl.project-list">
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0,4,0,4" />
-            <Setter Property="Margin" Value="0" />
-
-            <Style Selector="^ .project-icon icons|Symbol">
-                <Setter Property="Width" Value="48" />
-                <Setter Property="Height" Value="48" />
-                <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
-                <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
-                <Setter Property="Margin" Value="4" />
-            </Style>
-
-            <Style Selector="^ Button.project-item">
-                <Setter Property="Margin" Value="8,4,8,4" />
-
-                <Style Selector="^.left">
-                    <Setter Property="Margin" Value="8,4,4,4" />
-                </Style>
-                <Style Selector="^.right">
-                    <Setter Property="Margin" Value="4,4,8,4" />
-                </Style>
-
-                <Style Selector="^ TextBlock.title">
-                    <Setter Property="FontSize" Value="16" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                    <Setter Property="Margin" Value="16,0,0,2" />
-                    <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
-                    <Setter Property="TextWrapping" Value="Wrap" />
-
-                    <Style Selector="^:pointerover">
-                        <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundPointerOver}" />
-                    </Style>
-
-                    <Style Selector="^:pressed">
-                        <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundPressed}" />
-                    </Style>
-                </Style>
-
-                <Style Selector="^ TextBlock.last-referenced">
-                    <Setter Property="FontSize" Value="10" />
-                    <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}" />
-                    <Setter Property="Margin" Value="16,2,0,0" />
-                    <Setter Property="HorizontalAlignment" Value="Right" />
-                    <Setter Property="VerticalAlignment" Value="Bottom" />
-                    <Setter Property="TextWrapping" Value="Wrap" />
-                </Style>
-            </Style>
-        </Style>
+        <StyleInclude Source="avares://Mdk.Hub/Features/Projects/Overview/Styles.axaml" />
     </UserControl.Styles>
 
     <UserControl.DataTemplates>
@@ -84,10 +36,9 @@
             <Button Classes="project-item" HorizontalAlignment="Stretch">
                 <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
                 <Grid ColumnDefinitions="Auto,*">
-                    <ContentControl
-                        Classes="project-icon"
-                        Content="{Binding Type}"
-                        Grid.RowSpan="2" />
+                    <ContentControl Classes="project-icon"
+                                    Content="{Binding Type}"
+                                    Grid.RowSpan="2" />
 
                     <Grid Grid.Column="1" RowDefinitions="Auto,*">
                         <TextBlock
@@ -102,11 +53,12 @@
                     </Grid>
 
                     <!-- "Delete" button -->
-                    <Button Grid.Column="1" 
+                    <Button Grid.Column="1"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top"
                             Margin="0,2,2,0"
-                            ToolTip.Tip="Delete Project">
+                            ToolTip.Tip="Delete Project"
+                            Command="{Binding DeleteCommand}">
                         <avalonia:Icon Value="fa-solid fa-trash" Width="12" Height="12" />
                     </Button>
                 </Grid>
@@ -115,6 +67,7 @@
         <DataTemplate DataType="overview:NewProjectModel">
             <Grid ColumnDefinitions="*, *">
                 <Button Classes="project-item left"
+                        Classes.disabled="{Binding !CanMakeScript}"
                         HorizontalAlignment="Stretch"
                         IsEnabled="{Binding CanMakeScript}">
                     <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
@@ -136,6 +89,7 @@
                     </Grid>
                 </Button>
                 <Button Classes="project-item right"
+                        Classes.disabled="{Binding !CanMakeMod}"
                         Grid.Column="1"
                         HorizontalAlignment="Stretch"
                         IsEnabled="{Binding CanMakeMod}">

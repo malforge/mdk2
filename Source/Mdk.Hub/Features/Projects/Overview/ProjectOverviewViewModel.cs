@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Overview;
@@ -12,6 +13,7 @@ namespace Mdk.Hub.Features.Projects.Overview;
 [ViewModelFor<ProjectOverviewView>]
 public class ProjectOverviewViewModel : ViewModel
 {
+    readonly IShell _shell;
     readonly ObservableCollection<ProjectListItem> _projects = new();
     readonly ThrottledAction<string> _throttledSearch;
     bool _filterModsOnly;
@@ -22,8 +24,9 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchText = string.Empty;
     bool _showAll = true;
 
-    public ProjectOverviewViewModel()
+    public ProjectOverviewViewModel(IShell shell)
     {
+        _shell = shell;
         Projects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
@@ -32,9 +35,9 @@ public class ProjectOverviewViewModel : ViewModel
         ItemsSource = new ProjectListItem[]
         {
             new NewProjectModel(),
-            new ProjectModel(ProjectType.IngameScript, "My Ingame Script", DateTimeOffset.Now),
-            new ProjectModel(ProjectType.Mod, "My Mod", DateTimeOffset.Now.AddDays(-1)),
-            new ProjectModel(ProjectType.IngameScript, "Another Script", DateTimeOffset.Now.AddDays(-2))
+            new ProjectModel(ProjectType.IngameScript, "My Ingame Script", DateTimeOffset.Now, shell),
+            new ProjectModel(ProjectType.Mod, "My Mod", DateTimeOffset.Now.AddDays(-1), shell),
+            new ProjectModel(ProjectType.IngameScript, "Another Script", DateTimeOffset.Now.AddDays(-2), shell)
         };
     }
 
