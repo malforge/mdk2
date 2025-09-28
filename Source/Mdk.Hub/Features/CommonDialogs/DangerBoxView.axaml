@@ -34,7 +34,7 @@
             </Style>
         </Style>
     </UserControl.Styles>
-    <Grid ColumnDefinitions="10*, Auto, 10*">
+    <Grid ColumnDefinitions="10*, 80*, 10*">
         <Border Classes="panel"
                 Grid.Column="1"
                 HorizontalAlignment="Center"
