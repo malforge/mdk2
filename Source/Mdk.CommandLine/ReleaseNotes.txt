@@ -1,4 +1,7 @@
-﻿v.2.1.6
+﻿v.2.1.7
+   - Added support for thumb formats other than png (ex: thumb.jpg, thumb.bmp, thumb.gif) to Script Packer.
+
+v.2.1.6
    - Fixed minifier newline handling breaking when referencing minified code from preserved code.
    
 v.2.1.5
