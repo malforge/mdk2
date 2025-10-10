@@ -23,6 +23,15 @@ public class ScriptPacker: ProjectJob
 {
     const int MaxScriptLength = 100000;
 
+    readonly string[] _thumbExtensions =
+    [
+        "png",
+        "jpg",
+        "jpeg",
+        "bmp",
+        "gif"
+    ];
+
     /// <summary>
     ///     Perform packing operation(s) based on the provided options.
     /// </summary>
@@ -156,9 +165,16 @@ public class ScriptPacker: ProjectJob
         if (readmeDocument != null)
             context.Console.Trace("Found a readme file.");
 
-        project.TryGetDocument("thumb.png", out var thumbnailDocument);
-        if (thumbnailDocument != null)
-            context.Console.Trace("Found a thumbnail file.");
+        TextDocument? thumbnailDocument = null;
+        foreach (var extension in _thumbExtensions)
+        {
+            // Space Engineers seeks specifically for the file named "thumb.png", but can display other formats like jpg or bmp
+            if (!project.TryGetDocument($"thumb.{extension}", out thumbnailDocument)) 
+                continue;
+
+            context.Console.Trace($"Found a {extension} thumbnail file.");
+            break;
+        }
 
         bool isNotIgnored(Document doc)
         {
