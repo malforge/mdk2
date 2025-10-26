@@ -56,6 +56,22 @@
     <Configuration Solution="Debug|x64" Project="Debug|x64" />
     <Configuration Solution="Release|x64" Project="Release|x64" />
   </Project>
+  <Project Path="Mdk.DocGen2.ApiDocs.CLI\Mdk.DocGen2.ApiDocs.CLI.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="Mdk.DocGen2.Sprites.CLI\Mdk.DocGen2.Sprites.CLI.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="Mdk.DocGen2.Terminals.CLI\Mdk.DocGen2.Terminals.CLI.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="Mdk.DocGen2.TypeDef.CLI\Mdk.DocGen2.TypeDef.CLI.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+  </Project>
   <Project Path="Mdk.DocGen3\Mdk.DocGen3.csproj" Type="Classic C#">
     <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
     <Configuration Solution="Release|x64" Project="Release|Any CPU" />

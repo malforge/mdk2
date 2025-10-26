@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <terminals>
-  <block type="Sandbox.ModAPI.Ingame.IMyProgrammableBlock" typedefinition="MyProgrammableBlock">
+  <block type="Sandbox.ModAPI.Ingame.IMyShipDrill" typedefinition="Drill">
     <action name="OnOff" text="Toggle block On/Off" />
     <action name="OnOff_On" text="Toggle block On" />
     <action name="OnOff_Off" text="Toggle block Off" />
@@ -14,8 +14,10 @@
     <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
     <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
     <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="Run" text="Run" />
-    <action name="RunWithDefaultArgument" text="Run with default argument" />
+    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
+    <action name="TerrainClearingMode" text="Terrain Clearing Mode On/Off" />
+    <action name="TerrainClearingMode_On" text="Terrain Clearing Mode On" />
+    <action name="TerrainClearingMode_Off" text="Terrain Clearing Mode Off" />
     <property name="OnOff" type="Boolean" />
     <property name="ShowInTerminal" type="Boolean" />
     <property name="ShowInInventory" type="Boolean" />
@@ -33,7 +35,234 @@
     <property name="BackgroundColor" type="Color" />
     <property name="ChangeIntervalSlider" type="Single" />
     <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="ConsoleCommand" type="StringBuilder" />
+    <property name="UseConveyor" type="Boolean" />
+    <property name="TerrainClearingMode" type="Boolean" />
+  </block>
+  <block type="Sandbox.ModAPI.Ingame.IMyShipGrinder" typedefinition="ShipGrinder">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="UseConveyor" type="Boolean" />
+  </block>
+  <block type="Sandbox.ModAPI.Ingame.IMyShipWelder" typedefinition="ShipWelder">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
+    <action name="helpOthers" text="Help Others On/Off" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="UseConveyor" type="Boolean" />
+    <property name="helpOthers" type="Boolean" />
+  </block>
+  <block type="Sandbox.ModAPI.Ingame.IMyFunctionalBlock" typedefinition="FunctionalBlock">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+  </block>
+  <block type="SpaceEngineers.Game.ModAPI.Ingame.IMyOxygenFarm" typedefinition="OxygenFarm">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+  </block>
+  <block type="SpaceEngineers.Game.ModAPI.Ingame.IMyInteriorLight" typedefinition="InteriorLight">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="IncreaseRadius" text="Increase Radius" />
+    <action name="DecreaseRadius" text="Decrease Radius" />
+    <action name="SetRadius" text="Set Radius" />
+    <action name="IncreaseFalloff" text="Increase Falloff" />
+    <action name="DecreaseFalloff" text="Decrease Falloff" />
+    <action name="IncreaseIntensity" text="Increase Intensity" />
+    <action name="DecreaseIntensity" text="Decrease Intensity" />
+    <action name="IncreaseOffset" text="Increase Offset" />
+    <action name="DecreaseOffset" text="Decrease Offset" />
+    <action name="IncreaseBlink Interval" text="Increase Blink Interval" />
+    <action name="DecreaseBlink Interval" text="Decrease Blink Interval" />
+    <action name="SetBlinkInterval" text="Set Blink Interval" />
+    <action name="IncreaseBlink Lenght" text="Increase Blink Length" />
+    <action name="DecreaseBlink Lenght" text="Decrease Blink Length" />
+    <action name="IncreaseBlink Offset" text="Increase Blink Offset" />
+    <action name="DecreaseBlink Offset" text="Decrease Blink Offset" />
+    <action name="SetColor" text="Set Color" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="Color" type="Color" />
+    <property name="Radius" type="Single" />
+    <property name="Falloff" type="Single" />
+    <property name="Intensity" type="Single" />
+    <property name="Offset" type="Single" />
+    <property name="Blink Interval" type="Single" />
+    <property name="Blink Lenght" type="Single" />
+    <property name="Blink Offset" type="Single" />
+  </block>
+  <block type="Sandbox.ModAPI.Ingame.IMyOreDetector" typedefinition="OreDetector">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="BroadcastUsingAntennas" text="Broadcast using antennas On/Off" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="Range" type="Single" />
+    <property name="BroadcastUsingAntennas" type="Boolean" />
   </block>
   <block type="Sandbox.ModAPI.Ingame.IMyProjector" typedefinition="Projector">
     <action name="OnOff" text="Toggle block On/Off" />
@@ -346,6 +575,41 @@
     <property name="PreserveAspectRatio" type="Boolean" />
     <property name="Silent" type="Boolean" />
     <property name="TriggerDelay" type="Single" />
+  </block>
+  <block type="Sandbox.ModAPI.Ingame.IMyProgrammableBlock" typedefinition="MyProgrammableBlock">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="Run" text="Run" />
+    <action name="RunWithDefaultArgument" text="Run with default argument" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="ConsoleCommand" type="StringBuilder" />
   </block>
   <block type="SpaceEngineers.Game.ModAPI.Ingame.IMyTurretControlBlock" typedefinition="TurretControlBlock">
     <action name="OnOff" text="Toggle block On/Off" />
@@ -1428,6 +1692,54 @@
     <property name="Name" type="StringBuilder" />
     <property name="ShowOnHUD" type="Boolean" />
   </block>
+  <block type="Sandbox.ModAPI.Ingame.IMyGyro" typedefinition="Gyro">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="IncreasePower" text="Increase Power" />
+    <action name="DecreasePower" text="Decrease Power" />
+    <action name="Override" text="Override controls On/Off" />
+    <action name="Override_On" text="Override controls On" />
+    <action name="Override_Off" text="Override controls Off" />
+    <action name="IncreaseYaw" text="Increase Yaw override" />
+    <action name="DecreaseYaw" text="Decrease Yaw override" />
+    <action name="IncreasePitch" text="Increase Pitch override" />
+    <action name="DecreasePitch" text="Decrease Pitch override" />
+    <action name="IncreaseRoll" text="Increase Roll override" />
+    <action name="DecreaseRoll" text="Decrease Roll override" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="Power" type="Single" />
+    <property name="Override" type="Boolean" />
+    <property name="Yaw" type="Single" />
+    <property name="Pitch" type="Single" />
+    <property name="Roll" type="Single" />
+  </block>
   <block type="Sandbox.ModAPI.Ingame.IMyCryoChamber" typedefinition="CryoChamber">
     <action name="ShowOnHUD" text="Show on HUD On/Off" />
     <action name="ShowOnHUD_On" text="Show on HUD On" />
@@ -1483,54 +1795,6 @@
     <property name="ShowInToolbarConfig" type="Boolean" />
     <property name="Name" type="StringBuilder" />
     <property name="ShowOnHUD" type="Boolean" />
-  </block>
-  <block type="Sandbox.ModAPI.Ingame.IMyGyro" typedefinition="Gyro">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="IncreasePower" text="Increase Power" />
-    <action name="DecreasePower" text="Decrease Power" />
-    <action name="Override" text="Override controls On/Off" />
-    <action name="Override_On" text="Override controls On" />
-    <action name="Override_Off" text="Override controls Off" />
-    <action name="IncreaseYaw" text="Increase Yaw override" />
-    <action name="DecreaseYaw" text="Decrease Yaw override" />
-    <action name="IncreasePitch" text="Increase Pitch override" />
-    <action name="DecreasePitch" text="Decrease Pitch override" />
-    <action name="IncreaseRoll" text="Increase Roll override" />
-    <action name="DecreaseRoll" text="Decrease Roll override" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="Power" type="Single" />
-    <property name="Override" type="Boolean" />
-    <property name="Yaw" type="Single" />
-    <property name="Pitch" type="Single" />
-    <property name="Roll" type="Single" />
   </block>
   <block type="Sandbox.ModAPI.Ingame.IMyTextPanel" typedefinition="TextPanel">
     <action name="OnOff" text="Toggle block On/Off" />
@@ -1684,63 +1948,6 @@
     <property name="SpawnName" type="StringBuilder" />
     <property name="TakeOwnership" type="Boolean" />
     <property name="SetFaction" type="Boolean" />
-  </block>
-  <block type="SpaceEngineers.Game.ModAPI.Ingame.IMyInteriorLight" typedefinition="InteriorLight">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="IncreaseRadius" text="Increase Radius" />
-    <action name="DecreaseRadius" text="Decrease Radius" />
-    <action name="SetRadius" text="Set Radius" />
-    <action name="IncreaseFalloff" text="Increase Falloff" />
-    <action name="DecreaseFalloff" text="Decrease Falloff" />
-    <action name="IncreaseIntensity" text="Increase Intensity" />
-    <action name="DecreaseIntensity" text="Decrease Intensity" />
-    <action name="IncreaseOffset" text="Increase Offset" />
-    <action name="DecreaseOffset" text="Decrease Offset" />
-    <action name="IncreaseBlink Interval" text="Increase Blink Interval" />
-    <action name="DecreaseBlink Interval" text="Decrease Blink Interval" />
-    <action name="SetBlinkInterval" text="Set Blink Interval" />
-    <action name="IncreaseBlink Lenght" text="Increase Blink Length" />
-    <action name="DecreaseBlink Lenght" text="Decrease Blink Length" />
-    <action name="IncreaseBlink Offset" text="Increase Blink Offset" />
-    <action name="DecreaseBlink Offset" text="Decrease Blink Offset" />
-    <action name="SetColor" text="Set Color" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="Color" type="Color" />
-    <property name="Radius" type="Single" />
-    <property name="Falloff" type="Single" />
-    <property name="Intensity" type="Single" />
-    <property name="Offset" type="Single" />
-    <property name="Blink Interval" type="Single" />
-    <property name="Blink Lenght" type="Single" />
-    <property name="Blink Offset" type="Single" />
   </block>
   <block type="Sandbox.ModAPI.Ingame.IMyWarhead" typedefinition="Warhead">
     <action name="ShowOnHUD" text="Show on HUD On/Off" />
@@ -2765,38 +2972,6 @@
     <property name="UpperLimit" type="Single" />
     <property name="Displacement" type="Single" />
   </block>
-  <block type="SpaceEngineers.Game.ModAPI.Ingame.IMyOxygenFarm" typedefinition="OxygenFarm">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-  </block>
   <block type="Sandbox.ModAPI.Ingame.IMyUpgradeModule" typedefinition="UpgradeModule">
     <action name="OnOff" text="Toggle block On/Off" />
     <action name="OnOff_On" text="Toggle block On" />
@@ -2868,44 +3043,6 @@
     <property name="Recharge" type="Boolean" />
     <property name="JumpDistance" type="Single" />
     <property name="SearchField" type="StringBuilder" />
-  </block>
-  <block type="Sandbox.ModAPI.Ingame.IMyShipDrill" typedefinition="Drill">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
-    <action name="TerrainClearingMode" text="Terrain Clearing Mode On/Off" />
-    <action name="TerrainClearingMode_On" text="Terrain Clearing Mode On" />
-    <action name="TerrainClearingMode_Off" text="Terrain Clearing Mode Off" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="UseConveyor" type="Boolean" />
-    <property name="TerrainClearingMode" type="Boolean" />
   </block>
   <block type="Sandbox.ModAPI.Ingame.IMyMotorSuspension" typedefinition="MotorSuspension">
     <action name="OnOff" text="Toggle block On/Off" />
@@ -3027,111 +3164,6 @@
     <property name="ChangeIntervalSlider" type="Single" />
     <property name="PreserveAspectRatio" type="Boolean" />
   </block>
-  <block type="Sandbox.ModAPI.Ingame.IMyShipGrinder" typedefinition="ShipGrinder">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="UseConveyor" type="Boolean" />
-  </block>
-  <block type="Sandbox.ModAPI.Ingame.IMyShipWelder" typedefinition="ShipWelder">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
-    <action name="helpOthers" text="Help Others On/Off" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="UseConveyor" type="Boolean" />
-    <property name="helpOthers" type="Boolean" />
-  </block>
-  <block type="Sandbox.ModAPI.Ingame.IMyOreDetector" typedefinition="OreDetector">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="BroadcastUsingAntennas" text="Broadcast using antennas On/Off" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="Range" type="Single" />
-    <property name="BroadcastUsingAntennas" type="Boolean" />
-  </block>
   <block type="SpaceEngineers.Game.ModAPI.Ingame.IMyShipMergeBlock" typedefinition="MergeBlock">
     <action name="OnOff" text="Toggle block On/Off" />
     <action name="OnOff_On" text="Toggle block On" />
@@ -3204,84 +3236,6 @@
     <property name="AnyoneCanUse" type="Boolean" />
     <property name="AutoDeploy" type="Boolean" />
     <property name="AutoDeployHeight" type="Single" />
-  </block>
-  <block type="Sandbox.ModAPI.Ingame.IMySmallMissileLauncher" typedefinition="SmallMissileLauncher">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="ShootOnce" text="Shoot once" />
-    <action name="Shoot" text="Shoot On/Off" />
-    <action name="Shoot_On" text="Shoot On" />
-    <action name="Shoot_Off" text="Shoot Off" />
-    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="Shoot" type="Boolean" />
-    <property name="UseConveyor" type="Boolean" />
-  </block>
-  <block type="Sandbox.ModAPI.Ingame.IMySmallGatlingGun" typedefinition="SmallGatlingGun">
-    <action name="OnOff" text="Toggle block On/Off" />
-    <action name="OnOff_On" text="Toggle block On" />
-    <action name="OnOff_Off" text="Toggle block Off" />
-    <action name="ShowOnHUD" text="Show on HUD On/Off" />
-    <action name="ShowOnHUD_On" text="Show on HUD On" />
-    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
-    <action name="IncreaseFontSize" text="Increase Font Size" />
-    <action name="DecreaseFontSize" text="Decrease Font Size" />
-    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
-    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
-    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
-    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
-    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
-    <action name="ShootOnce" text="Shoot once" />
-    <action name="Shoot" text="Shoot On/Off" />
-    <action name="Shoot_On" text="Shoot On" />
-    <action name="Shoot_Off" text="Shoot Off" />
-    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
-    <property name="OnOff" type="Boolean" />
-    <property name="ShowInTerminal" type="Boolean" />
-    <property name="ShowInInventory" type="Boolean" />
-    <property name="ShowInToolbarConfig" type="Boolean" />
-    <property name="Name" type="StringBuilder" />
-    <property name="ShowOnHUD" type="Boolean" />
-    <property name="Content" type="Int64" />
-    <property name="ScriptForegroundColor" type="Color" />
-    <property name="ScriptBackgroundColor" type="Color" />
-    <property name="Font" type="Int64" />
-    <property name="FontSize" type="Single" />
-    <property name="FontColor" type="Color" />
-    <property name="alignment" type="Int64" />
-    <property name="TextPaddingSlider" type="Single" />
-    <property name="BackgroundColor" type="Color" />
-    <property name="ChangeIntervalSlider" type="Single" />
-    <property name="PreserveAspectRatio" type="Boolean" />
-    <property name="Shoot" type="Boolean" />
-    <property name="UseConveyor" type="Boolean" />
   </block>
   <block type="Sandbox.ModAPI.Ingame.IMySearchlight" typedefinition="Searchlight">
     <action name="OnOff" text="Toggle block On/Off" />
@@ -3530,6 +3484,45 @@
     <property name="EnableTargetLocking" type="Boolean" />
     <property name="TargetingGroup_Selector" type="Int64" />
   </block>
+  <block type="Sandbox.ModAPI.Ingame.IMySmallMissileLauncher" typedefinition="SmallMissileLauncher">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="ShootOnce" text="Shoot once" />
+    <action name="Shoot" text="Shoot On/Off" />
+    <action name="Shoot_On" text="Shoot On" />
+    <action name="Shoot_Off" text="Shoot Off" />
+    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="Shoot" type="Boolean" />
+    <property name="UseConveyor" type="Boolean" />
+  </block>
   <block type="Sandbox.ModAPI.Ingame.IMySmallMissileLauncherReload" typedefinition="SmallMissileLauncherReload">
     <action name="OnOff" text="Toggle block On/Off" />
     <action name="OnOff_On" text="Toggle block On" />
@@ -3569,6 +3562,45 @@
     <property name="PreserveAspectRatio" type="Boolean" />
     <property name="Shoot" type="Boolean" />
     <property name="UseConveyor" type="Boolean" />
+    <property name="UseConveyor" type="Boolean" />
+  </block>
+  <block type="Sandbox.ModAPI.Ingame.IMySmallGatlingGun" typedefinition="SmallGatlingGun">
+    <action name="OnOff" text="Toggle block On/Off" />
+    <action name="OnOff_On" text="Toggle block On" />
+    <action name="OnOff_Off" text="Toggle block Off" />
+    <action name="ShowOnHUD" text="Show on HUD On/Off" />
+    <action name="ShowOnHUD_On" text="Show on HUD On" />
+    <action name="ShowOnHUD_Off" text="Show on HUD Off" />
+    <action name="IncreaseFontSize" text="Increase Font Size" />
+    <action name="DecreaseFontSize" text="Decrease Font Size" />
+    <action name="IncreaseTextPaddingSlider" text="Increase Text Padding" />
+    <action name="DecreaseTextPaddingSlider" text="Decrease Text Padding" />
+    <action name="IncreaseChangeIntervalSlider" text="Increase Image change interval" />
+    <action name="DecreaseChangeIntervalSlider" text="Decrease Image change interval" />
+    <action name="PreserveAspectRatio" text="Preserve aspect ratio On/Off" />
+    <action name="ShootOnce" text="Shoot once" />
+    <action name="Shoot" text="Shoot On/Off" />
+    <action name="Shoot_On" text="Shoot On" />
+    <action name="Shoot_Off" text="Shoot Off" />
+    <action name="UseConveyor" text="Automatic Push/Pull On/Off" />
+    <property name="OnOff" type="Boolean" />
+    <property name="ShowInTerminal" type="Boolean" />
+    <property name="ShowInInventory" type="Boolean" />
+    <property name="ShowInToolbarConfig" type="Boolean" />
+    <property name="Name" type="StringBuilder" />
+    <property name="ShowOnHUD" type="Boolean" />
+    <property name="Content" type="Int64" />
+    <property name="ScriptForegroundColor" type="Color" />
+    <property name="ScriptBackgroundColor" type="Color" />
+    <property name="Font" type="Int64" />
+    <property name="FontSize" type="Single" />
+    <property name="FontColor" type="Color" />
+    <property name="alignment" type="Int64" />
+    <property name="TextPaddingSlider" type="Single" />
+    <property name="BackgroundColor" type="Color" />
+    <property name="ChangeIntervalSlider" type="Single" />
+    <property name="PreserveAspectRatio" type="Boolean" />
+    <property name="Shoot" type="Boolean" />
     <property name="UseConveyor" type="Boolean" />
   </block>
 </terminals>
