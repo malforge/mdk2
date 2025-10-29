@@ -12,7 +12,6 @@
         <Description>This is part of the MDK2 project.</Description>
         <Copyright>2024 Morten "Malware" Aune Lyrstad</Copyright>
         <Configurations>Release;Debug</Configurations>
-        <Platforms>x64</Platforms>
         <PublishSingleFile>false</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
