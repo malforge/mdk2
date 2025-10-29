@@ -12,9 +12,9 @@
         <Description>This is part of the MDK2 project.</Description>
         <Copyright>2024 Morten "Malware" Aune Lyrstad</Copyright>
         <Configurations>Release;Debug</Configurations>
-        <PublishSingleFile>false</PublishSingleFile>
+        <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <RuntimeIdentifiers>win-x64; linux-x64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>
