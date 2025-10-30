@@ -4,19 +4,17 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <AssemblyName>mdk</AssemblyName>
+        <AssemblyName>mdk-exe</AssemblyName>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
         <InformationalVersion>$(Version)</InformationalVersion>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <Title>MDK2 CLI</Title>
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <Description>This is part of the MDK2 project.</Description>
         <Copyright>2024 Morten "Malware" Aune Lyrstad</Copyright>
         <Configurations>Release;Debug</Configurations>
-        <Platforms>x64</Platforms>
-        <PublishSingleFile>false</PublishSingleFile>
+        <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <RuntimeIdentifiers>win-x64; linux-x64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>

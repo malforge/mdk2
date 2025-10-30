@@ -34,6 +34,9 @@ jobs:
           - "Mdk.CheckDotNet/Mdk.CheckDotNet.csproj"
           - "Mdk.CommandLine/Mdk.CommandLine.csproj"
           - "Mdk.Notification.Windows/Mdk.Notification.Windows.csproj"
+        rid:
+          - "win-x64"
+          - "linux-x64"
     steps:
       - uses: actions/checkout@v4
 
@@ -44,12 +47,12 @@ jobs:
 
       - name: Build tool project
         run: |
-          dotnet publish ${{ matrix.project }} -c Release -o ../output -r win-x64 -p:DebugType=None
+          dotnet publish ${{ matrix.project }} -c Release -o ../output -r ${{ matrix.rid }} -p:DebugType=None
 
       - name: Prepare artifact name
         run: |
           $outputDir = "../output"
-          $exePath = Get-ChildItem $outputDir -Filter *.exe | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $exePath = Get-ChildItem $outputDir -Filter *-exe* | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           
           if (-not $exePath) {
             Write-Error "No executable found in output directory!"

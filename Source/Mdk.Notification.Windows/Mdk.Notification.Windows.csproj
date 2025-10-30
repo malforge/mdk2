@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
-        <AssemblyName>mdknotify-win</AssemblyName>
+        <AssemblyName>mdknotify-win-exe</AssemblyName>
         <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
