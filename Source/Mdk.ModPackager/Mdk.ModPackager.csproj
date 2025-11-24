@@ -18,6 +18,7 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/../Mdk.CommandLine/ReleaseNotes.txt"))</PackageReleaseNotes>
         <DevelopmentDependency>true</DevelopmentDependency>
+        <Platforms>x64</Platforms>
     </PropertyGroup>
 
 <!--    <Target Name="BuildMdk" BeforeTargets="PreBuildEvent">-->

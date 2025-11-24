@@ -1,3 +1,4 @@
+VRage.Scripting.MemorySafeTypes.*, VRage.Scripting
 System.Collections.*, mscorlib
 System.Collections.Generic.*, System.Core
 System.Collections.Generic.*, System
@@ -175,11 +176,48 @@ System.Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult>+*, 
 System.Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult>+*, System.Core
 System.Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult>+*, System.Core
 System.Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult>+*, System.Core
-VRage.Scripting.MemorySafeTypes.*, VRage.Scripting
-SpaceEngineers.Game.ModAPI.Ingame.*, SpaceEngineers.Game
-SpaceEngineers.Game.ModAPI.Ingame.*, SpaceEngineers.ObjectBuilders
-SpaceEngineers.Game.ModAPI.*, SpaceEngineers.Game
-SpaceEngineers.Game.Definitions.SafeZone.*, SpaceEngineers.Game
+VRage.ModAPI.*, VRage.Input
+VRage.Input.MyInputExtensions+*, Sandbox.Game
+VRage.Input.MyKeys+*, VRage.Input
+VRage.Input.MyJoystickAxesEnum+*, VRage
+VRage.Input.MyJoystickButtonsEnum+*, VRage.Input
+VRage.Input.MyMouseButtonsEnum+*, VRage.Input
+VRage.Input.MySharedButtonsEnum+*, VRage.Input
+VRage.Input.MyGuiControlTypeEnum+*, VRage.Input
+VRage.Input.MyGuiInputDeviceEnum+*, VRage.Input
+VRage.Input.MyControlStateType+*, VRage.Input
+VRage.Input.MyControlType+*, VRage.Input
+VRage.Input.IMyControllerControl+*, VRage.Input
+VRage.Game.Components.Interfaces.IMyComponentContainer, VRage.Game
+VRage.Game.Components.Interfaces.IMyComponentContainer.TryGet<T>(out T), VRage.Game
+VRage.Game.Components.Interfaces.IMyComponentContainer.Has<T>(), VRage.Game
+VRage.Game.Components.Interfaces.IMyComponentContainer.Get<T>(), VRage.Game
+VRage.Game.Components.Interfaces.IMyComponentContainer.TryGet(System.Type, out VRage.Game.Components.MyComponentBase), VRage.Game
+Sandbox.Engine.Physics.MyPhysicsHelper+*, Sandbox.Game
+Sandbox.Engine.Physics.MyPhysics.CollisionLayers+*, Sandbox.Game
+ParallelTasks.IWork+*, VRage.Library
+ParallelTasks.Task+*, VRage.Library
+ParallelTasks.WorkOptions+*, VRage.Library
+VRage.Library.Threading.SpinLock+*, VRage.Library
+VRage.Library.Threading.SpinLockRef+*, VRage.Library
+System.Threading.Monitor+*, mscorlib
+System.Threading.AutoResetEvent+*, mscorlib
+System.Threading.ManualResetEvent+*, mscorlib
+System.Threading.Interlocked+*, mscorlib
+ProtoBuf.ProtoMemberAttribute+*, ProtoBuf.Net.Core
+ProtoBuf.ProtoContractAttribute+*, ProtoBuf.Net.Core
+ProtoBuf.ProtoIncludeAttribute+*, ProtoBuf.Net.Core
+ProtoBuf.ProtoIgnoreAttribute+*, ProtoBuf.Net.Core
+ProtoBuf.ProtoEnumAttribute+*, ProtoBuf.Net.Core
+ProtoBuf.MemberSerializationOptions+*, ProtoBuf.Net.Core
+ProtoBuf.DataFormat+*, ProtoBuf.Net.Core
+ParallelTasks.WorkData, VRage.Library
+ParallelTasks.WorkData.FlagAsFailed(), VRage.Library
+VRage.Game.ModAPI.Network.*, VRage.Game
+VRage.Sync.SyncDirection.BothWays+*, VRage
+VRage.Sync.SyncDirection.FromServer+*, VRage
+VRage.Sync.SyncExtensions+*, VRage
+VRage.Network.IMyEventProxy+*, VRage
 Sandbox.Game.Entities.MyCubeBuilder, Sandbox.Game
 Sandbox.Game.Entities.MyCubeBuilder.Static, Sandbox.Game
 Sandbox.Game.Entities.MyCubeBuilder.CubeBuilderState, Sandbox.Game
@@ -240,6 +278,7 @@ VRageRender.MyDecalRenderInfo+*, VRage.Render
 VRageRender.MyDecalBindingInfo+*, VRage.Render
 VRageRender.MyDecalFlags+*, VRage.Render
 VRage.Game.ObjectBuilders.*, VRage.Game
+VRage.Game.ObjectBuilders.Components.*, VRage.Game
 Sandbox.Game.*, Sandbox.Game
 Sandbox.Game.Components.*, Sandbox.Game
 Sandbox.Game.WorldEnvironment.*, Sandbox.Game
@@ -319,25 +358,6 @@ VRage.MyTupleComparer<T1, T2>+*, VRage.Library
 VRage.MyTupleComparer<T1, T2, T3>+*, VRage.Library
 VRage.MyTexts.MyLanguageDescription+*, VRage
 VRage.MyLanguagesEnum+*, VRage
-VRage.ModAPI.*, VRage.Input
-VRage.Input.MyInputExtensions+*, Sandbox.Game
-VRage.Input.MyKeys+*, VRage.Input
-VRage.Input.MyJoystickAxesEnum+*, VRage
-VRage.Input.MyJoystickButtonsEnum+*, VRage.Input
-VRage.Input.MyMouseButtonsEnum+*, VRage.Input
-VRage.Input.MySharedButtonsEnum+*, VRage.Input
-VRage.Input.MyGuiControlTypeEnum+*, VRage.Input
-VRage.Input.MyGuiInputDeviceEnum+*, VRage.Input
-VRage.Input.MyControlStateType+*, VRage.Input
-VRage.Input.MyControlType+*, VRage.Input
-VRage.Input.IMyControllerControl+*, VRage.Input
-VRage.Game.Components.Interfaces.IMyComponentContainer, VRage.Game
-VRage.Game.Components.Interfaces.IMyComponentContainer.TryGet<T>(out T), VRage.Game
-VRage.Game.Components.Interfaces.IMyComponentContainer.Has<T>(), VRage.Game
-VRage.Game.Components.Interfaces.IMyComponentContainer.Get<T>(), VRage.Game
-VRage.Game.Components.Interfaces.IMyComponentContainer.TryGet(System.Type, out VRage.Game.Components.MyComponentBase), VRage.Game
-Sandbox.Engine.Physics.MyPhysicsHelper+*, Sandbox.Game
-Sandbox.Engine.Physics.MyPhysics.CollisionLayers+*, Sandbox.Game
 VRageRender.MyLodTypeEnum+*, VRage.Render
 VRageRender.MyShadowsSettings+*, VRage.Render
 VRageRender.MyPostprocessSettings+*, VRage.Render
@@ -362,30 +382,11 @@ System.Diagnostics.Stopwatch+*, System
 System.Diagnostics.ConditionalAttribute+*, mscorlib
 System.Version+*, mscorlib
 System.ObsoleteAttribute+*, mscorlib
-ParallelTasks.IWork+*, VRage.Library
-ParallelTasks.Task+*, VRage.Library
-ParallelTasks.WorkOptions+*, VRage.Library
-VRage.Library.Threading.SpinLock+*, VRage.Library
-VRage.Library.Threading.SpinLockRef+*, VRage.Library
-System.Threading.Monitor+*, mscorlib
-System.Threading.AutoResetEvent+*, mscorlib
-System.Threading.ManualResetEvent+*, mscorlib
-System.Threading.Interlocked+*, mscorlib
-ProtoBuf.ProtoMemberAttribute+*, ProtoBuf.Net.Core
-ProtoBuf.ProtoContractAttribute+*, ProtoBuf.Net.Core
-ProtoBuf.ProtoIncludeAttribute+*, ProtoBuf.Net.Core
-ProtoBuf.ProtoIgnoreAttribute+*, ProtoBuf.Net.Core
-ProtoBuf.ProtoEnumAttribute+*, ProtoBuf.Net.Core
-ProtoBuf.MemberSerializationOptions+*, ProtoBuf.Net.Core
-ProtoBuf.DataFormat+*, ProtoBuf.Net.Core
-ParallelTasks.WorkData, VRage.Library
-ParallelTasks.WorkData.FlagAsFailed(), VRage.Library
 System.ArrayExtensions, VRage.Library
 System.ArrayExtensions.Contains<T>(T[], T), VRage.Library
 VRage.Game.ModAPI.Ingame.MyPhysicalInventoryItemExtensions_ModAPI+*, Sandbox.Game
 System.Collections.Immutable.*, System.Collections.Immutable
-VRage.Game.ModAPI.Network.*, VRage.Game
-VRage.Sync.SyncDirection.BothWays+*, VRage
-VRage.Sync.SyncDirection.FromServer+*, VRage
-VRage.Sync.SyncExtensions+*, VRage
-VRage.Network.IMyEventProxy+*, VRage
+SpaceEngineers.Game.ModAPI.Ingame.*, SpaceEngineers.Game
+SpaceEngineers.Game.ModAPI.Ingame.*, SpaceEngineers.ObjectBuilders
+SpaceEngineers.Game.ModAPI.*, SpaceEngineers.Game
+SpaceEngineers.Game.Definitions.SafeZone.*, SpaceEngineers.Game

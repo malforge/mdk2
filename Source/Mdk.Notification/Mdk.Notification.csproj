@@ -11,6 +11,7 @@
         <PublishSingleFile>false</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <Platforms>x64</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
