@@ -25,7 +25,7 @@ This is a project I pretty much made for _myself_. I'm publishing it in case som
 Sure thing! I'd be happy to accept contributions to the project. I'm especially grateful for help with features that I might not personally need. Since my time is limited, I mostly focus on features I plan to use. So, extra features, like mod support, depend on community contributions. However, I won't merge contributions blindly. They need to meet a certain standard, and I reserve the right to reject features I don't like. Just a heads-up! 😄
 
 ## Getting Started
-See the [wiki home page](https://github.com/malforge/mdk2/wiki) for instructions on how to get started on various IDEs/editors.
+See the [documentation site](https://malforge.github.io/spaceengineers/mdk2/) for instructions on how to get started on various IDEs/editors.
 
 - - -
 
