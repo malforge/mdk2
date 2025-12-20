@@ -75,16 +75,14 @@ public class LegacyConverter
         }
         console.Trace("Success.");
 
-        var projectFileName = Path.GetFileName(project.Project.FilePath) ?? throw new InvalidOperationException("The project file name is invalid.");
-        var mainIniFileName = Path.Combine(projectDirectory, Path.ChangeExtension(projectFileName, "mdk.ini"));
-        var localIniFileName = Path.Combine(projectDirectory,Path.ChangeExtension(projectFileName, ".mdk.local.ini"));
+        var (mainIniFileName, localIniFileName) = IniFileFinder.GetNewIniPaths(project.Project.FilePath);
 
-        console.Trace("Writing MDK ini files...");
+        console.Trace("Writing MDK ini files (using new naming convention: mdk.ini, mdk.local.ini)...");
         await WriteMainIni(console, minify, trimTypes, ignores, mainIniFileName, dryRun);
         await WriteLocalIni(console, outputPath, /*gameBinPath, */localIniFileName, dryRun);
 
         console.Trace("Adding or updating .gitignore file...");
-        await AddOrUpdateGitIgnore(console, projectDirectory, projectFileName, dryRun);
+        await AddOrUpdateGitIgnore(console, projectDirectory, dryRun);
         
         console.Print("The project has been successfully converted to MDK2.");
     }
@@ -202,10 +200,10 @@ public class LegacyConverter
         await File.WriteAllTextAsync(localIniFileName, iniContent);
     }
 
-    static async Task AddOrUpdateGitIgnore(IConsole console, string projectDirectory, string projectFileName, bool dryRun)
+    static async Task AddOrUpdateGitIgnore(IConsole console, string projectDirectory, bool dryRun)
     {
         var gitIgnoreFileName = Path.Combine(projectDirectory, ".gitignore");
-        var ignoreContent = $"# MDK{Environment.NewLine}{projectFileName}.mdk.local.ini";
+        var ignoreContent = $"# MDK{Environment.NewLine}mdk.local.ini";
         if (File.Exists(gitIgnoreFileName))
         {
             if (dryRun)
@@ -216,7 +214,7 @@ public class LegacyConverter
             }
             
             var gitIgnore = await File.ReadAllTextAsync(gitIgnoreFileName);
-            if (!gitIgnore.Contains(projectFileName + ".mdk.local.ini"))
+            if (!gitIgnore.Contains("mdk.local.ini"))
                 await File.AppendAllTextAsync(gitIgnoreFileName, Environment.NewLine + ignoreContent);
         }
         else

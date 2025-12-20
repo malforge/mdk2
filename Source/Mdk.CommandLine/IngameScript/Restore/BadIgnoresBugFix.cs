@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Utility;
 
 namespace Mdk.CommandLine.IngameScript.Restore;
 
@@ -18,8 +19,8 @@ public static partial class BadIgnoresBugFix
     /// <param name="console"></param>
     public static async Task CheckAsync(string projectFileName, IConsole console)
     {
-        var iniFileName = Path.ChangeExtension(projectFileName, ".mdk.ini");
-        if (!File.Exists(iniFileName))
+        var iniFileName = IniFileFinder.FindMainIni(projectFileName);
+        if (iniFileName == null)
             return;
 
         try

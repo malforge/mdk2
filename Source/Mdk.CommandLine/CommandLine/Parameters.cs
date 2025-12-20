@@ -335,17 +335,18 @@ public class Parameters : TracksPropertyChanges, IParameters
         Parse(args);
         if (!TryGetProjectFile(out var projectFile))
             return;
-        var iniFileName = Path.ChangeExtension(projectFile, ".mdk.ini");
-        var localIniFileName = Path.ChangeExtension(projectFile, ".mdk.local.ini");
+        
+        var localIniFileName = IniFileFinder.FindLocalIni(projectFile);
+        var iniFileName = IniFileFinder.FindMainIni(projectFile);
 
-        if (File.Exists(localIniFileName))
+        if (localIniFileName != null)
         {
             var ini = Ini.FromFile(localIniFileName);
             Load(ini, false);
             _autoConfigFiles.Add(localIniFileName);
         }
 
-        if (File.Exists(iniFileName))
+        if (iniFileName != null)
         {
             var ini = Ini.FromFile(iniFileName);
             Load(ini, false);

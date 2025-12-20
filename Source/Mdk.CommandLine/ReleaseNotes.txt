@@ -1,5 +1,6 @@
 ﻿v.2.1.8
    - Fix Issue #98: nameof() expressions not renamed with name conflicts
+   - mdk.ini and mdk.local.ini are now primary file names rather than {project}.mdk.ini and {project}.mdk.local.ini
 
 v.2.1.7
    - Added support for thumb formats other than png (ex: thumb.jpg, thumb.bmp, thumb.gif) to Script Packer.

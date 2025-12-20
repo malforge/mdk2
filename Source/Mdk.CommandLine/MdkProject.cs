@@ -56,10 +56,10 @@ public readonly struct MdkProject
 
     static MdkProjectType Identify(Project project, IConsole console)
     {
-        // If there are ini files named {projectName].mdk.ini, then it's an MDK2 project, we'll have to read it to know if it's a mod or an ingame script.
+        // Check for MDK2 project by looking for INI files (supports both new and legacy naming)
         var projectFileName = Path.GetFileName(project.FilePath);
-        var iniFileName = Path.ChangeExtension(project.FilePath, ".mdk.ini");
-        if (File.Exists(iniFileName))
+        var iniFileName = IniFileFinder.FindMainIni(project.FilePath);
+        if (iniFileName != null)
         {
             try
             {

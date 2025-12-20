@@ -27,15 +27,15 @@ namespace Mdk2.References
         {
             if (!string.IsNullOrEmpty(ProjectPath))
             {
-                var localIniFileName = Path.ChangeExtension(ProjectPath, ".mdk.local.ini");
-                if (File.Exists(localIniFileName))
+                var localIniFileName = IniFileFinder.FindLocalIni(ProjectPath);
+                if (localIniFileName != null)
                 {
                     Log.LogMessage(MessageImportance.High, $"Found local ini file: {localIniFileName}");
                     if (LoadFromIni(localIniFileName)) return true;
                 }
                 
-                var iniFileName = Path.ChangeExtension(ProjectPath, ".mdk.ini");
-                if (File.Exists(iniFileName))
+                var iniFileName = IniFileFinder.FindMainIni(ProjectPath);
+                if (iniFileName != null)
                 {
                     Log.LogMessage(MessageImportance.High, $"Found ini file: {iniFileName}");
                     if (LoadFromIni(iniFileName)) return true;
