@@ -44,7 +44,7 @@ public partial class SymbolRenamer : IDocumentProcessor
         var scanPhase2 = new UsageScanWalker(semanticModel, idMap);
         scanPhase2.Visit(syntaxRoot);
 
-        var renamer = new SymbolRenamingRewriter(idMap);
+        var renamer = new SymbolRenamingRewriter(idMap, semanticModel);
         syntaxRoot = renamer.Visit(syntaxRoot) ?? throw new InvalidOperationException("Failed to rename symbols.");
 
         document = document.WithSyntaxRoot(syntaxRoot);
@@ -101,11 +101,12 @@ public partial class SymbolRenamer : IDocumentProcessor
         }
     }
 
-    class SymbolRenamingRewriter(Dictionary<string, ISymbol> symbolMap) : CSharpSyntaxRewriter
+    class SymbolRenamingRewriter(Dictionary<string, ISymbol> symbolMap, SemanticModel semanticModel) : CSharpSyntaxRewriter
     {
         readonly HashSet<string> _distinctSymbolNames = new();
         readonly Dictionary<string, string> _nameMap = new(StringComparer.Ordinal);
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
+        readonly SemanticModel _semanticModel = semanticModel;
         int _symbolSrc;
 
         public IReadOnlyDictionary<string, string> NameMap => _nameMap;
@@ -575,10 +576,49 @@ public partial class SymbolRenamer : IDocumentProcessor
 
         public override SyntaxNode? VisitInvocationExpression(InvocationExpressionSyntax node)
         {
-            var newNode = (InvocationExpressionSyntax?)base.VisitInvocationExpression(node);
-            if (!TryGetSymbol(newNode, out _))
-                return newNode;
-            return newNode;
+            // Special handling for nameof() expressions
+            // The identifier inside nameof() is not treated as a normal expression by Roslyn,
+            // so we need to manually handle renaming it
+            if (node is { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" }, ArgumentList.Arguments.Count: > 0 })
+            {
+                var arg = node.ArgumentList.Arguments[0];
+                if (arg.Expression is IdentifierNameSyntax identifierArg)
+                {
+                    // Use the semantic model to get the symbol for the identifier
+                    var symbolInfo = _semanticModel.GetSymbolInfo(identifierArg);
+                    var symbol = symbolInfo.Symbol?.OriginalDefinition ?? symbolInfo.Symbol;
+                        
+                    // If no single symbol found, check candidate symbols
+                    // This happens when there's ambiguity (e.g., method group with same name as type)
+                    if (symbol == null && symbolInfo.CandidateSymbols.Length > 0)
+                    {
+                        // Try to find any candidate that we're tracking for renaming
+                        symbol = symbolInfo.CandidateSymbols.FirstOrDefault(s => 
+                            _symbolMap.Values.Contains(s.OriginalDefinition ?? s, SymbolEqualityComparer.Default));
+                    }
+                        
+                    if (symbol != null)
+                    {
+                        var originalSymbol = symbol.OriginalDefinition ?? symbol;
+                        var inMap = _symbolMap.Values.Contains(originalSymbol, SymbolEqualityComparer.Default);
+                        if (inMap)
+                        {
+                            var oldName = symbol.Name;
+                            var newName = GetMinifiedName(oldName);
+                            var newIdentifier = SyntaxFactory.Identifier(newName)
+                                .WithLeadingTrivia(identifierArg.Identifier.LeadingTrivia)
+                                .WithTrailingTrivia(identifierArg.Identifier.TrailingTrivia);
+                            var newIdentifierName = identifierArg.WithIdentifier(newIdentifier);
+                            var newArg = arg.WithExpression(newIdentifierName);
+                            var newArgList = node.ArgumentList.WithArguments(
+                                node.ArgumentList.Arguments.Replace(arg, newArg));
+                            return node.WithArgumentList(newArgList);
+                        }
+                    }
+                }
+            }
+            
+            return (InvocationExpressionSyntax?)base.VisitInvocationExpression(node);
         }
     }
 

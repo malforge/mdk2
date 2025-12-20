@@ -10,8 +10,26 @@ public class ProjectBasedRegressionTests
 {
     [TestCase("TestData/Issue44/Issue44.csproj")]
     [TestCase("TestData/Issue50/Issue50.csproj")]
+    [TestCase("TestData/Issue98/Issue98.csproj")]
     public async Task Pack_ForProject_ShouldNotThrow(string path)
     {
+        // Ensure the test project dependencies are restored
+        var fullPath = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
+        if (File.Exists(fullPath))
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"restore \"{fullPath}\" --verbosity quiet",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+            var process = System.Diagnostics.Process.Start(startInfo);
+            process?.WaitForExit();
+        }
+        
         var peripherals = Program.Peripherals.Create()
             .WithInteraction(A.Fake<IInteraction>())
             .WithHttpClient(A.Fake<IHttpClient>(o => o.Strict()))
