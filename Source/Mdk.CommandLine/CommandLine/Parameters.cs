@@ -248,7 +248,7 @@ public class Parameters : TracksPropertyChanges, IParameters
         if (verb == Verb.None)
             throw new CommandLineException(-1, "No verb specified.");
 
-        switch (verb)
+        switch (Verb)
         {
             case Verb.Pack:
                 if (PackVerb.ProjectFile == null)
@@ -363,7 +363,7 @@ public class Parameters : TracksPropertyChanges, IParameters
         var displayVersion = typeof(Parameters).Assembly.GetName().Version?.ToString() ?? "0.0.0";
         console.Print($"MDK v{displayVersion}")
             .Print();
-        switch (HelpVerb.Verb)
+        switch (Verb)
         {
             case Verb.Help:
                 switch (HelpVerb.Verb)
