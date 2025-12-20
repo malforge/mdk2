@@ -1,4 +1,7 @@
-﻿v.2.1.8
+﻿v.2.1.9
+   - Fixed 'mdk help pack' and 'mdk help restore' commands which were broken
+
+v.2.1.8
    - Fix Issue #98: nameof() expressions not renamed with name conflicts
    - mdk.ini and mdk.local.ini are now primary file names rather than {project}.mdk.ini and {project}.mdk.local.ini
 
