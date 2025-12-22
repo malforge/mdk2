@@ -205,13 +205,11 @@ public class CodeSmallifier : IDocumentProcessor
         {
             if (field.AttributeLists.Count > 0)
                 return false;
-            if (field.Declaration.Variables.Any(v => v.Initializer != null))
-                return false;
             return true;
         }
 
         static bool ModifiersEqual(FieldDeclarationSyntax a, FieldDeclarationSyntax b) =>
-            a.Modifiers.SequenceEqual(b.Modifiers);
+            a.Modifiers.Select(m => m.Kind()).SequenceEqual(b.Modifiers.Select(m => m.Kind()));
 
         static T CompactFieldDeclarations<T>(T node) where T : TypeDeclarationSyntax
         {

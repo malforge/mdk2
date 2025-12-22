@@ -24,9 +24,10 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
             {
                 string A;
                 string[] C;
-                string B;
-                int D;
+                string B = "x";
+                public int D = 1;
                 int E;
+                public int F;
             }
             """;
 
@@ -59,12 +60,19 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
         var programClass = root!.DescendantNodes().OfType<ClassDeclarationSyntax>().Single();
         var fields = programClass.Members.OfType<FieldDeclarationSyntax>().ToList();
 
-        Assert.That(fields, Has.Count.EqualTo(3));
+        Assert.That(fields, Has.Count.EqualTo(4));
         Assert.That(fields[0].Declaration.Type.ToString(), Is.EqualTo("string"));
         Assert.That(fields[0].Declaration.Variables.Count, Is.EqualTo(2));
+        Assert.That(fields[0].Declaration.Variables.Any(v => v.Initializer != null), Is.True);
         Assert.That(fields[1].Declaration.Type.ToString(), Is.EqualTo("string[]"));
         Assert.That(fields[1].Declaration.Variables.Count, Is.EqualTo(1));
         Assert.That(fields[2].Declaration.Type.ToString(), Is.EqualTo("int"));
         Assert.That(fields[2].Declaration.Variables.Count, Is.EqualTo(2));
+        Assert.That(fields[2].Declaration.Variables.Any(v => v.Initializer != null), Is.True);
+        Assert.That(fields[3].Declaration.Type.ToString(), Is.EqualTo("int"));
+        Assert.That(fields[3].Declaration.Variables.Count, Is.EqualTo(1));
+        Assert.That(fields[3].Declaration.Variables.Any(v => v.Initializer != null), Is.False);
+        Assert.That(fields[2].Modifiers.ToString(), Is.EqualTo("public"));
+        Assert.That(fields[3].Modifiers.ToString(), Is.EqualTo(string.Empty));
     }
 }
