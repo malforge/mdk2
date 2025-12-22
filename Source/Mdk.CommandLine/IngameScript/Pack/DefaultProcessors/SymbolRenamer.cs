@@ -220,7 +220,7 @@ public partial class SymbolRenamer : IDocumentProcessor
             // as it's likely to be either as short, or shorter than the original type name.
             if (newNode?.Type is QualifiedNameSyntax qualifiedName)
             {
-                if (IsVarAllowedFor(qualifiedName))
+                if (IsVarAllowedFor(qualifiedName, _semanticModel))
                 {
                     var varType = SyntaxFactory.IdentifierName("var")
                         .WithLeadingTrivia(qualifiedName.GetLeadingTrivia())
@@ -433,7 +433,7 @@ public partial class SymbolRenamer : IDocumentProcessor
         public override SyntaxNode? VisitQualifiedName(QualifiedNameSyntax node)
         {
             var shouldBePreserved = node!.ShouldBePreserved();
-            if (IsVarAllowedFor(node))
+            if (IsVarAllowedFor(node, _semanticModel))
             {
                 var varNode = SyntaxFactory.IdentifierName("var")
                     .WithLeadingTrivia(node.GetLeadingTrivia())
@@ -446,7 +446,7 @@ public partial class SymbolRenamer : IDocumentProcessor
             return base.VisitQualifiedName(node);
         }
 
-    private static bool IsVarAllowedFor(QualifiedNameSyntax node)
+    private static bool IsVarAllowedFor(QualifiedNameSyntax node, SemanticModel semanticModel)
     {
         var parent = node.Parent;
 
@@ -476,8 +476,26 @@ public partial class SymbolRenamer : IDocumentProcessor
                 }
                 break;
             
-            case ForEachStatementSyntax or ForEachVariableStatementSyntax:
-                return true;
+            case ForEachStatementSyntax forEachStatement:
+            {
+                // Only replace with var when the foreach element type matches the declared type.
+                // Some IEnumerable patterns surface element types differently, and var can widen to object.
+                var declaredType = semanticModel.GetTypeInfo(node).Type;
+                var foreachInfo = semanticModel.GetForEachStatementInfo(forEachStatement);
+                if (declaredType == null || foreachInfo.ElementType == null)
+                    return false;
+                return SymbolEqualityComparer.Default.Equals(declaredType, foreachInfo.ElementType);
+            }
+            case ForEachVariableStatementSyntax forEachVariableStatement:
+            {
+                // Only replace with var when the foreach element type matches the declared type.
+                // Some IEnumerable patterns surface element types differently, and var can widen to object.
+                var declaredType = semanticModel.GetTypeInfo(node).Type;
+                var foreachInfo = semanticModel.GetForEachStatementInfo(forEachVariableStatement);
+                if (declaredType == null || foreachInfo.ElementType == null)
+                    return false;
+                return SymbolEqualityComparer.Default.Equals(declaredType, foreachInfo.ElementType);
+            }
             
             case UsingStatementSyntax { Declaration: not null } usingStatement:
             {

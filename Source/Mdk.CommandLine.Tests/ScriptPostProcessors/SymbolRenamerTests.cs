@@ -25,8 +25,7 @@ public class SymbolRenamerTests : DocumentProcessorTests<SymbolRenamer>
             {
                 void Test()
                 {
-                    // Replacing the foreach variable type with var would be incorrect here.
-                    // Var would not know the type (Program.Inner) and would use IEnumerable default (object).
+                    // Replacing Program.Inner with var would infer "object" and change the element type.
                     foreach (Program.Inner item in Program.Matches())
                     {
                         var group = item.Groups;
