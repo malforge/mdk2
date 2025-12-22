@@ -120,11 +120,11 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
             """
             class Program
             {
-                private static string A = "x", B;
+                private static string A = "x",B;
                 internal string C;
                 string[] D;
                 string E,H;
-                int F = 1, G;
+                int F = 1,G;
             }
             """;
 
