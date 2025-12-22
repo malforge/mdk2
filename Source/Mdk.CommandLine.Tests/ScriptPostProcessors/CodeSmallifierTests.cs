@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Linq;
 using FakeItEasy;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
@@ -7,7 +6,6 @@ using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.ScriptPostProcessors;
@@ -22,12 +20,13 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
             """
             class Program
             {
-                string A;
-                string[] C;
-                string B = "x";
-                public int D = 1;
-                int E;
-                public int F;
+                private static string A;
+                private static string B = "x";
+                internal string C;
+                string[] D;
+                string E;
+                int F;
+                private int G = 1;
             }
             """;
 
@@ -56,23 +55,19 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
         );
 
         var result = await processor.ProcessAsync(document, context);
-        var root = await result.GetSyntaxRootAsync();
-        var programClass = root!.DescendantNodes().OfType<ClassDeclarationSyntax>().Single();
-        var fields = programClass.Members.OfType<FieldDeclarationSyntax>().ToList();
+        var actual = await result.GetTextAsync();
+            var expected =
+            """
+            class Program
+            {
+                private static string A,B = "x";
+                internal string C;
+                string[] D;
+                string E;
+                int F,G = 1;
+            }
+            """;
 
-        Assert.That(fields, Has.Count.EqualTo(4));
-        Assert.That(fields[0].Declaration.Type.ToString(), Is.EqualTo("string"));
-        Assert.That(fields[0].Declaration.Variables.Count, Is.EqualTo(2));
-        Assert.That(fields[0].Declaration.Variables.Any(v => v.Initializer != null), Is.True);
-        Assert.That(fields[1].Declaration.Type.ToString(), Is.EqualTo("string[]"));
-        Assert.That(fields[1].Declaration.Variables.Count, Is.EqualTo(1));
-        Assert.That(fields[2].Declaration.Type.ToString(), Is.EqualTo("int"));
-        Assert.That(fields[2].Declaration.Variables.Count, Is.EqualTo(2));
-        Assert.That(fields[2].Declaration.Variables.Any(v => v.Initializer != null), Is.True);
-        Assert.That(fields[3].Declaration.Type.ToString(), Is.EqualTo("int"));
-        Assert.That(fields[3].Declaration.Variables.Count, Is.EqualTo(1));
-        Assert.That(fields[3].Declaration.Variables.Any(v => v.Initializer != null), Is.False);
-        Assert.That(fields[2].Modifiers.ToString(), Is.EqualTo("public"));
-        Assert.That(fields[3].Modifiers.ToString(), Is.EqualTo(string.Empty));
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
     }
 }
