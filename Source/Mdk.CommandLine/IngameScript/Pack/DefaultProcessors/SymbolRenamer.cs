@@ -430,6 +430,86 @@ public partial class SymbolRenamer : IDocumentProcessor
             return newNode.WithIdentifier(newIdentifier);
         }
 
+        public override SyntaxNode? VisitFromClause(FromClauseSyntax node)
+        {
+            var newNode = (FromClauseSyntax?)base.VisitFromClause(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var shouldBePreserved = newNode!.Identifier.ShouldBePreserved();
+            var oldName = newNode.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
+            return newNode.WithIdentifier(newIdentifier);
+        }
+
+        public override SyntaxNode? VisitLetClause(LetClauseSyntax node)
+        {
+            var newNode = (LetClauseSyntax?)base.VisitLetClause(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var shouldBePreserved = newNode!.Identifier.ShouldBePreserved();
+            var oldName = newNode.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
+            return newNode.WithIdentifier(newIdentifier);
+        }
+
+        public override SyntaxNode? VisitJoinClause(JoinClauseSyntax node)
+        {
+            var newNode = (JoinClauseSyntax?)base.VisitJoinClause(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var shouldBePreserved = newNode!.Identifier.ShouldBePreserved();
+            var oldName = newNode.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
+            return newNode.WithIdentifier(newIdentifier);
+        }
+
+        public override SyntaxNode? VisitJoinIntoClause(JoinIntoClauseSyntax node)
+        {
+            var newNode = (JoinIntoClauseSyntax?)base.VisitJoinIntoClause(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var shouldBePreserved = newNode!.Identifier.ShouldBePreserved();
+            var oldName = newNode.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
+            return newNode.WithIdentifier(newIdentifier);
+        }
+
+        public override SyntaxNode? VisitQueryContinuation(QueryContinuationSyntax node)
+        {
+            var newNode = (QueryContinuationSyntax?)base.VisitQueryContinuation(node);
+            if (!TryGetSymbol(newNode, out _))
+                return newNode;
+            var shouldBePreserved = newNode!.Identifier.ShouldBePreserved();
+            var oldName = newNode.Identifier.Text;
+            var newName = GetMinifiedName(oldName);
+            var newIdentifier = SyntaxFactory.Identifier(newName)
+                .WithLeadingTrivia(newNode.Identifier.LeadingTrivia)
+                .WithTrailingTrivia(newNode.Identifier.TrailingTrivia);
+            if (shouldBePreserved)
+                newIdentifier = newIdentifier.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"));
+            return newNode.WithIdentifier(newIdentifier);
+        }
+
         public override SyntaxNode? VisitQualifiedName(QualifiedNameSyntax node)
         {
             var shouldBePreserved = node!.ShouldBePreserved();
