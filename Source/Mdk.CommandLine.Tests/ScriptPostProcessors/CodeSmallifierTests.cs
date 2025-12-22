@@ -27,6 +27,7 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
                 string E;
                 int F;
                 private int G = 1;
+                string H;
             }
             """;
 
@@ -63,7 +64,7 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
                 private static string A,B = "x";
                 internal string C;
                 string[] D;
-                string E;
+                string E,H;
                 int F,G = 1;
             }
             """;
