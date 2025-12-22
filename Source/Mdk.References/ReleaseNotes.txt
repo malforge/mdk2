@@ -1,3 +1,6 @@
+v.2.2.6
+ - Fixed really strange reference name error... Must have been a copy-paste error.
+S 
 v.2.2.5
  - Package updates
 

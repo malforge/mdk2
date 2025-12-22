@@ -79,7 +79,7 @@
                 <HintPath>$(SpaceEngineersBinPath)\VRage.Scripting.dll</HintPath>
                 <Private>$(SpaceEngineersBinCopyLocal)</Private>
             </Reference>
-            <Reference Include="VRage.Scripting">
+            <Reference Include="ProtoBuf.Net.Core">
                 <HintPath>$(SpaceEngineersBinPath)\ProtoBuf.Net.Core.dll</HintPath>
                 <Private>$(SpaceEngineersBinCopyLocal)</Private>
             </Reference>
