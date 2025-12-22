@@ -71,4 +71,63 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
 
         Assert.That(actual.ToString(), Is.EqualTo(expected));
     }
+
+    [Test]
+    public async Task ProcessAsync_WhenFieldsAreUninitialized_CompactsByTypeSecondaryOrder()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                private static string A = "x";
+                private static string B;
+                internal string C;
+                string[] D;
+                string E;
+                int F = 1;
+                private int G;
+                string H;
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new CodeSmallifier();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Lite,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var actual = await result.GetTextAsync();
+            var expected =
+            """
+            class Program
+            {
+                private static string A = "x", B;
+                internal string C;
+                string[] D;
+                string E,H;
+                int F = 1, G;
+            }
+            """;
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
+    }
 }
