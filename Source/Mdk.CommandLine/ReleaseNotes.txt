@@ -1,5 +1,6 @@
 ﻿v.2.1.10
    - LordMike added Compact field declarations in CodeSmallifier (combine separate variable declarations of the same type into multi-declaration)
+   - LordMike fixed linq queries
    
 v.2.1.9
    - Fixed 'mdk help pack' and 'mdk help restore' commands which were broken
