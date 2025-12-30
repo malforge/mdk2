@@ -1,3 +1,6 @@
+v.2.2.7
+ - Added a verbose output option to allow for workflow debugging.
+
 v.2.2.6
  - Fixed really strange reference name error... Must have been a copy-paste error.
 S 

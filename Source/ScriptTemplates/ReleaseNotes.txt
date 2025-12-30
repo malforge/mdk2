@@ -1,3 +1,6 @@
+v.2.2.40
+ - Updated the package versions in the template.
+
 v.2.2.39
  - Updated the package versions in the template.
 

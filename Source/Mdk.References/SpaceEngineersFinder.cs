@@ -22,25 +22,63 @@ namespace Mdk2.References
         public bool Interactive { get; set; }
         
         public string ProjectPath { get; set; }
+        
+        public bool Verbose { get; set; }
 
         public override bool Execute()
         {
+            if (Verbose)
+            {
+                Log.LogMessage(MessageImportance.High, "[SpaceEngineersFinder] Starting search...");
+                Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] ProjectPath: {ProjectPath ?? "(null)"}");
+                Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Interactive: {Interactive}");
+            }
+            
             if (!string.IsNullOrEmpty(ProjectPath))
             {
+                if (Verbose)
+                    Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Looking for local ini file...");
+                    
                 var localIniFileName = IniFileFinder.FindLocalIni(ProjectPath);
+                
+                if (Verbose)
+                    Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] FindLocalIni returned: {localIniFileName ?? "(null)"}");
+                    
                 if (localIniFileName != null)
                 {
                     Log.LogMessage(MessageImportance.High, $"Found local ini file: {localIniFileName}");
+                    
+                    if (Verbose)
+                        Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Attempting to load from ini...");
+                        
                     if (LoadFromIni(localIniFileName)) return true;
                 }
                 
+                if (Verbose)
+                    Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Looking for main ini file...");
+                
                 var iniFileName = IniFileFinder.FindMainIni(ProjectPath);
+                
+                if (Verbose)
+                    Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] FindMainIni returned: {iniFileName ?? "(null)"}");
+                
                 if (iniFileName != null)
                 {
                     Log.LogMessage(MessageImportance.High, $"Found ini file: {iniFileName}");
+                    
+                    if (Verbose)
+                        Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Attempting to load from ini...");
+                        
                     if (LoadFromIni(iniFileName)) return true;
                 }
             }
+            else if (Verbose)
+            {
+                Log.LogMessage(MessageImportance.High, "[SpaceEngineersFinder] ProjectPath is null or empty, skipping ini file search");
+            }
+            
+            if (Verbose)
+                Log.LogMessage(MessageImportance.High, "[SpaceEngineersFinder] No ini file found, attempting registry lookup...");
             
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -69,20 +107,50 @@ namespace Mdk2.References
         {
             try
             {
+                if (Verbose)
+                    Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Reading file: {localIniFileName}");
+                    
                 var content = File.ReadAllText(localIniFileName);
+                
+                if (Verbose)
+                    Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] File content length: {content.Length} chars");
+                
                 if (Ini.TryParse(content, out var ini))
                 {
+                    if (Verbose)
+                        Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] INI parsed successfully");
+                        
                     var section = ini["mdk"];
+                    
+                    if (Verbose)
+                        Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Got section 'mdk'");
+                    
                     if (section.HasKey("binarypath"))
                     {
                         var path = section["binarypath"].ToString()?.Trim();
+                        
+                        if (Verbose)
+                            Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] binarypath value: {path ?? "(null)"}");
+                        
                         if (!string.IsNullOrEmpty(path) && !string.Equals(path, "auto", StringComparison.OrdinalIgnoreCase))
                         {
                             BinaryPath = path;
                             Log.LogMessage(MessageImportance.High, $"Binary path of Space Engineers was overridden by ini file: {BinaryPath}");
                             return true;
                         }
+                        else if (Verbose)
+                        {
+                            Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] binarypath is empty or 'auto', skipping");
+                        }
                     }
+                    else if (Verbose)
+                    {
+                        Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Section 'mdk' does not have 'binarypath' key");
+                    }
+                }
+                else if (Verbose)
+                {
+                    Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] Failed to parse INI file");
                 }
             }
             catch (Exception e)
