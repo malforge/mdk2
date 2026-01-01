@@ -336,8 +336,8 @@ public class Parameters : TracksPropertyChanges, IParameters
         if (!TryGetProjectFile(out var projectFile))
             return;
         
-        var localIniFileName = IniFileFinder.FindLocalIni(projectFile);
-        var iniFileName = IniFileFinder.FindMainIni(projectFile);
+        var localIniFileName = IniFileFinder.FindLocalIni(projectFile!);
+        var iniFileName = IniFileFinder.FindMainIni(projectFile!);
 
         if (localIniFileName != null)
         {

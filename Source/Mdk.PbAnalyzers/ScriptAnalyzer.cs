@@ -38,7 +38,7 @@ namespace Mdk2.PbAnalyzers
         // readonly List<Uri> _ignoredFolders = new List<Uri>();
         // readonly List<Uri> _ignoredFiles = new List<Uri>();
         // Uri _basePath;
-        readonly string _namespaceName = DefaultNamespaceName;
+        HashSet<string> _allowedNamespaces;
         string _projectDir;
         Matcher _mdkIgnorePaths;
 
@@ -88,10 +88,11 @@ namespace Mdk2.PbAnalyzers
             context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.projectdir", out _projectDir);
             _projectDir = _projectDir ?? ".";
             
-            // Try to load ignore paths from ini files in AdditionalFiles first
-            var ignorePathsFromIni = TryLoadIgnorePathsFromIni(context.Options.AdditionalFiles, context.CancellationToken);
+            // Load settings from ini files (ignores and namespaces)
+            LoadSettingsFromIni(context.Options.AdditionalFiles, context.CancellationToken, 
+                out var ignorePathsFromIni, out var namespacesFromIni);
             
-            // Fall back to MSBuild property if no ini files found
+            // Fall back to MSBuild property for ignores if no ini files found
             if (string.IsNullOrEmpty(ignorePathsFromIni))
             {
                 context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.mdk-ignorepaths", out ignorePathsFromIni);
@@ -116,6 +117,20 @@ namespace Mdk2.PbAnalyzers
 
                 _mdkIgnorePaths = matcher;
             }
+            
+            // Setup allowed namespaces
+            if (!string.IsNullOrEmpty(namespacesFromIni))
+            {
+                _allowedNamespaces = new HashSet<string>(
+                    namespacesFromIni.Split(new[] { ';', ',', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(ns => ns.Trim()),
+                    StringComparer.Ordinal);
+            }
+            else
+            {
+                // Default to IngameScript if not specified
+                _allowedNamespaces = new HashSet<string>(StringComparer.Ordinal) { DefaultNamespaceName };
+            }
 
             if (!TryLoadWhitelist(context.Options.AdditionalFiles, context.CancellationToken))
                 LoadEmbeddedWhitelist();
@@ -134,16 +149,22 @@ namespace Mdk2.PbAnalyzers
                 SyntaxKind.ClassDeclaration);
         }
         
-        string TryLoadIgnorePathsFromIni(ImmutableArray<AdditionalText> additionalFiles, CancellationToken cancellationToken)
+        void LoadSettingsFromIni(ImmutableArray<AdditionalText> additionalFiles, CancellationToken cancellationToken,
+            out string ignorePathsResult, out string namespacesResult)
         {
             var ignoresList = new List<string>();
+            var namespacesList = new List<string>();
             
             // Find all .ini files
             var iniFiles = additionalFiles.Where(file => 
                 file.Path.EndsWith(".ini", StringComparison.OrdinalIgnoreCase)).ToList();
             
             if (!iniFiles.Any())
-                return null;
+            {
+                ignorePathsResult = null;
+                namespacesResult = null;
+                return;
+            }
             
             // Process local ini first, then main ini (matches Parameters.ParseAndLoadConfigs behavior)
             var localIni = iniFiles.FirstOrDefault(f => f.Path.IndexOf(".local.ini", StringComparison.OrdinalIgnoreCase) >= 0);
@@ -158,7 +179,7 @@ namespace Mdk2.PbAnalyzers
                 var content = iniFile.GetText(cancellationToken)?.ToString();
                 if (string.IsNullOrWhiteSpace(content)) return;
                 
-                // Simple ini parsing - look for ignores= line under [mdk] section
+                // Simple ini parsing - look for ignores= and namespaces= lines under [mdk] section
                 var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 bool inMdkSection = false;
                 
@@ -171,12 +192,20 @@ namespace Mdk2.PbAnalyzers
                         continue;
                     }
                     
-                    if (inMdkSection && trimmed.StartsWith("ignores=", StringComparison.OrdinalIgnoreCase))
+                    if (!inMdkSection)
+                        continue;
+                    
+                    if (trimmed.StartsWith("ignores=", StringComparison.OrdinalIgnoreCase))
                     {
                         var ignoresValue = trimmed.Substring("ignores=".Length);
                         var patterns = ignoresValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                         ignoresList.AddRange(patterns.Select(p => p.Trim()));
-                        break;
+                    }
+                    else if (trimmed.StartsWith("namespaces=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var namespacesValue = trimmed.Substring("namespaces=".Length);
+                        var namespaces = namespacesValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        namespacesList.AddRange(namespaces.Select(ns => ns.Trim()));
                     }
                 }
             }
@@ -184,7 +213,8 @@ namespace Mdk2.PbAnalyzers
             ProcessIniFile(localIni);
             ProcessIniFile(mainIni);
             
-            return ignoresList.Any() ? string.Join(";", ignoresList.Distinct()) : null;
+            ignorePathsResult = ignoresList.Any() ? string.Join(";", ignoresList.Distinct()) : null;
+            namespacesResult = namespacesList.Any() ? string.Join(";", namespacesList.Distinct()) : null;
         }
 
         void AnalyzeNamespace(SyntaxNodeAnalysisContext context)
@@ -197,11 +227,16 @@ namespace Mdk2.PbAnalyzers
 
             var namespaceDeclaration = classDeclaration.Parent as NamespaceDeclarationSyntax;
             var namespaceName = namespaceDeclaration?.Name.ToString();
-            if (_namespaceName.Equals(namespaceName, StringComparison.Ordinal))
+            
+            // Check if namespace is in the allowed list
+            if (_allowedNamespaces != null && !string.IsNullOrEmpty(namespaceName) && _allowedNamespaces.Contains(namespaceName))
                 return;
+            
+            // If no namespace, report with suggestion for first allowed namespace
+            var suggestedNamespace = _allowedNamespaces?.FirstOrDefault() ?? DefaultNamespaceName;
             var diagnostic = Diagnostic.Create(InconsistentNamespaceDeclarationRule,
                 namespaceDeclaration?.Name.GetLocation() ?? classDeclaration.Identifier.GetLocation(),
-                _namespaceName);
+                string.Join(", ", _allowedNamespaces ?? new HashSet<string> { DefaultNamespaceName }));
             context.ReportDiagnostic(diagnostic);
         }
 

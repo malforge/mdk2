@@ -75,7 +75,8 @@ public class LegacyConverter
         }
         console.Trace("Success.");
 
-        var (mainIniFileName, localIniFileName) = IniFileFinder.GetNewIniPaths(project.Project.FilePath);
+        var projectFilepath = project.Project.FilePath ?? throw new InvalidOperationException("The project file path is invalid.");
+        var (mainIniFileName, localIniFileName) = IniFileFinder.GetNewIniPaths(projectFilepath);
 
         console.Trace("Writing MDK ini files (using new naming convention: mdk.ini, mdk.local.ini)...");
         await WriteMainIni(console, minify, trimTypes, ignores, mainIniFileName, dryRun);

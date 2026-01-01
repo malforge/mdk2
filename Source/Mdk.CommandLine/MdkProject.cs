@@ -58,7 +58,12 @@ public readonly struct MdkProject
     {
         // Check for MDK2 project by looking for INI files (supports both new and legacy naming)
         var projectFileName = Path.GetFileName(project.FilePath);
-        var iniFileName = IniFileFinder.FindMainIni(project.FilePath);
+        if (projectFileName == null)
+        {
+            console.Print("The project file path is invalid.");
+            return MdkProjectType.Unknown;
+        }
+        var iniFileName = IniFileFinder.FindMainIni(projectFileName);
         if (iniFileName != null)
         {
             try

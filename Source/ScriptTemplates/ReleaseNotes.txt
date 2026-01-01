@@ -1,3 +1,11 @@
+v.2.2.42
+ - Updated the package versions in the template.
+
+v.2.2.41
+ - Added `namespaces=` setting to mdk.ini template with explanation
+ - Explains why namespace discipline is important (namespaces are stripped in final script)
+ - Updated package versions in the template
+
 v.2.2.40
  - Updated the package versions in the template.
 
