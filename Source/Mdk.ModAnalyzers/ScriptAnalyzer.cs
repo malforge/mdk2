@@ -69,17 +69,26 @@ namespace Mdk2.ModAnalyzers
         {
             context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.projectdir", out var projectDir);
             _projectDirUri = new Uri(Path.GetFullPath(projectDir ?? "."));
-            context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.mdk-ignorepaths", out var ignorePaths);
-
-            if (!string.IsNullOrEmpty(ignorePaths))
+            
+            // Try to load ignore paths from ini files in AdditionalFiles first
+            var ignorePathsFromIni = TryLoadIgnorePathsFromIni(context.Options.AdditionalFiles, context.CancellationToken);
+            
+            // Fall back to MSBuild property if no ini files found
+            if (string.IsNullOrEmpty(ignorePathsFromIni))
             {
-                var paths = ignorePaths.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+                context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.mdk-ignorepaths", out ignorePathsFromIni);
+            }
+
+            if (!string.IsNullOrEmpty(ignorePathsFromIni))
+            {
+                var paths = ignorePathsFromIni.Split(new[] { '|', ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
                 var matcher = new Matcher();
                 foreach (var path in paths)
                 {
                     try
                     {
-                        matcher.AddInclude(path);
+                        // Don't use full paths - Matcher expects relative patterns
+                        matcher.AddInclude(path.Trim());
                     }
                     catch
                     {
@@ -99,6 +108,59 @@ namespace Mdk2.ModAnalyzers
                 SyntaxKind.GenericName,
                 SyntaxKind.IdentifierName,
                 SyntaxKind.DestructorDeclaration);
+        }
+        
+        string TryLoadIgnorePathsFromIni(ImmutableArray<AdditionalText> additionalFiles, CancellationToken cancellationToken)
+        {
+            var ignoresList = new List<string>();
+            
+            // Find all .ini files
+            var iniFiles = additionalFiles.Where(file => 
+                file.Path.EndsWith(".ini", StringComparison.OrdinalIgnoreCase)).ToList();
+            
+            if (!iniFiles.Any())
+                return null;
+            
+            // Process local ini first, then main ini (matches Parameters.ParseAndLoadConfigs behavior)
+            var localIni = iniFiles.FirstOrDefault(f => f.Path.IndexOf(".local.ini", StringComparison.OrdinalIgnoreCase) >= 0);
+            var mainIni = iniFiles.FirstOrDefault(f => 
+                f.Path.EndsWith("mdk.ini", StringComparison.OrdinalIgnoreCase) || 
+                (f.Path.EndsWith(".mdk.ini", StringComparison.OrdinalIgnoreCase) && f.Path.IndexOf(".local.ini", StringComparison.OrdinalIgnoreCase) < 0));
+            
+            void ProcessIniFile(AdditionalText iniFile)
+            {
+                if (iniFile == null) return;
+                
+                var content = iniFile.GetText(cancellationToken)?.ToString();
+                if (string.IsNullOrWhiteSpace(content)) return;
+                
+                // Simple ini parsing - look for ignores= line under [mdk] section
+                var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                bool inMdkSection = false;
+                
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (trimmed.StartsWith("["))
+                    {
+                        inMdkSection = trimmed.Equals("[mdk]", StringComparison.OrdinalIgnoreCase);
+                        continue;
+                    }
+                    
+                    if (inMdkSection && trimmed.StartsWith("ignores=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var ignoresValue = trimmed.Substring("ignores=".Length);
+                        var patterns = ignoresValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        ignoresList.AddRange(patterns.Select(p => p.Trim()));
+                        break;
+                    }
+                }
+            }
+            
+            ProcessIniFile(localIni);
+            ProcessIniFile(mainIni);
+            
+            return ignoresList.Any() ? string.Join(";", ignoresList.Distinct()) : null;
         }
 
         void Analyze(SyntaxNodeAnalysisContext context)

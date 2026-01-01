@@ -1,2 +1,5 @@
-﻿v.1.0.0-alpha1
+﻿v.2.1.11
+ - Changed: ini files are now exposed as AdditionalFiles to enable analyzer integration
+
+v.2.1.6
  - Initial release

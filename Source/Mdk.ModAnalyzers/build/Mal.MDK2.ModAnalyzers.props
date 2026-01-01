@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
     <PropertyGroup>
-        <Mdk-IgnorePaths>**\*.debug.cs|obj\**\*</Mdk-IgnorePaths>
+        <!-- Default ignore paths (can be overridden in project file) -->
+        <Mdk-IgnorePaths Condition="'$(Mdk-IgnorePaths)' == ''">**\*.debug.cs;obj\**\*</Mdk-IgnorePaths>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Update="Mal.Mdk2.ModAnalyzers" IncludeAssets="analyzers" />

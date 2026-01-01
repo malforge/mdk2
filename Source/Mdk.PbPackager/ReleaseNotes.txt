@@ -1,4 +1,7 @@
-v.2.1.5
+v.2.1.11
+- Changed: ini files are now exposed as AdditionalFiles to enable analyzer integration
+
+v.2.1.6
   - Added support for thumb formats other than png (ex: thumb.jpg, thumb.bmp, thumb.gif) to Script Packer.
 
 v.2.1.3

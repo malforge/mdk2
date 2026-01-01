@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
     <PropertyGroup>
-        <Mdk-IgnorePaths>obj\**\*;MDK\**\*;**\*.debug.cs</Mdk-IgnorePaths>
+        <!-- Default ignore paths (can be overridden in project file) -->
+        <Mdk-IgnorePaths Condition="'$(Mdk-IgnorePaths)' == ''">obj\**\*;MDK\**\*;**\*.debug.cs</Mdk-IgnorePaths>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Update="Mal.Mdk2.PbAnalyzers" IncludeAssets="analyzers" />

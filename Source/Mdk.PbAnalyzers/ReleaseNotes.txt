@@ -1,4 +1,10 @@
-v.2.1.14
+v.2.1.15
+- Fixed: Separator bug where Mdk-IgnorePaths only accepted '|' but props files used ';'
+- Fixed: Analyzers now read ignore patterns directly from mdk.ini and mdk.local.ini files
+- Changed: ini files are now exposed as AdditionalFiles to analyzers
+- Improved: Ignore path separators now accept ';', '|', and ',' for maximum compatibility
+
+2.1.14
     - Whitelist update
 
 v.2.1.13
