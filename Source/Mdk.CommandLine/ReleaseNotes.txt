@@ -1,4 +1,7 @@
-﻿v.2.1.11
+﻿v.2.1.12
+   - Fixed a dum-dum error causing just the project filename to be passed down rather than the full path, causing the project file to not be found. PSA: There's no such thing as "just a small harmless fix". Test your code.
+
+v.2.1.11
    - Changed: ini files are now exposed as AdditionalFiles to enable analyzer integration
    
 v.2.1.10

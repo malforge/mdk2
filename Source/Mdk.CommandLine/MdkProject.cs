@@ -57,13 +57,13 @@ public readonly struct MdkProject
     static MdkProjectType Identify(Project project, IConsole console)
     {
         // Check for MDK2 project by looking for INI files (supports both new and legacy naming)
-        var projectFileName = Path.GetFileName(project.FilePath);
-        if (projectFileName == null)
+        if (string.IsNullOrEmpty(project.FilePath))
         {
-            console.Print("The project file path is invalid.");
+            console.Print("The project does not have a valid file path.");
             return MdkProjectType.Unknown;
         }
-        var iniFileName = IniFileFinder.FindMainIni(projectFileName);
+        var projectFileName = Path.GetFileName(project.FilePath);
+        var iniFileName = IniFileFinder.FindMainIni(project.FilePath);
         if (iniFileName != null)
         {
             try
