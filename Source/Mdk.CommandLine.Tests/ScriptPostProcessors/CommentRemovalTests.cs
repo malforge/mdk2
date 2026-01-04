@@ -18,13 +18,15 @@ public class CommentRemovalTests : DocumentProcessorTests<TypeTrimmer>
     {
         const string testCode =
             """
-            class Program
+            class Program : MyGridProgram
             {
                 // This is a comment
                 void Main(string argument)
                 {
                     // This is another comment
                     Echo(argument);
+                    FunctionInWeirdPlace(argument);
+                    FunctionWithComment(argument);
                 }
                 
                 /* This is a block comment */
@@ -47,7 +49,7 @@ public class CommentRemovalTests : DocumentProcessorTests<TypeTrimmer>
         
         // const string expectedCode =
         //     """
-        //     class Program
+        //     class Program : MyGridProgram
         //     {
         //         void Main(string argument)
         //         {
