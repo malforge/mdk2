@@ -30,12 +30,14 @@ public partial class RegionAnnotator : IDocumentProcessor
         readonly Regex _macroRegex = GetMacroRegex();
 
         readonly IReadOnlyDictionary<string, string> _macros;
+        readonly bool _hasMacros;
         readonly Regex _regionRegex = GetRegionRegex();
         readonly Stack<RegionInfo> _stack = new();
 
         public MdkAnnotationRewriter(IReadOnlyDictionary<string, string> macros) : base(true)
         {
             _macros = macros;
+            _hasMacros = macros.Count > 0;
             _stack.Push(new RegionInfo());
         }
 
@@ -58,7 +60,7 @@ public partial class RegionAnnotator : IDocumentProcessor
         {
             token = base.VisitToken(token);
             var region = _stack.Peek();
-            if (token.IsKind(SyntaxKind.StringLiteralToken) && region.ExpandsMacros)
+            if (_hasMacros && token.IsKind(SyntaxKind.StringLiteralToken))
                 token = SyntaxFactory.Literal(ReplaceMacros(token.ValueText));
 
             if (region.Annotation != null)
@@ -120,32 +122,39 @@ public partial class RegionAnnotator : IDocumentProcessor
         {
             trivia = base.VisitTrivia(trivia);
             var region = _stack.Peek();
-            if (region.ExpandsMacros && region.Annotation != null)
+            if (_hasMacros)
             {
                 if (trivia.IsKind(SyntaxKind.SingleLineCommentTrivia))
                 {
-                    return SyntaxFactory.Comment(ReplaceMacros(trivia.ToFullString()))
-                        .WithAdditionalAnnotations(region.Annotation);
+                    trivia = SyntaxFactory.Comment(ReplaceMacros(trivia.ToFullString()));
                 }
 
                 if (trivia.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia))
                 {
-                    //return SyntaxFactory.DocumentationCommentTrivia(ReplaceMacros(trivia.ToFullString()))
-                    //    .WithAdditionalAnnotations(region.Annotation);
+                    trivia = ReplaceDocumentationTrivia(trivia);
                 }
 
                 if (trivia.IsKind(SyntaxKind.MultiLineCommentTrivia))
                 {
-                    return SyntaxFactory.Comment(ReplaceMacros(trivia.ToFullString()))
-                        .WithAdditionalAnnotations(region.Annotation);
+                    trivia = SyntaxFactory.Comment(ReplaceMacros(trivia.ToFullString()));
                 }
 
-                if (trivia.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia)) { }
+                if (trivia.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia))
+                {
+                    trivia = ReplaceDocumentationTrivia(trivia);
+                }
             }
 
             if (region.Annotation != null)
                 trivia = trivia.WithAdditionalAnnotations(region.Annotation);
             return trivia;
+        }
+
+        SyntaxTrivia ReplaceDocumentationTrivia(SyntaxTrivia trivia)
+        {
+            var replaced = ReplaceMacros(trivia.ToFullString());
+            var parsed = SyntaxFactory.ParseLeadingTrivia(replaced);
+            return parsed.Count > 0 ? parsed[0] : SyntaxFactory.Comment(replaced);
         }
 
         public override SyntaxNode? VisitRegionDirectiveTrivia(RegionDirectiveTriviaSyntax node)
