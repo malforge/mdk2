@@ -118,4 +118,66 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
         annotations = annotatedProperty.GetAnnotations("MDK");
         Assert.That(annotations, Is.Not.Empty);
     }
+
+    [Test]
+    public async Task ProcessAsync_ReplacesMacrosInCommentsAndStrings()
+    {
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument",
+            """
+            class MacroSandbox
+            {
+                // single $TEST$
+                /* multi-line $TEST$ */
+                /// <summary>xml $TEST$</summary>
+                void Method()
+                {
+                    var plainString = "$TEST$";
+                }
+                
+                // Regions should also support replacements inside
+                #region mdk preserve
+                public string InsideRegion = "$TEST$";
+                #endregion
+            }
+            """);
+        var processor = new RegionAnnotator();
+        
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Macros =
+                {
+                    ["$TEST$"] = "REPLACED"
+                }
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+        var text = (await result.GetTextAsync()).ToString();
+
+        // Assert
+        Assert.That(text, Does.Contain("// single REPLACED"));
+        Assert.That(text, Does.Contain("/* multi-line REPLACED */"));
+        Assert.That(text, Does.Contain("/// <summary>xml REPLACED</summary>"));
+        Assert.That(text, Does.Contain("var plainString = \"REPLACED\";"));
+        Assert.That(text, Does.Contain("public string InsideRegion = \"REPLACED\";"));
+    }
 }
