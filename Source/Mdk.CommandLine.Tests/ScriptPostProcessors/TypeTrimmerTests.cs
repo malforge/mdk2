@@ -718,32 +718,45 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
-    public async Task ProcessAsync_WhenUnusedConstructor_RemovesConstructor()
+    public async Task ProcessAsync_WhenUnusedCallbacksOutsideMyGridProgram_RemovesMembers()
     {
         const string testCode =
             """
+            class Utility
+            {
+                // These members should disappear, as this is not a MyGridProgram
+                public Utility() {}
+                void Main() {}
+                void Save() {}
+            }
+
             class Program : MyGridProgram
             {
-                public Program() {}
-                public Program(int value) {}
-
-                static void Main()
+                // These members should not disappear, as this is not a MyGridProgram
+                public Program()
                 {
-                    var program = new Program(1);
+                    _ = typeof(Utility);
                 }
+                void Main() {}
+                void Save() {}
             }
             """;
 
         const string expectedCode =
             """
+            class Utility
+            {
+            }
+
             class Program : MyGridProgram
             {
-                public Program(int value) {}
-
-                static void Main()
+                // These members should not disappear, as this is not a MyGridProgram
+                public Program()
                 {
-                    var program = new Program(1);
+                    _ = typeof(Utility);
                 }
+                void Main() {}
+                void Save() {}
             }
             """;
 

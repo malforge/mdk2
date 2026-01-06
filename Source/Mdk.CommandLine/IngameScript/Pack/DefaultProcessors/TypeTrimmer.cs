@@ -228,15 +228,27 @@ public class TypeTrimmer : IDocumentProcessor
         if (!symbol.IsDefinition
             || symbol.IsOverride
             || symbol.IsInterfaceImplementation()
-            || IsScriptMainCallback(symbol)
+            || IsScriptCallback(symbol)
+            || IsScriptDefaultConstructor(symbol)
             || symbol.MethodKind == MethodKind.StaticConstructor)
             return false;
         return true;
     }
 
-    static bool IsScriptMainCallback(IMethodSymbol symbol)
+    static bool IsScriptCallback(IMethodSymbol symbol)
     {
-        if (!string.Equals(symbol.Name, "Main", StringComparison.Ordinal))
+        if (!string.Equals(symbol.Name, "Main", StringComparison.Ordinal)
+            && !string.Equals(symbol.Name, "Save", StringComparison.Ordinal))
+            return false;
+        var containingType = symbol.ContainingType;
+        if (containingType == null)
+            return false;
+        return InheritsFrom(containingType, "MyGridProgram");
+    }
+
+    static bool IsScriptDefaultConstructor(IMethodSymbol symbol)
+    {
+        if (symbol.MethodKind != MethodKind.Constructor || symbol.Parameters.Length != 0)
             return false;
         var containingType = symbol.ContainingType;
         if (containingType == null)
