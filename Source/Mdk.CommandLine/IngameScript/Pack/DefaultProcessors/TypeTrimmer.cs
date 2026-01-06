@@ -19,6 +19,9 @@ public class TypeTrimmer : IDocumentProcessor
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
         var shouldTrimMembers = (context.Parameters.PackVerb.MinifierExtraOptions & MinifierExtraOptions.NoMemberTrimming) == 0;
+        var unusedTypes = new List<TypeDeclarationSyntax>();
+        var unusedMembers = new List<SyntaxNode>();
+        var fieldReplacements = new Dictionary<FieldDeclarationSyntax, FieldDeclarationSyntax>();
         
         while (true)
         {
@@ -31,9 +34,9 @@ public class TypeTrimmer : IDocumentProcessor
             var solution = document.Project.Solution;
             
             var allTypeDeclarations = rootNode.DescendantNodes().OfType<TypeDeclarationSyntax>();
-            var unusedTypes = new List<TypeDeclarationSyntax>();
-            var unusedMembers = new List<SyntaxNode>();
-            var fieldReplacements = new Dictionary<FieldDeclarationSyntax, FieldDeclarationSyntax>();
+            unusedTypes.Clear();
+            unusedMembers.Clear();
+            fieldReplacements.Clear();
             
             // Trim entirely unused types
             foreach (var typeDeclaration in allTypeDeclarations)
