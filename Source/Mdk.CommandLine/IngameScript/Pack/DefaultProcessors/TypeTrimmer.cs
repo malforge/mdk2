@@ -18,6 +18,8 @@ public class TypeTrimmer : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
+        var shouldTrimMembers = (context.Parameters.PackVerb.MinifierExtraOptions & MinifierExtraOptions.NoMemberTrimming) == 0;
+        
         while (true)
         {
             var rootNode = await document.GetSyntaxRootAsync();

@@ -160,6 +160,13 @@ public class Parameters : TracksPropertyChanges, IParameters
                         PackVerb.MinifierLevel = level;
                         continue;
                     }
+                    if (matches("-minifyextraoptions"))
+                    {
+                        if (!queue.TryDequeue(out MinifierExtraOptions options))
+                            throw new CommandLineException(-1, "No or unknown minifier extra options specified.");
+                        PackVerb.MinifierExtraOptions = options;
+                        continue;
+                    }
                     if (matches("-dryrun"))
                     {
                         PackVerb.DryRun = true;
@@ -285,12 +292,17 @@ public class Parameters : TracksPropertyChanges, IParameters
             PackVerb.Output = section["output"].ToString();
         if (section.HasKey("minify") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.MinifierLevel))))
             PackVerb.MinifierLevel = section["minify"].ToEnum<MinifierLevel>();
+        if (section.HasKey("minifyextraoptions") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.MinifierExtraOptions))))
+            PackVerb.MinifierExtraOptions = section["minifyextraoptions"].ToEnum<MinifierExtraOptions>();
         if (section.HasKey("trim") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.MinifierLevel))))
         {
             // This is only here to maintain backwards compatibility with existing configuration files.
             var trimUnusedTypes = section["trim"].ToBool();
             if (trimUnusedTypes && PackVerb.MinifierLevel == MinifierLevel.None)
+            {
                 PackVerb.MinifierLevel = MinifierLevel.Trim;
+                PackVerb.MinifierExtraOptions = MinifierExtraOptions.NoMemberTrimming;
+            }
         }
         if (section.HasKey("ignores"))
         {
@@ -507,6 +519,7 @@ public class Parameters : TracksPropertyChanges, IParameters
         string? _output;
         string? _projectFile;
         bool _dryRun;
+        MinifierExtraOptions _minifierExtraOptions = MinifierExtraOptions.None;
 
         /// <inheritdoc cref="IParameters.IPackVerbParameters.Ignores" />
         public List<string> Ignores { get; } = new();
@@ -550,6 +563,13 @@ public class Parameters : TracksPropertyChanges, IParameters
         {
             get => _minifierLevel;
             set => SetField(ref _minifierLevel, value);
+        }
+
+        /// <inheritdoc />
+        public MinifierExtraOptions MinifierExtraOptions
+        {
+            get => _minifierExtraOptions;
+            set => SetField(ref _minifierExtraOptions, value);
         }
 
         /// <inheritdoc />
