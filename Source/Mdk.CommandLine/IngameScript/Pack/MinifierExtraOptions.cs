@@ -14,7 +14,7 @@ public enum MinifierExtraOptions
     None,
     
     /// <summary>
-    /// The <see cref="MinifierLevel.Trim"/> level will not remove unused members (fields, properties, methods).
+    /// The <see cref="MinifierLevel.Trim"/> level will not remove unused members (fields, methods, constructors).
     /// </summary>
     NoMemberTrimming
 }

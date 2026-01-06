@@ -34,6 +34,8 @@ public class TypeTrimmer : IDocumentProcessor
             var unusedTypes = new List<TypeDeclarationSyntax>();
             var unusedMembers = new List<SyntaxNode>();
             var fieldReplacements = new Dictionary<FieldDeclarationSyntax, FieldDeclarationSyntax>();
+            
+            // Trim entirely unused types
             foreach (var typeDeclaration in allTypeDeclarations)
             {
                 if (semanticModel.GetDeclaredSymbol(typeDeclaration) is not INamedTypeSymbol symbol)
@@ -60,106 +62,112 @@ public class TypeTrimmer : IDocumentProcessor
                 context.Console.Trace($"Unused type: {symbol.Name}");
             }
 
-            var allFieldDeclarations = rootNode.DescendantNodes().OfType<FieldDeclarationSyntax>();
-            foreach (var fieldDeclaration in allFieldDeclarations)
+            if (shouldTrimMembers)
             {
-                if (fieldDeclaration.ShouldBePreserved())
-                    continue;
-                var declaration = fieldDeclaration.Declaration;
-                if (declaration == null)
-                    continue;
-                var variables = declaration.Variables;
-                if (variables.Count == 0)
-                    continue;
-
-                var keptVariables = new List<VariableDeclaratorSyntax>(variables.Count);
-                var removedAny = false;
-                foreach (var variable in variables)
+                // Trim unused fields
+                var allFieldDeclarations = rootNode.DescendantNodes().OfType<FieldDeclarationSyntax>();
+                foreach (var fieldDeclaration in allFieldDeclarations)
                 {
-                    if (variable.Identifier.ShouldBePreserved())
+                    if (fieldDeclaration.ShouldBePreserved())
+                        continue;
+                    var declaration = fieldDeclaration.Declaration;
+                    if (declaration == null)
+                        continue;
+                    var variables = declaration.Variables;
+                    if (variables.Count == 0)
+                        continue;
+
+                    var keptVariables = new List<VariableDeclaratorSyntax>(variables.Count);
+                    var removedAny = false;
+                    foreach (var variable in variables)
                     {
-                        keptVariables.Add(variable);
+                        if (variable.Identifier.ShouldBePreserved())
+                        {
+                            keptVariables.Add(variable);
+                            continue;
+                        }
+                        if (semanticModel.GetDeclaredSymbol(variable) is not IFieldSymbol fieldSymbol)
+                        {
+                            keptVariables.Add(variable);
+                            continue;
+                        }
+                        if (!IsEligibleForRemoval(variable, fieldSymbol))
+                        {
+                            keptVariables.Add(variable);
+                            continue;
+                        }
+                        var references = (await SymbolFinder.FindReferencesAsync(fieldSymbol, solution)).ToList();
+                        references.RemoveAll(reference => !reference.Locations.Any());
+                        references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, variable, location)));
+
+                        if (references.Count > 0)
+                        {
+                            keptVariables.Add(variable);
+                            continue;
+                        }
+
+                        removedAny = true;
+                        context.Console.Trace($"Unused field: {fieldSymbol.Name}");
+                    }
+
+                    if (!removedAny)
+                        continue;
+
+                    if (keptVariables.Count == 0)
+                    {
+                        unusedMembers.Add(fieldDeclaration);
                         continue;
                     }
-                    if (semanticModel.GetDeclaredSymbol(variable) is not IFieldSymbol fieldSymbol)
-                    {
-                        keptVariables.Add(variable);
+
+                    var newVariables = default(SeparatedSyntaxList<VariableDeclaratorSyntax>);
+                    newVariables = newVariables.AddRange(keptVariables);
+                    var newDeclaration = fieldDeclaration.WithDeclaration(declaration.WithVariables(newVariables));
+                    fieldReplacements[fieldDeclaration] = newDeclaration;
+                }
+
+                // Trim unused methods
+                var allMethodDeclarations = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
+                foreach (var methodDeclaration in allMethodDeclarations)
+                {
+                    if (methodDeclaration.Identifier.ShouldBePreserved() || methodDeclaration.ShouldBePreserved())
                         continue;
-                    }
-                    if (!IsEligibleForRemoval(variable, fieldSymbol))
-                    {
-                        keptVariables.Add(variable);
+                    if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol methodSymbol)
                         continue;
-                    }
-                    var references = (await SymbolFinder.FindReferencesAsync(fieldSymbol, solution)).ToList();
+                    if (!IsEligibleForRemoval(methodSymbol))
+                        continue;
+
+                    var references = (await SymbolFinder.FindReferencesAsync(methodSymbol, solution)).ToList();
                     references.RemoveAll(reference => !reference.Locations.Any());
-                    references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, variable, location)));
+                    references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, methodDeclaration, location)));
 
                     if (references.Count > 0)
-                    {
-                        keptVariables.Add(variable);
                         continue;
-                    }
 
-                    removedAny = true;
-                    context.Console.Trace($"Unused field: {fieldSymbol.Name}");
+                    unusedMembers.Add(methodDeclaration);
+                    context.Console.Trace($"Unused method: {methodSymbol.Name}");
                 }
 
-                if (!removedAny)
-                    continue;
-
-                if (keptVariables.Count == 0)
+                // Trim unused constructors
+                var allConstructorDeclarations = rootNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
+                foreach (var constructorDeclaration in allConstructorDeclarations)
                 {
-                    unusedMembers.Add(fieldDeclaration);
-                    continue;
+                    if (constructorDeclaration.ShouldBePreserved())
+                        continue;
+                    if (semanticModel.GetDeclaredSymbol(constructorDeclaration) is not IMethodSymbol ctorSymbol)
+                        continue;
+                    if (!IsEligibleForRemoval(ctorSymbol))
+                        continue;
+
+                    var references = (await SymbolFinder.FindReferencesAsync(ctorSymbol, solution)).ToList();
+                    references.RemoveAll(reference => !reference.Locations.Any());
+                    references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, constructorDeclaration, location)));
+
+                    if (references.Count > 0)
+                        continue;
+
+                    unusedMembers.Add(constructorDeclaration);
+                    context.Console.Trace($"Unused constructor: {ctorSymbol.ContainingType.Name}({string.Join(", ", ctorSymbol.Parameters.Select(p => p.Type.Name))})");
                 }
-
-                var newVariables = default(SeparatedSyntaxList<VariableDeclaratorSyntax>);
-                newVariables = newVariables.AddRange(keptVariables);
-                var newDeclaration = fieldDeclaration.WithDeclaration(declaration.WithVariables(newVariables));
-                fieldReplacements[fieldDeclaration] = newDeclaration;
-            }
-
-            var allMethodDeclarations = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
-            foreach (var methodDeclaration in allMethodDeclarations)
-            {
-                if (methodDeclaration.Identifier.ShouldBePreserved() || methodDeclaration.ShouldBePreserved())
-                    continue;
-                if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol methodSymbol)
-                    continue;
-                if (!IsEligibleForRemoval(methodSymbol))
-                    continue;
-
-                var references = (await SymbolFinder.FindReferencesAsync(methodSymbol, solution)).ToList();
-                references.RemoveAll(reference => !reference.Locations.Any());
-                references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, methodDeclaration, location)));
-
-                if (references.Count > 0)
-                    continue;
-
-                unusedMembers.Add(methodDeclaration);
-                context.Console.Trace($"Unused method: {methodSymbol.Name}");
-            }
-
-            var allConstructorDeclarations = rootNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
-            foreach (var constructorDeclaration in allConstructorDeclarations)
-            {
-                if (constructorDeclaration.ShouldBePreserved())
-                    continue;
-                if (semanticModel.GetDeclaredSymbol(constructorDeclaration) is not IMethodSymbol ctorSymbol)
-                    continue;
-                if (!IsEligibleForRemoval(ctorSymbol))
-                    continue;
-
-                var references = (await SymbolFinder.FindReferencesAsync(ctorSymbol, solution)).ToList();
-                references.RemoveAll(reference => !reference.Locations.Any());
-                references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, constructorDeclaration, location)));
-
-                if (references.Count > 0)
-                    continue;
-
-                unusedMembers.Add(constructorDeclaration);
-                context.Console.Trace($"Unused constructor: {ctorSymbol.ContainingType.Name}({string.Join(", ", ctorSymbol.Parameters.Select(p => p.Type.Name))})");
             }
             
             if (unusedTypes.Count == 0 && unusedMembers.Count == 0 && fieldReplacements.Count == 0)
