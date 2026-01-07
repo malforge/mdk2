@@ -124,15 +124,37 @@ public class TypeTrimmer : IDocumentProcessor
 
                     var newVariables = default(SeparatedSyntaxList<VariableDeclaratorSyntax>);
                     newVariables = newVariables.AddRange(keptVariables);
-                    var newDeclaration = fieldDeclaration.WithDeclaration(declaration.WithVariables(newVariables));
-                    fieldReplacements[fieldDeclaration] = newDeclaration;
-                }
+                var newDeclaration = fieldDeclaration.WithDeclaration(declaration.WithVariables(newVariables));
+                fieldReplacements[fieldDeclaration] = newDeclaration;
+            }
 
-                // Trim unused methods
-                var allMethodDeclarations = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
-                foreach (var methodDeclaration in allMethodDeclarations)
-                {
-                    if (methodDeclaration.Identifier.ShouldBePreserved() || methodDeclaration.ShouldBePreserved())
+            // Trim unused properties
+            var allPropertyDeclarations = rootNode.DescendantNodes().OfType<PropertyDeclarationSyntax>();
+            foreach (var propertyDeclaration in allPropertyDeclarations)
+            {
+                if (propertyDeclaration.Identifier.ShouldBePreserved() || propertyDeclaration.ShouldBePreserved())
+                    continue;
+                if (semanticModel.GetDeclaredSymbol(propertyDeclaration) is not IPropertySymbol propertySymbol)
+                    continue;
+                if (!IsEligibleForRemoval(propertyDeclaration, propertySymbol))
+                    continue;
+
+                var references = (await SymbolFinder.FindReferencesAsync(propertySymbol, solution)).ToList();
+                references.RemoveAll(reference => !reference.Locations.Any());
+                references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, propertyDeclaration, location)));
+
+                if (references.Count > 0)
+                    continue;
+
+                unusedMembers.Add(propertyDeclaration);
+                context.Console.Trace($"Unused property: {propertySymbol.Name}");
+            }
+
+            // Trim unused methods
+            var allMethodDeclarations = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
+            foreach (var methodDeclaration in allMethodDeclarations)
+            {
+                if (methodDeclaration.Identifier.ShouldBePreserved() || methodDeclaration.ShouldBePreserved())
                         continue;
                     if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol methodSymbol)
                         continue;
@@ -230,6 +252,15 @@ public class TypeTrimmer : IDocumentProcessor
     {
         if (variableDeclarator.ShouldBePreserved()
             || !symbol.IsDefinition)
+            return false;
+        return true;
+    }
+
+    static bool IsEligibleForRemoval(PropertyDeclarationSyntax propertyDeclaration, IPropertySymbol symbol)
+    {
+        if (!symbol.IsDefinition
+            || symbol.IsOverride
+            || symbol.IsInterfaceImplementation())
             return false;
         return true;
     }

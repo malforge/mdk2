@@ -515,12 +515,16 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
                 int _usedField;
                 int _unusedField;
 
+                int UsedProperty { get; set; }
+                int UnusedProperty { get; set; }
+
                 static int UsedStaticField;
                 static int UnusedStaticField;
 
                 public void Call()
                 {
                     _usedField = 1;
+                    UsedProperty = 3;
                     UsedStaticField = 2;
                 }
 
@@ -538,11 +542,14 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
             {
                 int _usedField;
 
+                int UsedProperty { get; set; }
+
                 static int UsedStaticField;
 
                 public void Call()
                 {
                     _usedField = 1;
+                    UsedProperty = 3;
                     UsedStaticField = 2;
                 }
 
