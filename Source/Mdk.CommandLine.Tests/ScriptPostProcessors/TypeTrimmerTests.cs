@@ -416,55 +416,86 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     [Test]
     public async Task ProcessAsync_WhenUnusedType_ReturnsDocumentWithoutType()
     {
+        // Test
+        // - Used+Unused types like Classes, Structs, Interfaces, Enums, Delegates
+        // - Used+Unused nested types, as above - in a used container type
+        // - Special case of a type with a nested type, both unused
         const string testCode =
             """
-            class A {}
-            class B {}
-            class C {}
-            struct D {}
-            interface I {}
-            enum E 
+            class UsedClass {}
+            class UnusedClass {}
+            struct UsedStruct {}
+            struct UnusedStruct {}
+            interface UsedInterface {}
+            interface UnusedInterface {}
+            enum UsedEnum { A }
+            enum UnusedEnum { A }
+            delegate void UsedDelegate();
+            delegate void UnusedDelegate();
+            class UnusedContainer
             {
-                A,
-                B,
-                C
+                class UnusedNestedClass {}
             }
-            
+            class UsedContainer
+            {
+                public class UsedNestedClass {}
+                public class UnusedNestedClass {}
+                public struct UsedNestedStruct {}
+                public struct UnusedNestedStruct {}
+                public interface UsedNestedInterface {}
+                public interface UnusedNestedInterface {}
+                public enum UsedNestedEnum { A }
+                public enum UnusedNestedEnum { A }
+                public delegate void UsedNestedDelegate();
+                public delegate void UnusedNestedDelegate();
+            }
             class Program : MyGridProgram
             {
                 static void Main()
                 {
-                    var a = new A();
-                    var b = new B();
-                    var c = new C();
-                    var d = new D();
-                    var e = E.A;                    
+                    var usedClass = new UsedClass();
+                    var usedStruct = new UsedStruct();
+                    UsedInterface usedInterface = null;
+                    var usedEnum = UsedEnum.A;
+                    UsedDelegate usedDelegate = null;
+                    var usedNestedClass = new UsedContainer.UsedNestedClass();
+                    var usedNestedStruct = new UsedContainer.UsedNestedStruct();
+                    UsedContainer.UsedNestedInterface usedNestedInterface = null;
+                    var usedNestedEnum = UsedContainer.UsedNestedEnum.A;
+                    UsedContainer.UsedNestedDelegate usedNestedDelegate = null;
                 }
             }
             """;
 
         const string expectedCode =
             """
-            class A {}
-            class B {}
-            class C {}
-            struct D {}
-            enum E 
+            class UsedClass {}
+            struct UsedStruct {}
+            interface UsedInterface {}
+            enum UsedEnum { A }
+            delegate void UsedDelegate();
+            class UsedContainer
             {
-                A,
-                B,
-                C
+                public class UsedNestedClass {}
+                public struct UsedNestedStruct {}
+                public interface UsedNestedInterface {}
+                public enum UsedNestedEnum { A }
+                public delegate void UsedNestedDelegate();
             }
-            
             class Program : MyGridProgram
             {
                 static void Main()
                 {
-                    var a = new A();
-                    var b = new B();
-                    var c = new C();
-                    var d = new D();
-                    var e = E.A;                    
+                    var usedClass = new UsedClass();
+                    var usedStruct = new UsedStruct();
+                    UsedInterface usedInterface = null;
+                    var usedEnum = UsedEnum.A;
+                    UsedDelegate usedDelegate = null;
+                    var usedNestedClass = new UsedContainer.UsedNestedClass();
+                    var usedNestedStruct = new UsedContainer.UsedNestedStruct();
+                    UsedContainer.UsedNestedInterface usedNestedInterface = null;
+                    var usedNestedEnum = UsedContainer.UsedNestedEnum.A;
+                    UsedContainer.UsedNestedDelegate usedNestedDelegate = null;
                 }
             }
             """;
