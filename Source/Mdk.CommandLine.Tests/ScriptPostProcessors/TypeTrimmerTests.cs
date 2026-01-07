@@ -636,6 +636,82 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenNoMemberTrimming_RemovesUnusedTypesOnly()
+    {
+        const string testCode =
+            """
+            class UnusedType {}
+            class UnusedTypeWithMembers
+            {
+                int UnusedField;
+                int UnusedProperty { get; set; }
+                void UnusedMethod() {}
+                delegate void UnusedDelegate();
+            }
+            class Program : MyGridProgram
+            {
+                static void Main()
+                {
+                    _ = new UnusedTypeWithMembers();
+                }
+            }
+            """;
+
+        const string expectedCode =
+            """
+            class UnusedTypeWithMembers
+            {
+                int UnusedField;
+                int UnusedProperty { get; set; }
+                void UnusedMethod() {}
+                delegate void UnusedDelegate();
+            }
+            class Program : MyGridProgram
+            {
+                static void Main()
+                {
+                    _ = new UnusedTypeWithMembers();
+                }
+            }
+            """;
+
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                MinifierExtraOptions = MinifierExtraOptions.NoMemberTrimming,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenUnusedCallbacksOutsideMyGridProgram_RemovesMembers()
     {
         const string testCode =

@@ -23,7 +23,7 @@ public class TypeTrimmer : IDocumentProcessor
         var unusedDelegates = new List<DelegateDeclarationSyntax>();
         var unusedMembers = new List<SyntaxNode>();
         var fieldReplacements = new Dictionary<FieldDeclarationSyntax, FieldDeclarationSyntax>();
-        
+
         while (true)
         {
             var rootNode = await document.GetSyntaxRootAsync();
@@ -33,13 +33,13 @@ public class TypeTrimmer : IDocumentProcessor
             if (semanticModel == null)
                 return document;
             var solution = document.Project.Solution;
-            
+
             unusedTypes.Clear();
             unusedDelegates.Clear();
             unusedMembers.Clear();
             fieldReplacements.Clear();
             var allTypeDeclarations = rootNode.DescendantNodes().OfType<BaseTypeDeclarationSyntax>();
-            
+
             // Trim entirely unused types
             foreach (var typeDeclaration in allTypeDeclarations)
             {
@@ -48,7 +48,7 @@ public class TypeTrimmer : IDocumentProcessor
                 if (!IsEligibleForRemoval(typeDeclaration, symbol))
                     continue;
                 var references = (await SymbolFinder.FindReferencesAsync(symbol, solution)).ToList();
-                
+
                 // Check for extension class usage
                 if (symbol is { IsDefinition: true } and ITypeSymbol { TypeKind: TypeKind.Class, IsStatic: true, ContainingType: null } typeSymbol)
                 {
@@ -56,37 +56,38 @@ public class TypeTrimmer : IDocumentProcessor
                     foreach (var member in members)
                         references.AddRange(await SymbolFinder.FindReferencesAsync(member, document.Project.Solution));
                 }
-                
+
                 references.RemoveAll(reference => !reference.Locations.Any());
                 references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, typeDeclaration, location)));
-                
+
                 if (references.Count > 0)
                     continue;
-                
+
                 unusedTypes.Add(typeDeclaration);
                 context.Console.Trace($"Unused type: {symbol.Name}");
             }
 
-            var allDelegateDeclarations = rootNode.DescendantNodes().OfType<DelegateDeclarationSyntax>();
-            foreach (var delegateDeclaration in allDelegateDeclarations)
-            {
-                if (semanticModel.GetDeclaredSymbol(delegateDeclaration) is not INamedTypeSymbol symbol)
-                    continue;
-                if (!IsEligibleForRemoval(delegateDeclaration, symbol))
-                    continue;
-                var references = (await SymbolFinder.FindReferencesAsync(symbol, solution)).ToList();
-                references.RemoveAll(reference => !reference.Locations.Any());
-                references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, delegateDeclaration, location)));
-
-                if (references.Count > 0)
-                    continue;
-
-                unusedDelegates.Add(delegateDeclaration);
-                context.Console.Trace($"Unused delegate: {symbol.Name}");
-            }
-
             if (shouldTrimMembers)
             {
+                // Trim unused delegates
+                var allDelegateDeclarations = rootNode.DescendantNodes().OfType<DelegateDeclarationSyntax>();
+                foreach (var delegateDeclaration in allDelegateDeclarations)
+                {
+                    if (semanticModel.GetDeclaredSymbol(delegateDeclaration) is not INamedTypeSymbol symbol)
+                        continue;
+                    if (!IsEligibleForRemoval(delegateDeclaration, symbol))
+                        continue;
+                    var references = (await SymbolFinder.FindReferencesAsync(symbol, solution)).ToList();
+                    references.RemoveAll(reference => !reference.Locations.Any());
+                    references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, delegateDeclaration, location)));
+
+                    if (references.Count > 0)
+                        continue;
+
+                    unusedDelegates.Add(delegateDeclaration);
+                    context.Console.Trace($"Unused delegate: {symbol.Name}");
+                }
+
                 // Trim unused fields
                 var allFieldDeclarations = rootNode.DescendantNodes().OfType<FieldDeclarationSyntax>();
                 foreach (var fieldDeclaration in allFieldDeclarations)
@@ -144,37 +145,37 @@ public class TypeTrimmer : IDocumentProcessor
 
                     var newVariables = default(SeparatedSyntaxList<VariableDeclaratorSyntax>);
                     newVariables = newVariables.AddRange(keptVariables);
-                var newDeclaration = fieldDeclaration.WithDeclaration(declaration.WithVariables(newVariables));
-                fieldReplacements[fieldDeclaration] = newDeclaration;
-            }
+                    var newDeclaration = fieldDeclaration.WithDeclaration(declaration.WithVariables(newVariables));
+                    fieldReplacements[fieldDeclaration] = newDeclaration;
+                }
 
-            // Trim unused properties
-            var allPropertyDeclarations = rootNode.DescendantNodes().OfType<PropertyDeclarationSyntax>();
-            foreach (var propertyDeclaration in allPropertyDeclarations)
-            {
-                if (propertyDeclaration.Identifier.ShouldBePreserved() || propertyDeclaration.ShouldBePreserved())
-                    continue;
-                if (semanticModel.GetDeclaredSymbol(propertyDeclaration) is not IPropertySymbol propertySymbol)
-                    continue;
-                if (!IsEligibleForRemoval(propertyDeclaration, propertySymbol))
-                    continue;
+                // Trim unused properties
+                var allPropertyDeclarations = rootNode.DescendantNodes().OfType<PropertyDeclarationSyntax>();
+                foreach (var propertyDeclaration in allPropertyDeclarations)
+                {
+                    if (propertyDeclaration.Identifier.ShouldBePreserved() || propertyDeclaration.ShouldBePreserved())
+                        continue;
+                    if (semanticModel.GetDeclaredSymbol(propertyDeclaration) is not IPropertySymbol propertySymbol)
+                        continue;
+                    if (!IsEligibleForRemoval(propertyDeclaration, propertySymbol))
+                        continue;
 
-                var references = (await SymbolFinder.FindReferencesAsync(propertySymbol, solution)).ToList();
-                references.RemoveAll(reference => !reference.Locations.Any());
-                references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, propertyDeclaration, location)));
+                    var references = (await SymbolFinder.FindReferencesAsync(propertySymbol, solution)).ToList();
+                    references.RemoveAll(reference => !reference.Locations.Any());
+                    references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, propertyDeclaration, location)));
 
-                if (references.Count > 0)
-                    continue;
+                    if (references.Count > 0)
+                        continue;
 
-                unusedMembers.Add(propertyDeclaration);
-                context.Console.Trace($"Unused property: {propertySymbol.Name}");
-            }
+                    unusedMembers.Add(propertyDeclaration);
+                    context.Console.Trace($"Unused property: {propertySymbol.Name}");
+                }
 
-            // Trim unused methods
-            var allMethodDeclarations = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
-            foreach (var methodDeclaration in allMethodDeclarations)
-            {
-                if (methodDeclaration.Identifier.ShouldBePreserved() || methodDeclaration.ShouldBePreserved())
+                // Trim unused methods
+                var allMethodDeclarations = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
+                foreach (var methodDeclaration in allMethodDeclarations)
+                {
+                    if (methodDeclaration.Identifier.ShouldBePreserved() || methodDeclaration.ShouldBePreserved())
                         continue;
                     if (semanticModel.GetDeclaredSymbol(methodDeclaration) is not IMethodSymbol methodSymbol)
                         continue;
@@ -214,10 +215,10 @@ public class TypeTrimmer : IDocumentProcessor
                     context.Console.Trace($"Unused constructor: {ctorSymbol.ContainingType.Name}({string.Join(", ", ctorSymbol.Parameters.Select(p => p.Type.Name))})");
                 }
             }
-            
+
             if (unusedTypes.Count == 0 && unusedDelegates.Count == 0 && unusedMembers.Count == 0 && fieldReplacements.Count == 0)
                 break;
-            
+
             var trackedNodes = unusedTypes.Cast<SyntaxNode>()
                 .Concat(unusedDelegates)
                 .Concat(unusedMembers)
@@ -259,7 +260,7 @@ public class TypeTrimmer : IDocumentProcessor
             return false;
         return true;
     }
-    
+
     static bool IsEligibleForRemoval(DelegateDeclarationSyntax delegateDeclaration, INamedTypeSymbol symbol)
     {
         if (symbol.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName) == "Program"
