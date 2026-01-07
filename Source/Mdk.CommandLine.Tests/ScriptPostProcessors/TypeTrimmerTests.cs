@@ -566,6 +566,76 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenRecursiveTypeUsage_RemovesUnusedChain()
+    {
+        const string testCode =
+            """
+            class A1 {}
+            class B2 { public A1 Value; }
+            class B3 { public B2 Value; }
+            class C2 { public A1 Value; }
+            class C3 { public C2 Value; }
+            class Program : MyGridProgram
+            {
+                static void Main()
+                {
+                    var c3 = new C3();
+                    _ = c3.Value.Value;
+                }
+            }
+            """;
+
+        const string expectedCode =
+            """
+            class A1 {}
+            class C2 { public A1 Value; }
+            class C3 { public C2 Value; }
+            class Program : MyGridProgram
+            {
+                static void Main()
+                {
+                    var c3 = new C3();
+                    _ = c3.Value.Value;
+                }
+            }
+            """;
+
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenUnusedCallbacksOutsideMyGridProgram_RemovesMembers()
     {
         const string testCode =
