@@ -417,7 +417,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     public async Task ProcessAsync_WhenUnusedType_ReturnsDocumentWithoutType()
     {
         // Test
-        // - Used+Unused types like Classes, Structs, Interfaces, Enums, Delegates
+        // - Used+Unused types like Classes, Structs, Interfaces, Enums, Delegates, Fields, Properties
         // - Used+Unused nested types, as above - in a used container type
         // - Special case of a type with a nested type, both unused
         const string testCode =
@@ -448,11 +448,22 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
                 public enum UnusedNestedEnum { A }
                 public delegate void UsedNestedDelegate();
                 public delegate void UnusedNestedDelegate();
+                public int UsedField;
+                public int UnusedField;
+                public int UsedProperty { get; set; }
+                public int UnusedProperty { get; set; }
+                public static int UsedStaticField;
+                public static int UnusedStaticField;
+                public void UsedMethod() {}
+                public void UnusedMethod() {}
+                public static void UsedStaticMethod() {}
+                public static void UnusedStaticMethod() {}
             }
             class Program : MyGridProgram
             {
                 static void Main()
                 {
+                    var usedContainer = new UsedContainer();
                     var usedClass = new UsedClass();
                     var usedStruct = new UsedStruct();
                     UsedInterface usedInterface = null;
@@ -463,6 +474,12 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
                     UsedContainer.UsedNestedInterface usedNestedInterface = null;
                     var usedNestedEnum = UsedContainer.UsedNestedEnum.A;
                     UsedContainer.UsedNestedDelegate usedNestedDelegate = null;
+
+                    usedContainer.UsedField = 1;
+                    usedContainer.UsedProperty = 3;
+                    UsedContainer.UsedStaticField = 2;
+                    usedContainer.UsedMethod();
+                    UsedContainer.UsedStaticMethod();
                 }
             }
             """;
@@ -481,11 +498,17 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
                 public interface UsedNestedInterface {}
                 public enum UsedNestedEnum { A }
                 public delegate void UsedNestedDelegate();
+                public int UsedField;
+                public int UsedProperty { get; set; }
+                public static int UsedStaticField;
+                public void UsedMethod() {}
+                public static void UsedStaticMethod() {}
             }
             class Program : MyGridProgram
             {
                 static void Main()
                 {
+                    var usedContainer = new UsedContainer();
                     var usedClass = new UsedClass();
                     var usedStruct = new UsedStruct();
                     UsedInterface usedInterface = null;
@@ -496,6 +519,12 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
                     UsedContainer.UsedNestedInterface usedNestedInterface = null;
                     var usedNestedEnum = UsedContainer.UsedNestedEnum.A;
                     UsedContainer.UsedNestedDelegate usedNestedDelegate = null;
+
+                    usedContainer.UsedField = 1;
+                    usedContainer.UsedProperty = 3;
+                    UsedContainer.UsedStaticField = 2;
+                    usedContainer.UsedMethod();
+                    UsedContainer.UsedStaticMethod();
                 }
             }
             """;
@@ -530,225 +559,6 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
 
         // Assert
         // Write documents to string and compare them
-        var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
-        var actual = await result.GetTextAsync();
-
-        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
-    }
-
-    [Test]
-    public async Task ProcessAsync_WhenUnusedField_RemovesFields()
-    {
-        const string testCode =
-            """
-            class Program : MyGridProgram
-            {
-                int _usedField;
-                int _unusedField;
-
-                int UsedProperty { get; set; }
-                int UnusedProperty { get; set; }
-
-                static int UsedStaticField;
-                static int UnusedStaticField;
-
-                public void Call()
-                {
-                    _usedField = 1;
-                    UsedProperty = 3;
-                    UsedStaticField = 2;
-                }
-
-                static void Main()
-                {
-                    var program = new Program();
-                    program.Call();
-                }
-            }
-            """;
-
-        const string expectedCode =
-            """
-            class Program : MyGridProgram
-            {
-                int _usedField;
-
-                int UsedProperty { get; set; }
-
-                static int UsedStaticField;
-
-                public void Call()
-                {
-                    _usedField = 1;
-                    UsedProperty = 3;
-                    UsedStaticField = 2;
-                }
-
-                static void Main()
-                {
-                    var program = new Program();
-                    program.Call();
-                }
-            }
-            """;
-
-        // Arrange
-        var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
-        var document = project.AddDocument("TestDocument", testCode);
-        var processor = new TypeTrimmer();
-        var parameters = new Parameters
-        {
-            Verb = Verb.Pack,
-            PackVerb =
-            {
-                MinifierLevel = MinifierLevel.Trim,
-                ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output"
-            }
-        };
-        var context = new PackContext(
-            parameters,
-            A.Fake<IConsole>(),
-            A.Fake<IInteraction>(o => o.Strict()),
-            A.Fake<IFileFilter>(o => o.Strict()),
-            A.Fake<IFileFilter>(o => o.Strict()),
-            A.Fake<IFileSystem>(),
-            A.Fake<IImmutableSet<string>>(o => o.Strict())
-        );
-
-        // Act
-        var result = await processor.ProcessAsync(document, context);
-
-        // Assert
-        var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
-        var actual = await result.GetTextAsync();
-
-        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
-    }
-
-    [Test]
-    public async Task ProcessAsync_WhenUnusedMethod_RemovesMethods()
-    {
-        const string testCode =
-            """
-            class MyGridProgram
-            {
-            }
-
-            class Script : MyGridProgram
-            {
-                void Main() {}
-                void Used() {}
-                void Unused() {}
-
-                static void UsedStatic() {}
-                static void UnusedStatic() {}
-
-                public void Call()
-                {
-                    Used();
-                    UsedStatic();
-                }
-            }
-
-            class Utility
-            {
-                void Main() {}
-                void Used() {}
-                void Unused() {}
-
-                public void Call()
-                {
-                    Used();
-                }
-            }
-
-            class Program : MyGridProgram
-            {
-                static void Main()
-                {
-                    var script = new Script();
-                    script.Call();
-                    var utility = new Utility();
-                    utility.Call();
-                }
-
-            }
-            """;
-
-        const string expectedCode =
-            """
-            class MyGridProgram
-            {
-            }
-
-            class Script : MyGridProgram
-            {
-                void Main() {}
-                void Used() {}
-
-                static void UsedStatic() {}
-
-                public void Call()
-                {
-                    Used();
-                    UsedStatic();
-                }
-            }
-
-            class Utility
-            {
-                void Used() {}
-
-                public void Call()
-                {
-                    Used();
-                }
-            }
-
-            class Program : MyGridProgram
-            {
-                static void Main()
-                {
-                    var script = new Script();
-                    script.Call();
-                    var utility = new Utility();
-                    utility.Call();
-                }
-
-            }
-            """;
-
-        // Arrange
-        var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
-        var document = project.AddDocument("TestDocument", testCode);
-        var processor = new TypeTrimmer();
-        var parameters = new Parameters
-        {
-            Verb = Verb.Pack,
-            PackVerb =
-            {
-                MinifierLevel = MinifierLevel.Trim,
-                ProjectFile = @"A:\Fake\Path\Project.csproj",
-                Output = @"A:\Fake\Path\Output"
-            }
-        };
-        var context = new PackContext(
-            parameters,
-            A.Fake<IConsole>(),
-            A.Fake<IInteraction>(o => o.Strict()),
-            A.Fake<IFileFilter>(o => o.Strict()),
-            A.Fake<IFileFilter>(o => o.Strict()),
-            A.Fake<IFileSystem>(),
-            A.Fake<IImmutableSet<string>>(o => o.Strict())
-        );
-
-        // Act
-        var result = await processor.ProcessAsync(document, context);
-
-        // Assert
         var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
         var actual = await result.GetTextAsync();
 
