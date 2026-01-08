@@ -1,4 +1,7 @@
-﻿v.2.1.13
+﻿v.2.1.14
+   - Extended dead code removal to also remove: methods, fields, properties, delegates besides just entirely unused types. An extra option in mdk.ini, minifyextraoptions, allows you to opt out from trimming.
+
+v.2.1.13
    - Extended macro replacements such as "$MDK_DATETIME$" to work everywhere in scripts and mods, and not just in mdk regions like "#region mdk preserve"
 
 v.2.1.12
