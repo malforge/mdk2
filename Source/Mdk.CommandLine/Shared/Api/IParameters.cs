@@ -84,6 +84,11 @@ public interface IParameters
         ///     What level of minification to use, if any.
         /// </summary>
         MinifierLevel MinifierLevel { get; set; }
+        
+        /// <summary>
+        ///     Extra options to modify how minification is performed.
+        /// </summary>
+        MinifierExtraOptions MinifierExtraOptions { get; set; }
                 
         /// <summary>
         /// What configuration to run the pack for.
