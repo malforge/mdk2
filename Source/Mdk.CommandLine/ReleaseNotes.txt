@@ -1,4 +1,7 @@
-﻿v.2.1.14
+﻿v.2.1.15
+   - Fix hardcoded paths causing issues on Linux due to relative paths using '.\' on Mod Packer
+
+v.2.1.14
    - Extended dead code removal to also remove: methods, fields, properties, delegates besides just entirely unused types. An extra option in mdk.ini, minifyextraoptions, allows you to opt out from trimming.
 
 v.2.1.13
