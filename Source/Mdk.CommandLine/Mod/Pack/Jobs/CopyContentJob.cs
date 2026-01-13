@@ -20,6 +20,10 @@ internal class CopyContentJob : ModJob
         if (contentDocuments.Length == 0)
             return context;
 
+        var relativePrefix = $".{Path.DirectorySeparatorChar}";
+        var content = $"Content{Path.DirectorySeparatorChar}";
+        var relativeContent = $"{relativePrefix}{content}";
+
         foreach (var document in contentDocuments)
         {
             var relativePath = new FileInfo(document.FilePath!).GetPathRelativeTo(projectDirectory);
@@ -27,13 +31,13 @@ internal class CopyContentJob : ModJob
             // Remove the Content folder from the path: An early version of the packer copied all
             // the files from the root of the project as long as it wasn't code, which confused
             // people _and_ caused issues of certain temporary files also being copied.
-            if (relativePath.StartsWith(@".\Content\", StringComparison.OrdinalIgnoreCase))
+            if (relativePath.StartsWith(relativeContent, StringComparison.OrdinalIgnoreCase))
                 relativePath = relativePath[10..];
-            else if (relativePath.StartsWith(@"Content\", StringComparison.OrdinalIgnoreCase))
+            else if (relativePath.StartsWith(content, StringComparison.OrdinalIgnoreCase))
                 relativePath = relativePath[8..];
 
-            if (!relativePath.StartsWith(@".\", StringComparison.OrdinalIgnoreCase))
-                relativePath = @$".\{relativePath}"; // Really just for visual flavor
+            if (!relativePath.StartsWith(relativePrefix, StringComparison.Ordinal))
+                relativePath = $"{relativePrefix}{relativePath}"; // Really just for visual flavor
             
             context.Console.Trace($"Copying {relativePath} to {outputDirectory.FullName}");
             var outputPath = Path.Combine(outputDirectory.FullName, relativePath);
