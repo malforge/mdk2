@@ -712,6 +712,68 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenAbstractMemberIsOverridden_PreservesBaseMember()
+    {
+        const string testCode =
+            """
+            abstract class Base
+            {
+                // Abstract member must remain when derived types override it.
+                public abstract void Tick();
+            }
+
+            class Derived : Base
+            {
+                public override void Tick()
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                    _ = new Derived();
+                }
+            }
+            """;
+
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenUnusedCallbacksOutsideMyGridProgram_RemovesMembers()
     {
         const string testCode =
