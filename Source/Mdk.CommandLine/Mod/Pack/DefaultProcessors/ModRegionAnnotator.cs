@@ -43,7 +43,7 @@ public partial class ModRegionAnnotator : IDocumentProcessor
 
         string ReplaceMacros(string content) =>
             _macroRegex.Replace(content,
-                match => _macros.GetValueOrDefault(match.Value, ""));
+                match => _macros.TryGetValue(match.Value, out var value) ? value : match.Value);
 
         public override SyntaxNode? Visit(SyntaxNode? node)
         {
