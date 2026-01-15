@@ -18,6 +18,9 @@ public class TypeTrimmer : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
+        if (context.Parameters.PackVerb.MinifierLevel == MinifierLevel.None)
+            return document;
+        
         var shouldTrimMembers = (context.Parameters.PackVerb.MinifierExtraOptions & MinifierExtraOptions.NoMemberTrimming) == 0;
         var unusedTypes = new List<BaseTypeDeclarationSyntax>();
         var unusedDelegates = new List<DelegateDeclarationSyntax>();
