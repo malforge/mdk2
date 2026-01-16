@@ -70,6 +70,41 @@ public class TypeTrimmer : IDocumentProcessor
 
             if (shouldTrimMembers)
             {
+                // Track types used with new() constraints (e.g. class Factory<T> where T : new())
+                // so their parameterless ctors are preserved even without direct ctor references.
+                var constructorConstrainedTypes = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+                foreach (var genericName in rootNode.DescendantNodes().OfType<GenericNameSyntax>())
+                {
+                    var symbol = semanticModel.GetSymbolInfo(genericName).Symbol;
+                    if (symbol is INamedTypeSymbol namedTypeSymbol)
+                    {
+                        var typeArguments = namedTypeSymbol.TypeArguments;
+                        var typeParameters = namedTypeSymbol.TypeParameters;
+                        var count = Math.Min(typeArguments.Length, typeParameters.Length);
+                        for (var i = 0; i < count; i++)
+                        {
+                            if (!typeParameters[i].HasConstructorConstraint)
+                                continue;
+                            if (typeArguments[i] is INamedTypeSymbol argumentType)
+                                constructorConstrainedTypes.Add(argumentType);
+                        }
+                        continue;
+                    }
+                    if (symbol is IMethodSymbol methodSymbol)
+                    {
+                        var typeArguments = methodSymbol.TypeArguments;
+                        var typeParameters = methodSymbol.TypeParameters;
+                        var count = Math.Min(typeArguments.Length, typeParameters.Length);
+                        for (var i = 0; i < count; i++)
+                        {
+                            if (!typeParameters[i].HasConstructorConstraint)
+                                continue;
+                            if (typeArguments[i] is INamedTypeSymbol argumentType)
+                                constructorConstrainedTypes.Add(argumentType);
+                        }
+                    }
+                }
+
                 // Trim unused delegates
                 var allDelegateDeclarations = rootNode.DescendantNodes().OfType<DelegateDeclarationSyntax>();
                 foreach (var delegateDeclaration in allDelegateDeclarations)
@@ -231,6 +266,11 @@ public class TypeTrimmer : IDocumentProcessor
                         if (hasDerivedTypes)
                             continue;
                     }
+                    // Generic new() constraints require a public parameterless ctor even without direct references.
+                    if (ctorSymbol.Parameters.Length == 0
+                        && ctorSymbol.ContainingType != null
+                        && constructorConstrainedTypes.Contains(ctorSymbol.ContainingType))
+                        continue;
                     if (!IsEligibleForRemoval(ctorSymbol))
                         continue;
 
