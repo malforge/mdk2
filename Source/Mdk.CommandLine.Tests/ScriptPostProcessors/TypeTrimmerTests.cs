@@ -838,6 +838,72 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenTypeUsedWithNewConstraint_PreservesDefaultConstructor()
+    {
+        const string testCode =
+            """
+            class A
+            {
+                // new() constraints require a public parameterless ctor to remain.
+                public A() {}
+                public A(int value) {}
+            }
+
+            class B<T> where T : new()
+            {
+                public T Create()
+                {
+                    return new T();
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                    var factory = new B<A>();
+                    _ = factory.Create();
+                    _ = new A(1);
+                }
+            }
+            """;
+
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenStaticFieldInitializerHasSideEffects_PreservesField()
     {
         const string testCode =
