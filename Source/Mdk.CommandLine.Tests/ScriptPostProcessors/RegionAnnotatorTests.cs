@@ -132,9 +132,11 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
                 // single $TEST$
                 /* multi-line $TEST$ */
                 /// <summary>xml $TEST$</summary>
+                // should not replace $UNMATCHED$
                 void Method()
                 {
                     var plainString = "$TEST$";
+                    var notMacroString = "$UNMATCHED$";
                 }
                 
                 // Regions should also support replacements inside
@@ -177,7 +179,9 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
         Assert.That(text, Does.Contain("// single REPLACED"));
         Assert.That(text, Does.Contain("/* multi-line REPLACED */"));
         Assert.That(text, Does.Contain("/// <summary>xml REPLACED</summary>"));
+        Assert.That(text, Does.Contain("// should not replace $UNMATCHED$"));
         Assert.That(text, Does.Contain("var plainString = \"REPLACED\";"));
+        Assert.That(text, Does.Contain("var notMacroString = \"$UNMATCHED$\";"));
         Assert.That(text, Does.Contain("public string InsideRegion = \"REPLACED\";"));
     }
 }
