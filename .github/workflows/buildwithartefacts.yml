@@ -20,7 +20,41 @@ env:
   NuGetPublishEnabled: true
 
 jobs:
+  update-templates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    defaults:
+      run:
+        working-directory: ./Source
+        shell: pwsh
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update package references in templates
+        run: |
+          cd ScriptTemplates
+          pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1
+
+      - name: Commit template updates
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if (git diff --cached --quiet) {
+            Write-Host "No changes to commit"
+          } else {
+            git commit -m "Auto-update template package references"
+            git push
+          }
+
   build-tools:
+    needs: update-templates
     runs-on: ubuntu-latest
 
     defaults:
@@ -79,6 +113,7 @@ jobs:
       contents: write
     
     needs:
+      - update-templates
       - build-tools
     
     defaults:
@@ -95,24 +130,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.x
-
-      - name: Update package references in templates
-        run: |
-          cd ScriptTemplates
-          pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1
-
-      - name: Commit template updates
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if (git diff --cached --quiet) {
-            Write-Host "No changes to commit"
-          } else {
-            git commit -m "Auto-update template package references [skip ci]"
-            git push
-          }
 
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
