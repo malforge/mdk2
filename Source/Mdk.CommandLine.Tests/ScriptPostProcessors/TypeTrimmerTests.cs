@@ -14,6 +14,70 @@ namespace MDK.CommandLine.Tests.ScriptPostProcessors;
 public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
 {
     [Test]
+    public async Task ProcessAsync_WhenMinifyNone_DoesNotModifyDocument()
+    {
+        const string testCode =
+            """
+            /// <summary>Unused type docs.</summary>
+            class UnusedType
+            {
+                /// <summary>Unused method docs.</summary>
+                public void NeverCalled()
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                /// <summary>Unused helper docs.</summary>
+                void Helper()
+                {
+                    var unused = 1;
+                }
+
+                void Main()
+                {
+                    Echo("hi");
+                }
+            }
+            """;
+
+        // Arrange
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenAllTypesAreUsed_ReturnsDocument()
     {
         const string testCode =
@@ -687,6 +751,322 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
             {
                 MinifierLevel = MinifierLevel.Trim,
                 MinifierExtraOptions = MinifierExtraOptions.NoMemberTrimming,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAbstractMemberIsOverridden_PreservesBaseMember()
+    {
+        const string testCode =
+            """
+            abstract class Base
+            {
+                // Abstract member must remain when derived types override it.
+                public abstract void Tick();
+            }
+
+            class Derived : Base
+            {
+                public override void Tick()
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                    _ = new Derived();
+                }
+            }
+            """;
+
+        // Arrange
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenBaseConstructorHasSideEffects_PreservesConstructor()
+    {
+        const string testCode =
+            """
+            class Base
+            {
+                // Base constructor is implicitly called by derived types and must remain.
+                public Base()
+                {
+                    Program.BaseConstructed = true;
+                }
+            }
+
+            class Derived : Base
+            {
+            }
+
+            class Program : MyGridProgram
+            {
+                public static bool BaseConstructed;
+
+                void Main()
+                {
+                    _ = new Derived();
+                }
+            }
+            """;
+
+        // Arrange
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenTypeUsedWithNewConstraint_PreservesDefaultConstructor()
+    {
+        const string testCode =
+            """
+            class A
+            {
+                // new() constraints require a public parameterless ctor to remain.
+                public A() {}
+                public A(int value) {}
+            }
+
+            class B<T> where T : new()
+            {
+                public T Create()
+                {
+                    return new T();
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                    var factory = new B<A>();
+                    _ = factory.Create();
+                    _ = new A(1);
+                }
+            }
+            """;
+
+        // Arrange
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenStaticFieldInitializerHasSideEffects_PreservesField()
+    {
+        const string testCode =
+            """
+            class Registrar
+            {
+                // Static and instance initializers with methods have side effects even if the fields are never read.
+                static readonly int _static = RegisterStatic();
+                readonly int _instance = RegisterInstance();
+                static int StaticProperty { get; } = RegisterStatic();
+                int InstanceProperty { get; } = RegisterInstance();
+                
+                // Chained assignments can also do side effects
+                static int _usedStaticFieldChained;
+                static int _unusedStaticFieldChained = _usedStaticFieldChained = 1;
+                
+                // Static and instance initializers without side effects should be removed.
+                static int StaticZeroField = 0;
+                int InstanceZeroField = 0;
+                static int StaticZeroProperty { get; } = 0;
+                int InstanceZeroProperty { get; } = 0;
+
+                static int RegisterStatic()
+                {
+                    _ = _usedStaticFieldChained;
+                    Program.RegisterCount++;
+                    return 0;
+                }
+
+                int RegisterInstance()
+                {
+                    Program.RegisterCount++;
+                    return 0;
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                public static int RegisterCount;
+
+                void Main()
+                {
+                    _ = typeof(Registrar);
+                    _ = new Registrar();
+                }
+            }
+            """;
+
+        const string expectedCode =
+            """
+            class Registrar
+            {
+                // Static and instance initializers with methods have side effects even if the fields are never read.
+                static readonly int _static = RegisterStatic();
+                readonly int _instance = RegisterInstance();
+                static int StaticProperty { get; } = RegisterStatic();
+                int InstanceProperty { get; } = RegisterInstance();
+                
+                // Chained assignments can also do side effects
+                static int _usedStaticFieldChained;
+                static int _unusedStaticFieldChained = _usedStaticFieldChained = 1;
+
+                static int RegisterStatic()
+                {
+                    _ = _usedStaticFieldChained;
+                    Program.RegisterCount++;
+                    return 0;
+                }
+
+                int RegisterInstance()
+                {
+                    Program.RegisterCount++;
+                    return 0;
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                public static int RegisterCount;
+
+                void Main()
+                {
+                    _ = typeof(Registrar);
+                    _ = new Registrar();
+                }
+            }
+            """;
+
+        // Arrange
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
                 ProjectFile = @"A:\Fake\Path\Project.csproj",
                 Output = @"A:\Fake\Path\Output"
             }

@@ -1,4 +1,12 @@
-﻿v.2.1.15
+﻿v.2.1.16
+   - `MinifierLevel=none` would still trim code. Now we early exit TypeTrimmer if `MinifierLevel=none`.
+   - replacements would replace unknown keys with nothing. Now unknown keys f.ex. `$UNMATCHED$` is left alone.
+   - `abstract class Base { public abstract void Tick(); } class Derived : Base { public override void Tick() {} }` - base abstract member could be removed even though it must exist for the override.
+   - `class Base { public Base() { /* side effects */ } } class Derived : Base {}` - base parameterless ctor could be trimmed even though derived types call it implicitly.
+   - `class Registrar { static readonly int _x = Register(); int P { get; } = Register(); }` - side‑effecting field/property initializers could be removed.
+   - `class Factory<T> where T : new() { T Create() => new T(); } var f = new Factory<A>();` - A’s parameterless ctor could be removed even though `new()` requires it.
+
+v.2.1.15
    - Fix hardcoded paths causing issues on Linux due to relative paths using '.\' on Mod Packer
 
 v.2.1.14
