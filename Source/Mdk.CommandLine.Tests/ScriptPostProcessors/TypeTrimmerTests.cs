@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using FakeItEasy;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
@@ -731,6 +731,70 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
 
             class Program : MyGridProgram
             {
+                void Main()
+                {
+                    _ = new Derived();
+                }
+            }
+            """;
+
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenBaseConstructorHasSideEffects_PreservesConstructor()
+    {
+        const string testCode =
+            """
+            class Base
+            {
+                // Base constructor is implicitly called by derived types and must remain.
+                public Base()
+                {
+                    Program.BaseConstructed = true;
+                }
+            }
+
+            class Derived : Base
+            {
+            }
+
+            class Program : MyGridProgram
+            {
+                public static bool BaseConstructed;
+
                 void Main()
                 {
                     _ = new Derived();
