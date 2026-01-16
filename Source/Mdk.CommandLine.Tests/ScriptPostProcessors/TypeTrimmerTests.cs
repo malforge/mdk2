@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using FakeItEasy;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
@@ -768,6 +768,130 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
 
         // Assert
         var expected = await document.GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenStaticFieldInitializerHasSideEffects_PreservesField()
+    {
+        const string testCode =
+            """
+            class Registrar
+            {
+                // Static and instance initializers with methods have side effects even if the fields are never read.
+                static readonly int _static = RegisterStatic();
+                readonly int _instance = RegisterInstance();
+                static int StaticProperty { get; } = RegisterStatic();
+                int InstanceProperty { get; } = RegisterInstance();
+                
+                // Chained assignments can also do side effects
+                static int _usedStaticFieldChained;
+                static int _unusedStaticFieldChained = _usedStaticFieldChained = 1;
+                
+                // Static and instance initializers without side effects should be removed.
+                static int StaticZeroField = 0;
+                int InstanceZeroField = 0;
+                static int StaticZeroProperty { get; } = 0;
+                int InstanceZeroProperty { get; } = 0;
+
+                static int RegisterStatic()
+                {
+                    _ = _usedStaticFieldChained;
+                    Program.RegisterCount++;
+                    return 0;
+                }
+
+                int RegisterInstance()
+                {
+                    Program.RegisterCount++;
+                    return 0;
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                public static int RegisterCount;
+
+                void Main()
+                {
+                    _ = typeof(Registrar);
+                    _ = new Registrar();
+                }
+            }
+            """;
+
+        const string expectedCode =
+            """
+            class Registrar
+            {
+                // Static and instance initializers with methods have side effects even if the fields are never read.
+                static readonly int _static = RegisterStatic();
+                readonly int _instance = RegisterInstance();
+                static int StaticProperty { get; } = RegisterStatic();
+                int InstanceProperty { get; } = RegisterInstance();
+                
+                // Chained assignments can also do side effects
+                static int _usedStaticFieldChained;
+                static int _unusedStaticFieldChained = _usedStaticFieldChained = 1;
+
+                static int RegisterStatic()
+                {
+                    _ = _usedStaticFieldChained;
+                    Program.RegisterCount++;
+                    return 0;
+                }
+
+                int RegisterInstance()
+                {
+                    Program.RegisterCount++;
+                    return 0;
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                public static int RegisterCount;
+
+                void Main()
+                {
+                    _ = typeof(Registrar);
+                    _ = new Registrar();
+                }
+            }
+            """;
+
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
         var actual = await result.GetTextAsync();
 
         Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
