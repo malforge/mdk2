@@ -1,0 +1,115 @@
+name: Version Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'Source/**'
+
+jobs:
+  check-versions:
+    runs-on: ubuntu-latest
+    name: Validate Package Versions
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          echo "BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})" >> $GITHUB_ENV
+      
+      - name: Check version updates
+        shell: pwsh
+        run: |
+          $baseSha = $env:BASE_SHA
+          $headSha = "${{ github.sha }}"
+          
+          Write-Host "Comparing $baseSha...$headSha"
+          
+          # Get all changed files
+          $changedFiles = git diff --name-only $baseSha $headSha
+          
+          # Find all folders with PackageVersion.txt
+          $packageFolders = Get-ChildItem -Path "Source" -Filter "PackageVersion.txt" -Recurse | 
+            ForEach-Object { $_.DirectoryName }
+          
+          $errors = @()
+          
+          foreach ($folder in $packageFolders) {
+            $relativePath = $folder -replace [regex]::Escape($PWD.Path + [IO.Path]::DirectorySeparatorChar), ""
+            $relativePath = $relativePath -replace '\\', '/'
+            
+            Write-Host "`nChecking folder: $relativePath"
+            
+            # Check if any files in this folder changed (excluding PackageVersion.txt and ReleaseNotes.txt)
+            $folderChanges = $changedFiles | Where-Object { 
+              $_ -like "$relativePath/*" -and 
+              $_ -notlike "*/PackageVersion.txt" -and 
+              $_ -notlike "*/ReleaseNotes.txt"
+            }
+            
+            if ($folderChanges) {
+              Write-Host "  Found changes in folder:"
+              $folderChanges | ForEach-Object { Write-Host "    - $_" }
+              
+              # Check if PackageVersion.txt was updated
+              $versionFile = "$relativePath/PackageVersion.txt"
+              $versionChanged = $changedFiles -contains $versionFile
+              
+              if (-not $versionChanged) {
+                $errors += "❌ Files changed in $relativePath but PackageVersion.txt was not updated"
+                continue
+              }
+              
+              Write-Host "  ✓ PackageVersion.txt was updated"
+              
+              # Get the new version
+              $newVersion = (Get-Content "$folder/PackageVersion.txt").Trim()
+              Write-Host "  New version: $newVersion"
+              
+              # Check if ReleaseNotes.txt exists and was updated
+              $releaseNotesFile = Join-Path $folder "ReleaseNotes.txt"
+              if (Test-Path $releaseNotesFile) {
+                $releaseNotesChanged = $changedFiles -contains "$relativePath/ReleaseNotes.txt"
+                
+                if (-not $releaseNotesChanged) {
+                  $errors += "❌ PackageVersion.txt changed in $relativePath but ReleaseNotes.txt was not updated"
+                  continue
+                }
+                
+                # Verify the new version appears in ReleaseNotes.txt
+                $releaseNotes = Get-Content $releaseNotesFile -Raw
+                if ($releaseNotes -notmatch "v\.?$([regex]::Escape($newVersion))") {
+                  $errors += "❌ Version $newVersion not found in ReleaseNotes.txt for $relativePath"
+                  continue
+                }
+                
+                Write-Host "  ✓ ReleaseNotes.txt updated with version $newVersion"
+              } else {
+                Write-Host "  ⚠ No ReleaseNotes.txt found (skipping release notes check)"
+              }
+            }
+          }
+          
+          # Report results
+          if ($errors.Count -gt 0) {
+            Write-Host "`n`n========================================" -ForegroundColor Red
+            Write-Host "VERSION GUARD FAILURES" -ForegroundColor Red
+            Write-Host "========================================`n" -ForegroundColor Red
+            
+            foreach ($error in $errors) {
+              Write-Host $error -ForegroundColor Red
+            }
+            
+            Write-Host "`n`nℹ️  When you modify code in a folder with PackageVersion.txt:" -ForegroundColor Yellow
+            Write-Host "   1. Update PackageVersion.txt with the new version" -ForegroundColor Yellow
+            Write-Host "   2. Add an entry to ReleaseNotes.txt describing the change`n" -ForegroundColor Yellow
+            
+            exit 1
+          }
+          
+          Write-Host "`n✓ All version checks passed!" -ForegroundColor Green
