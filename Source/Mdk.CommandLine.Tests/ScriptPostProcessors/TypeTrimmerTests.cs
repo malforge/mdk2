@@ -933,7 +933,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
             """;
 
         // Arrange
-        var workspace = new AdhocWorkspace();
+        using var workspace = new AdhocWorkspace();
         var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
         var document = project.AddDocument("TestDocument", testCode);
         var processor = new TypeTrimmer();
