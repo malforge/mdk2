@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,6 +23,7 @@ public class TypeTrimmer : IDocumentProcessor
         var unusedDelegates = new List<DelegateDeclarationSyntax>();
         var unusedMembers = new List<SyntaxNode>();
         var fieldReplacements = new Dictionary<FieldDeclarationSyntax, FieldDeclarationSyntax>();
+        var derivedTypeCache = new Dictionary<INamedTypeSymbol, bool>(SymbolEqualityComparer.Default);
 
         while (true)
         {
@@ -115,6 +116,15 @@ public class TypeTrimmer : IDocumentProcessor
                             keptVariables.Add(variable);
                             continue;
                         }
+                        // If this field is initialized (private int a = 2;), we need to keep it if it might have side effects
+                        // This could be if the initializer is an expression or a method, like "int a = Method();" or "int a = b = Method()";
+                        var variableInitializer = variable.Initializer;
+                        if (variableInitializer != null
+                            && !semanticModel.GetConstantValue(variableInitializer.Value).HasValue)
+                        {
+                            keptVariables.Add(variable);
+                            continue;
+                        }
                         if (!IsEligibleForRemoval(variable, fieldSymbol))
                         {
                             keptVariables.Add(variable);
@@ -156,6 +166,12 @@ public class TypeTrimmer : IDocumentProcessor
                     if (propertyDeclaration.Identifier.ShouldBePreserved() || propertyDeclaration.ShouldBePreserved())
                         continue;
                     if (semanticModel.GetDeclaredSymbol(propertyDeclaration) is not IPropertySymbol propertySymbol)
+                        continue;
+                    // If this property is initialized (int A {get;} = 2;), we need to keep it if it might have side effects
+                    // This could be if the initializer is an expression or a method, like "int A {get;} = Method();" or "int A {get;} = b = Method()";
+                    var propertyInitializer = propertyDeclaration.Initializer;
+                    if (propertyInitializer != null
+                        && !semanticModel.GetConstantValue(propertyInitializer.Value).HasValue)
                         continue;
                     if (!IsEligibleForRemoval(propertyDeclaration, propertySymbol))
                         continue;
@@ -201,6 +217,20 @@ public class TypeTrimmer : IDocumentProcessor
                         continue;
                     if (semanticModel.GetDeclaredSymbol(constructorDeclaration) is not IMethodSymbol ctorSymbol)
                         continue;
+                    // If this is a parameterless ctor on a base type, derived types might call it implicitly
+                    // We keep it when the type has derived classes to avoid trimming required base initialization.
+                    if (ctorSymbol.Parameters.Length == 0
+                        && ctorSymbol.ContainingType != null)
+                    {
+                        if (!derivedTypeCache.TryGetValue(ctorSymbol.ContainingType, out var hasDerivedTypes))
+                        {
+                            var derivedTypes = await SymbolFinder.FindDerivedClassesAsync(ctorSymbol.ContainingType, solution);
+                            hasDerivedTypes = derivedTypes.Any();
+                            derivedTypeCache[ctorSymbol.ContainingType] = hasDerivedTypes;
+                        }
+                        if (hasDerivedTypes)
+                            continue;
+                    }
                     if (!IsEligibleForRemoval(ctorSymbol))
                         continue;
 
@@ -212,7 +242,8 @@ public class TypeTrimmer : IDocumentProcessor
                         continue;
 
                     unusedMembers.Add(constructorDeclaration);
-                    context.Console.Trace($"Unused constructor: {ctorSymbol.ContainingType.Name}({string.Join(", ", ctorSymbol.Parameters.Select(p => p.Type.Name))})");
+                    var containingTypeName = ctorSymbol.ContainingType?.Name ?? "<unknown>";
+                    context.Console.Trace($"Unused constructor: {containingTypeName}({string.Join(", ", ctorSymbol.Parameters.Select(p => p.Type.Name))})");
                 }
             }
 
@@ -289,6 +320,8 @@ public class TypeTrimmer : IDocumentProcessor
     {
         if (!symbol.IsDefinition
             || symbol.IsOverride
+            || symbol.IsAbstract
+            || symbol.IsVirtual
             || symbol.IsInterfaceImplementation())
             return false;
         return true;
@@ -298,6 +331,8 @@ public class TypeTrimmer : IDocumentProcessor
     {
         if (!symbol.IsDefinition
             || symbol.IsOverride
+            || symbol.IsAbstract
+            || symbol.IsVirtual
             || symbol.IsInterfaceImplementation()
             || IsScriptCallback(symbol)
             || IsScriptDefaultConstructor(symbol)
