@@ -18,8 +18,11 @@ public class TypeTrimmer : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
-        if (context.Parameters.PackVerb.MinifierLevel == MinifierLevel.None)
+        if (context.Parameters.PackVerb.MinifierLevel < MinifierLevel.Trim)
+        {
+            context.Console.Trace("Skipping type trimming because the minifier level < Trim.");
             return document;
+        }
         
         var shouldTrimMembers = (context.Parameters.PackVerb.MinifierExtraOptions & MinifierExtraOptions.NoMemberTrimming) == 0;
         var unusedTypes = new List<BaseTypeDeclarationSyntax>();
