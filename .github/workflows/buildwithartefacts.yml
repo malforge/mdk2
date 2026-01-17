@@ -48,7 +48,7 @@ jobs:
           pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1
 
       - name: Commit template updates
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
