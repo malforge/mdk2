@@ -7,7 +7,8 @@ $modAnalyzersVersionFile = "../Mdk.ModAnalyzers/PackageVersion.txt"
 # Array of .csproj file paths (relative to the ScriptTemplates project)
 $projectFiles = @(
     "content/0_Script/PbScript.csproj",
-    "content/1_Mod/ModProject.csproj"
+    "content/1_Mod/ModProject.csproj",
+    "content/3_ScriptUnitTest/PbScriptTests.csproj"
 )
 
 # Path to this project's PackageVersion.txt file and ReleaseNotes.txt

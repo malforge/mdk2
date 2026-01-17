@@ -1,3 +1,7 @@
+v.2.2.49
+ - Added unit test template to automatic package reference updates.
+ - Updated package references in unit test template to 2.2.7.
+
 v.2.2.48
  - Updated the package versions in the template.
 
