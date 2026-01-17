@@ -101,8 +101,8 @@ jobs:
             Write-Host "VERSION GUARD FAILURES" -ForegroundColor Red
             Write-Host "========================================`n" -ForegroundColor Red
             
-            foreach ($error in $errors) {
-              Write-Host $error -ForegroundColor Red
+            foreach ($err in $errors) {
+              Write-Host $err -ForegroundColor Red
             }
             
             Write-Host "`n`nℹ️  When you modify code in a folder with PackageVersion.txt:" -ForegroundColor Yellow
