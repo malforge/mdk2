@@ -57,6 +57,7 @@ jobs:
             Write-Host "No changes to commit"
           } else {
             git commit -m "Auto-update template package references"
+            git pull --rebase origin main
             git push
           }
 
