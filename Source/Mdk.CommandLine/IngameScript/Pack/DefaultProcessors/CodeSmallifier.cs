@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Mdk.CommandLine.IngameScript.Pack.Api;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -21,6 +20,12 @@ public class CodeSmallifier : IDocumentProcessor
 {
     public async Task<Document> ProcessAsync(Document document, IPackContext context)
     {
+        if (context.Parameters.PackVerb.MinifierLevel < MinifierLevel.Trim)
+        {
+            context.Console.Trace("Skipping code smallification because the minifier level < Trim.");
+            return document;
+        }
+        
         var root = await document.GetSyntaxRootAsync();
         if (root == null)
             return document;

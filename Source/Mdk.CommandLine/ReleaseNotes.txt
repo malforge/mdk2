@@ -1,4 +1,7 @@
-﻿v.2.1.16
+﻿v.2.1.17
+   - Moved the "Smallifier" processor to the Trim minifying level.
+
+v.2.1.16
    - `MinifierLevel=none` would still trim code. Now we early exit TypeTrimmer if `MinifierLevel=none`.
    - replacements would replace unknown keys with nothing. Now unknown keys f.ex. `$UNMATCHED$` is left alone.
    - `abstract class Base { public abstract void Tick(); } class Derived : Base { public override void Tick() {} }` - base abstract member could be removed even though it must exist for the override.
