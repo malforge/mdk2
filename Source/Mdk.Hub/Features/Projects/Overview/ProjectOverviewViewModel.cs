@@ -184,7 +184,7 @@ public class ProjectOverviewViewModel : ViewModel
             return;
         foreach (var item in ItemsSource)
         {
-            if (!item.MatchesFilter(_searchTerm, FilterModsOnly, FilterScriptsOnly))
+            if (!item.MatchesFilter(_searchTerm, FilterScriptsOnly, FilterModsOnly))
                 continue;
             item.SelectCommand = SelectProjectCommand;
             _projects.Add(item);
