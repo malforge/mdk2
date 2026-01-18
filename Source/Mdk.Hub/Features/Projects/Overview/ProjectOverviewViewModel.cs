@@ -23,11 +23,17 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchText = string.Empty;
     bool _showAll = true;
 
+    public ProjectOverviewViewModel() : this(null!)
+    {
+        IsDesignMode = true;
+    }
+
     public ProjectOverviewViewModel(ICommonDialogs commonDialogs)
     {
         Projects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
+        SelectProjectCommand = new RelayCommand<ProjectListItem>(SelectProject);
 
         // Sample data for design-time
         ItemsSource = new ProjectListItem[]
@@ -38,6 +44,8 @@ public class ProjectOverviewViewModel : ViewModel
             new ProjectModel(ProjectType.IngameScript, "Another Script", DateTimeOffset.Now.AddDays(-2), commonDialogs)
         };
     }
+
+    public bool IsDesignMode { get; private set; }
 
     public IEnumerable<ProjectListItem>? ItemsSource
     {
@@ -108,11 +116,29 @@ public class ProjectOverviewViewModel : ViewModel
     }
 
     public ICommand ClearSearchCommand { get; }
+    
+    public ICommand SelectProjectCommand { get; }
 
     public void ClearSearch()
     {
         using var handle = BeginFilterUpdate();
         SearchText = string.Empty;
+    }
+    
+    void SelectProject(ProjectListItem? project)
+    {
+        if (project == null)
+            return;
+            
+        // Single selection model - deselect all others
+        foreach (var item in _projects)
+        {
+            if (item != project)
+                item.IsSelected = false;
+        }
+        
+        // Toggle selection on clicked item
+        project.IsSelected = !project.IsSelected;
     }
 
     void SetSearchTerm(string searchTerm)

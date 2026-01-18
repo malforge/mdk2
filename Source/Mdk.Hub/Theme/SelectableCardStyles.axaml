@@ -1,0 +1,36 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls">
+    
+    <!-- SelectableCard - Reusable card control with selection state -->
+    <Style Selector="controls|SelectableCard">
+        <!-- Card-like appearance inspired by malforge.github.io -->
+        <Setter Property="Background" Value="#CC1a1a2e" />
+        <Setter Property="BorderBrush" Value="#1affffff" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Cursor" Value="Hand" />
+
+        <!-- Hover state - blue glow -->
+        <Style Selector="^:pointerover">
+            <Setter Property="Background" Value="#DD1a1a2e" />
+            <Setter Property="BorderBrush" Value="#66007bff" />
+        </Style>
+
+        <!-- Selected state -->
+        <Style Selector="^:selected">
+            <Setter Property="Background" Value="#EE16213e" />
+            <Setter Property="BorderBrush" Value="#FF007bff" />
+        </Style>
+        
+        <!-- Disabled state -->
+        <Style Selector="^:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+    </Style>
+    
+</Styles>

@@ -22,8 +22,8 @@
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Linux.cs"/>
-                <None Include="**\*.Linux.cs"/>
+                <Compile Remove="**\*.Linux.cs" />
+                <None Include="**\*.Linux.cs" />
             </ItemGroup>
         </When>
 
@@ -34,23 +34,23 @@
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Windows.cs"/>
-                <None Include="**\*.Windows.cs"/>
+                <Compile Remove="**\*.Windows.cs" />
+                <None Include="**\*.Windows.cs" />
             </ItemGroup>
         </Otherwise>
     </Choose>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.3.6" />
-        <PackageReference Include="Avalonia.Desktop" Version="11.3.6" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+        <PackageReference Include="Avalonia" Version="11.3.11" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.*" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.6">
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.11">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
@@ -60,7 +60,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\DISourceGenerator\DISourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="..\DISourceGenerator\DISourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup>

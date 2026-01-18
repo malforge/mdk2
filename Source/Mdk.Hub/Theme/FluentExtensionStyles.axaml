@@ -1,8 +1,61 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Design.PreviewWith>
-        <Border Padding="20">
-            <!-- Add Controls for Previewer Here -->
-        </Border>
-    </Design.PreviewWith>
+    
+    <!-- Space Theme Styles - matching malforge.github.io -->
+    
+    <!-- Window gradient background -->
+    <Style Selector="Window">
+        <Setter Property="Background">
+            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#FF0a0a0a" Offset="0.0" />
+                <GradientStop Color="#FF1a1a2e" Offset="0.5" />
+                <GradientStop Color="#FF16213e" Offset="1.0" />
+            </LinearGradientBrush>
+        </Setter>
+    </Style>
+    
+    <!-- Override default control colors -->
+    <Style Selector="Button">
+        <Setter Property="Background" Value="#CC1a1a2e" />
+        <Setter Property="BorderBrush" Value="#33ffffff" />
+        <Setter Property="Foreground" Value="#FFe0e0e0" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#DD16213e" />
+            <Setter Property="BorderBrush" Value="#FF007bff" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#FF16213e" />
+        </Style>
+    </Style>
+    
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="#CC1a1a2e" />
+        <Setter Property="BorderBrush" Value="#33ffffff" />
+        <Setter Property="Foreground" Value="#FFe0e0e0" />
+        <Setter Property="SelectionBrush" Value="#FF007bff" />
+        <Setter Property="CaretBrush" Value="#FFe0e0e0" />
+        
+        <Style Selector="^:focus /template/ Border#BorderElement">
+            <Setter Property="BorderBrush" Value="#FF007bff" />
+        </Style>
+    </Style>
+    
+    <Style Selector="RadioButton">
+        <Setter Property="Foreground" Value="#FFe0e0e0" />
+    </Style>
+    
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="#FFe0e0e0" />
+    </Style>
+    
+    <Style Selector="ScrollViewer">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    
+    <Style Selector="UserControl">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    
 </Styles>

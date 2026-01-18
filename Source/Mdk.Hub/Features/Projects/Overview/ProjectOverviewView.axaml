@@ -6,6 +6,7 @@
              xmlns:m="clr-namespace:Mdk.Hub.Markup"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
              xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
+             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Mdk.Hub.Features.Projects.Overview.ProjectOverviewView"
              x:DataType="overview:ProjectOverviewViewModel">
@@ -33,7 +34,11 @@
         </icons:SymbolSelector>
 
         <DataTemplate DataType="overview:ProjectModel">
-            <Button Classes="project-item" HorizontalAlignment="Stretch">
+            <controls:SelectableCard Classes="project-item" 
+                                   HorizontalAlignment="Stretch"
+                                   IsSelected="{Binding IsSelected}"
+                                   Command="{Binding $parent[ItemsControl].((overview:ProjectOverviewViewModel)DataContext).SelectProjectCommand}"
+                                   CommandParameter="{Binding}">
                 <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
                 <Grid ColumnDefinitions="Auto,*">
                     <ContentControl Classes="project-icon"
@@ -62,14 +67,17 @@
                         <avalonia:Icon Value="fa-solid fa-trash" Width="12" Height="12" />
                     </Button>
                 </Grid>
-            </Button>
+            </controls:SelectableCard>
         </DataTemplate>
         <DataTemplate DataType="overview:NewProjectModel">
             <Grid ColumnDefinitions="*, *">
-                <Button Classes="project-item left"
+                <controls:SelectableCard Classes="project-item left"
                         Classes.disabled="{Binding !CanMakeScript}"
                         HorizontalAlignment="Stretch"
-                        IsEnabled="{Binding CanMakeScript}">
+                        IsEnabled="{Binding CanMakeScript}"
+                        IsSelected="{Binding IsSelected}"
+                        Command="{Binding $parent[ItemsControl].((overview:ProjectOverviewViewModel)DataContext).SelectProjectCommand}"
+                        CommandParameter="{Binding}">
                     <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
                     <Grid ColumnDefinitions="Auto,*">
                         <ContentControl Grid.Column="0" Grid.Row="0" Classes="project-icon">
@@ -87,12 +95,15 @@
                                 Text="Create a new Programmable Block Script project" />
                         </Grid>
                     </Grid>
-                </Button>
-                <Button Classes="project-item right"
+                </controls:SelectableCard>
+                <controls:SelectableCard Classes="project-item right"
                         Classes.disabled="{Binding !CanMakeMod}"
                         Grid.Column="1"
                         HorizontalAlignment="Stretch"
-                        IsEnabled="{Binding CanMakeMod}">
+                        IsEnabled="{Binding CanMakeMod}"
+                        IsSelected="{Binding IsSelected}"
+                        Command="{Binding $parent[ItemsControl].((overview:ProjectOverviewViewModel)DataContext).SelectProjectCommand}"
+                        CommandParameter="{Binding}">
                     <!-- Avalonia rowspan does not behave, so I have to use a nested grid -->
                     <Grid ColumnDefinitions="Auto,*">
                         <ContentControl Grid.Column="0" Grid.Row="0" Classes="project-icon">
@@ -110,7 +121,7 @@
                                 Text="Create a new Mod project" />
                         </Grid>
                     </Grid>
-                </Button>
+                </controls:SelectableCard>
             </Grid>
         </DataTemplate>
     </UserControl.DataTemplates>
