@@ -11,7 +11,7 @@
              x:DataType="local:MessageBoxViewModel">
     <Grid ColumnDefinitions="10*, 80*, 10*">
         <Border Grid.Column="1"
-                CornerRadius="8"
+            CornerRadius="8"
                 Background="{DynamicResource SystemControlBackgroundAccentBrush}"
                 Padding="16"
                 HorizontalAlignment="Center"

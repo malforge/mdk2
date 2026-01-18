@@ -14,6 +14,7 @@ namespace Mdk.Hub.Features.Projects.Overview;
 [ViewModelFor<ProjectOverviewView>]
 public class ProjectOverviewViewModel : ViewModel
 {
+    readonly IShell _shell;
     readonly ObservableCollection<ProjectListItem> _projects = new();
     readonly ThrottledAction<string> _throttledSearch;
     bool _filterModsOnly;
@@ -26,6 +27,7 @@ public class ProjectOverviewViewModel : ViewModel
 
         public ProjectOverviewViewModel(ICommonDialogs commonDialogs)
     {
+        _shell = shell;
         Projects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
