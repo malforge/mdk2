@@ -10,6 +10,11 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
              x:Class="Mdk.Hub.Features.Projects.Actions.ProjectActionsView"
              x:DataType="actions:ProjectActionsViewModel">
+    <UserControl.Resources>
+        <actions:BoolToDeploymentStatusConverter x:Key="BoolToDeploymentStatusConverter" />
+        <actions:BoolToWarningBackgroundConverter x:Key="BoolToWarningBackgroundConverter" />
+    </UserControl.Resources>
+    
     <Design.DataContext>
         <actions:ProjectActionsViewModel />
     </Design.DataContext>
@@ -76,11 +81,50 @@
                     </StackPanel>
                 </StackPanel>
                 
-                <!-- Last Referenced -->
-                <StackPanel Spacing="4">
-                    <TextBlock Classes="info-label" Text="Last Referenced:" />
-                    <TextBlock Classes="info-value" Text="{Binding Project.LastReferenced}" />
-                </StackPanel>
+                <!-- Info grid -->
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+                    <!-- Row 1: Deployment Status | Last Deployed -->
+                    <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4" 
+                                HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock Classes="info-label" Text="Deployment Status:" />
+                        <TextBlock Classes="info-value" Text="{Binding IsDeployed, Converter={StaticResource BoolToDeploymentStatusConverter}}" />
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" Grid.Row="0" Spacing="4" 
+                                HorizontalAlignment="Left" VerticalAlignment="Top"
+                                IsVisible="{Binding IsDeployed}">
+                        <TextBlock Classes="info-label" Text="Last Deployed:" />
+                        <controls:DateTimeDisplay Value="{Binding LastDeployed}" />
+                    </StackPanel>
+                    
+                    <!-- Row 2: Last Changed (full width) -->
+                    <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Spacing="4"
+                                HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <TextBlock Classes="info-label" Text="Last Changed:" />
+                        <controls:DateTimeDisplay Value="{Binding LastChanged}" />
+                    </StackPanel>
+                    
+                    <!-- Row 3: Script Size (full width, highlighted if over limit) -->
+                    <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" 
+                            IsVisible="{Binding IsScript}"
+                            Background="{Binding IsScriptTooLarge, Converter={StaticResource BoolToWarningBackgroundConverter}}"
+                            CornerRadius="4"
+                            Padding="8"
+                            ClipToBounds="True"
+                            HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="info-label" Text="Script Size:" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Classes="info-value" Text="{Binding ScriptSizeCharacters, StringFormat='{}{0:N0} characters'}" />
+                                <TextBlock Classes="info-value" 
+                                           Text="⚠ Exceeds SE limit (100,000 characters)" 
+                                           Foreground="#FFff6666"
+                                           FontWeight="Bold"
+                                           IsVisible="{Binding IsScriptTooLarge}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
                 
                 <!-- Action toolbar -->
                 <Border Classes="action-toolbar" Padding="8" CornerRadius="4" Background="#11ffffff">

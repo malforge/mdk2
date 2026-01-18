@@ -15,6 +15,7 @@
         <FluentTheme />
         <StyleInclude Source="avares://Mdk.Hub/Theme/FluentExtensionStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/SelectableCardStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Framework/Controls/DateTimeDisplayStyles.axaml" />
     </Application.Styles>
 
     <Application.Resources>

@@ -1,0 +1,32 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
+        xmlns:i="https://github.com/projektanker/icons.avalonia">
+    
+    <Style Selector="controls|DateTimeDisplay">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button Name="PART_CycleButton"
+                            Classes="icon-button"
+                            Width="16" Height="16"
+                            Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            VerticalAlignment="Center">
+                        <i:Icon Value="fa-solid fa-clock" FontSize="10" Opacity="0.5" />
+                    </Button>
+                    <TextBlock Text="{TemplateBinding DisplayText}" 
+                               Classes="info-value"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    
+    <Style Selector="controls|DateTimeDisplay Button.icon-button:pointerover i|Icon">
+        <Setter Property="Opacity" Value="1.0" />
+    </Style>
+    
+</Styles>
