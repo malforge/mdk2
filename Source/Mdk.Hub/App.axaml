@@ -3,8 +3,8 @@
              x:Class="Mdk.Hub.App"
              xmlns:local="using:Mdk.Hub"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
-             RequestedThemeVariant="Default" >
-    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Dark" >
+    <!-- Force dark mode for starfield easter egg -->
 
     <Application.DataTemplates>
         <local:ViewLocator />

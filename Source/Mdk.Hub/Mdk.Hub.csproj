@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>Assets\malware.ico</ApplicationIcon>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>

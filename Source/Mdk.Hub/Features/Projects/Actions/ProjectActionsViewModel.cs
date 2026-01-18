@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions;
@@ -13,11 +15,16 @@ public class ProjectActionsViewModel : ViewModel
 {
     readonly ObservableCollection<ActionItem> _actions = new();
     readonly IProjectState _projectState;
+    readonly IShell _shell;
+    readonly ICommonDialogs _dialogs;
 
-    public ProjectActionsViewModel(IProjectState projectState)
+    public ProjectActionsViewModel(IProjectState projectState, IShell shell, ICommonDialogs dialogs)
     {
         _projectState = projectState;
+        _shell = shell;
+        _dialogs = dialogs;
         _projectState.StateChanged += OnProjectStateChanged;
+        _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
         Actions = new ReadOnlyObservableCollection<ActionItem>(_actions);
         
         UpdateActions();
@@ -26,6 +33,11 @@ public class ProjectActionsViewModel : ViewModel
     public ReadOnlyObservableCollection<ActionItem> Actions { get; }
 
     void OnProjectStateChanged(object? sender, EventArgs e)
+    {
+        UpdateActions();
+    }
+
+    void OnEasterEggActiveChanged(object? sender, EventArgs e)
     {
         UpdateActions();
     }
@@ -49,6 +61,9 @@ public class ProjectActionsViewModel : ViewModel
         {
             allActions.Add(new ProjectInfoAction(projectModel));
         }
+
+        // Easter egg dismiss (always add, will filter by ShouldShow)
+        allActions.Add(new EasterEggDismissAction(_shell, _dialogs));
 
         // Filter by ShouldShow and insert separators between category changes
         _actions.Clear();

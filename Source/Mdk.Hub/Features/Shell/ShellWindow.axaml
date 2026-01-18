@@ -8,7 +8,7 @@
         MinWidth="850" MinHeight="450"
         x:Class="Mdk.Hub.Features.Shell.ShellWindow"
         x:DataType="vm:ShellViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/malware.ico"
         Title="Mdk.Hub">
 
     <Design.DataContext>
@@ -31,6 +31,9 @@
     </Window.Styles>
 
     <Grid>
+        <!-- Easter Egg Layer -->
+        <vm:EasterEgg x:Name="EasterEggControl" />
+        
         <Grid x:Name="MainContentGrid"
               Classes="main-content" 
               Classes.has-overlays="{Binding HasOverlays}"

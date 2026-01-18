@@ -19,6 +19,10 @@ public partial class ShellWindow : Window
     {
         _shell = shell;
         InitializeComponent();
+        
+        // Initialize easter egg
+        var easterEgg = this.FindControl<EasterEgg>("EasterEggControl");
+        easterEgg?.Initialize(shell);
     }
 
     protected override void OnGotFocus(global::Avalonia.Input.GotFocusEventArgs e)

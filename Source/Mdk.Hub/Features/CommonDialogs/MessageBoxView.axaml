@@ -12,19 +12,21 @@
     <Grid ColumnDefinitions="10*, 80*, 10*">
         <Border Grid.Column="1"
             CornerRadius="8"
-                Background="{DynamicResource SystemControlBackgroundAccentBrush}"
+                Background="#DD1a1a2e"
+                BorderBrush="#44ffffff"
+                BorderThickness="1"
                 Padding="16"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
             <StackPanel>
                 <TextBlock Text="{Binding Title}"
-                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                           Foreground="#FFe0e0e0"
                            FontSize="20"
                            FontWeight="Bold"
                            Margin="0,0,0,8"
                            TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Message}"
-                           Foreground="{DynamicResource SystemControlDescriptionTextForegroundBrush}"
+                           Foreground="#FFd0d0d0"
                            FontSize="14"
                            Margin="0,0,0,16"
                            TextWrapping="Wrap" />
