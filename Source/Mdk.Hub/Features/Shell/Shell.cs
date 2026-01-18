@@ -9,6 +9,8 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     readonly IDependencyContainer _container = container;
     readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
 
+    public event EventHandler? WindowFocusGained;
+
     public void Start() { }
 
     public void AddOverlay(OverlayModel model)
@@ -22,5 +24,10 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
 
         model.Dismissed += onDismissed;
         _viewModel.Value.OverlayViews.Add(model);
+    }
+
+    public void RaiseWindowFocusGained()
+    {
+        WindowFocusGained?.Invoke(this, EventArgs.Empty);
     }
 }

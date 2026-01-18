@@ -13,9 +13,20 @@ namespace Mdk.Hub.Features.Shell;
 [UsedImplicitly]
 public partial class ShellWindow : Window
 {
-    public ShellWindow()
+    readonly IShell _shell;
+    
+    public ShellWindow(IShell shell)
     {
+        _shell = shell;
         InitializeComponent();
+    }
+
+    protected override void OnGotFocus(global::Avalonia.Input.GotFocusEventArgs e)
+    {
+        base.OnGotFocus(e);
+        
+        if (_shell is Shell shellService)
+            shellService.RaiseWindowFocusGained();
     }
 
     protected override void OnDataContextChanged(EventArgs e)
