@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Mal.DependencyInjection;
@@ -14,6 +15,7 @@ namespace Mdk.Hub.Features.Projects.Overview;
 public class ProjectOverviewViewModel : ViewModel
 {
     readonly ObservableCollection<ProjectListItem> _projects = new();
+    readonly IProjectState _projectState;
     readonly ThrottledAction<string> _throttledSearch;
     bool _filterModsOnly;
     bool _filterScriptsOnly;
@@ -23,13 +25,14 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchText = string.Empty;
     bool _showAll = true;
 
-    public ProjectOverviewViewModel() : this(null!)
+    public ProjectOverviewViewModel() : this(null!, null!)
     {
         IsDesignMode = true;
     }
 
-    public ProjectOverviewViewModel(ICommonDialogs commonDialogs)
+    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState)
     {
+        _projectState = projectState;
         Projects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
@@ -38,10 +41,9 @@ public class ProjectOverviewViewModel : ViewModel
         // Sample data for design-time
         ItemsSource = new ProjectListItem[]
         {
-            new NewProjectModel(),
-            new ProjectModel(ProjectType.IngameScript, "My Ingame Script", DateTimeOffset.Now, commonDialogs),
+            new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", DateTimeOffset.Now, commonDialogs),
             new ProjectModel(ProjectType.Mod, "My Mod", DateTimeOffset.Now.AddDays(-1), commonDialogs),
-            new ProjectModel(ProjectType.IngameScript, "Another Script", DateTimeOffset.Now.AddDays(-2), commonDialogs)
+            new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", DateTimeOffset.Now.AddDays(-2), commonDialogs)
         };
     }
 
@@ -91,7 +93,8 @@ public class ProjectOverviewViewModel : ViewModel
         set
         {
             using var handle = BeginFilterUpdate();
-            SetProperty(ref _filterModsOnly, value);
+            if (SetProperty(ref _filterModsOnly, value))
+                UpdateState();
             if (value)
             {
                 ShowAll = false;
@@ -106,7 +109,8 @@ public class ProjectOverviewViewModel : ViewModel
         set
         {
             using var handle = BeginFilterUpdate();
-            SetProperty(ref _filterScriptsOnly, value);
+            if (SetProperty(ref _filterScriptsOnly, value))
+                UpdateState();
             if (value)
             {
                 ShowAll = false;
@@ -116,7 +120,7 @@ public class ProjectOverviewViewModel : ViewModel
     }
 
     public ICommand ClearSearchCommand { get; }
-    
+
     public ICommand SelectProjectCommand { get; }
 
     public void ClearSearch()
@@ -124,21 +128,32 @@ public class ProjectOverviewViewModel : ViewModel
         using var handle = BeginFilterUpdate();
         SearchText = string.Empty;
     }
-    
+
     void SelectProject(ProjectListItem? project)
     {
         if (project == null)
             return;
-            
+
         // Single selection model - deselect all others
         foreach (var item in _projects)
         {
             if (item != project)
                 item.IsSelected = false;
         }
-        
+
         // Toggle selection on clicked item
         project.IsSelected = !project.IsSelected;
+
+        UpdateState();
+    }
+
+    void UpdateState()
+    {
+        var selectedProject = _projects.FirstOrDefault(p => p.IsSelected);
+        var canMakeScript = !FilterModsOnly;
+        var canMakeMod = !FilterScriptsOnly;
+
+        _projectState.UpdateState(selectedProject, canMakeScript, canMakeMod);
     }
 
     void SetSearchTerm(string searchTerm)
@@ -171,6 +186,7 @@ public class ProjectOverviewViewModel : ViewModel
         {
             if (!item.MatchesFilter(_searchTerm, FilterModsOnly, FilterScriptsOnly))
                 continue;
+            item.SelectCommand = SelectProjectCommand;
             _projects.Add(item);
         }
     }

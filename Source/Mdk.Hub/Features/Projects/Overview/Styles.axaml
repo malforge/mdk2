@@ -45,7 +45,7 @@
             </Style>
             
             <Style Selector="^:selected TextBlock.title">
-                <Setter Property="Foreground" Value="#FF007bff" />
+                <Setter Property="Foreground" Value="#FF4da6ff" />
             </Style>
             
             <Style Selector="^ TextBlock.last-referenced">

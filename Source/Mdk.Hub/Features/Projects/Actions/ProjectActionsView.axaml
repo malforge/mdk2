@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
+             xmlns:overview="clr-namespace:Mdk.Hub.Features.Projects.Overview"
+             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
+             xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
+             x:Class="Mdk.Hub.Features.Projects.Actions.ProjectActionsView"
+             x:DataType="actions:ProjectActionsViewModel">
+    <Design.DataContext>
+        <actions:ProjectActionsViewModel />
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Mdk.Hub/Features/Projects/Actions/Styles.axaml" />
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <icons:SymbolSelector>
+            <icons:ProjectTypeDefinition Type="IngameScript">
+                <DataTemplate>
+                    <icons:ProgrammableBlockSymbol />
+                </DataTemplate>
+            </icons:ProjectTypeDefinition>
+            <icons:ProjectTypeDefinition Type="Mod">
+                <DataTemplate>
+                    <icons:ModSymbol />
+                </DataTemplate>
+            </icons:ProjectTypeDefinition>
+        </icons:SymbolSelector>
+        
+        <!-- Create Project Action -->
+        <DataTemplate DataType="actions:CreateProjectAction">
+            <StackPanel Spacing="8" Margin="16,0">
+                <TextBlock Classes="section-title" Text="Create New Project" />
+                <ItemsControl ItemsSource="{Binding Options}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="create-hover-row" Padding="10" CornerRadius="4" Cursor="Hand">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <ContentControl Content="{Binding ProjectType}" Width="32" Height="32" Grid.Column="0" />
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                                        <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" />
+                                        <TextBlock Text="{Binding Description}" FontSize="11" Foreground="#FF999999" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Category Separator -->
+        <DataTemplate DataType="actions:CategorySeparator">
+            <Border Height="1" Background="#44ffffff" Margin="0,12" />
+        </DataTemplate>
+
+        <!-- Project Info -->
+        <DataTemplate DataType="actions:ProjectInfoAction">
+            <StackPanel Spacing="12" Margin="16,0">
+                <!-- Project header -->
+                <StackPanel Spacing="12" Orientation="Horizontal">
+                    <ContentControl Content="{Binding Project.Type}" Width="48" Height="48" />
+                    <StackPanel Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Classes="section-title" Text="{Binding Project.Name}" />
+                        <TextBlock Classes="info-label" Text="{Binding ProjectTypeName}" />
+                    </StackPanel>
+                </StackPanel>
+                
+                <!-- Last Referenced -->
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="info-label" Text="Last Referenced:" />
+                    <TextBlock Classes="info-value" Text="{Binding Project.LastReferenced}" />
+                </StackPanel>
+                
+                <!-- Action toolbar -->
+                <Border Classes="action-toolbar" Padding="8" CornerRadius="4" Background="#11ffffff">
+                    <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                        <Button Classes="toolbar-button" ToolTip.Tip="Open in IDE">
+                            <i:Icon Value="fa-solid fa-code" FontSize="16" />
+                        </Button>
+                        <Button Classes="toolbar-button" ToolTip.Tip="Options">
+                            <i:Icon Value="fa-solid fa-cog" FontSize="16" />
+                        </Button>
+                        <Button Classes="toolbar-button" ToolTip.Tip="Copy Script to Clipboard"
+                                IsVisible="{Binding IsScript}">
+                            <i:Icon Value="fa-solid fa-copy" FontSize="16" />
+                        </Button>
+                        <Border Width="1" Height="24" Background="#33ffffff" Margin="4,0" />
+                        <Button Classes="toolbar-button danger" ToolTip.Tip="Delete Project"
+                                Command="{Binding Project.DeleteCommand}">
+                            <i:Icon Value="fa-solid fa-trash" FontSize="16" />
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Project Action Button -->
+        <DataTemplate DataType="actions:ProjectAction">
+            <Button Classes="action-button" Content="{Binding Title}" HorizontalAlignment="Stretch" Margin="16,0" />
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding Actions}" Margin="0,16">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Spacing="8" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>

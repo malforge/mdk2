@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.Projects.Actions;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Framework;
@@ -26,7 +27,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!)
+    public ShellViewModel() : this(null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -36,11 +37,13 @@ public class ShellViewModel : ViewModel
     /// </summary>
     /// <param name="settings">Application settings service.</param>
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
-    public ShellViewModel(ISettings settings, ProjectOverviewViewModel projectOverviewViewModel)
+    /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
+    public ShellViewModel(ISettings settings, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel)
     {
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
+        CurrentView = projectActionsViewModel;
     }
 
     /// <summary>
