@@ -40,7 +40,7 @@ public class ShellViewModel : ViewModel
     {
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
-        CurrentView = projectOverviewViewModel;
+        NavigationView = projectOverviewViewModel;
     }
 
     /// <summary>

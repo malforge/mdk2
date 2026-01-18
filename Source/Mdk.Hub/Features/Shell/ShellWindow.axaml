@@ -5,6 +5,7 @@
         xmlns:vm="clr-namespace:Mdk.Hub.Features.Shell"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         Width="800" Height="450"
+        MinWidth="850" MinHeight="450"
         x:Class="Mdk.Hub.Features.Shell.ShellWindow"
         x:DataType="vm:ShellViewModel"
         Icon="/Assets/avalonia-logo.ico"
@@ -30,11 +31,18 @@
     </Window.Styles>
 
     <Grid>
-        <Grid Classes="main-content" 
+        <Grid x:Name="MainContentGrid"
+              Classes="main-content" 
               Classes.has-overlays="{Binding HasOverlays}"
-              ColumnDefinitions="Auto,*" RowDefinitions="*">
+              RowDefinitions="*">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="400" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="400" />
+            </Grid.ColumnDefinitions>
             <ContentControl Grid.Column="0" Content="{Binding NavigationView}" />
-            <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />
+            <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns" Width="4" />
+            <ContentControl Grid.Column="2" Content="{Binding CurrentView}" />
         </Grid>
         <ItemsControl Classes="overlay-content" 
                       Grid.Column="0"
