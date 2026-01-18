@@ -23,14 +23,7 @@
   </Folder>
   <Folder Name="/SourceGenerators/">
     <Project Path="DISourceGenerator\DISourceGenerator.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
-    </Project>
-  </Folder>
-  <Folder Name="/SourceGenerators/">
-    <Project Path="DISourceGenerator\DISourceGenerator.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+        <Platform Project="x64" />
     </Project>
   </Folder>
   <Folder Name="/Templates/">
@@ -64,8 +57,7 @@
     <Platform Project="x64" />
   </Project>
   <Project Path="Mdk.Hub\Mdk.Hub.csproj" Type="Classic C#">
-    <Configuration Solution="Debug|x64" Project="Debug|Any CPU" />
-    <Configuration Solution="Release|x64" Project="Release|Any CPU" />
+      <Platform Project="x64" />
   </Project>
   <Project Path="Mdk.Notification.Windows\Mdk.Notification.Windows.csproj">
     <Platform Project="x64" />
