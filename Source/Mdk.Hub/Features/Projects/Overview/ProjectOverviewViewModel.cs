@@ -6,6 +6,7 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Overview;
@@ -18,6 +19,7 @@ public class ProjectOverviewViewModel : ViewModel
     readonly ObservableCollection<ProjectListItem> _projects = new();
     readonly IProjectService _projectService;
     readonly IProjectState _projectState;
+    readonly ISettings _settings;
     readonly ThrottledAction<string> _throttledSearch;
     bool _filterModsOnly;
     bool _filterScriptsOnly;
@@ -27,16 +29,17 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchText = string.Empty;
     bool _showAll = true;
 
-    public ProjectOverviewViewModel() : this(null!, null!, null!)
+    public ProjectOverviewViewModel() : this(null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
 
-    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService)
+    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService, ISettings settings)
     {
         _commonDialogs = commonDialogs;
         _projectState = projectState;
         _projectService = projectService;
+        _settings = settings;
         Projects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
@@ -55,6 +58,7 @@ public class ProjectOverviewViewModel : ViewModel
         else
         {
             LoadProjects();
+            RestoreSelectedProject();
         }
     }
 
@@ -155,6 +159,12 @@ public class ProjectOverviewViewModel : ViewModel
         // Toggle selection on clicked item
         project.IsSelected = !project.IsSelected;
 
+        // Save selected project path
+        if (project.IsSelected && project is ProjectModel model)
+            _settings.SetValue("LastSelectedProject", model.ProjectPath);
+        else if (!project.IsSelected)
+            _settings.SetValue("LastSelectedProject", string.Empty);
+
         UpdateState();
     }
 
@@ -213,5 +223,19 @@ public class ProjectOverviewViewModel : ViewModel
         }
         
         ItemsSource = viewModels;
+    }
+
+    void RestoreSelectedProject()
+    {
+        var lastSelectedPath = _settings.GetValue("LastSelectedProject", string.Empty);
+        if (string.IsNullOrEmpty(lastSelectedPath))
+            return;
+
+        var project = _projects.FirstOrDefault(p => p is ProjectModel model && model.ProjectPath == lastSelectedPath);
+        if (project != null)
+        {
+            project.IsSelected = true;
+            UpdateState();
+        }
     }
 }
