@@ -17,12 +17,14 @@ public class ProjectActionsViewModel : ViewModel
     readonly IProjectState _projectState;
     readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
+    readonly IProjectService _projectService;
 
-    public ProjectActionsViewModel(IProjectState projectState, IShell shell, ICommonDialogs dialogs)
+    public ProjectActionsViewModel(IProjectState projectState, IShell shell, ICommonDialogs dialogs, IProjectService projectService)
     {
         _projectState = projectState;
         _shell = shell;
         _dialogs = dialogs;
+        _projectService = projectService;
         _projectState.StateChanged += OnProjectStateChanged;
         _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
         Actions = new ReadOnlyObservableCollection<ActionItem>(_actions);
@@ -54,7 +56,10 @@ public class ProjectActionsViewModel : ViewModel
         if (_projectState.CanMakeMod)
             availableTypes.Add(ProjectType.Mod);
         if (availableTypes.Count > 0)
-            allActions.Add(new CreateProjectAction(availableTypes));
+        {
+            var addExistingAction = new AddExistingProjectAction(_shell, _dialogs, _projectService);
+            allActions.Add(new CreateProjectAction(availableTypes, addExistingAction));
+        }
 
         // Project-specific actions
         if (_projectState.SelectedProject is ProjectModel projectModel)

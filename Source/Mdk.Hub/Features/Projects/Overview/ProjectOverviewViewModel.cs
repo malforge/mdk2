@@ -14,7 +14,9 @@ namespace Mdk.Hub.Features.Projects.Overview;
 [ViewModelFor<ProjectOverviewView>]
 public class ProjectOverviewViewModel : ViewModel
 {
+    readonly ICommonDialogs _commonDialogs;
     readonly ObservableCollection<ProjectListItem> _projects = new();
+    readonly IProjectService _projectService;
     readonly IProjectState _projectState;
     readonly ThrottledAction<string> _throttledSearch;
     bool _filterModsOnly;
@@ -25,26 +27,35 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchText = string.Empty;
     bool _showAll = true;
 
-    public ProjectOverviewViewModel() : this(null!, null!)
+    public ProjectOverviewViewModel() : this(null!, null!, null!)
     {
         IsDesignMode = true;
     }
 
-    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState)
+    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService)
     {
+        _commonDialogs = commonDialogs;
         _projectState = projectState;
+        _projectService = projectService;
         Projects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
         SelectProjectCommand = new RelayCommand<ProjectListItem>(SelectProject);
 
-        // Sample data for design-time
-        ItemsSource = new ProjectListItem[]
+        if (IsDesignMode)
         {
-            new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", DateTimeOffset.Now, commonDialogs),
-            new ProjectModel(ProjectType.Mod, "My Mod", DateTimeOffset.Now.AddDays(-1), commonDialogs),
-            new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", DateTimeOffset.Now.AddDays(-2), commonDialogs)
-        };
+            // Sample data for design-time
+            ItemsSource = new ProjectListItem[]
+            {
+                new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", DateTimeOffset.Now, commonDialogs),
+                new ProjectModel(ProjectType.Mod, "My Mod", DateTimeOffset.Now.AddDays(-1), commonDialogs),
+                new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", DateTimeOffset.Now.AddDays(-2), commonDialogs)
+            };
+        }
+        else
+        {
+            LoadProjects();
+        }
     }
 
     public bool IsDesignMode { get; private set; }
@@ -189,5 +200,18 @@ public class ProjectOverviewViewModel : ViewModel
             item.SelectCommand = SelectProjectCommand;
             _projects.Add(item);
         }
+    }
+
+    void LoadProjects()
+    {
+        var projects = _projectService.GetProjects();
+        var viewModels = new List<ProjectListItem>();
+        
+        foreach (var project in projects)
+        {
+            viewModels.Add(new ProjectModel(project.Type, project.Name, project.LastReferenced, _commonDialogs));
+        }
+        
+        ItemsSource = viewModels;
     }
 }

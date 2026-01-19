@@ -40,7 +40,7 @@
         <!-- Create Project Action -->
         <DataTemplate DataType="actions:CreateProjectAction">
             <StackPanel Spacing="8" Margin="16,0">
-                <TextBlock Classes="section-title" Text="Create New Project" />
+                <TextBlock Classes="section-title" Text="Projects" />
                 <ItemsControl ItemsSource="{Binding Options}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -61,6 +61,28 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                
+                <!-- Add Existing Project -->
+                <Border Classes="create-hover-row" 
+                        Padding="10" 
+                        CornerRadius="4" 
+                        Cursor="Hand"
+                        Tapped="OnAddExistingProjectTapped"
+                        Tag="{Binding AddExistingAction}">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <i:Icon Value="fa-solid fa-folder-open" 
+                                FontSize="18" 
+                                Width="32" 
+                                Height="32" 
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                            <TextBlock Text="Add Existing Project" FontSize="13" FontWeight="Medium" />
+                            <TextBlock Text="Open an existing MDK2 project" FontSize="11" Foreground="#FF999999" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </StackPanel>
         </DataTemplate>
 

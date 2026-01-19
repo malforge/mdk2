@@ -1,12 +1,46 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.Projects.Configuration;
+using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Utility;
 
-namespace Mdk.Hub.Features.Projects.Configuration;
+namespace Mdk.Hub.Features.Projects;
 
-[Dependency<IProjectConfigurationService>]
-public class ProjectConfigurationService : IProjectConfigurationService
+[Dependency<IProjectService>]
+public class ProjectService : IProjectService
 {
+    readonly ProjectRegistry _registry;
+
+    public ProjectService()
+    {
+        _registry = new ProjectRegistry();
+    }
+
+    public IReadOnlyList<ProjectInfo> GetProjects()
+    {
+        return _registry.GetProjects();
+    }
+
+    public bool TryAddProject(string projectPath, out string? errorMessage)
+    {
+        if (ProjectDetector.TryDetectProject(projectPath, out var projectInfo))
+        {
+            _registry.AddOrUpdateProject(projectInfo!);
+            errorMessage = null;
+            return true;
+        }
+
+        errorMessage = "The selected project is not a valid MDK2 project. MDK2 projects must reference either Mal.Mdk2.PbPackager or Mal.Mdk2.ModPackager.";
+        return false;
+    }
+
+    public void RemoveProject(string projectPath)
+    {
+        _registry.RemoveProject(projectPath);
+    }
+
     public ProjectConfiguration? LoadConfiguration(string projectPath)
     {
         if (string.IsNullOrWhiteSpace(projectPath) || !File.Exists(projectPath))

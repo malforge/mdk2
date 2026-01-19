@@ -6,14 +6,16 @@ namespace Mdk.Hub.Features.Projects.Actions;
 
 public class CreateProjectAction : ActionItem
 {
-    public CreateProjectAction(IReadOnlyList<ProjectType> availableTypes)
+    public CreateProjectAction(IReadOnlyList<ProjectType> availableTypes, AddExistingProjectAction addExistingAction)
     {
         AvailableTypes = availableTypes;
+        AddExistingAction = addExistingAction;
         Options = availableTypes.Select(t => new CreateOption(t)).ToList();
     }
 
     public IReadOnlyList<ProjectType> AvailableTypes { get; }
     public IReadOnlyList<CreateOption> Options { get; }
+    public AddExistingProjectAction AddExistingAction { get; }
 
     public override string? Category => null; // Global actions, no category
 
