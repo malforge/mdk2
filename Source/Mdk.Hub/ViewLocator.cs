@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub;
@@ -12,6 +13,10 @@ public class ViewLocator : IDataTemplate
     {
         if (param is null)
             return null;
+
+        // Special case for ToastViewModel - use ToastView
+        if (param is ToastViewModel)
+            return new ToastView { DataContext = param };
 
         var viewModelForAttribute = param.GetType().GetCustomAttribute<ViewModelForAttribute>();
         if (viewModelForAttribute is null)
@@ -27,5 +32,5 @@ public class ViewLocator : IDataTemplate
         return view;
     }
 
-    public bool Match(object? data) => data is ViewModel;
+    public bool Match(object? data) => data is ViewModel || data is ToastViewModel;
 }

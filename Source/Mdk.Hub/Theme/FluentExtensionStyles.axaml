@@ -14,20 +14,64 @@
         </Setter>
     </Style>
     
-    <!-- Override default control colors -->
+    <!-- Default Button Style - clean blue buttons like easter egg -->
     <Style Selector="Button">
-        <Setter Property="Background" Value="#CC1a1a2e" />
-        <Setter Property="BorderBrush" Value="#33ffffff" />
-        <Setter Property="Foreground" Value="#FFe0e0e0" />
+        <Setter Property="Background" Value="#FF007bff" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="#FFffffff" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Cursor" Value="Hand" />
         
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#DD16213e" />
-            <Setter Property="BorderBrush" Value="#FF007bff" />
+            <Setter Property="Background" Value="#FF0056b3" />
         </Style>
         
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#FF16213e" />
+            <Setter Property="Background" Value="#FF004494" />
         </Style>
+    </Style>
+    
+    <!-- Subtle variant for less prominent actions -->
+    <Style Selector="Button.subtle">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#FFe0e0e0" />
+        <Setter Property="FontWeight" Value="Normal" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#22ffffff" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33ffffff" />
+        </Style>
+    </Style>
+    
+    <!-- Danger variant for destructive actions -->
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="#FFdc3545" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#FFc82333" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#FFbd2130" />
+        </Style>
+    </Style>
+    
+    <!-- Subtle danger for icon buttons - override solid red background -->
+    <Style Selector="Button.subtle.danger">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    
+    <Style Selector="Button.subtle.danger:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#22ff4444" />
+    </Style>
+    
+    <Style Selector="Button.subtle.danger:pressed /template/ ContentPresenter">
+        <Setter Property="Background" Value="#33ff4444" />
     </Style>
     
     <Style Selector="TextBox">

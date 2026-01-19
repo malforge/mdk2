@@ -1,27 +1,42 @@
 using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using Avalonia;
+using Avalonia.Platform.Storage;
+using CommunityToolkit.Mvvm.Input;
+using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
 public class ProjectInfoAction : ActionItem
 {
-    public ProjectInfoAction(ProjectModel project)
+    readonly IProjectService _projectService;
+    readonly ICommonDialogs _commonDialogs;
+    DateTimeOffset? _lastChanged;
+    bool _isDeployed;
+    DateTimeOffset? _lastDeployed;
+    int? _scriptSizeCharacters;
+    bool _isLoading = true;
+    string? _outputPath;
+
+    public ProjectInfoAction(ProjectModel project, IProjectService projectService, ICommonDialogs commonDialogs)
     {
         Project = project;
+        _projectService = projectService;
+        _commonDialogs = commonDialogs;
         
-        // TODO: Replace with actual async file scanning
-        LastChanged = DateTimeOffset.Now.AddHours(-3);
+        OpenProjectFolderCommand = new RelayCommand(OpenProjectFolder, CanOpenProjectFolder);
+        OpenOutputFolderCommand = new RelayCommand(OpenOutputFolder, CanOpenOutputFolder);
+        OpenInIdeCommand = new RelayCommand(OpenInIde, CanOpenInIde);
+        CopyScriptCommand = new AsyncRelayCommand(CopyScriptAsync, CanCopyScript);
         
-        // TODO: Replace with actual deployment detection
-        IsDeployed = true;
-        LastDeployed = IsDeployed ? DateTimeOffset.Now.AddHours(-5) : null;
-        
-        // TODO: Replace with actual script size calculation (for scripts only)
-        if (IsScript)
-        {
-            // ScriptSizeCharacters = 87543; // Fake: under limit
-            ScriptSizeCharacters = 105000; // Fake: over limit for testing
-        }
+        // Load data asynchronously
+        _ = LoadProjectDataAsync(projectService);
     }
 
     public ProjectModel Project { get; }
@@ -32,36 +47,227 @@ public class ProjectInfoAction : ActionItem
         ? "Programmable Block Script" 
         : "Mod";
 
-    /// <summary>
-    /// When the project files were last modified (placeholder/fake for now).
-    /// </summary>
-    public DateTimeOffset LastChanged { get; }
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set => SetProperty(ref _isLoading, value);
+    }
 
-    /// <summary>
-    /// Whether the project has been deployed to the output folder (placeholder/fake for now).
-    /// </summary>
-    public bool IsDeployed { get; }
+    public DateTimeOffset? LastChanged
+    {
+        get => _lastChanged;
+        private set => SetProperty(ref _lastChanged, value);
+    }
 
-    /// <summary>
-    /// When the project was last deployed (null if not deployed, placeholder/fake for now).
-    /// </summary>
-    public DateTimeOffset? LastDeployed { get; }
+    public bool IsDeployed
+    {
+        get => _isDeployed;
+        private set
+        {
+            if (SetProperty(ref _isDeployed, value))
+            {
+                ((RelayCommand)OpenOutputFolderCommand).NotifyCanExecuteChanged();
+                ((AsyncRelayCommand)CopyScriptCommand).NotifyCanExecuteChanged();
+            }
+        }
+    }
 
-    /// <summary>
-    /// Size of the compiled script in characters (null for mods, placeholder/fake for now).
-    /// </summary>
-    public int? ScriptSizeCharacters { get; }
+    public DateTimeOffset? LastDeployed
+    {
+        get => _lastDeployed;
+        private set => SetProperty(ref _lastDeployed, value);
+    }
 
-    /// <summary>
-    /// Whether the script exceeds Space Engineers' 100k character limit.
-    /// </summary>
+    public int? ScriptSizeCharacters
+    {
+        get => _scriptSizeCharacters;
+        private set
+        {
+            if (SetProperty(ref _scriptSizeCharacters, value))
+                OnPropertyChanged(nameof(IsScriptTooLarge));
+        }
+    }
+
     public bool IsScriptTooLarge => ScriptSizeCharacters.HasValue && ScriptSizeCharacters.Value > 100_000;
+
+    public ICommand OpenProjectFolderCommand { get; }
+    public ICommand OpenOutputFolderCommand { get; }
+    public ICommand OpenInIdeCommand { get; }
+    public ICommand CopyScriptCommand { get; }
 
     public override string? Category => "Project";
 
     public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
     {
-        // Only show if a project is selected
         return selectedProject is ProjectModel;
+    }
+
+    bool CanOpenProjectFolder()
+    {
+        return File.Exists(Project.ProjectPath);
+    }
+
+    void OpenProjectFolder()
+    {
+        if (!CanOpenProjectFolder())
+            return;
+
+        var folder = Path.GetDirectoryName(Project.ProjectPath);
+        if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = folder,
+                UseShellExecute = true
+            });
+        }
+    }
+
+    bool CanOpenOutputFolder()
+    {
+        return IsDeployed && !string.IsNullOrEmpty(_outputPath) && Directory.Exists(_outputPath);
+    }
+
+    void OpenOutputFolder()
+    {
+        if (!CanOpenOutputFolder())
+            return;
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = _outputPath!,
+            UseShellExecute = true
+        });
+    }
+
+    bool CanOpenInIde()
+    {
+        return File.Exists(Project.ProjectPath);
+    }
+
+    void OpenInIde()
+    {
+        if (!CanOpenInIde())
+            return;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = Project.ProjectPath,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            // Silently fail - user's system might not have a default handler for .csproj
+            Debug.WriteLine($"Failed to open project in IDE: {ex.Message}");
+        }
+    }
+
+    bool CanCopyScript()
+    {
+        return IsScript && IsDeployed && !string.IsNullOrEmpty(_outputPath);
+    }
+
+    async Task CopyScriptAsync()
+    {
+        if (!CanCopyScript())
+            return;
+
+        try
+        {
+            var scriptFile = Path.Combine(_outputPath!, "Script.cs");
+            if (File.Exists(scriptFile))
+            {
+                var content = await File.ReadAllTextAsync(scriptFile);
+                
+                // Use TopLevel to get clipboard
+                var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                    ? Avalonia.Controls.TopLevel.GetTopLevel(desktop.MainWindow)
+                    : null;
+                
+                if (topLevel?.Clipboard != null)
+                {
+                    await topLevel.Clipboard.SetTextAsync(content);
+                    _commonDialogs.ShowToast($"Script copied ({content.Length:N0} characters)");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _commonDialogs.ShowAsync(new ConfirmationMessage
+            {
+                Title = "Copy Failed",
+                Message = $"Failed to copy script to clipboard: {ex.Message}",
+                OkText = "OK",
+                CancelText = "Close"
+            });
+        }
+    }
+
+    async Task LoadProjectDataAsync(IProjectService projectService)
+    {
+        try
+        {
+            await Task.Run(() =>
+            {
+                // Load last changed time from project file
+                if (File.Exists(Project.ProjectPath))
+                {
+                    LastChanged = File.GetLastWriteTime(Project.ProjectPath);
+                }
+
+                // Load configuration and check deployment
+                var config = projectService.LoadConfiguration(Project.ProjectPath);
+                if (config != null)
+                {
+                    var outputPath = config.GetResolvedOutputPath();
+                    _outputPath = outputPath;
+                    
+                    if (!string.IsNullOrEmpty(outputPath) && Directory.Exists(outputPath))
+                    {
+                        IsDeployed = true;
+                        
+                        // Get the most recent file write time in the output directory
+                        try
+                        {
+                            var files = Directory.GetFiles(outputPath, "*", SearchOption.AllDirectories);
+                            if (files.Length > 0)
+                            {
+                                var mostRecent = files.Max(f => File.GetLastWriteTime(f));
+                                LastDeployed = mostRecent;
+                            }
+                        }
+                        catch
+                        {
+                            // Ignore errors reading output directory
+                        }
+                    }
+
+                    // For scripts, try to load the deployed script size
+                    if (IsScript && !string.IsNullOrEmpty(outputPath))
+                    {
+                        try
+                        {
+                            var scriptFile = Path.Combine(outputPath, "Script.cs");
+                            if (File.Exists(scriptFile))
+                            {
+                                var content = File.ReadAllText(scriptFile);
+                                ScriptSizeCharacters = content.Length;
+                            }
+                        }
+                        catch
+                        {
+                            // Ignore errors reading script file
+                        }
+                    }
+                }
+            });
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }

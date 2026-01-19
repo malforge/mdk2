@@ -12,7 +12,7 @@
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Background" Value="{DynamicResource MessageBoxDangerBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderThickness" Value="2" />
             <Setter Property="Padding" Value="16" />
 
             <Style Selector="^ TextBlock">
@@ -24,13 +24,56 @@
                 <Style Selector="^.header">
                     <Setter Property="FontSize" Value="20" />
                     <Setter Property="FontWeight" Value="Bold" />
+                    <Setter Property="Foreground" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
                 </Style>
             </Style>
-            <Style Selector="^ Button">
-                <Setter Property="FontFamily" Value="Segoe UI" />
-            </Style>
+            
             <Style Selector="^ TextBox">
                 <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="Background" Value="#33000000" />
+                <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Foreground" Value="{DynamicResource MessageBoxDangerForegroundBrush}" />
+                <Setter Property="CaretBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
+                <Setter Property="SelectionBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
+                <Setter Property="SelectionForegroundBrush" Value="#FFffffff" />
+                
+                <Style Selector="^:pointerover /template/ Border#PART_BorderElement">
+                    <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
+                </Style>
+                
+                <Style Selector="^:focus /template/ Border#PART_BorderElement">
+                    <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </Style>
+            </Style>
+            
+            <Style Selector="^ Button">
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="Background" Value="{DynamicResource MessageBoxDangerBorderBrush}" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="Foreground" Value="#FFffffff" />
+                
+                <Style Selector="^:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="#FFc82333" />
+                </Style>
+                
+                <Style Selector="^:pressed /template/ ContentPresenter">
+                    <Setter Property="Background" Value="#FFbd2130" />
+                </Style>
+                
+                <Style Selector="^.cancel">
+                    <Setter Property="Background" Value="#44ffffff" />
+                    <Setter Property="Foreground" Value="{DynamicResource MessageBoxDangerForegroundBrush}" />
+                    
+                    <Style Selector="^:pointerover /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#55ffffff" />
+                    </Style>
+                    
+                    <Style Selector="^:pressed /template/ ContentPresenter">
+                        <Setter Property="Background" Value="#66ffffff" />
+                    </Style>
+                </Style>
             </Style>
         </Style>
     </UserControl.Styles>
@@ -64,6 +107,7 @@
                         <DataTemplate x:DataType="local:IMessageBoxChoice">
                             <Button Content="{Binding Text}"
                                     Command="{Binding Command}"
+                                    Classes.cancel="{Binding IsCancel}"
                                     IsDefault="{Binding IsDefault}"
                                     IsCancel="{Binding IsCancel}"
                                     MinWidth="75" />

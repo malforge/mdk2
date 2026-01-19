@@ -47,9 +47,9 @@ public class ProjectOverviewViewModel : ViewModel
             // Sample data for design-time
             ItemsSource = new ProjectListItem[]
             {
-                new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", DateTimeOffset.Now, commonDialogs),
-                new ProjectModel(ProjectType.Mod, "My Mod", DateTimeOffset.Now.AddDays(-1), commonDialogs),
-                new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", DateTimeOffset.Now.AddDays(-2), commonDialogs)
+                new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", @"C:\Projects\MyScript\MyScript.csproj", DateTimeOffset.Now, commonDialogs, null!),
+                new ProjectModel(ProjectType.Mod, "My Mod", @"C:\Projects\MyMod\MyMod.csproj", DateTimeOffset.Now.AddDays(-1), commonDialogs, null!),
+                new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", @"C:\Projects\AnotherScript\AnotherScript.csproj", DateTimeOffset.Now.AddDays(-2), commonDialogs, null!)
             };
         }
         else
@@ -209,7 +209,7 @@ public class ProjectOverviewViewModel : ViewModel
         
         foreach (var project in projects)
         {
-            viewModels.Add(new ProjectModel(project.Type, project.Name, project.LastReferenced, _commonDialogs));
+            viewModels.Add(new ProjectModel(project.Type, project.Name, project.ProjectPath, project.LastReferenced, _commonDialogs, _projectService));
         }
         
         ItemsSource = viewModels;

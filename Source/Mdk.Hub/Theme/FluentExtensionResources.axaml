@@ -53,9 +53,10 @@
             <Color x:Key="SystemAccentColorDark1">#FF0056b3</Color>
             
             <!-- Danger colors (keep existing) -->
-            <SolidColorBrush x:Key="MessageBoxDangerBackgroundBrush" Color="#FF2C1B1B" />
-            <SolidColorBrush x:Key="MessageBoxDangerBorderBrush" Color="#FF803232" />
+            <SolidColorBrush x:Key="MessageBoxDangerBackgroundBrush" Color="#DD2a1a1a" />
+            <SolidColorBrush x:Key="MessageBoxDangerBorderBrush" Color="#FFdc3545" />
             <SolidColorBrush x:Key="MessageBoxDangerForegroundBrush" Color="#FFe0e0e0" />
+            <SolidColorBrush x:Key="MessageBoxDangerAccentBrush" Color="#FFff6b6b" />
             <SolidColorBrush x:Key="MessageBoxDangerIconBrush" Color="#FFD13438" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>

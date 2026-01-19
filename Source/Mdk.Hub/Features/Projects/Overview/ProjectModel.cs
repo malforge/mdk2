@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
@@ -9,16 +10,20 @@ namespace Mdk.Hub.Features.Projects.Overview;
 public class ProjectModel : ProjectListItem
 {
     readonly ICommonDialogs _commonDialogs;
+    readonly IProjectService? _projectService;
     readonly AsyncRelayCommand _deleteCommand;
     DateTimeOffset _lastReferenced;
     string _name;
+    string _projectPath;
     ProjectType _type;
 
-    public ProjectModel(ProjectType type, string name, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs)
+    public ProjectModel(ProjectType type, string name, string projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)
     {
         _lastReferenced = lastReferenced;
         _commonDialogs = commonDialogs;
+        _projectService = projectService;
         _name = name;
+        _projectPath = projectPath;
         _type = type;
         _deleteCommand = new AsyncRelayCommand(DeleteAsync, CanDelete);
     }
@@ -33,6 +38,12 @@ public class ProjectModel : ProjectListItem
     {
         get => _name;
         private set => SetProperty(ref _name, value);
+    }
+
+    public string ProjectPath
+    {
+        get => _projectPath;
+        private set => SetProperty(ref _projectPath, value);
     }
 
     public DateTimeOffset LastReferenced
@@ -60,7 +71,29 @@ public class ProjectModel : ProjectListItem
             });
         if (!result)
             return;
-        // TODO delete
+
+        try
+        {
+            // Delete the project directory
+            var projectDirectory = Path.GetDirectoryName(ProjectPath);
+            if (!string.IsNullOrEmpty(projectDirectory) && Directory.Exists(projectDirectory))
+            {
+                Directory.Delete(projectDirectory, recursive: true);
+            }
+
+            // Remove from registry
+            _projectService?.RemoveProject(ProjectPath);
+        }
+        catch (Exception ex)
+        {
+            await _commonDialogs.ShowAsync(new ConfirmationMessage
+            {
+                Title = "Delete Failed",
+                Message = $"Failed to delete project: {ex.Message}",
+                OkText = "OK",
+                CancelText = "Close"
+            });
+        }
     }
 
     public override bool MatchesFilter(string searchText, bool mustBeMod, bool mustBeScript)

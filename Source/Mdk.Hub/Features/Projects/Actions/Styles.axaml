@@ -30,45 +30,17 @@
         <Setter Property="Foreground" Value="#FFe0e0e0" />
     </Style>
 
-    <!-- Toolbar button -->
+    <!-- Toolbar button - uses subtle style with padding -->
     <Style Selector="Button.toolbar-button">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="10,8" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="Foreground" Value="#FFe0e0e0" />
-        <Setter Property="Cursor" Value="Hand" />
-    </Style>
-    
-    <Style Selector="Button.toolbar-button:pointerover">
-        <Setter Property="Background" Value="#22ffffff" />
-    </Style>
-    
-    <Style Selector="Button.toolbar-button:pressed">
-        <Setter Property="Background" Value="#33ffffff" />
-    </Style>
-    
-    <Style Selector="Button.toolbar-button.danger:pointerover">
-        <Setter Property="Background" Value="#22ff0000" />
-        <Setter Property="Foreground" Value="#FFff6666" />
-    </Style>
-    
-    <Style Selector="Button.toolbar-button.danger:pressed">
-        <Setter Property="Background" Value="#33ff0000" />
     </Style>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons - uses subtle style -->
     <Style Selector="Button.action-button">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-    </Style>
-    
-    <Style Selector="Button.action-button:pointerover">
-        <Setter Property="Background" Value="#22ffffff" />
     </Style>
 
 </Styles>

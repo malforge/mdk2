@@ -21,13 +21,14 @@ namespace Mdk.Hub.Features.Shell;
 [ViewModelFor<ShellWindow>]
 public class ShellViewModel : ViewModel
 {
+    readonly IShell _shell;
     ViewModel? _currentView;
     ViewModel? _navigationView;
 
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -35,11 +36,13 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Initializes a new instance of the <see cref="ShellViewModel" /> for runtime usage.
     /// </summary>
+    /// <param name="shell">Shell service for access to toast messages.</param>
     /// <param name="settings">Application settings service.</param>
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
-    public ShellViewModel(ISettings settings, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel)
+    public ShellViewModel(IShell shell, ISettings settings, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel)
     {
+        _shell = shell;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
@@ -95,6 +98,11 @@ public class ShellViewModel : ViewModel
     ///     on top of the main application content.
     /// </remarks>
     public ObservableCollection<ViewModel> OverlayViews { get; } = new();
+
+    /// <summary>
+    ///     Gets the collection of toast messages displayed non-blockingly.
+    /// </summary>
+    public ObservableCollection<ToastMessage> ToastMessages => IsDesignMode ? new() : _shell.ToastMessages;
 
     void OnOverlayViewsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => OnPropertyChanged(nameof(HasOverlays));
 }

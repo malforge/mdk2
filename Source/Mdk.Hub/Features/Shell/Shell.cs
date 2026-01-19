@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Settings;
 
@@ -15,6 +17,8 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
 
     public event EventHandler? WindowFocusGained;
     public event EventHandler? EasterEggActiveChanged;
+
+    public ObservableCollection<ToastMessage> ToastMessages { get; } = new();
 
     public bool IsEasterEggActive
     {
@@ -53,6 +57,24 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
 
         model.Dismissed += onDismissed;
         _viewModel.Value.OverlayViews.Add(model);
+    }
+
+    public void ShowToast(string message, int durationMs = 3000)
+    {
+        var toast = new ToastMessage { Message = message };
+        ToastMessages.Add(toast);
+        
+        // Start dismiss animation before removal
+        Task.Delay(durationMs - 200).ContinueWith(_ =>
+        {
+            toast.IsDismissing = true;
+        }, TaskScheduler.FromCurrentSynchronizationContext());
+        
+        // Remove after fade-out animation completes
+        Task.Delay(durationMs).ContinueWith(_ =>
+        {
+            ToastMessages.Remove(toast);
+        }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
     public void RaiseWindowFocusGained()

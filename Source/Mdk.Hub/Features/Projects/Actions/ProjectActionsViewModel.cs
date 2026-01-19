@@ -64,7 +64,7 @@ public class ProjectActionsViewModel : ViewModel
         // Project-specific actions
         if (_projectState.SelectedProject is ProjectModel projectModel)
         {
-            allActions.Add(new ProjectInfoAction(projectModel));
+            allActions.Add(new ProjectInfoAction(projectModel, _projectService, _dialogs));
         }
 
         // Easter egg dismiss (always add, will filter by ShouldShow)

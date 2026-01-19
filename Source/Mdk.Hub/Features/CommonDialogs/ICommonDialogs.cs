@@ -6,6 +6,7 @@ public interface ICommonDialogs
 {
     Task<bool> ShowAsync(ConfirmationMessage message);
     Task<bool> ShowAsync(KeyPhraseValidationMessage message);
+    void ShowToast(string message, int durationMs = 3000);
 }
 
 public readonly struct ConfirmationMessage()

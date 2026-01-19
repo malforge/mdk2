@@ -151,18 +151,30 @@
                 <!-- Action toolbar -->
                 <Border Classes="action-toolbar" Padding="8" CornerRadius="4" Background="#11ffffff">
                     <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
-                        <Button Classes="toolbar-button" ToolTip.Tip="Open in IDE">
+                        <Button Classes="toolbar-button subtle" ToolTip.Tip="Open in IDE"
+                                Command="{Binding OpenInIdeCommand}">
                             <i:Icon Value="fa-solid fa-code" FontSize="16" />
                         </Button>
-                        <Button Classes="toolbar-button" ToolTip.Tip="Options">
+                        <Border Width="1" Height="24" Background="#33ffffff" Margin="4,0" />
+                        <Button Classes="toolbar-button subtle" ToolTip.Tip="Open Project Folder"
+                                Command="{Binding OpenProjectFolderCommand}">
+                            <i:Icon Value="fa-solid fa-folder" FontSize="16" />
+                        </Button>
+                        <Button Classes="toolbar-button subtle" ToolTip.Tip="Open Output Folder"
+                                Command="{Binding OpenOutputFolderCommand}">
+                            <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
+                        </Button>
+                        <Border Width="1" Height="24" Background="#33ffffff" Margin="4,0" />
+                        <Button Classes="toolbar-button subtle" ToolTip.Tip="Options">
                             <i:Icon Value="fa-solid fa-cog" FontSize="16" />
                         </Button>
-                        <Button Classes="toolbar-button" ToolTip.Tip="Copy Script to Clipboard"
+                        <Button Classes="toolbar-button subtle" ToolTip.Tip="Copy Script to Clipboard"
+                                Command="{Binding CopyScriptCommand}"
                                 IsVisible="{Binding IsScript}">
                             <i:Icon Value="fa-solid fa-copy" FontSize="16" />
                         </Button>
                         <Border Width="1" Height="24" Background="#33ffffff" Margin="4,0" />
-                        <Button Classes="toolbar-button danger" ToolTip.Tip="Delete Project"
+                        <Button Classes="toolbar-button subtle danger" ToolTip.Tip="Delete Project"
                                 Command="{Binding Project.DeleteCommand}">
                             <i:Icon Value="fa-solid fa-trash" FontSize="16" />
                         </Button>
@@ -173,7 +185,7 @@
 
         <!-- Project Action Button -->
         <DataTemplate DataType="actions:ProjectAction">
-            <Button Classes="action-button" Content="{Binding Title}" HorizontalAlignment="Stretch" Margin="16,0" />
+            <Button Classes="action-button subtle" Content="{Binding Title}" HorizontalAlignment="Stretch" Margin="16,0" />
         </DataTemplate>
     </UserControl.DataTemplates>
 

@@ -62,4 +62,9 @@ public class CommonDialogs(IShell shell) : ICommonDialogs
         await _shell.ShowOverlayAsync(model);
         return (bool)(model.SelectedValue ?? false);
     }
+
+    public void ShowToast(string message, int durationMs = 3000)
+    {
+        _shell.ShowToast(message, durationMs);
+    }
 }

@@ -47,6 +47,8 @@
             <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns" Width="4" />
             <ContentControl Grid.Column="2" Content="{Binding CurrentView}" />
         </Grid>
+        
+        <!-- Overlay Layer (blocking dialogs) -->
         <ItemsControl Classes="overlay-content" 
                       Grid.Column="0"
                       Grid.Row="0"
@@ -57,6 +59,80 @@
                     <Grid />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
+        </ItemsControl>
+        
+        <!-- Toast Layer (non-blocking) -->
+        <ItemsControl ItemsSource="{Binding ToastMessages}"
+                      IsHitTestVisible="False"
+                      VerticalAlignment="Bottom"
+                      HorizontalAlignment="Center"
+                      Margin="0,0,0,40">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Spacing="8" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:ToastMessage">
+                    <Border Classes="toast"
+                            Classes.dismissing="{Binding IsDismissing}"
+                            Background="#FF2a2416"
+                            BorderBrush="#FFf5a623"
+                            BorderThickness="2"
+                            CornerRadius="8"
+                            Padding="16,12"
+                            BoxShadow="0 4 20 0 #AA000000"
+                            HorizontalAlignment="Center"
+                            RenderTransformOrigin="50%,50%">
+                        <Border.RenderTransform>
+                            <ScaleTransform />
+                        </Border.RenderTransform>
+                        <Border.Styles>
+                            <!-- Entry animation -->
+                            <Style Selector="Border.toast">
+                                <Style.Animations>
+                                    <Animation Duration="0:0:0.2" FillMode="Forward">
+                                        <KeyFrame Cue="0%">
+                                            <Setter Property="Opacity" Value="0" />
+                                            <Setter Property="ScaleTransform.ScaleX" Value="0.8" />
+                                            <Setter Property="ScaleTransform.ScaleY" Value="0.8" />
+                                        </KeyFrame>
+                                        <KeyFrame Cue="100%">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Setter Property="ScaleTransform.ScaleX" Value="1" />
+                                            <Setter Property="ScaleTransform.ScaleY" Value="1" />
+                                        </KeyFrame>
+                                    </Animation>
+                                </Style.Animations>
+                            </Style>
+                            <!-- Exit animation -->
+                            <Style Selector="Border.toast.dismissing">
+                                <Style.Animations>
+                                    <Animation Duration="0:0:0.2" FillMode="Forward">
+                                        <KeyFrame Cue="0%">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Setter Property="ScaleTransform.ScaleX" Value="1" />
+                                            <Setter Property="ScaleTransform.ScaleY" Value="1" />
+                                        </KeyFrame>
+                                        <KeyFrame Cue="100%">
+                                            <Setter Property="Opacity" Value="0" />
+                                            <Setter Property="ScaleTransform.ScaleX" Value="0.8" />
+                                            <Setter Property="ScaleTransform.ScaleY" Value="0.8" />
+                                        </KeyFrame>
+                                    </Animation>
+                                </Style.Animations>
+                            </Style>
+                        </Border.Styles>
+                        <TextBlock Text="{Binding Message}"
+                                   Foreground="#FFffffff"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="400" />
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
         </ItemsControl>
     </Grid>
 
