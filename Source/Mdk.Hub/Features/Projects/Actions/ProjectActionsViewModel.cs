@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
@@ -11,13 +12,19 @@ namespace Mdk.Hub.Features.Projects.Actions;
 
 [Dependency]
 [ViewModelFor<ProjectActionsView>]
-public class ProjectActionsViewModel : ViewModel
+public partial class ProjectActionsViewModel : ViewModel
 {
     readonly ObservableCollection<ActionItem> _actions = new();
     readonly IProjectState _projectState;
     readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
     readonly IProjectService _projectService;
+    
+    [ObservableProperty]
+    bool _isOptionsDrawerOpen;
+    
+    [ObservableProperty]
+    string? _optionsProjectPath;
 
     public ProjectActionsViewModel(IProjectState projectState, IShell shell, ICommonDialogs dialogs, IProjectService projectService)
     {
@@ -33,6 +40,17 @@ public class ProjectActionsViewModel : ViewModel
     }
 
     public ReadOnlyObservableCollection<ActionItem> Actions { get; }
+    
+    public void ShowOptionsDrawer(string projectPath)
+    {
+        OptionsProjectPath = projectPath;
+        IsOptionsDrawerOpen = true;
+    }
+    
+    public void CloseOptionsDrawer()
+    {
+        IsOptionsDrawerOpen = false;
+    }
 
     void OnProjectStateChanged(object? sender, EventArgs e)
     {
@@ -64,7 +82,7 @@ public class ProjectActionsViewModel : ViewModel
         // Project-specific actions
         if (_projectState.SelectedProject is ProjectModel projectModel)
         {
-            allActions.Add(new ProjectInfoAction(projectModel, _projectService, _dialogs));
+            allActions.Add(new ProjectInfoAction(projectModel, _projectService, _dialogs, _shell, this));
         }
 
         // Easter egg dismiss (always add, will filter by ShouldShow)

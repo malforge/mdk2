@@ -9,6 +9,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions;
@@ -17,6 +18,8 @@ public class ProjectInfoAction : ActionItem
 {
     readonly IProjectService _projectService;
     readonly ICommonDialogs _commonDialogs;
+    readonly IShell _shell;
+    readonly ProjectActionsViewModel _actionsViewModel;
     DateTimeOffset? _lastChanged;
     bool _isDeployed;
     DateTimeOffset? _lastDeployed;
@@ -24,16 +27,19 @@ public class ProjectInfoAction : ActionItem
     bool _isLoading = true;
     string? _outputPath;
 
-    public ProjectInfoAction(ProjectModel project, IProjectService projectService, ICommonDialogs commonDialogs)
+    public ProjectInfoAction(ProjectModel project, IProjectService projectService, ICommonDialogs commonDialogs, IShell shell, ProjectActionsViewModel actionsViewModel)
     {
         Project = project;
         _projectService = projectService;
         _commonDialogs = commonDialogs;
+        _shell = shell;
+        _actionsViewModel = actionsViewModel;
         
         OpenProjectFolderCommand = new RelayCommand(OpenProjectFolder, CanOpenProjectFolder);
         OpenOutputFolderCommand = new RelayCommand(OpenOutputFolder, CanOpenOutputFolder);
         OpenInIdeCommand = new RelayCommand(OpenInIde, CanOpenInIde);
         CopyScriptCommand = new AsyncRelayCommand(CopyScriptAsync, CanCopyScript);
+        ShowOptionsCommand = new RelayCommand(ShowOptions, CanShowOptions);
         
         // Load data asynchronously
         _ = LoadProjectDataAsync(projectService);
@@ -94,6 +100,7 @@ public class ProjectInfoAction : ActionItem
     public ICommand OpenOutputFolderCommand { get; }
     public ICommand OpenInIdeCommand { get; }
     public ICommand CopyScriptCommand { get; }
+    public ICommand ShowOptionsCommand { get; }
 
     public override string? Category => "Project";
 
@@ -204,6 +211,16 @@ public class ProjectInfoAction : ActionItem
                 CancelText = "Close"
             });
         }
+    }
+
+    bool CanShowOptions() => File.Exists(Project.ProjectPath);
+
+    void ShowOptions()
+    {
+        if (!CanShowOptions())
+            return;
+
+        _actionsViewModel.ShowOptionsDrawer(Project.ProjectPath);
     }
 
     async Task LoadProjectDataAsync(IProjectService projectService)

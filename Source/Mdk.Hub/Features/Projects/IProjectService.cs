@@ -36,4 +36,18 @@ public interface IProjectService
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <returns>Merged project configuration, or null if no configuration files found.</returns>
     ProjectConfiguration? LoadConfiguration(string projectPath);
+
+    /// <summary>
+    /// Saves configuration changes to the specified INI file.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <param name="output">Output path value.</param>
+    /// <param name="binaryPath">Binary path value.</param>
+    /// <param name="minify">Minify value.</param>
+    /// <param name="minifyExtraOptions">MinifyExtraOptions value.</param>
+    /// <param name="trace">Trace value.</param>
+    /// <param name="ignores">Ignores value.</param>
+    /// <param name="namespaces">Namespaces value.</param>
+    /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
+    void SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
 }

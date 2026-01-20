@@ -119,4 +119,45 @@ public class ProjectService : IProjectService
         // Fall back to default
         return new ConfigurationValue<bool>(defaultValue, SourceLayer.Default);
     }
+
+    public void SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
+    {
+        if (string.IsNullOrWhiteSpace(projectPath))
+            throw new ArgumentNullException(nameof(projectPath));
+
+        var mainIniPath = IniFileFinder.FindMainIni(projectPath);
+        var localIniPath = IniFileFinder.FindLocalIni(projectPath);
+        var targetIniPath = saveToLocal ? localIniPath : mainIniPath;
+        
+        // Ensure we have a target path
+        if (string.IsNullOrWhiteSpace(targetIniPath))
+        {
+            // Create the path if it doesn't exist
+            var projectDir = Path.GetDirectoryName(projectPath);
+            if (string.IsNullOrWhiteSpace(projectDir))
+                throw new InvalidOperationException("Cannot determine project directory");
+                
+            targetIniPath = Path.Combine(projectDir, saveToLocal ? "mdk.local.ini" : "mdk.ini");
+        }
+
+        // Load the target INI file or create a new one
+        Ini targetIni;
+        if (File.Exists(targetIniPath) && Ini.TryParse(File.ReadAllText(targetIniPath), out var parsed))
+            targetIni = parsed;
+        else
+            targetIni = new Ini();
+
+        // Update values in the [mdk] section
+        targetIni = targetIni
+            .WithKey("mdk", "output", output)
+            .WithKey("mdk", "binarypath", binaryPath)
+            .WithKey("mdk", "minify", minify)
+            .WithKey("mdk", "minifyextraoptions", minifyExtraOptions)
+            .WithKey("mdk", "trace", trace)
+            .WithKey("mdk", "ignores", ignores)
+            .WithKey("mdk", "namespaces", namespaces);
+
+        // Write the file
+        File.WriteAllText(targetIniPath, targetIni.ToString());
+    }
 }

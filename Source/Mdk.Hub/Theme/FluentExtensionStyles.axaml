@@ -74,18 +74,6 @@
         <Setter Property="Background" Value="#33ff4444" />
     </Style>
     
-    <Style Selector="TextBox">
-        <Setter Property="Background" Value="#CC1a1a2e" />
-        <Setter Property="BorderBrush" Value="#33ffffff" />
-        <Setter Property="Foreground" Value="#FFe0e0e0" />
-        <Setter Property="SelectionBrush" Value="#FF007bff" />
-        <Setter Property="CaretBrush" Value="#FFe0e0e0" />
-        
-        <Style Selector="^:focus /template/ Border#BorderElement">
-            <Setter Property="BorderBrush" Value="#FF007bff" />
-        </Style>
-    </Style>
-    
     <Style Selector="RadioButton">
         <Setter Property="Foreground" Value="#FFe0e0e0" />
     </Style>

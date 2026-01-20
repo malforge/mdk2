@@ -41,6 +41,19 @@
             <SolidColorBrush x:Key="TextControlForeground">#FFe0e0e0</SolidColorBrush>
             <SolidColorBrush x:Key="TextControlSelectionHighlightColor">#FF007bff</SolidColorBrush>
             
+            <!-- Override FluentTheme ComboBox resources to match TextBox -->
+            <SolidColorBrush x:Key="ComboBoxBackground">#CC1a1a2e</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver">#DD16213e</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxBackgroundPressed">#DD16213e</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxBackgroundFocused">#DD16213e</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxBorderBrush">#33ffffff</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver">#44ffffff</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxBorderBrushPressed">#FF007bff</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxBorderBrushFocused">#FF007bff</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxForeground">#FFe0e0e0</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxForegroundFocused">#FFe0e0e0</SolidColorBrush>
+            <SolidColorBrush x:Key="ComboBoxForegroundPointerOver">#FFe0e0e0</SolidColorBrush>
+            
             <!-- Override general text/foreground -->
             <SolidColorBrush x:Key="TextFillColorPrimaryBrush">#FFe0e0e0</SolidColorBrush>
             <SolidColorBrush x:Key="TextFillColorSecondaryBrush">#FFd0d0d0</SolidColorBrush>

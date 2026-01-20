@@ -1,0 +1,308 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:options="clr-namespace:Mdk.Hub.Features.Projects.Options"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Mdk.Hub.Features.Projects.Options.ProjectOptionsView"
+             x:DataType="options:ProjectOptionsViewModel"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             Background="Transparent">
+    
+    <DockPanel LastChildFill="True">
+        <!-- Header at top -->
+        <TextBlock DockPanel.Dock="Top"
+                   Text="{Binding ProjectName, StringFormat='Options - {0}'}"
+                   Foreground="#FFe0e0e0"
+                   FontSize="20"
+                   FontWeight="Bold"
+                   Margin="0,0,0,16"/>
+        
+        <!-- Buttons at bottom -->
+        <StackPanel DockPanel.Dock="Bottom"
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,16,0,0">
+            <Button Content="Save"
+                    Command="{Binding SaveCommand}"
+                    MinWidth="75"/>
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    Classes="subtle"
+                    MinWidth="75"/>
+        </StackPanel>
+        
+        <!-- Tabs fill remaining space -->
+        <TabControl>
+                    <!-- Main INI Tab -->
+                    <TabItem Header="Main (mdk.ini)">
+                        <ScrollViewer>
+                            <StackPanel Spacing="12" Margin="0,12,12,0">
+                                <TextBlock Text="Shared project configuration, committed to source control. Settings here apply to all developers."
+                                           Foreground="#FF808080"
+                                           FontSize="10"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,8"/>
+                                
+                                <!-- Output Path -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Output Path"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    IsVisible="{Binding IsOutputOverridden}">
+                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Overridden in Local"
+                                                       Foreground="#FFffa500"
+                                                       FontSize="10"
+                                                       FontStyle="Italic"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBox Text="{Binding MainOutputPath}"
+                                             Watermark="auto"/>
+                                </StackPanel>
+                                
+                                <!-- Binary Path -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Binary Path"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    IsVisible="{Binding IsBinaryPathOverridden}">
+                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Overridden in Local"
+                                                       Foreground="#FFffa500"
+                                                       FontSize="10"
+                                                       FontStyle="Italic"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBox Text="{Binding MainBinaryPath}"
+                                             Watermark="auto"/>
+                                </StackPanel>
+                                
+                                <!-- Minify -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Minify"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    IsVisible="{Binding IsMinifyOverridden}">
+                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Overridden in Local"
+                                                       Foreground="#FFffa500"
+                                                       FontSize="10"
+                                                       FontStyle="Italic"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <ComboBox Grid.Column="0"
+                                                  SelectedItem="{Binding MainMinify}"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="None" Tag="none"/>
+                                            <ComboBoxItem Content="Trim" Tag="trim"/>
+                                            <ComboBoxItem Content="Strip Comments" Tag="stripcomments"/>
+                                            <ComboBoxItem Content="Lite" Tag="lite"/>
+                                            <ComboBoxItem Content="Full" Tag="full"/>
+                                        </ComboBox>
+                                        <ComboBox Grid.Column="2"
+                                                  SelectedItem="{Binding MainMinifyExtraOptions}"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="None" Tag="none"/>
+                                            <ComboBoxItem Content="No Member Trimming" Tag="nomembertrimming"/>
+                                        </ComboBox>
+                                    </Grid>
+                                </StackPanel>
+                                
+                                <!-- Trace -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Trace"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    IsVisible="{Binding IsTraceOverridden}">
+                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Overridden in Local"
+                                                       Foreground="#FFffa500"
+                                                       FontSize="10"
+                                                       FontStyle="Italic"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <ComboBox SelectedItem="{Binding MainTrace}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="Off" Tag="false"/>
+                                        <ComboBoxItem Content="On" Tag="true"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                
+                                <!-- Ignores -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Ignores"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    IsVisible="{Binding IsIgnoresOverridden}">
+                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Overridden in Local"
+                                                       Foreground="#FFffa500"
+                                                       FontSize="10"
+                                                       FontStyle="Italic"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBox Text="{Binding MainIgnores}"
+                                             AcceptsReturn="True"
+                                             Height="60"/>
+                                </StackPanel>
+                                
+                                <!-- Namespaces -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Namespaces"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    IsVisible="{Binding IsNamespacesOverridden}">
+                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Overridden in Local"
+                                                       Foreground="#FFffa500"
+                                                       FontSize="10"
+                                                       FontStyle="Italic"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBox Text="{Binding MainNamespaces}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                    
+                    <!-- Local INI Tab -->
+                    <TabItem Header="Local (mdk.local.ini)">
+                        <ScrollViewer>
+                            <StackPanel Spacing="12" Margin="0,12,12,0">
+                                <TextBlock Text="Local overrides, gitignored and not committed. Settings here override Main settings and are specific to your machine."
+                                           Foreground="#FF808080"
+                                           FontSize="10"
+                                           TextWrapping="Wrap"
+                                           Margin="0,0,0,8"/>
+                                
+                                <!-- Output Path -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Output Path"
+                                               Foreground="#FFb0b0b0"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding LocalOutputPath}"
+                                             Watermark="(inherits from Main)"/>
+                                </StackPanel>
+                                
+                                <!-- Binary Path -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Binary Path"
+                                               Foreground="#FFb0b0b0"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding LocalBinaryPath}"
+                                             Watermark="(inherits from Main)"/>
+                                </StackPanel>
+                                
+                                <!-- Minify -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Minify"
+                                               Foreground="#FFb0b0b0"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <ComboBox Grid.Column="0"
+                                                  SelectedItem="{Binding LocalMinify}"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="None" Tag="none"/>
+                                            <ComboBoxItem Content="Trim" Tag="trim"/>
+                                            <ComboBoxItem Content="Strip Comments" Tag="stripcomments"/>
+                                            <ComboBoxItem Content="Lite" Tag="lite"/>
+                                            <ComboBoxItem Content="Full" Tag="full"/>
+                                        </ComboBox>
+                                        <ComboBox Grid.Column="2"
+                                                  SelectedItem="{Binding LocalMinifyExtraOptions}"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBoxItem Content="None" Tag="none"/>
+                                            <ComboBoxItem Content="No Member Trimming" Tag="nomembertrimming"/>
+                                        </ComboBox>
+                                    </Grid>
+                                </StackPanel>
+                                
+                                <!-- Trace -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Trace"
+                                               Foreground="#FFb0b0b0"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                    <ComboBox SelectedItem="{Binding LocalTrace}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="Off" Tag="false"/>
+                                        <ComboBoxItem Content="On" Tag="true"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                
+                                <!-- Ignores -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Ignores"
+                                               Foreground="#FFb0b0b0"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding LocalIgnores}"
+                                             AcceptsReturn="True"
+                                             Height="60"
+                                             Watermark="(inherits from Main)"/>
+                                </StackPanel>
+                                
+                                <!-- Namespaces -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Namespaces"
+                                               Foreground="#FFb0b0b0"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding LocalNamespaces}"
+                                             Watermark="(inherits from Main)"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+    </DockPanel>
+</UserControl>

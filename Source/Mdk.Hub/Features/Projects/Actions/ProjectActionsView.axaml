@@ -6,6 +6,7 @@
              xmlns:overview="clr-namespace:Mdk.Hub.Features.Projects.Overview"
              xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+             xmlns:options="clr-namespace:Mdk.Hub.Features.Projects.Options"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
              x:Class="Mdk.Hub.Features.Projects.Actions.ProjectActionsView"
@@ -165,7 +166,8 @@
                             <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
                         </Button>
                         <Border Width="1" Height="24" Background="#33ffffff" Margin="4,0" />
-                        <Button Classes="toolbar-button subtle" ToolTip.Tip="Options">
+                        <Button Classes="toolbar-button subtle" ToolTip.Tip="Options"
+                                Command="{Binding ShowOptionsCommand}">
                             <i:Icon Value="fa-solid fa-cog" FontSize="16" />
                         </Button>
                         <Button Classes="toolbar-button subtle" ToolTip.Tip="Copy Script to Clipboard"
@@ -189,13 +191,61 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <ScrollViewer>
-        <ItemsControl ItemsSource="{Binding Actions}" Margin="0,16">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Spacing="8" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-        </ItemsControl>
-    </ScrollViewer>
+    <Grid>
+        <!-- Main content -->
+        <ScrollViewer>
+            <ItemsControl ItemsSource="{Binding Actions}" Margin="0,16">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="8" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+        
+        <!-- Options Drawer (slides in from right) -->
+        <Border x:Name="OptionsDrawer"
+                Background="#FF1a1a2e"
+                BorderBrush="#44ffffff"
+                BorderThickness="1,0,0,0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Margin="80,0,0,0"
+                Padding="16"
+                IsVisible="False"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <TranslateTransform X="1000"/>
+            </Border.RenderTransform>
+            
+            <Grid RowDefinitions="Auto,*">
+                <!-- Header with close button -->
+                <Border Grid.Row="0" 
+                        Background="#FF0f0f1a" 
+                        Padding="16,12"
+                        BorderBrush="#44ffffff"
+                        BorderThickness="0,0,0,1"
+                        Margin="-16,-16,-16,16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Project Options"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="#FFe0e0e0"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1"
+                                Classes="subtle"
+                                Content="✕"
+                                FontSize="16"
+                                Padding="8,4"
+                                Click="OnCloseDrawerClick"
+                                ToolTip.Tip="Close"/>
+                    </Grid>
+                </Border>
+                
+                <!-- Options content -->
+                <options:ProjectOptionsView x:Name="OptionsView" Grid.Row="1" DataContext="{x:Null}"/>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>
