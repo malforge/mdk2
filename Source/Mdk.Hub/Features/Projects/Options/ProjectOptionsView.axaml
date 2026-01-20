@@ -48,7 +48,7 @@
                                 
                                 <!-- Output Path -->
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Output Path"
                                                    Foreground="#FFb0b0b0"
@@ -66,13 +66,13 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
-                                    <TextBox Text="{Binding MainOutputPath}"
+                                    <TextBox Text="{Binding MainConfig.OutputPath}"
                                              Watermark="auto"/>
                                 </StackPanel>
                                 
                                 <!-- Binary Path -->
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Binary Path"
                                                    Foreground="#FFb0b0b0"
@@ -90,52 +90,75 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
-                                    <TextBox Text="{Binding MainBinaryPath}"
+                                    <TextBox Text="{Binding MainConfig.BinaryPath}"
                                              Watermark="auto"/>
                                 </StackPanel>
                                 
                                 <!-- Minify -->
-                                <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0"
-                                                   Text="Minify"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
-                                        <StackPanel Grid.Column="1" 
-                                                    Orientation="Horizontal" 
-                                                    Spacing="4"
-                                                    IsVisible="{Binding IsMinifyOverridden}">
-                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Overridden in Local"
-                                                       Foreground="#FFffa500"
-                                                       FontSize="10"
-                                                       FontStyle="Italic"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Grid>
-                                    <Grid ColumnDefinitions="*,8,*">
-                                        <ComboBox Grid.Column="0"
-                                                  SelectedItem="{Binding MainMinify}"
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="Minify"
+                                                       Foreground="#FFb0b0b0"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"/>
+                                            <StackPanel Grid.Column="1" 
+                                                        Orientation="Horizontal" 
+                                                        Spacing="4"
+                                                        IsVisible="{Binding IsMinifyOverridden}">
+                                                <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Overridden in Local"
+                                                           Foreground="#FFffa500"
+                                                           FontSize="10"
+                                                           FontStyle="Italic"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyOptionsList}"
+                                                  SelectedItem="{Binding MainConfig.Minify}"
                                                   HorizontalAlignment="Stretch">
-                                            <ComboBoxItem Content="None" Tag="none"/>
-                                            <ComboBoxItem Content="Trim" Tag="trim"/>
-                                            <ComboBoxItem Content="Strip Comments" Tag="stripcomments"/>
-                                            <ComboBoxItem Content="Lite" Tag="lite"/>
-                                            <ComboBoxItem Content="Full" Tag="full"/>
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
                                         </ComboBox>
-                                        <ComboBox Grid.Column="2"
-                                                  SelectedItem="{Binding MainMinifyExtraOptions}"
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="Minify Extra Options"
+                                                       Foreground="#FFb0b0b0"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"/>
+                                            <StackPanel Grid.Column="1" 
+                                                        Orientation="Horizontal" 
+                                                        Spacing="4"
+                                                        IsVisible="{Binding IsMinifyExtraOptionsOverridden}">
+                                                <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Overridden in Local"
+                                                           Foreground="#FFffa500"
+                                                           FontSize="10"
+                                                           FontStyle="Italic"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyExtraOptionsList}"
+                                                  SelectedItem="{Binding MainConfig.MinifyExtraOptions}"
                                                   HorizontalAlignment="Stretch">
-                                            <ComboBoxItem Content="None" Tag="none"/>
-                                            <ComboBoxItem Content="No Member Trimming" Tag="nomembertrimming"/>
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
                                         </ComboBox>
-                                    </Grid>
-                                </StackPanel>
+                                    </StackPanel>
+                                </Grid>
                                 
                                 <!-- Trace -->
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Trace"
                                                    Foreground="#FFb0b0b0"
@@ -153,16 +176,20 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
-                                    <ComboBox SelectedItem="{Binding MainTrace}"
+                                    <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.TraceOptionsList}"
+                                              SelectedItem="{Binding MainConfig.Trace}"
                                               HorizontalAlignment="Stretch">
-                                        <ComboBoxItem Content="Off" Tag="false"/>
-                                        <ComboBoxItem Content="On" Tag="true"/>
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Display}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
                                     </ComboBox>
                                 </StackPanel>
                                 
                                 <!-- Ignores -->
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Ignores"
                                                    Foreground="#FFb0b0b0"
@@ -180,14 +207,14 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
-                                    <TextBox Text="{Binding MainIgnores}"
+                                    <TextBox Text="{Binding MainConfig.Ignores}"
                                              AcceptsReturn="True"
                                              Height="60"/>
                                 </StackPanel>
                                 
                                 <!-- Namespaces -->
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Namespaces"
                                                    Foreground="#FFb0b0b0"
@@ -205,7 +232,7 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
-                                    <TextBox Text="{Binding MainNamespaces}"/>
+                                    <TextBox Text="{Binding MainConfig.Namespaces}"/>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
@@ -223,69 +250,145 @@
                                 
                                 <!-- Output Path -->
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Output Path"
-                                               Foreground="#FFb0b0b0"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"/>
-                                    <TextBox Text="{Binding LocalOutputPath}"
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Output Path"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <Button Grid.Column="1"
+                                                Classes="subtle"
+                                                Content="Clear"
+                                                FontSize="10"
+                                                Padding="6,2"
+                                                Command="{Binding ClearLocalOutputPathCommand}"
+                                                IsEnabled="{Binding LocalConfig.OutputPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </Grid>
+                                    <TextBox Text="{Binding LocalConfig.OutputPath}"
                                              Watermark="(inherits from Main)"/>
                                 </StackPanel>
                                 
                                 <!-- Binary Path -->
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Binary Path"
-                                               Foreground="#FFb0b0b0"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"/>
-                                    <TextBox Text="{Binding LocalBinaryPath}"
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Binary Path"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <Button Grid.Column="1"
+                                                Classes="subtle"
+                                                Content="Clear"
+                                                FontSize="10"
+                                                Padding="6,2"
+                                                Command="{Binding ClearLocalBinaryPathCommand}"
+                                                IsEnabled="{Binding LocalConfig.BinaryPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </Grid>
+                                    <TextBox Text="{Binding LocalConfig.BinaryPath}"
                                              Watermark="(inherits from Main)"/>
                                 </StackPanel>
                                 
                                 <!-- Minify -->
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Minify"
-                                               Foreground="#FFb0b0b0"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"/>
-                                    <Grid ColumnDefinitions="*,8,*">
-                                        <ComboBox Grid.Column="0"
-                                                  SelectedItem="{Binding LocalMinify}"
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="Minify"
+                                                       Foreground="#FFb0b0b0"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"/>
+                                            <Button Grid.Column="1"
+                                                    Classes="subtle"
+                                                    Content="Clear"
+                                                    FontSize="10"
+                                                    Padding="6,2"
+                                                    Command="{Binding ClearLocalMinifyCommand}"
+                                                    IsEnabled="{Binding LocalConfig.Minify, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        </Grid>
+                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyOptionsList}"
+                                                  SelectedItem="{Binding LocalConfig.Minify}"
+                                                  PlaceholderText="(inherits from Main)"
                                                   HorizontalAlignment="Stretch">
-                                            <ComboBoxItem Content="None" Tag="none"/>
-                                            <ComboBoxItem Content="Trim" Tag="trim"/>
-                                            <ComboBoxItem Content="Strip Comments" Tag="stripcomments"/>
-                                            <ComboBoxItem Content="Lite" Tag="lite"/>
-                                            <ComboBoxItem Content="Full" Tag="full"/>
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
                                         </ComboBox>
-                                        <ComboBox Grid.Column="2"
-                                                  SelectedItem="{Binding LocalMinifyExtraOptions}"
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="Minify Extra Options"
+                                                       Foreground="#FFb0b0b0"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"/>
+                                            <Button Grid.Column="1"
+                                                    Classes="subtle"
+                                                    Content="Clear"
+                                                    FontSize="10"
+                                                    Padding="6,2"
+                                                    Command="{Binding ClearLocalMinifyExtraOptionsCommand}"
+                                                    IsEnabled="{Binding LocalConfig.MinifyExtraOptions, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        </Grid>
+                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyExtraOptionsList}"
+                                                  SelectedItem="{Binding LocalConfig.MinifyExtraOptions}"
+                                                  PlaceholderText="(inherits from Main)"
                                                   HorizontalAlignment="Stretch">
-                                            <ComboBoxItem Content="None" Tag="none"/>
-                                            <ComboBoxItem Content="No Member Trimming" Tag="nomembertrimming"/>
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
                                         </ComboBox>
-                                    </Grid>
-                                </StackPanel>
+                                    </StackPanel>
+                                </Grid>
                                 
                                 <!-- Trace -->
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Trace"
-                                               Foreground="#FFb0b0b0"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"/>
-                                    <ComboBox SelectedItem="{Binding LocalTrace}"
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Trace"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <Button Grid.Column="1"
+                                                Classes="subtle"
+                                                Content="Clear"
+                                                FontSize="10"
+                                                Padding="6,2"
+                                                Command="{Binding ClearLocalTraceCommand}"
+                                                IsEnabled="{Binding LocalConfig.Trace, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                    </Grid>
+                                    <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.TraceOptionsList}"
+                                              SelectedItem="{Binding LocalConfig.Trace}"
+                                              PlaceholderText="(inherits from Main)"
                                               HorizontalAlignment="Stretch">
-                                        <ComboBoxItem Content="Off" Tag="false"/>
-                                        <ComboBoxItem Content="On" Tag="true"/>
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Display}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
                                     </ComboBox>
                                 </StackPanel>
                                 
                                 <!-- Ignores -->
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Ignores"
-                                               Foreground="#FFb0b0b0"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"/>
-                                    <TextBox Text="{Binding LocalIgnores}"
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Ignores"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <Button Grid.Column="1"
+                                                Classes="subtle"
+                                                Content="Clear"
+                                                FontSize="10"
+                                                Padding="6,2"
+                                                Command="{Binding ClearLocalIgnoresCommand}"
+                                                IsEnabled="{Binding LocalConfig.Ignores, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </Grid>
+                                    <TextBox Text="{Binding LocalConfig.Ignores}"
                                              AcceptsReturn="True"
                                              Height="60"
                                              Watermark="(inherits from Main)"/>
@@ -293,11 +396,21 @@
                                 
                                 <!-- Namespaces -->
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Namespaces"
-                                               Foreground="#FFb0b0b0"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"/>
-                                    <TextBox Text="{Binding LocalNamespaces}"
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Namespaces"
+                                                   Foreground="#FFb0b0b0"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"/>
+                                        <Button Grid.Column="1"
+                                                Classes="subtle"
+                                                Content="Clear"
+                                                FontSize="10"
+                                                Padding="6,2"
+                                                Command="{Binding ClearLocalNamespacesCommand}"
+                                                IsEnabled="{Binding LocalConfig.Namespaces, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </Grid>
+                                    <TextBox Text="{Binding LocalConfig.Namespaces}"
                                              Watermark="(inherits from Main)"/>
                                 </StackPanel>
                             </StackPanel>
@@ -306,3 +419,5 @@
                 </TabControl>
     </DockPanel>
 </UserControl>
+
+

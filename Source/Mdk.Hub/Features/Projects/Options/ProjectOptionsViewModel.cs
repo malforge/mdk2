@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Features.Projects.Configuration;
@@ -16,49 +17,8 @@ public partial class ProjectOptionsViewModel : ObservableObject
     readonly Action _onClose;
     ProjectConfiguration? _configuration;
 
-    // Main INI values (mdk.ini - shared, in source control)
-    [ObservableProperty]
-    string _mainOutputPath = string.Empty;
-    
-    [ObservableProperty]
-    string _mainBinaryPath = string.Empty;
-    
-    [ObservableProperty]
-    string _mainMinify = string.Empty;
-    
-    [ObservableProperty]
-    string _mainMinifyExtraOptions = string.Empty;
-    
-    [ObservableProperty]
-    string _mainTrace = string.Empty;
-    
-    [ObservableProperty]
-    string _mainIgnores = string.Empty;
-    
-    [ObservableProperty]
-    string _mainNamespaces = string.Empty;
-
-    // Local INI values (mdk.local.ini - local overrides, gitignored)
-    [ObservableProperty]
-    string _localOutputPath = string.Empty;
-    
-    [ObservableProperty]
-    string _localBinaryPath = string.Empty;
-    
-    [ObservableProperty]
-    string _localMinify = string.Empty;
-    
-    [ObservableProperty]
-    string _localMinifyExtraOptions = string.Empty;
-    
-    [ObservableProperty]
-    string _localTrace = string.Empty;
-    
-    [ObservableProperty]
-    string _localIgnores = string.Empty;
-    
-    [ObservableProperty]
-    string _localNamespaces = string.Empty;
+    public ConfigurationSectionViewModel MainConfig { get; } = new();
+    public ConfigurationSectionViewModel LocalConfig { get; } = new();
 
     public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Action onClose)
     {
@@ -66,67 +26,96 @@ public partial class ProjectOptionsViewModel : ObservableObject
         _projectService = projectService;
         _onClose = onClose;
         
+        // Subscribe to Local property changes to update override indicators
+        LocalConfig.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ConfigurationSectionViewModel.OutputPath))
+                OnPropertyChanged(nameof(IsOutputOverridden));
+            else if (e.PropertyName == nameof(ConfigurationSectionViewModel.BinaryPath))
+                OnPropertyChanged(nameof(IsBinaryPathOverridden));
+            else if (e.PropertyName == nameof(ConfigurationSectionViewModel.Minify))
+                OnPropertyChanged(nameof(IsMinifyOverridden));
+            else if (e.PropertyName == nameof(ConfigurationSectionViewModel.MinifyExtraOptions))
+                OnPropertyChanged(nameof(IsMinifyExtraOptionsOverridden));
+            else if (e.PropertyName == nameof(ConfigurationSectionViewModel.Trace))
+                OnPropertyChanged(nameof(IsTraceOverridden));
+            else if (e.PropertyName == nameof(ConfigurationSectionViewModel.Ignores))
+                OnPropertyChanged(nameof(IsIgnoresOverridden));
+            else if (e.PropertyName == nameof(ConfigurationSectionViewModel.Namespaces))
+                OnPropertyChanged(nameof(IsNamespacesOverridden));
+        };
+        
         LoadConfiguration();
     }
 
     public string ProjectName => Path.GetFileNameWithoutExtension(_projectPath);
     
-    public bool IsOutputOverridden => !string.IsNullOrWhiteSpace(LocalOutputPath);
-    public bool IsBinaryPathOverridden => !string.IsNullOrWhiteSpace(LocalBinaryPath);
-    public bool IsMinifyOverridden => !string.IsNullOrWhiteSpace(LocalMinify);
-    public bool IsMinifyExtraOptionsOverridden => !string.IsNullOrWhiteSpace(LocalMinifyExtraOptions);
-    public bool IsTraceOverridden => !string.IsNullOrWhiteSpace(LocalTrace);
-    public bool IsIgnoresOverridden => !string.IsNullOrWhiteSpace(LocalIgnores);
-    public bool IsNamespacesOverridden => !string.IsNullOrWhiteSpace(LocalNamespaces);
+    public bool IsOutputOverridden => !string.IsNullOrWhiteSpace(LocalConfig.OutputPath);
+    public bool IsBinaryPathOverridden => !string.IsNullOrWhiteSpace(LocalConfig.BinaryPath);
+    public bool IsMinifyOverridden => LocalConfig.Minify != null;
+    public bool IsMinifyExtraOptionsOverridden => LocalConfig.MinifyExtraOptions != null;
+    public bool IsTraceOverridden => LocalConfig.Trace != null;
+    public bool IsIgnoresOverridden => !string.IsNullOrWhiteSpace(LocalConfig.Ignores);
+    public bool IsNamespacesOverridden => !string.IsNullOrWhiteSpace(LocalConfig.Namespaces);
 
     void LoadConfiguration()
     {
         _configuration = _projectService.LoadConfiguration(_projectPath);
+        
+        // Set defaults for Main
+        MainConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList[0]; // "none"
+        MainConfig.MinifyExtraOptions = ConfigurationSectionViewModel.MinifyExtraOptionsList[0]; // "none"
+        MainConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList[0]; // "false"
+        MainConfig.Namespaces = "IngameScript";
+        
         if (_configuration == null)
             return;
 
-        // Load Main INI values
+        // Load Main INI values (overriding defaults if present)
         if (_configuration.MainIni != null)
         {
             var section = _configuration.MainIni["mdk"];
-            MainOutputPath = section.TryGet("output", out string? output) ? output : string.Empty;
-            MainBinaryPath = section.TryGet("binarypath", out string? binary) ? binary : string.Empty;
-            MainMinify = section.TryGet("minify", out string? minify) ? minify : string.Empty;
-            MainMinifyExtraOptions = section.TryGet("minifyextraoptions", out string? minifyExtra) ? minifyExtra : string.Empty;
-            MainTrace = section.TryGet("trace", out string? trace) ? trace : string.Empty;
-            MainIgnores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
-            MainNamespaces = section.TryGet("namespaces", out string? namespaces) ? namespaces : string.Empty;
+            MainConfig.OutputPath = section.TryGet("output", out string? output) ? output : string.Empty;
+            MainConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : string.Empty;
+            if (section.TryGet("minify", out string? minify))
+                MainConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList.FirstOrDefault(o => o.Value == minify) ?? MainConfig.Minify;
+            if (section.TryGet("minifyextraoptions", out string? minifyExtra))
+                MainConfig.MinifyExtraOptions = ConfigurationSectionViewModel.MinifyExtraOptionsList.FirstOrDefault(o => o.Value == minifyExtra) ?? MainConfig.MinifyExtraOptions;
+            if (section.TryGet("trace", out string? trace))
+                MainConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList.FirstOrDefault(o => o.Value == trace) ?? MainConfig.Trace;
+            MainConfig.Ignores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
+            MainConfig.Namespaces = section.TryGet("namespaces", out string? namespaces) && !string.IsNullOrWhiteSpace(namespaces) ? namespaces : MainConfig.Namespaces;
         }
 
         // Load Local INI values
         if (_configuration.LocalIni != null)
         {
             var section = _configuration.LocalIni["mdk"];
-            LocalOutputPath = section.TryGet("output", out string? output) ? output : string.Empty;
-            LocalBinaryPath = section.TryGet("binarypath", out string? binary) ? binary : string.Empty;
-            LocalMinify = section.TryGet("minify", out string? minify) ? minify : string.Empty;
-            LocalMinifyExtraOptions = section.TryGet("minifyextraoptions", out string? minifyExtra) ? minifyExtra : string.Empty;
-            LocalTrace = section.TryGet("trace", out string? trace) ? trace : string.Empty;
-            LocalIgnores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
-            LocalNamespaces = section.TryGet("namespaces", out string? namespaces) ? namespaces : string.Empty;
+            LocalConfig.OutputPath = section.TryGet("output", out string? output) ? output : string.Empty;
+            LocalConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : string.Empty;
+            if (section.TryGet("minify", out string? minify))
+                LocalConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList.FirstOrDefault(o => o.Value == minify);
+            if (section.TryGet("minifyextraoptions", out string? minifyExtra))
+                LocalConfig.MinifyExtraOptions = ConfigurationSectionViewModel.MinifyExtraOptionsList.FirstOrDefault(o => o.Value == minifyExtra);
+            if (section.TryGet("trace", out string? trace))
+                LocalConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList.FirstOrDefault(o => o.Value == trace);
+            LocalConfig.Ignores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
+            LocalConfig.Namespaces = section.TryGet("namespaces", out string? namespaces) ? namespaces : string.Empty;
         }
-        
-        // Notify override properties
-        OnPropertyChanged(nameof(IsOutputOverridden));
-        OnPropertyChanged(nameof(IsBinaryPathOverridden));
-        OnPropertyChanged(nameof(IsMinifyOverridden));
-        OnPropertyChanged(nameof(IsMinifyExtraOptionsOverridden));
-        OnPropertyChanged(nameof(IsTraceOverridden));
-        OnPropertyChanged(nameof(IsIgnoresOverridden));
-        OnPropertyChanged(nameof(IsNamespacesOverridden));
     }
 
     [RelayCommand]
     void Save()
     {
         // Save both Main and Local INI files
-        _projectService.SaveConfiguration(_projectPath, MainOutputPath, MainBinaryPath, MainMinify, MainMinifyExtraOptions, MainTrace, MainIgnores, MainNamespaces, saveToLocal: false);
-        _projectService.SaveConfiguration(_projectPath, LocalOutputPath, LocalBinaryPath, LocalMinify, LocalMinifyExtraOptions, LocalTrace, LocalIgnores, LocalNamespaces, saveToLocal: true);
+        _projectService.SaveConfiguration(_projectPath, 
+            MainConfig.OutputPath, MainConfig.BinaryPath, 
+            MainConfig.Minify?.Value ?? "none", MainConfig.MinifyExtraOptions?.Value ?? "none", 
+            MainConfig.Trace?.Value ?? "false", MainConfig.Ignores, MainConfig.Namespaces, saveToLocal: false);
+        _projectService.SaveConfiguration(_projectPath, 
+            LocalConfig.OutputPath, LocalConfig.BinaryPath, 
+            LocalConfig.Minify?.Value ?? string.Empty, LocalConfig.MinifyExtraOptions?.Value ?? string.Empty, 
+            LocalConfig.Trace?.Value ?? string.Empty, LocalConfig.Ignores, LocalConfig.Namespaces, saveToLocal: true);
         
         _onClose();
     }
@@ -136,4 +125,25 @@ public partial class ProjectOptionsViewModel : ObservableObject
     {
         _onClose();
     }
+
+    [RelayCommand]
+    void ClearLocalOutputPath() => LocalConfig.OutputPath = string.Empty;
+
+    [RelayCommand]
+    void ClearLocalBinaryPath() => LocalConfig.BinaryPath = string.Empty;
+
+    [RelayCommand]
+    void ClearLocalMinify() => LocalConfig.Minify = null;
+
+    [RelayCommand]
+    void ClearLocalMinifyExtraOptions() => LocalConfig.MinifyExtraOptions = null;
+
+    [RelayCommand]
+    void ClearLocalTrace() => LocalConfig.Trace = null;
+
+    [RelayCommand]
+    void ClearLocalIgnores() => LocalConfig.Ignores = string.Empty;
+
+    [RelayCommand]
+    void ClearLocalNamespaces() => LocalConfig.Namespaces = string.Empty;
 }

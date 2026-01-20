@@ -244,7 +244,7 @@
                 </Border>
                 
                 <!-- Options content -->
-                <options:ProjectOptionsView x:Name="OptionsView" Grid.Row="1" DataContext="{x:Null}"/>
+                <options:ProjectOptionsView Grid.Row="1" DataContext="{Binding OptionsViewModel}"/>
             </Grid>
         </Border>
     </Grid>

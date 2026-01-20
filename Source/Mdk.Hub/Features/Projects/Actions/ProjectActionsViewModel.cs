@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
@@ -25,6 +26,9 @@ public partial class ProjectActionsViewModel : ViewModel
     
     [ObservableProperty]
     string? _optionsProjectPath;
+    
+    [ObservableProperty]
+    ProjectOptionsViewModel? _optionsViewModel;
 
     public ProjectActionsViewModel(IProjectState projectState, IShell shell, ICommonDialogs dialogs, IProjectService projectService)
     {
@@ -44,6 +48,7 @@ public partial class ProjectActionsViewModel : ViewModel
     public void ShowOptionsDrawer(string projectPath)
     {
         OptionsProjectPath = projectPath;
+        OptionsViewModel = new ProjectOptionsViewModel(projectPath, _projectService, CloseOptionsDrawer);
         IsOptionsDrawerOpen = true;
     }
     

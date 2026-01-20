@@ -5,19 +5,16 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Mal.DependencyInjection;
-using Mdk.Hub.Features.Projects.Options;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
 [Dependency]
 public partial class ProjectActionsView : UserControl
 {
-    readonly IProjectService _projectService;
     ProjectActionsViewModel? _currentViewModel;
 
-    public ProjectActionsView(IProjectService projectService)
+    public ProjectActionsView()
     {
-        _projectService = projectService;
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
@@ -26,7 +23,6 @@ public partial class ProjectActionsView : UserControl
     void OnLoaded(object? sender, RoutedEventArgs e)
     {
         // Initialize drawer state on load
-        UpdateOptionsViewDataContext();
         AnimateDrawer();
     }
 
@@ -43,31 +39,14 @@ public partial class ProjectActionsView : UserControl
         {
             _currentViewModel = vm;
             vm.PropertyChanged += OnViewModelPropertyChanged;
-            UpdateOptionsViewDataContext();
         }
     }
 
     void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ProjectActionsViewModel.OptionsProjectPath))
-        {
-            UpdateOptionsViewDataContext();
-        }
-        else if (e.PropertyName == nameof(ProjectActionsViewModel.IsOptionsDrawerOpen))
+        if (e.PropertyName == nameof(ProjectActionsViewModel.IsOptionsDrawerOpen))
         {
             AnimateDrawer();
-        }
-    }
-
-    void UpdateOptionsViewDataContext()
-    {
-        if (DataContext is ProjectActionsViewModel vm && !string.IsNullOrEmpty(vm.OptionsProjectPath))
-        {
-            var optionsView = this.FindControl<ProjectOptionsView>("OptionsView");
-            if (optionsView != null)
-            {
-                optionsView.DataContext = new ProjectOptionsViewModel(vm.OptionsProjectPath, _projectService, () => vm.CloseOptionsDrawer());
-            }
         }
     }
 
