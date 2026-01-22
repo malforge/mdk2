@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Mdk.Hub.Features.Projects.Configuration;
 
 namespace Mdk.Hub.Features.Projects;
@@ -49,5 +50,5 @@ public interface IProjectService
     /// <param name="ignores">Ignores value.</param>
     /// <param name="namespaces">Namespaces value.</param>
     /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
-    void SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
+    Task SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
 }

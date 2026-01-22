@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Features.Projects.Configuration;
@@ -13,6 +14,7 @@ namespace Mdk.Hub.Features.Projects.Options;
 public partial class ProjectOptionsViewModel : ObservableObject
 {
     readonly IProjectService _projectService;
+    readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs _commonDialogs;
     readonly string _projectPath;
     readonly Action<bool> _onClose; // bool parameter: true if saved, false if cancelled
     readonly Action? _onDirtyStateChanged;
@@ -39,10 +41,11 @@ public partial class ProjectOptionsViewModel : ObservableObject
     public ConfigurationSectionViewModel MainConfig { get; } = new();
     public ConfigurationSectionViewModel LocalConfig { get; } = new();
 
-    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Action<bool> onClose, Action? onDirtyStateChanged = null)
+    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
         _projectPath = projectPath;
         _projectService = projectService;
+        _commonDialogs = commonDialogs;
         _onClose = onClose;
         _onDirtyStateChanged = onDirtyStateChanged;
         
@@ -202,19 +205,42 @@ public partial class ProjectOptionsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    void Save()
+    async Task Save()
     {
-        // Save both Main and Local INI files
-        _projectService.SaveConfiguration(_projectPath, 
-            MainConfig.OutputPath, MainConfig.BinaryPath, 
-            MainConfig.Minify?.Value ?? "none", MainConfig.MinifyExtraOptions?.Value ?? "none", 
-            MainConfig.Trace?.Value ?? "false", MainConfig.Ignores, MainConfig.Namespaces, saveToLocal: false);
-        _projectService.SaveConfiguration(_projectPath, 
-            LocalConfig.OutputPath, LocalConfig.BinaryPath, 
-            LocalConfig.Minify?.Value ?? string.Empty, LocalConfig.MinifyExtraOptions?.Value ?? string.Empty, 
-            LocalConfig.Trace?.Value ?? string.Empty, LocalConfig.Ignores, LocalConfig.Namespaces, saveToLocal: true);
-        
-        _onClose(true); // Saved
+        try
+        {
+            // Save both Main and Local INI files
+            await _projectService.SaveConfiguration(_projectPath, 
+                MainConfig.OutputPath, MainConfig.BinaryPath, 
+                MainConfig.Minify?.Value ?? "none", MainConfig.MinifyExtraOptions?.Value ?? "none", 
+                MainConfig.Trace?.Value ?? "false", MainConfig.Ignores, MainConfig.Namespaces, saveToLocal: false);
+            await _projectService.SaveConfiguration(_projectPath, 
+                LocalConfig.OutputPath, LocalConfig.BinaryPath, 
+                LocalConfig.Minify?.Value ?? string.Empty, LocalConfig.MinifyExtraOptions?.Value ?? string.Empty, 
+                LocalConfig.Trace?.Value ?? string.Empty, LocalConfig.Ignores, LocalConfig.Namespaces, saveToLocal: true);
+            
+            _onClose(true); // Saved
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await _commonDialogs.ShowAsync(new Mdk.Hub.Features.CommonDialogs.ConfirmationMessage
+            {
+                Title = "Permission Denied",
+                Message = $"Cannot save configuration file. Access is denied.\n\nPlease check file permissions and try again.\n\nDetails: {ex.Message}",
+                OkText = "OK",
+                CancelText = ""
+            });
+        }
+        catch (IOException ex)
+        {
+            await _commonDialogs.ShowAsync(new Mdk.Hub.Features.CommonDialogs.ConfirmationMessage
+            {
+                Title = "Save Failed",
+                Message = $"Cannot save configuration file. The disk may be full or the file may be in use.\n\nDetails: {ex.Message}",
+                OkText = "OK",
+                CancelText = ""
+            });
+        }
     }
     
     void NotifyDirtyStateChanged()

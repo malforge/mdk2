@@ -110,7 +110,13 @@
                     <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4" 
                                 HorizontalAlignment="Left" VerticalAlignment="Top">
                         <TextBlock Classes="info-label" Text="Deployment Status:" />
-                        <TextBlock Classes="info-value" Text="{Binding IsDeployed, Converter={StaticResource BoolToDeploymentStatusConverter}}" />
+                        <TextBlock Classes="info-value" 
+                                   Text="{Binding IsDeployed, Converter={StaticResource BoolToDeploymentStatusConverter}}" 
+                                   IsVisible="{Binding !DeploymentError}" />
+                        <TextBlock Classes="info-value" 
+                                   Text="{Binding DeploymentError}" 
+                                   Foreground="#FFff6666"
+                                   IsVisible="{Binding DeploymentError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     
                     <StackPanel Grid.Column="1" Grid.Row="0" Spacing="4" 
@@ -124,7 +130,12 @@
                     <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Spacing="4"
                                 HorizontalAlignment="Left" VerticalAlignment="Top">
                         <TextBlock Classes="info-label" Text="Last Changed:" />
-                        <controls:DateTimeDisplay Value="{Binding LastChanged}" />
+                        <controls:DateTimeDisplay Value="{Binding LastChanged}" 
+                                                  IsVisible="{Binding !LastChangedError}" />
+                        <TextBlock Classes="info-value" 
+                                   Text="{Binding LastChangedError}" 
+                                   Foreground="#FFff6666"
+                                   IsVisible="{Binding LastChangedError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     
                     <!-- Row 3: Script Size (full width, highlighted if over limit) -->

@@ -21,7 +21,9 @@ public class ProjectInfoAction : ActionItem
     readonly IShell _shell;
     readonly ProjectActionsViewModel _actionsViewModel;
     DateTimeOffset? _lastChanged;
+    string? _lastChangedError;
     bool _isDeployed;
+    string? _deploymentError;
     DateTimeOffset? _lastDeployed;
     int? _scriptSizeCharacters;
     bool _isLoading = true;
@@ -64,6 +66,12 @@ public class ProjectInfoAction : ActionItem
         get => _lastChanged;
         private set => SetProperty(ref _lastChanged, value);
     }
+    
+    public string? LastChangedError
+    {
+        get => _lastChangedError;
+        private set => SetProperty(ref _lastChangedError, value);
+    }
 
     public bool IsDeployed
     {
@@ -76,6 +84,12 @@ public class ProjectInfoAction : ActionItem
                 ((AsyncRelayCommand)CopyScriptCommand).NotifyCanExecuteChanged();
             }
         }
+    }
+    
+    public string? DeploymentError
+    {
+        get => _deploymentError;
+        private set => SetProperty(ref _deploymentError, value);
     }
 
     public DateTimeOffset? LastDeployed
@@ -247,15 +261,28 @@ public class ProjectInfoAction : ActionItem
             var result = await Task.Run(() =>
             {
                 DateTimeOffset? lastChanged = null;
+                string? lastChangedError = null;
                 bool isDeployed = false;
+                string? deploymentError = null;
                 DateTimeOffset? lastDeployed = null;
                 int? scriptSize = null;
                 string? outputPath = null;
 
                 // Load last changed time from project file
-                if (File.Exists(Project.ProjectPath))
+                try
                 {
-                    lastChanged = File.GetLastWriteTime(Project.ProjectPath);
+                    if (File.Exists(Project.ProjectPath))
+                    {
+                        lastChanged = File.GetLastWriteTime(Project.ProjectPath);
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    lastChangedError = "Permission denied";
+                }
+                catch (IOException ex)
+                {
+                    lastChangedError = $"Error: {ex.Message}";
                 }
 
                 // Load configuration and check deployment
@@ -278,9 +305,20 @@ public class ProjectInfoAction : ActionItem
                                 lastDeployed = mostRecent;
                             }
                         }
-                        catch
+                        catch (UnauthorizedAccessException)
                         {
-                            // Ignore errors reading output directory
+                            deploymentError = "Permission denied accessing deployment folder";
+                            isDeployed = false;
+                        }
+                        catch (DirectoryNotFoundException)
+                        {
+                            // Directory was deleted between Exists check and GetFiles
+                            isDeployed = false;
+                        }
+                        catch (IOException ex)
+                        {
+                            deploymentError = $"Error reading deployment folder: {ex.Message}";
+                            isDeployed = false;
                         }
                     }
 
@@ -296,20 +334,30 @@ public class ProjectInfoAction : ActionItem
                                 scriptSize = content.Length;
                             }
                         }
-                        catch
+                        catch (UnauthorizedAccessException)
                         {
-                            // Ignore errors reading script file
+                            // Can't read script file - deployment status already set above
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            // File was deleted - ignore
+                        }
+                        catch (IOException)
+                        {
+                            // Other I/O errors - ignore (deployment status already set)
                         }
                     }
                 }
 
-                return (lastChanged, isDeployed, lastDeployed, scriptSize, outputPath);
+                return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath);
             });
 
             // Update properties on UI thread
             LastChanged = result.lastChanged;
+            LastChangedError = result.lastChangedError;
             _outputPath = result.outputPath;
             IsDeployed = result.isDeployed;
+            DeploymentError = result.deploymentError;
             LastDeployed = result.lastDeployed;
             ScriptSizeCharacters = result.scriptSize;
         }

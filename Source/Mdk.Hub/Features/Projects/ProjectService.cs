@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Projects.Overview;
@@ -120,7 +121,7 @@ public class ProjectService : IProjectService
         return new ConfigurationValue<bool>(defaultValue, SourceLayer.Default);
     }
 
-    public void SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
+    public async Task SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
     {
         if (string.IsNullOrWhiteSpace(projectPath))
             throw new ArgumentNullException(nameof(projectPath));
