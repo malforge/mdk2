@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Mdk.Hub.Features.Projects.Options;
 
@@ -51,8 +52,8 @@ public partial class ConfigurationSectionViewModel : ObservableObject
 
     public void Clear()
     {
-        OutputPath = string.Empty;
-        BinaryPath = string.Empty;
+        OutputPath = "auto";
+        BinaryPath = "auto";
         Minify = null;
         MinifyExtraOptions = null;
         Trace = null;

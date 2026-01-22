@@ -90,13 +90,12 @@ public class ProjectConfiguration
 
         // Resolve "auto" based on project type
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var projectName = System.IO.Path.GetFileNameWithoutExtension(ProjectPath);
         
         var type = Type.Value.ToLowerInvariant();
         return type switch
         {
-            "programmableblock" => System.IO.Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName),
-            "mod" => System.IO.Path.Combine(appData, "SpaceEngineers", "Mods", projectName),
+            "programmableblock" => System.IO.Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local"),
+            "mod" => System.IO.Path.Combine(appData, "SpaceEngineers", "Mods"),
             _ => null
         };
     }

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:options="clr-namespace:Mdk.Hub.Features.Projects.Options"
+             xmlns:controls="clr-namespace:Mdk.Hub.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Mdk.Hub.Features.Projects.Options.ProjectOptionsView"
              x:DataType="options:ProjectOptionsViewModel"
@@ -44,6 +45,7 @@
                                            Foreground="#FF808080"
                                            FontSize="10"
                                            TextWrapping="Wrap"
+                                           MinHeight="28"
                                            Margin="0,0,0,8"/>
                                 
                                 <!-- Output Path -->
@@ -54,20 +56,9 @@
                                                    Foreground="#FFb0b0b0"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"/>
-                                        <StackPanel Grid.Column="1" 
-                                                    Orientation="Horizontal" 
-                                                    Spacing="4"
-                                                    IsVisible="{Binding IsOutputOverridden}">
-                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Overridden in Local"
-                                                       Foreground="#FFffa500"
-                                                       FontSize="10"
-                                                       FontStyle="Italic"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
                                     </Grid>
-                                    <TextBox Text="{Binding MainConfig.OutputPath}"
-                                             Watermark="auto"/>
+                                    <controls:PathSelectorControl Path="{Binding MainConfig.OutputPath}"
+                                                                  DefaultPath="{Binding DefaultOutputPath}"/>
                                 </StackPanel>
                                 
                                 <!-- Binary Path -->
@@ -78,20 +69,9 @@
                                                    Foreground="#FFb0b0b0"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"/>
-                                        <StackPanel Grid.Column="1" 
-                                                    Orientation="Horizontal" 
-                                                    Spacing="4"
-                                                    IsVisible="{Binding IsBinaryPathOverridden}">
-                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Overridden in Local"
-                                                       Foreground="#FFffa500"
-                                                       FontSize="10"
-                                                       FontStyle="Italic"
-                                                       VerticalAlignment="Center"/>
-                                        </StackPanel>
                                     </Grid>
-                                    <TextBox Text="{Binding MainConfig.BinaryPath}"
-                                             Watermark="auto"/>
+                                    <controls:PathSelectorControl Path="{Binding MainConfig.BinaryPath}"
+                                                                  DefaultPath="{Binding DefaultBinaryPath}"/>
                                 </StackPanel>
                                 
                                 <!-- Minify -->
@@ -207,9 +187,7 @@
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
-                                    <TextBox Text="{Binding MainConfig.Ignores}"
-                                             AcceptsReturn="True"
-                                             Height="60"/>
+                                    <TextBox Text="{Binding MainConfig.Ignores}"/>
                                 </StackPanel>
                                 
                                 <!-- Namespaces -->
@@ -246,6 +224,7 @@
                                            Foreground="#FF808080"
                                            FontSize="10"
                                            TextWrapping="Wrap"
+                                           MinHeight="28"
                                            Margin="0,0,0,8"/>
                                 
                                 <!-- Output Path -->
@@ -256,16 +235,20 @@
                                                    Foreground="#FFb0b0b0"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1"
-                                                Classes="subtle"
-                                                Content="Clear"
-                                                FontSize="10"
-                                                Padding="6,2"
-                                                Command="{Binding ClearLocalOutputPathCommand}"
-                                                IsEnabled="{Binding LocalConfig.OutputPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                     </Grid>
-                                    <TextBox Text="{Binding LocalConfig.OutputPath}"
-                                             Watermark="(inherits from Main)"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <controls:PathSelectorControl Grid.Column="0"
+                                                                      Path="{Binding LocalConfig.OutputPath}"
+                                                                      DefaultPath="{Binding DefaultOutputPath}"
+                                                                      Watermark="(inherits from Main)"/>
+                                        <Button Grid.Column="1"
+                                                Content="✕"
+                                                Command="{Binding ClearLocalOutputPathCommand}"
+                                                IsEnabled="{Binding LocalConfig.OutputPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Clear (inherit from Main)"/>
+                                    </Grid>
                                 </StackPanel>
                                 
                                 <!-- Binary Path -->
@@ -276,16 +259,20 @@
                                                    Foreground="#FFb0b0b0"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1"
-                                                Classes="subtle"
-                                                Content="Clear"
-                                                FontSize="10"
-                                                Padding="6,2"
-                                                Command="{Binding ClearLocalBinaryPathCommand}"
-                                                IsEnabled="{Binding LocalConfig.BinaryPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                     </Grid>
-                                    <TextBox Text="{Binding LocalConfig.BinaryPath}"
-                                             Watermark="(inherits from Main)"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <controls:PathSelectorControl Grid.Column="0"
+                                                                      Path="{Binding LocalConfig.BinaryPath}"
+                                                                      DefaultPath="{Binding DefaultBinaryPath}"
+                                                                      Watermark="(inherits from Main)"/>
+                                        <Button Grid.Column="1"
+                                                Content="✕"
+                                                Command="{Binding ClearLocalBinaryPathCommand}"
+                                                IsEnabled="{Binding LocalConfig.BinaryPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Clear (inherit from Main)"/>
+                                    </Grid>
                                 </StackPanel>
                                 
                                 <!-- Minify -->
@@ -297,24 +284,27 @@
                                                        Foreground="#FFb0b0b0"
                                                        FontSize="11"
                                                        FontWeight="SemiBold"/>
-                                            <Button Grid.Column="1"
-                                                    Classes="subtle"
-                                                    Content="Clear"
-                                                    FontSize="10"
-                                                    Padding="6,2"
-                                                    Command="{Binding ClearLocalMinifyCommand}"
-                                                    IsEnabled="{Binding LocalConfig.Minify, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                         </Grid>
-                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyOptionsList}"
-                                                  SelectedItem="{Binding LocalConfig.Minify}"
-                                                  PlaceholderText="(inherits from Main)"
-                                                  HorizontalAlignment="Stretch">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Display}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <ComboBox Grid.Column="0"
+                                                      ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyOptionsList}"
+                                                      SelectedItem="{Binding LocalConfig.Minify}"
+                                                      PlaceholderText="(inherits from Main)"
+                                                      HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Display}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <Button Grid.Column="1"
+                                                    Content="✕"
+                                                    Command="{Binding ClearLocalMinifyCommand}"
+                                                    IsEnabled="{Binding LocalConfig.Minify, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    ToolTip.Tip="Clear (inherit from Main)"/>
+                                        </Grid>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="20">
@@ -323,24 +313,27 @@
                                                        Foreground="#FFb0b0b0"
                                                        FontSize="11"
                                                        FontWeight="SemiBold"/>
-                                            <Button Grid.Column="1"
-                                                    Classes="subtle"
-                                                    Content="Clear"
-                                                    FontSize="10"
-                                                    Padding="6,2"
-                                                    Command="{Binding ClearLocalMinifyExtraOptionsCommand}"
-                                                    IsEnabled="{Binding LocalConfig.MinifyExtraOptions, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                         </Grid>
-                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyExtraOptionsList}"
-                                                  SelectedItem="{Binding LocalConfig.MinifyExtraOptions}"
-                                                  PlaceholderText="(inherits from Main)"
-                                                  HorizontalAlignment="Stretch">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Display}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <ComboBox Grid.Column="0"
+                                                      ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyExtraOptionsList}"
+                                                      SelectedItem="{Binding LocalConfig.MinifyExtraOptions}"
+                                                      PlaceholderText="(inherits from Main)"
+                                                      HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Display}"/>
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <Button Grid.Column="1"
+                                                    Content="✕"
+                                                    Command="{Binding ClearLocalMinifyExtraOptionsCommand}"
+                                                    IsEnabled="{Binding LocalConfig.MinifyExtraOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                    Margin="5,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    ToolTip.Tip="Clear (inherit from Main)"/>
+                                        </Grid>
                                     </StackPanel>
                                 </Grid>
                                 
@@ -352,24 +345,27 @@
                                                    Foreground="#FFb0b0b0"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1"
-                                                Classes="subtle"
-                                                Content="Clear"
-                                                FontSize="10"
-                                                Padding="6,2"
-                                                Command="{Binding ClearLocalTraceCommand}"
-                                                IsEnabled="{Binding LocalConfig.Trace, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                     </Grid>
-                                    <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.TraceOptionsList}"
-                                              SelectedItem="{Binding LocalConfig.Trace}"
-                                              PlaceholderText="(inherits from Main)"
-                                              HorizontalAlignment="Stretch">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Display}"/>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <ComboBox Grid.Column="0"
+                                                  ItemsSource="{x:Static options:ConfigurationSectionViewModel.TraceOptionsList}"
+                                                  SelectedItem="{Binding LocalConfig.Trace}"
+                                                  PlaceholderText="(inherits from Main)"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                        <Button Grid.Column="1"
+                                                Content="✕"
+                                                Command="{Binding ClearLocalTraceCommand}"
+                                                IsEnabled="{Binding LocalConfig.Trace, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Clear (inherit from Main)"/>
+                                    </Grid>
                                 </StackPanel>
                                 
                                 <!-- Ignores -->
@@ -380,18 +376,19 @@
                                                    Foreground="#FFb0b0b0"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1"
-                                                Classes="subtle"
-                                                Content="Clear"
-                                                FontSize="10"
-                                                Padding="6,2"
-                                                Command="{Binding ClearLocalIgnoresCommand}"
-                                                IsEnabled="{Binding LocalConfig.Ignores, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                     </Grid>
-                                    <TextBox Text="{Binding LocalConfig.Ignores}"
-                                             AcceptsReturn="True"
-                                             Height="60"
-                                             Watermark="(inherits from Main)"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding LocalConfig.Ignores}"
+                                                 Watermark="(inherits from Main)"/>
+                                        <Button Grid.Column="1"
+                                                Content="✕"
+                                                Command="{Binding ClearLocalIgnoresCommand}"
+                                                IsEnabled="{Binding LocalConfig.Ignores, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Clear (inherit from Main)"/>
+                                    </Grid>
                                 </StackPanel>
                                 
                                 <!-- Namespaces -->
@@ -402,16 +399,19 @@
                                                    Foreground="#FFb0b0b0"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"/>
-                                        <Button Grid.Column="1"
-                                                Classes="subtle"
-                                                Content="Clear"
-                                                FontSize="10"
-                                                Padding="6,2"
-                                                Command="{Binding ClearLocalNamespacesCommand}"
-                                                IsEnabled="{Binding LocalConfig.Namespaces, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                     </Grid>
-                                    <TextBox Text="{Binding LocalConfig.Namespaces}"
-                                             Watermark="(inherits from Main)"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding LocalConfig.Namespaces}"
+                                                 Watermark="(inherits from Main)"/>
+                                        <Button Grid.Column="1"
+                                                Content="✕"
+                                                Command="{Binding ClearLocalNamespacesCommand}"
+                                                IsEnabled="{Binding LocalConfig.Namespaces, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Clear (inherit from Main)"/>
+                                    </Grid>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>

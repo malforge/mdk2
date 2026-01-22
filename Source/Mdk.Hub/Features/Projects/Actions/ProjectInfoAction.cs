@@ -227,24 +227,30 @@ public class ProjectInfoAction : ActionItem
     {
         try
         {
-            await Task.Run(() =>
+            // Run I/O operations on background thread
+            var result = await Task.Run(() =>
             {
+                DateTimeOffset? lastChanged = null;
+                bool isDeployed = false;
+                DateTimeOffset? lastDeployed = null;
+                int? scriptSize = null;
+                string? outputPath = null;
+
                 // Load last changed time from project file
                 if (File.Exists(Project.ProjectPath))
                 {
-                    LastChanged = File.GetLastWriteTime(Project.ProjectPath);
+                    lastChanged = File.GetLastWriteTime(Project.ProjectPath);
                 }
 
                 // Load configuration and check deployment
                 var config = projectService.LoadConfiguration(Project.ProjectPath);
                 if (config != null)
                 {
-                    var outputPath = config.GetResolvedOutputPath();
-                    _outputPath = outputPath;
+                    outputPath = config.GetResolvedOutputPath();
                     
                     if (!string.IsNullOrEmpty(outputPath) && Directory.Exists(outputPath))
                     {
-                        IsDeployed = true;
+                        isDeployed = true;
                         
                         // Get the most recent file write time in the output directory
                         try
@@ -253,7 +259,7 @@ public class ProjectInfoAction : ActionItem
                             if (files.Length > 0)
                             {
                                 var mostRecent = files.Max(f => File.GetLastWriteTime(f));
-                                LastDeployed = mostRecent;
+                                lastDeployed = mostRecent;
                             }
                         }
                         catch
@@ -271,7 +277,7 @@ public class ProjectInfoAction : ActionItem
                             if (File.Exists(scriptFile))
                             {
                                 var content = File.ReadAllText(scriptFile);
-                                ScriptSizeCharacters = content.Length;
+                                scriptSize = content.Length;
                             }
                         }
                         catch
@@ -280,7 +286,16 @@ public class ProjectInfoAction : ActionItem
                         }
                     }
                 }
+
+                return (lastChanged, isDeployed, lastDeployed, scriptSize, outputPath);
             });
+
+            // Update properties on UI thread
+            LastChanged = result.lastChanged;
+            _outputPath = result.outputPath;
+            IsDeployed = result.isDeployed;
+            LastDeployed = result.lastDeployed;
+            ScriptSizeCharacters = result.scriptSize;
         }
         finally
         {

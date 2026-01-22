@@ -16,6 +16,8 @@ public partial class ProjectOptionsViewModel : ObservableObject
     readonly string _projectPath;
     readonly Action _onClose;
     ProjectConfiguration? _configuration;
+    string? _defaultBinaryPath;
+    bool _defaultBinaryPathLoaded;
 
     public ConfigurationSectionViewModel MainConfig { get; } = new();
     public ConfigurationSectionViewModel LocalConfig { get; } = new();
@@ -50,6 +52,39 @@ public partial class ProjectOptionsViewModel : ObservableObject
 
     public string ProjectName => Path.GetFileNameWithoutExtension(_projectPath);
     
+    public string? DefaultOutputPath => _configuration?.GetResolvedOutputPath();
+    
+    public string? DefaultBinaryPath
+    {
+        get
+        {
+            if (_defaultBinaryPathLoaded)
+                return _defaultBinaryPath;
+                
+            _defaultBinaryPathLoaded = true;
+            
+            if (OperatingSystem.IsWindows())
+            {
+                try
+                {
+                    var se = new Utility.SpaceEngineers();
+                    _defaultBinaryPath = se.GetInstallPath("Bin64");
+                }
+                catch
+                {
+                    // Failed to find SE installation
+                    _defaultBinaryPath = null;
+                }
+            }
+            else
+            {
+                _defaultBinaryPath = null;
+            }
+            
+            return _defaultBinaryPath;
+        }
+    }
+    
     public bool IsOutputOverridden => !string.IsNullOrWhiteSpace(LocalConfig.OutputPath);
     public bool IsBinaryPathOverridden => !string.IsNullOrWhiteSpace(LocalConfig.BinaryPath);
     public bool IsMinifyOverridden => LocalConfig.Minify != null;
@@ -75,8 +110,8 @@ public partial class ProjectOptionsViewModel : ObservableObject
         if (_configuration.MainIni != null)
         {
             var section = _configuration.MainIni["mdk"];
-            MainConfig.OutputPath = section.TryGet("output", out string? output) ? output : string.Empty;
-            MainConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : string.Empty;
+            MainConfig.OutputPath = section.TryGet("output", out string? output) ? output : "auto";
+            MainConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : "auto";
             if (section.TryGet("minify", out string? minify))
                 MainConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList.FirstOrDefault(o => o.Value == minify) ?? MainConfig.Minify;
             if (section.TryGet("minifyextraoptions", out string? minifyExtra))

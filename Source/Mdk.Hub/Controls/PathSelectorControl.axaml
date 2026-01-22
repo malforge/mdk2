@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mdk.Hub.Controls"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="35"
+             x:Class="Mdk.Hub.Controls.PathSelectorControl"
+             x:DataType="controls:PathSelectorControl">
+    
+    <ComboBox x:Name="PART_ComboBox"
+              HorizontalAlignment="Stretch"
+              SelectedIndex="{Binding SelectedIndex, RelativeSource={RelativeSource AncestorType=controls:PathSelectorControl}}"
+              PlaceholderText="{Binding Watermark, RelativeSource={RelativeSource AncestorType=controls:PathSelectorControl}}"
+              VerticalAlignment="Center">
+        <ComboBoxItem Content="Auto"/>
+        <ComboBoxItem Content="Find Folder..."/>
+    </ComboBox>
+    
+</UserControl>
