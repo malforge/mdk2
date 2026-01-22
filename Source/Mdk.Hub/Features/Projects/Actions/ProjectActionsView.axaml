@@ -104,6 +104,23 @@
                     </StackPanel>
                 </StackPanel>
                 
+                <!-- Configuration Warning -->
+                <Border Background="#33ff6666" 
+                        CornerRadius="4" 
+                        Padding="12"
+                        IsVisible="{Binding ConfigurationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="⚠ Configuration Issues" 
+                                   Foreground="#FFff6666" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="12" />
+                        <TextBlock Text="{Binding ConfigurationWarning}" 
+                                   TextWrapping="Wrap"
+                                   Foreground="#FFff6666"
+                                   FontSize="11" />
+                    </StackPanel>
+                </Border>
+                
                 <!-- Info grid -->
                 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
                     <!-- Row 1: Deployment Status | Last Deployed -->

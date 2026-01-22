@@ -33,6 +33,11 @@ public class ProjectConfiguration
     /// Path to the project (.csproj) file.
     /// </summary>
     public string ProjectPath { get; init; } = string.Empty;
+    
+    /// <summary>
+    /// List of warnings encountered while loading configuration (e.g., corrupt or missing INI files).
+    /// </summary>
+    public System.Collections.Generic.List<string> ConfigurationWarnings { get; init; } = new();
 
     // Configuration properties with source tracking
     
@@ -82,6 +87,13 @@ public class ProjectConfiguration
     /// <returns>The resolved path, or null if output is not set and no default can be determined.</returns>
     public string? GetResolvedOutputPath()
     {
+        // Validate ProjectPath first
+        if (string.IsNullOrWhiteSpace(ProjectPath))
+        {
+            System.Diagnostics.Debug.WriteLine("GetResolvedOutputPath: ProjectPath is null or empty");
+            return null;
+        }
+        
         var output = Output.Value;
         
         // If not set or not "auto", return as-is (but add project name if it's a custom path without it)
@@ -89,12 +101,23 @@ public class ProjectConfiguration
         {
             // Custom paths should include the project name subfolder
             var projectName = System.IO.Path.GetFileNameWithoutExtension(ProjectPath);
+            if (string.IsNullOrEmpty(projectName))
+            {
+                System.Diagnostics.Debug.WriteLine($"GetResolvedOutputPath: Could not extract project name from path: {ProjectPath}");
+                return output; // Return the custom path as-is without project name
+            }
             return System.IO.Path.Combine(output, projectName);
         }
 
         // Resolve "auto" based on project type
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var projectName2 = System.IO.Path.GetFileNameWithoutExtension(ProjectPath);
+        
+        if (string.IsNullOrEmpty(projectName2))
+        {
+            System.Diagnostics.Debug.WriteLine($"GetResolvedOutputPath: Could not extract project name from path: {ProjectPath}");
+            return null;
+        }
         
         var type = Type.Value.ToLowerInvariant();
         return type switch

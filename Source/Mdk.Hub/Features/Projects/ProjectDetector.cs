@@ -58,8 +58,28 @@ public static class ProjectDetector
 
             return true;
         }
-        catch (Exception)
+        catch (System.Xml.XmlException)
         {
+            // Corrupt XML - different from "not an MDK project"
+            System.Diagnostics.Debug.WriteLine($"Project file appears to be corrupted (invalid XML): {projectPath}");
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Can't read file
+            System.Diagnostics.Debug.WriteLine($"Cannot read project file (permission denied): {projectPath}");
+            return false;
+        }
+        catch (IOException ex)
+        {
+            // Other I/O error
+            System.Diagnostics.Debug.WriteLine($"Cannot read project file (I/O error): {projectPath} - {ex.Message}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            // Unexpected error - log it
+            System.Diagnostics.Debug.WriteLine($"Unexpected error reading project file: {projectPath} - {ex.GetType().Name}: {ex.Message}");
             return false;
         }
     }

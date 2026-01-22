@@ -147,19 +147,51 @@ public class ProjectRegistry
 
     void Save()
     {
-        try
+        const int maxRetries = 3;
+        const int retryDelayMs = 100;
+        
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            var directory = Path.GetDirectoryName(_registryPath);
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory!);
+            try
+            {
+                var directory = Path.GetDirectoryName(_registryPath);
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory!);
 
-            var json = JsonSerializer.Serialize(_projects, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_registryPath, json);
+                var json = JsonSerializer.Serialize(_projects, new JsonSerializerOptions { WriteIndented = true });
+                
+                // Use temp file + rename for atomic write
+                var tempPath = _registryPath + ".tmp";
+                File.WriteAllText(tempPath, json);
+                
+                // Atomic replace
+                if (File.Exists(_registryPath))
+                    File.Delete(_registryPath);
+                File.Move(tempPath, _registryPath);
+                
+                return; // Success
+            }
+            catch (IOException ex) when (attempt < maxRetries - 1)
+            {
+                // Retry on transient failures (file locked, etc)
+                System.Threading.Thread.Sleep(retryDelayMs);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Permission issue - no point retrying
+                System.Diagnostics.Debug.WriteLine("Project registry save failed: permission denied");
+                return;
+            }
+            catch (Exception ex)
+            {
+                // Unexpected error - log and give up
+                System.Diagnostics.Debug.WriteLine($"Project registry save failed: {ex.Message}");
+                return;
+            }
         }
-        catch (IOException)
-        {
-            // Silently ignore save failures
-        }
+        
+        // All retries exhausted
+        System.Diagnostics.Debug.WriteLine($"Project registry save failed after {maxRetries} attempts");
     }
 
     void RefreshLastReferencedTimes()

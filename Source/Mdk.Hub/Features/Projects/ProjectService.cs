@@ -56,17 +56,26 @@ public class ProjectService : IProjectService
 
         Ini? mainIni = null;
         Ini? localIni = null;
+        var warnings = new List<string>();
 
         if (mainIniPath != null && File.Exists(mainIniPath))
         {
             if (Ini.TryParse(File.ReadAllText(mainIniPath), out var parsed))
                 mainIni = parsed;
+            else
+                warnings.Add($"Main configuration file is corrupt or malformed: {Path.GetFileName(mainIniPath)}");
+        }
+        else if (mainIniPath != null)
+        {
+            warnings.Add($"Main configuration file not found: {Path.GetFileName(mainIniPath)}");
         }
 
         if (localIniPath != null && File.Exists(localIniPath))
         {
             if (Ini.TryParse(File.ReadAllText(localIniPath), out var parsed))
                 localIni = parsed;
+            else
+                warnings.Add($"Local configuration file is corrupt or malformed: {Path.GetFileName(localIniPath)}");
         }
 
         return new ProjectConfiguration
@@ -76,6 +85,7 @@ public class ProjectService : IProjectService
             MainIniPath = mainIniPath,
             LocalIniPath = localIniPath,
             ProjectPath = projectPath,
+            ConfigurationWarnings = warnings,
             
             // Merge configuration values (local overrides main)
             Type = GetConfigValue(mainIni, localIni, "type", "programmableblock"),

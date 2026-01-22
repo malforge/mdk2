@@ -28,6 +28,7 @@ public class ProjectInfoAction : ActionItem
     int? _scriptSizeCharacters;
     bool _isLoading = true;
     string? _outputPath;
+    string? _configurationWarning;
 
     public ProjectInfoAction(ProjectModel project, IProjectService projectService, ICommonDialogs commonDialogs, IShell shell, ProjectActionsViewModel actionsViewModel)
     {
@@ -106,6 +107,12 @@ public class ProjectInfoAction : ActionItem
             if (SetProperty(ref _scriptSizeCharacters, value))
                 OnPropertyChanged(nameof(IsScriptTooLarge));
         }
+    }
+    
+    public string? ConfigurationWarning
+    {
+        get => _configurationWarning;
+        private set => SetProperty(ref _configurationWarning, value);
     }
 
     public bool IsScriptTooLarge => ScriptSizeCharacters.HasValue && ScriptSizeCharacters.Value > 100_000;
@@ -287,8 +294,16 @@ public class ProjectInfoAction : ActionItem
 
                 // Load configuration and check deployment
                 var config = projectService.LoadConfiguration(Project.ProjectPath);
+                string? configWarning = null;
+                
                 if (config != null)
                 {
+                    // Check for configuration warnings
+                    if (config.ConfigurationWarnings.Count > 0)
+                    {
+                        configWarning = string.Join("\n", config.ConfigurationWarnings);
+                    }
+                    
                     outputPath = config.GetResolvedOutputPath();
                     
                     if (!string.IsNullOrEmpty(outputPath) && Directory.Exists(outputPath))
@@ -349,7 +364,7 @@ public class ProjectInfoAction : ActionItem
                     }
                 }
 
-                return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath);
+                return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath, configWarning);
             });
 
             // Update properties on UI thread
@@ -360,6 +375,7 @@ public class ProjectInfoAction : ActionItem
             DeploymentError = result.deploymentError;
             LastDeployed = result.lastDeployed;
             ScriptSizeCharacters = result.scriptSize;
+            ConfigurationWarning = result.configWarning;
         }
         finally
         {
