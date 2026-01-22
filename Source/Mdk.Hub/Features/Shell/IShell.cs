@@ -43,6 +43,21 @@ public interface IShell
     /// Raised when the easter egg active state changes.
     /// </summary>
     event EventHandler? EasterEggActiveChanged;
+    
+    /// <summary>
+    /// Checks if there are any projects with unsaved changes.
+    /// </summary>
+    bool HasUnsavedChanges();
+    
+    /// <summary>
+    /// Gets the first project path with unsaved changes, or null if none.
+    /// </summary>
+    string? GetFirstProjectWithUnsavedChanges();
+    
+    /// <summary>
+    /// Registers or updates unsaved changes state for a project.
+    /// </summary>
+    void SetProjectUnsavedState(string projectPath, bool hasUnsavedChanges);
 }
 
 public partial class ToastMessage : ObservableObject

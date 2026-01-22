@@ -16,6 +16,7 @@ public class ProjectModel : ProjectListItem
     string _name;
     string _projectPath;
     ProjectType _type;
+    bool _hasUnsavedChanges;
 
     public ProjectModel(ProjectType type, string name, string projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)
     {
@@ -50,6 +51,12 @@ public class ProjectModel : ProjectListItem
     {
         get => _lastReferenced;
         private set => SetProperty(ref _lastReferenced, value);
+    }
+    
+    public bool HasUnsavedChanges
+    {
+        get => _hasUnsavedChanges;
+        set => SetProperty(ref _hasUnsavedChanges, value);
     }
 
     public ICommand DeleteCommand => _deleteCommand;

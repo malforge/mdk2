@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Settings;
@@ -12,6 +13,7 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     readonly IDependencyContainer _container = container;
     readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
     readonly ISettings _settings = settings;
+    readonly System.Collections.Generic.HashSet<string> _projectsWithUnsavedChanges = new();
     DateTime? _easterEggDisabledUntil;
     bool _easterEggDisabledForever;
 
@@ -94,5 +96,23 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         _easterEggDisabledForever = true;
         _settings.SetValue("EasterEggDisabledForever", true);
         EasterEggActiveChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public bool HasUnsavedChanges()
+    {
+        return _projectsWithUnsavedChanges.Count > 0;
+    }
+
+    public string? GetFirstProjectWithUnsavedChanges()
+    {
+        return _projectsWithUnsavedChanges.FirstOrDefault();
+    }
+
+    public void SetProjectUnsavedState(string projectPath, bool hasUnsavedChanges)
+    {
+        if (hasUnsavedChanges)
+            _projectsWithUnsavedChanges.Add(projectPath);
+        else
+            _projectsWithUnsavedChanges.Remove(projectPath);
     }
 }

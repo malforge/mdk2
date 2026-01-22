@@ -39,7 +39,7 @@
                                    IsSelected="{Binding IsSelected}"
                                    Command="{Binding SelectCommand}"
                                    CommandParameter="{Binding}">
-                <Grid ColumnDefinitions="Auto,*">
+                <Grid ColumnDefinitions="Auto,*,Auto">
                     <ContentControl Classes="project-icon"
                                     Content="{Binding Type}"
                                     Grid.RowSpan="2" />
@@ -55,6 +55,15 @@
                             Grid.Row="1"
                             Text="{Binding LastReferenced, Converter={m:SmartDate}}" />
                     </Grid>
+                    
+                    <Ellipse Grid.Column="2" 
+                             Width="8" 
+                             Height="8"
+                             Fill="#FFffa500"
+                             VerticalAlignment="Center"
+                             Margin="8,0,0,0"
+                             IsVisible="{Binding HasUnsavedChanges}"
+                             ToolTip.Tip="Unsaved changes"/>
                 </Grid>
             </controls:SelectableCard>
         </DataTemplate>

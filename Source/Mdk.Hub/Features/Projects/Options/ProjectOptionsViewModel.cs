@@ -14,21 +14,45 @@ public partial class ProjectOptionsViewModel : ObservableObject
 {
     readonly IProjectService _projectService;
     readonly string _projectPath;
-    readonly Action _onClose;
+    readonly Action<bool> _onClose; // bool parameter: true if saved, false if cancelled
+    readonly Action? _onDirtyStateChanged;
     ProjectConfiguration? _configuration;
     string? _defaultBinaryPath;
     bool _defaultBinaryPathLoaded;
+    
+    // Store original values to detect changes
+    string? _originalMainOutputPath;
+    string? _originalMainBinaryPath;
+    string? _originalMainMinify;
+    string? _originalMainMinifyExtraOptions;
+    string? _originalMainTrace;
+    string? _originalMainIgnores;
+    string? _originalMainNamespaces;
+    string? _originalLocalOutputPath;
+    string? _originalLocalBinaryPath;
+    string? _originalLocalMinify;
+    string? _originalLocalMinifyExtraOptions;
+    string? _originalLocalTrace;
+    string? _originalLocalIgnores;
+    string? _originalLocalNamespaces;
 
     public ConfigurationSectionViewModel MainConfig { get; } = new();
     public ConfigurationSectionViewModel LocalConfig { get; } = new();
 
-    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Action onClose)
+    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
         _projectPath = projectPath;
         _projectService = projectService;
         _onClose = onClose;
+        _onDirtyStateChanged = onDirtyStateChanged;
         
-        // Subscribe to Local property changes to update override indicators
+        // Subscribe to property changes to update override indicators and dirty state
+        MainConfig.PropertyChanged += (_, e) =>
+        {
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            NotifyDirtyStateChanged();
+        };
+        
         LocalConfig.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(ConfigurationSectionViewModel.OutputPath))
@@ -45,6 +69,9 @@ public partial class ProjectOptionsViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsIgnoresOverridden));
             else if (e.PropertyName == nameof(ConfigurationSectionViewModel.Namespaces))
                 OnPropertyChanged(nameof(IsNamespacesOverridden));
+                
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            NotifyDirtyStateChanged();
         };
         
         LoadConfiguration();
@@ -53,6 +80,22 @@ public partial class ProjectOptionsViewModel : ObservableObject
     public string ProjectName => Path.GetFileNameWithoutExtension(_projectPath);
     
     public bool IsProgrammableBlock => _configuration?.Type.Value?.Equals("programmableblock", StringComparison.OrdinalIgnoreCase) ?? true;
+    
+    public bool HasUnsavedChanges =>
+        MainConfig.OutputPath != _originalMainOutputPath ||
+        MainConfig.BinaryPath != _originalMainBinaryPath ||
+        MainConfig.Minify?.Value != _originalMainMinify ||
+        MainConfig.MinifyExtraOptions?.Value != _originalMainMinifyExtraOptions ||
+        MainConfig.Trace?.Value != _originalMainTrace ||
+        MainConfig.Ignores != _originalMainIgnores ||
+        MainConfig.Namespaces != _originalMainNamespaces ||
+        LocalConfig.OutputPath != _originalLocalOutputPath ||
+        LocalConfig.BinaryPath != _originalLocalBinaryPath ||
+        LocalConfig.Minify?.Value != _originalLocalMinify ||
+        LocalConfig.MinifyExtraOptions?.Value != _originalLocalMinifyExtraOptions ||
+        LocalConfig.Trace?.Value != _originalLocalTrace ||
+        LocalConfig.Ignores != _originalLocalIgnores ||
+        LocalConfig.Namespaces != _originalLocalNamespaces;
     
     public string? DefaultOutputPath => _configuration?.GetResolvedOutputPath();
     
@@ -140,6 +183,22 @@ public partial class ProjectOptionsViewModel : ObservableObject
             LocalConfig.Ignores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
             LocalConfig.Namespaces = section.TryGet("namespaces", out string? namespaces) ? namespaces : string.Empty;
         }
+        
+        // Store original values for dirty tracking
+        _originalMainOutputPath = MainConfig.OutputPath;
+        _originalMainBinaryPath = MainConfig.BinaryPath;
+        _originalMainMinify = MainConfig.Minify?.Value;
+        _originalMainMinifyExtraOptions = MainConfig.MinifyExtraOptions?.Value;
+        _originalMainTrace = MainConfig.Trace?.Value;
+        _originalMainIgnores = MainConfig.Ignores;
+        _originalMainNamespaces = MainConfig.Namespaces;
+        _originalLocalOutputPath = LocalConfig.OutputPath;
+        _originalLocalBinaryPath = LocalConfig.BinaryPath;
+        _originalLocalMinify = LocalConfig.Minify?.Value;
+        _originalLocalMinifyExtraOptions = LocalConfig.MinifyExtraOptions?.Value;
+        _originalLocalTrace = LocalConfig.Trace?.Value;
+        _originalLocalIgnores = LocalConfig.Ignores;
+        _originalLocalNamespaces = LocalConfig.Namespaces;
     }
 
     [RelayCommand]
@@ -155,13 +214,18 @@ public partial class ProjectOptionsViewModel : ObservableObject
             LocalConfig.Minify?.Value ?? string.Empty, LocalConfig.MinifyExtraOptions?.Value ?? string.Empty, 
             LocalConfig.Trace?.Value ?? string.Empty, LocalConfig.Ignores, LocalConfig.Namespaces, saveToLocal: true);
         
-        _onClose();
+        _onClose(true); // Saved
+    }
+    
+    void NotifyDirtyStateChanged()
+    {
+        _onDirtyStateChanged?.Invoke();
     }
 
     [RelayCommand]
     void Cancel()
     {
-        _onClose();
+        _onClose(false); // Cancelled
     }
 
     [RelayCommand]

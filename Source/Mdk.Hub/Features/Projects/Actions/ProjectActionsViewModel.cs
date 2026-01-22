@@ -20,6 +20,8 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
     readonly IProjectService _projectService;
+    readonly Dictionary<string, ProjectOptionsViewModel> _cachedOptionsViewModels = new();
+    readonly Dictionary<string, ProjectModel> _projectModelCache = new();
     
     [ObservableProperty]
     bool _isOptionsDrawerOpen;
@@ -45,21 +47,99 @@ public partial class ProjectActionsViewModel : ViewModel
 
     public ReadOnlyObservableCollection<ActionItem> Actions { get; }
     
+    public bool HasUnsavedChanges(string projectPath)
+    {
+        return _cachedOptionsViewModels.TryGetValue(projectPath, out var viewModel) && viewModel.HasUnsavedChanges;
+    }
+    
     public void ShowOptionsDrawer(string projectPath)
     {
         OptionsProjectPath = projectPath;
-        OptionsViewModel = new ProjectOptionsViewModel(projectPath, _projectService, CloseOptionsDrawer);
+        
+        // Reuse cached ViewModel if it exists, otherwise create new
+        if (!_cachedOptionsViewModels.TryGetValue(projectPath, out var viewModel))
+        {
+            viewModel = new ProjectOptionsViewModel(projectPath, _projectService, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
+            _cachedOptionsViewModels[projectPath] = viewModel;
+        }
+        
+        OptionsViewModel = viewModel;
         IsOptionsDrawerOpen = true;
+    }
+    
+    void UpdateProjectDirtyState(string projectPath)
+    {
+        // Find the project and update its HasUnsavedChanges flag
+        ProjectModel? projectModel = null;
+        
+        // Try to get from cache first
+        if (!_projectModelCache.TryGetValue(projectPath, out projectModel))
+        {
+            // If not cached, check if it's the currently selected project
+            if (_projectState.SelectedProject is ProjectModel selected && selected.ProjectPath == projectPath)
+            {
+                projectModel = selected;
+                _projectModelCache[projectPath] = projectModel;
+            }
+        }
+        
+        if (projectModel != null)
+        {
+            bool hasChanges = HasUnsavedChanges(projectPath);
+            projectModel.HasUnsavedChanges = hasChanges;
+            _shell.SetProjectUnsavedState(projectPath, hasChanges);
+        }
+    }
+    
+    void CloseOptionsDrawer(string projectPath, bool saved)
+    {
+        IsOptionsDrawerOpen = false;
+        
+        // Clear HasUnsavedChanges flag and cache for the current project only
+        if (_projectModelCache.TryGetValue(projectPath, out var projectModel))
+        {
+            projectModel.HasUnsavedChanges = false;
+        }
+        
+        // Update shell
+        _shell.SetProjectUnsavedState(projectPath, false);
+        
+        // Remove the current project from cache (whether saved or cancelled)
+        _cachedOptionsViewModels.Remove(projectPath);
+        _projectModelCache.Remove(projectPath);
+        
+        OptionsViewModel = null;
+        OptionsProjectPath = null;
     }
     
     public void CloseOptionsDrawer()
     {
+        // Just close the drawer without clearing any cache (ESC or X button)
         IsOptionsDrawerOpen = false;
+        OptionsViewModel = null;
+        // Don't clear OptionsProjectPath - keep it for potential reopen
     }
 
     void OnProjectStateChanged(object? sender, EventArgs e)
     {
         UpdateActions();
+        
+        if (_projectState.SelectedProject is ProjectModel selectedProject)
+        {
+            // If drawer is open and a different project is selected, switch to it
+            if (IsOptionsDrawerOpen)
+            {
+                if (OptionsProjectPath != selectedProject.ProjectPath)
+                {
+                    ShowOptionsDrawer(selectedProject.ProjectPath);
+                }
+            }
+            // If drawer is closed and selected project has unsaved changes, open the drawer
+            else if (HasUnsavedChanges(selectedProject.ProjectPath))
+            {
+                ShowOptionsDrawer(selectedProject.ProjectPath);
+            }
+        }
     }
 
     void OnEasterEggActiveChanged(object? sender, EventArgs e)

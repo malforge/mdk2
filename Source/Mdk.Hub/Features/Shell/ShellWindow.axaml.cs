@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Text.Json.Serialization;
 using Avalonia;
 using Avalonia.Controls;
 using JetBrains.Annotations;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.Projects;
 // ReSharper disable ConvertToPrimaryConstructor
 // ReSharper disable MemberCanBePrivate.Local
 
@@ -14,10 +16,14 @@ namespace Mdk.Hub.Features.Shell;
 public partial class ShellWindow : Window
 {
     readonly IShell _shell;
+    readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs _commonDialogs;
+    readonly IProjectService _projectService;
     
-    public ShellWindow(IShell shell)
+    public ShellWindow(IShell shell, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, IProjectService projectService)
     {
         _shell = shell;
+        _commonDialogs = commonDialogs;
+        _projectService = projectService;
         InitializeComponent();
         
         // Initialize easter egg
@@ -55,6 +61,17 @@ public partial class ShellWindow : Window
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
+        // Check for unsaved changes before allowing close
+        if (_shell.HasUnsavedChanges() && !e.IsProgrammatic)
+        {
+            // Cancel the close
+            e.Cancel = true;
+            
+            // Show warning dialog
+            _ = WarnAboutUnsavedChangesAsync();
+            return;
+        }
+        
         if (DataContext is ShellViewModel viewModel)
         {
             try
@@ -69,6 +86,43 @@ public partial class ShellWindow : Window
             }
         }
         base.OnClosing(e);
+    }
+    
+    async System.Threading.Tasks.Task WarnAboutUnsavedChangesAsync()
+    {
+        var result = await _commonDialogs.ShowAsync(new Mdk.Hub.Features.CommonDialogs.ConfirmationMessage
+        {
+            Title = "Unsaved Changes",
+            Message = "You have unsaved project configuration changes. Are you sure you want to exit?",
+            OkText = "Exit Anyway",
+            CancelText = "Show Me"
+        });
+        
+        if (result)
+        {
+            // Exit Anyway - Close programmatically to bypass the check
+            Close();
+        }
+        else
+        {
+            // Show Me - Navigate to first project with changes
+            var projectPath = _shell.GetFirstProjectWithUnsavedChanges();
+            if (projectPath != null && DataContext is ShellViewModel viewModel)
+            {
+                // Find the project in the overview
+                if (viewModel.NavigationView is Mdk.Hub.Features.Projects.Overview.ProjectOverviewViewModel overviewVm)
+                {
+                    var projectModel = overviewVm.Projects
+                        .OfType<Mdk.Hub.Features.Projects.Overview.ProjectModel>()
+                        .FirstOrDefault(p => p.ProjectPath == projectPath);
+                    
+                    if (projectModel != null)
+                    {
+                        projectModel.SelectCommand.Execute(projectModel);
+                    }
+                }
+            }
+        }
     }
 
     class WindowSettings
