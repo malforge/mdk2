@@ -75,7 +75,7 @@
                                 </StackPanel>
                                 
                                 <!-- Minify -->
-                                <Grid ColumnDefinitions="*,8,*">
+                                <Grid ColumnDefinitions="*,8,*" IsVisible="{Binding IsProgrammableBlock}">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                             <TextBlock Grid.Column="0"
@@ -191,7 +191,7 @@
                                 </StackPanel>
                                 
                                 <!-- Namespaces -->
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="4" IsVisible="{Binding IsProgrammableBlock}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Namespaces"
@@ -276,7 +276,7 @@
                                 </StackPanel>
                                 
                                 <!-- Minify -->
-                                <Grid ColumnDefinitions="*,8,*">
+                                <Grid ColumnDefinitions="*,8,*" IsVisible="{Binding IsProgrammableBlock}">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                             <TextBlock Grid.Column="0"
@@ -392,7 +392,7 @@
                                 </StackPanel>
                                 
                                 <!-- Namespaces -->
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="4" IsVisible="{Binding IsProgrammableBlock}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Namespaces"

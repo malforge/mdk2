@@ -52,6 +52,8 @@ public partial class ProjectOptionsViewModel : ObservableObject
 
     public string ProjectName => Path.GetFileNameWithoutExtension(_projectPath);
     
+    public bool IsProgrammableBlock => _configuration?.Type.Value?.Equals("programmableblock", StringComparison.OrdinalIgnoreCase) ?? true;
+    
     public string? DefaultOutputPath => _configuration?.GetResolvedOutputPath();
     
     public string? DefaultBinaryPath
@@ -96,6 +98,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
     void LoadConfiguration()
     {
         _configuration = _projectService.LoadConfiguration(_projectPath);
+        OnPropertyChanged(nameof(IsProgrammableBlock));
         
         // Set defaults for Main
         MainConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList[0]; // "none"

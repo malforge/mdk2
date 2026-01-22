@@ -179,30 +179,46 @@ public class ProjectInfoAction : ActionItem
 
     async Task CopyScriptAsync()
     {
+        System.Diagnostics.Debug.WriteLine($"CopyScriptAsync called. IsScript={IsScript}, IsDeployed={IsDeployed}, _outputPath={_outputPath}");
+        
         if (!CanCopyScript())
+        {
+            System.Diagnostics.Debug.WriteLine("CanCopyScript returned false, exiting early");
             return;
+        }
 
         try
         {
             var scriptFile = Path.Combine(_outputPath!, "Script.cs");
+            System.Diagnostics.Debug.WriteLine($"Looking for script at: {scriptFile}");
+            
             if (File.Exists(scriptFile))
             {
                 var content = await File.ReadAllTextAsync(scriptFile);
+                System.Diagnostics.Debug.WriteLine($"Script loaded, length={content.Length}");
                 
                 // Use TopLevel to get clipboard
                 var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
                     ? Avalonia.Controls.TopLevel.GetTopLevel(desktop.MainWindow)
                     : null;
                 
+                System.Diagnostics.Debug.WriteLine($"TopLevel: {topLevel != null}, Clipboard: {topLevel?.Clipboard != null}");
+                
                 if (topLevel?.Clipboard != null)
                 {
                     await topLevel.Clipboard.SetTextAsync(content);
+                    System.Diagnostics.Debug.WriteLine("Clipboard set successfully");
                     _commonDialogs.ShowToast($"Script copied ({content.Length:N0} characters)");
                 }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Script file does not exist");
             }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"Exception: {ex}");
             await _commonDialogs.ShowAsync(new ConfirmationMessage
             {
                 Title = "Copy Failed",

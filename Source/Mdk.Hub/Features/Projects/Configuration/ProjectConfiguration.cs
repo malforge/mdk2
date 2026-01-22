@@ -84,18 +84,23 @@ public class ProjectConfiguration
     {
         var output = Output.Value;
         
-        // If not set or not "auto", return as-is
-        if (string.IsNullOrWhiteSpace(output) || !string.Equals(output, "auto", StringComparison.OrdinalIgnoreCase))
-            return output;
+        // If not set or not "auto", return as-is (but add project name if it's a custom path without it)
+        if (!string.IsNullOrWhiteSpace(output) && !string.Equals(output, "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            // Custom paths should include the project name subfolder
+            var projectName = System.IO.Path.GetFileNameWithoutExtension(ProjectPath);
+            return System.IO.Path.Combine(output, projectName);
+        }
 
         // Resolve "auto" based on project type
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var projectName2 = System.IO.Path.GetFileNameWithoutExtension(ProjectPath);
         
         var type = Type.Value.ToLowerInvariant();
         return type switch
         {
-            "programmableblock" => System.IO.Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local"),
-            "mod" => System.IO.Path.Combine(appData, "SpaceEngineers", "Mods"),
+            "programmableblock" => System.IO.Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName2),
+            "mod" => System.IO.Path.Combine(appData, "SpaceEngineers", "Mods", projectName2),
             _ => null
         };
     }
