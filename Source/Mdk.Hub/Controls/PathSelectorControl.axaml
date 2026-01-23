@@ -12,8 +12,6 @@
               SelectedIndex="{Binding SelectedIndex, RelativeSource={RelativeSource AncestorType=controls:PathSelectorControl}}"
               PlaceholderText="{Binding Watermark, RelativeSource={RelativeSource AncestorType=controls:PathSelectorControl}}"
               VerticalAlignment="Center">
-        <ComboBoxItem Content="Auto"/>
-        <ComboBoxItem Content="Find Folder..."/>
     </ComboBox>
     
 </UserControl>

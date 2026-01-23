@@ -254,7 +254,7 @@
                         BorderBrush="#44ffffff"
                         BorderThickness="0,0,0,1"
                         Margin="-16,-16,-16,16">
-                    <Grid ColumnDefinitions="*,Auto">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
                         <TextBlock Grid.Column="0"
                                    Text="Project Options"
                                    FontSize="18"
@@ -262,6 +262,14 @@
                                    Foreground="#FFe0e0e0"
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="1"
+                                Classes="subtle"
+                                Content="⚙"
+                                FontSize="16"
+                                Padding="8,4"
+                                Margin="0,0,4,0"
+                                Command="{Binding OptionsViewModel.OpenGlobalSettingsCommand}"
+                                ToolTip.Tip="Global Settings"/>
+                        <Button Grid.Column="2"
                                 Classes="subtle"
                                 Content="✕"
                                 FontSize="16"

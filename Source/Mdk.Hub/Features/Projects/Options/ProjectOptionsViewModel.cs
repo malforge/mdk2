@@ -15,6 +15,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
 {
     readonly IProjectService _projectService;
     readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs _commonDialogs;
+    readonly IShell _shell;
     readonly string _projectPath;
     readonly Action<bool> _onClose; // bool parameter: true if saved, false if cancelled
     readonly Action? _onDirtyStateChanged;
@@ -41,11 +42,12 @@ public partial class ProjectOptionsViewModel : ObservableObject
     public ConfigurationSectionViewModel MainConfig { get; } = new();
     public ConfigurationSectionViewModel LocalConfig { get; } = new();
 
-    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, Action<bool> onClose, Action? onDirtyStateChanged = null)
+    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, IShell shell, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
         _projectPath = projectPath;
         _projectService = projectService;
         _commonDialogs = commonDialogs;
+        _shell = shell;
         _onClose = onClose;
         _onDirtyStateChanged = onDirtyStateChanged;
         
@@ -274,4 +276,11 @@ public partial class ProjectOptionsViewModel : ObservableObject
 
     [RelayCommand]
     void ClearLocalNamespaces() => LocalConfig.Namespaces = string.Empty;
+
+    [RelayCommand]
+    void OpenGlobalSettings()
+    {
+        var viewModel = App.Container.Resolve<Mdk.Hub.Features.Settings.GlobalSettingsViewModel>();
+        _shell.AddOverlay(viewModel);
+    }
 }

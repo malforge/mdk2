@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:settings="clr-namespace:Mdk.Hub.Features.Settings"
+             xmlns:controls="clr-namespace:Mdk.Hub.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Mdk.Hub.Features.Settings.GlobalSettingsView"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             Background="Transparent"
+             x:DataType="settings:GlobalSettingsViewModel">
+    <Grid ColumnDefinitions="10*, 80*, 10*">
+        <Border Grid.Column="1"
+                CornerRadius="8"
+                Background="#DD1a1a2e"
+                BorderBrush="#44ffffff"
+                BorderThickness="1"
+                Padding="24"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MinWidth="500">
+            <StackPanel Spacing="16">
+                <!-- Header -->
+                <TextBlock Text="Global Settings"
+                           Foreground="#FFe0e0e0"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           Margin="0,0,0,8"/>
+                
+                <!-- Explanation -->
+                <TextBlock TextWrapping="Wrap"
+                           Foreground="#FFb0b0b0"
+                           FontSize="12"
+                           Margin="0,0,0,8">
+                    These settings apply globally to all projects in MDK Hub.
+                </TextBlock>
+
+                <!-- Custom Auto Script Output Path -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
+                               Foreground="#FFe0e0e0"
+                               FontSize="14"
+                               FontWeight="SemiBold"/>
+                    
+                    <TextBlock TextWrapping="Wrap"
+                               Foreground="#FF909090"
+                               FontSize="11"
+                               Margin="0,0,0,4">
+                        When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
+                    </TextBlock>
+                    
+                    <controls:PathSelectorControl Path="{Binding CustomAutoScriptOutputPath}"
+                                                  DefaultText="Default"
+                                                  HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <!-- Custom Auto Mod Output Path -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Custom Auto Output Path (Mods)"
+                               Foreground="#FFe0e0e0"
+                               FontSize="14"
+                               FontWeight="SemiBold"/>
+                    
+                    <TextBlock TextWrapping="Wrap"
+                               Foreground="#FF909090"
+                               FontSize="11"
+                               Margin="0,0,0,4">
+                        When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
+                    </TextBlock>
+                    
+                    <controls:PathSelectorControl Path="{Binding CustomAutoModOutputPath}"
+                                                  DefaultText="Default"
+                                                  HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <!-- Custom Auto Binary Path -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Custom Auto Binary Path"
+                               Foreground="#FFe0e0e0"
+                               FontSize="14"
+                               FontWeight="SemiBold"/>
+                    
+                    <TextBlock TextWrapping="Wrap"
+                               Foreground="#FF909090"
+                               FontSize="11"
+                               Margin="0,0,0,4">
+                        When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
+                    </TextBlock>
+                    
+                    <controls:PathSelectorControl Path="{Binding CustomAutoBinaryPath}"
+                                                  DefaultText="Default"
+                                                  HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <!-- Buttons -->
+                <StackPanel Orientation="Horizontal" 
+                            HorizontalAlignment="Right"
+                            Spacing="8"
+                            Margin="0,8,0,0">
+                    <Button Content="Save"
+                            Command="{Binding SaveCommand}"
+                            MinWidth="75"/>
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            Classes="subtle"
+                            MinWidth="75"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

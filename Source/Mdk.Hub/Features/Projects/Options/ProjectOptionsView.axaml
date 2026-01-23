@@ -70,7 +70,8 @@
                                                    FontWeight="SemiBold"/>
                                     </Grid>
                                     <controls:PathSelectorControl Path="{Binding MainConfig.OutputPath}"
-                                                                  DefaultPath="{Binding DefaultOutputPath}"/>
+                                                                  DefaultPath="{Binding DefaultOutputPath}"
+                                                                  DefaultText="Auto"/>
                                 </StackPanel>
                                 
                                 <!-- Binary Path -->
@@ -83,7 +84,8 @@
                                                    FontWeight="SemiBold"/>
                                     </Grid>
                                     <controls:PathSelectorControl Path="{Binding MainConfig.BinaryPath}"
-                                                                  DefaultPath="{Binding DefaultBinaryPath}"/>
+                                                                  DefaultPath="{Binding DefaultBinaryPath}"
+                                                                  DefaultText="Auto"/>
                                 </StackPanel>
                                 
                                 <!-- Minify -->
@@ -252,6 +254,7 @@
                                         <controls:PathSelectorControl Grid.Column="0"
                                                                       Path="{Binding LocalConfig.OutputPath}"
                                                                       DefaultPath="{Binding DefaultOutputPath}"
+                                                                      DefaultText="Auto"
                                                                       Watermark="(inherits from Main)"/>
                                         <Button Grid.Column="1"
                                                 Content="✕"
@@ -276,6 +279,7 @@
                                         <controls:PathSelectorControl Grid.Column="0"
                                                                       Path="{Binding LocalConfig.BinaryPath}"
                                                                       DefaultPath="{Binding DefaultBinaryPath}"
+                                                                      DefaultText="Auto"
                                                                       Watermark="(inherits from Main)"/>
                                         <Button Grid.Column="1"
                                                 Content="✕"

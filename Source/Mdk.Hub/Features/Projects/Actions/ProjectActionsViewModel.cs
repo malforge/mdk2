@@ -59,7 +59,7 @@ public partial class ProjectActionsViewModel : ViewModel
         // Reuse cached ViewModel if it exists, otherwise create new
         if (!_cachedOptionsViewModels.TryGetValue(projectPath, out var viewModel))
         {
-            viewModel = new ProjectOptionsViewModel(projectPath, _projectService, _dialogs, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
+            viewModel = new ProjectOptionsViewModel(projectPath, _projectService, _dialogs, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
             _cachedOptionsViewModels[projectPath] = viewModel;
         }
         

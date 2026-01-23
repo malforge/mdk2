@@ -123,6 +123,16 @@ public class ScriptPacker: ProjectJob
         string resolveAutoOutputDirectory()
         {
             console.Trace("Determining the output directory automatically...");
+            
+            // Check for custom global setting first
+            var customPath = Shared.GlobalSettings.GetCustomAutoScriptOutputPath();
+            if (customPath != null)
+            {
+                console.Trace($"Using custom auto script output path from global settings: {customPath}");
+                return customPath;
+            }
+            
+            // Fall back to default behavior
             if (!OperatingSystem.IsWindows())
                 throw new CommandLineException(-1, "The auto output option is only supported on Windows.");
             var se = new SpaceEngineers();

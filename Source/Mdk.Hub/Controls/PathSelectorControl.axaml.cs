@@ -23,6 +23,9 @@ public partial class PathSelectorControl : UserControl
     public static readonly StyledProperty<string?> WatermarkProperty =
         AvaloniaProperty.Register<PathSelectorControl, string?>(nameof(Watermark));
 
+    public static readonly StyledProperty<string> DefaultTextProperty =
+        AvaloniaProperty.Register<PathSelectorControl, string>(nameof(DefaultText), "Default");
+
     public static readonly StyledProperty<int> SelectedIndexProperty =
         AvaloniaProperty.Register<PathSelectorControl, int>(nameof(SelectedIndex), 0);
 
@@ -48,6 +51,11 @@ public partial class PathSelectorControl : UserControl
         _comboBox = this.FindControl<ComboBox>("PART_ComboBox");
         if (_comboBox != null)
         {
+            // Populate items in code since bindings don't work in Items collection
+            _comboBox.Items.Clear();
+            _comboBox.Items.Add(new ComboBoxItem { Content = DefaultText });
+            _comboBox.Items.Add(new ComboBoxItem { Content = "Find Folder..." });
+            
             _comboBox.SelectionChanged += OnComboBoxSelectionChanged;
             UpdateSelectionFromPath();
         }
@@ -60,6 +68,14 @@ public partial class PathSelectorControl : UserControl
         if (change.Property == PathProperty && !_updatingSelection)
         {
             UpdateSelectionFromPath();
+        }
+        else if (change.Property == DefaultTextProperty && _comboBox != null)
+        {
+            // Update the first item when DefaultText changes
+            if (_comboBox.Items.Count > 0 && _comboBox.Items[0] is ComboBoxItem item)
+            {
+                item.Content = DefaultText;
+            }
         }
     }
 
@@ -211,6 +227,12 @@ public partial class PathSelectorControl : UserControl
     {
         get => GetValue(WatermarkProperty);
         set => SetValue(WatermarkProperty, value);
+    }
+
+    public string DefaultText
+    {
+        get => GetValue(DefaultTextProperty);
+        set => SetValue(DefaultTextProperty, value);
     }
 
     public int SelectedIndex

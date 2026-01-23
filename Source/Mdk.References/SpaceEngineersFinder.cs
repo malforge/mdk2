@@ -25,6 +25,50 @@ namespace Mdk2.References
         
         public bool Verbose { get; set; }
 
+        static string GetCustomAutoBinaryPath()
+        {
+            try
+            {
+                var settingsPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "MDK2", "Hub", "settings.json");
+
+                if (!File.Exists(settingsPath))
+                    return null;
+
+                var json = File.ReadAllText(settingsPath);
+                
+                // Simple JSON parsing for just this one value
+                var key = "\"CustomAutoBinaryPath\"";
+                var keyIndex = json.IndexOf(key, StringComparison.Ordinal);
+                if (keyIndex < 0)
+                    return null;
+                    
+                var colonIndex = json.IndexOf(':', keyIndex);
+                if (colonIndex < 0)
+                    return null;
+                    
+                var valueStart = json.IndexOf('"', colonIndex + 1);
+                if (valueStart < 0)
+                    return null;
+                    
+                var valueEnd = json.IndexOf('"', valueStart + 1);
+                if (valueEnd < 0)
+                    return null;
+                    
+                var value = json.Substring(valueStart + 1, valueEnd - valueStart - 1);
+                if (string.IsNullOrWhiteSpace(value) || value == "auto")
+                    return null;
+                    
+                return value;
+            }
+            catch
+            {
+                // If we can't read settings, just return null (use default)
+                return null;
+            }
+        }
+
         public override bool Execute()
         {
             if (Verbose)
@@ -138,9 +182,20 @@ namespace Mdk2.References
                             Log.LogMessage(MessageImportance.High, $"Binary path of Space Engineers was overridden by ini file: {BinaryPath}");
                             return true;
                         }
-                        else if (Verbose)
+                        else
                         {
-                            Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] binarypath is empty or 'auto', skipping");
+                            // Check global settings for custom auto path
+                            var customPath = GetCustomAutoBinaryPath();
+                            if (customPath != null)
+                            {
+                                BinaryPath = customPath;
+                                Log.LogMessage(MessageImportance.High, $"Binary path was overridden by global settings: {BinaryPath}");
+                                return true;
+                            }
+                            else if (Verbose)
+                            {
+                                Log.LogMessage(MessageImportance.High, $"[SpaceEngineersFinder] binarypath is empty or 'auto', skipping");
+                            }
                         }
                     }
                     else if (Verbose)
