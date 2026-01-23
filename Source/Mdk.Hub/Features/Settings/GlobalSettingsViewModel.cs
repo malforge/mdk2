@@ -11,9 +11,9 @@ namespace Mdk.Hub.Features.Settings;
 public partial class GlobalSettingsViewModel : OverlayModel
 {
     readonly GlobalSettings _globalSettings;
-    string? _customAutoScriptOutputPath;
-    string? _customAutoModOutputPath;
-    string? _customAutoBinaryPath;
+    string _customAutoScriptOutputPath;
+    string _customAutoModOutputPath;
+    string _customAutoBinaryPath;
 
     public GlobalSettingsViewModel(GlobalSettings globalSettings)
     {
@@ -23,19 +23,19 @@ public partial class GlobalSettingsViewModel : OverlayModel
         _customAutoBinaryPath = _globalSettings.CustomAutoBinaryPath;
     }
 
-    public string? CustomAutoScriptOutputPath
+    public string CustomAutoScriptOutputPath
     {
         get => _customAutoScriptOutputPath;
         set => SetProperty(ref _customAutoScriptOutputPath, value);
     }
 
-    public string? CustomAutoModOutputPath
+    public string CustomAutoModOutputPath
     {
         get => _customAutoModOutputPath;
         set => SetProperty(ref _customAutoModOutputPath, value);
     }
 
-    public string? CustomAutoBinaryPath
+    public string CustomAutoBinaryPath
     {
         get => _customAutoBinaryPath;
         set => SetProperty(ref _customAutoBinaryPath, value);

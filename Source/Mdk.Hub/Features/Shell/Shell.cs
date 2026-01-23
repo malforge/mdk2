@@ -115,4 +115,24 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         else
             _projectsWithUnsavedChanges.Remove(projectPath);
     }
+    
+    public void NavigateToFirstProjectWithUnsavedChanges()
+    {
+        var projectPath = GetFirstProjectWithUnsavedChanges();
+        if (projectPath == null)
+            return;
+            
+        // Find the project in the overview and select it
+        if (_viewModel.Value.NavigationView is Features.Projects.Overview.ProjectOverviewViewModel overviewVm)
+        {
+            var projectModel = overviewVm.Projects
+                .OfType<Features.Projects.Overview.ProjectModel>()
+                .FirstOrDefault(p => p.ProjectPath == projectPath);
+            
+            if (projectModel != null)
+            {
+                projectModel.SelectCommand?.Execute(projectModel);
+            }
+        }
+    }
 }

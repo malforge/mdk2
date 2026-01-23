@@ -74,10 +74,8 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:ToastMessage">
-                    <Border Classes="toast"
+                    <Border Classes="toast easter-egg-banner"
                             Classes.dismissing="{Binding IsDismissing}"
-                            Background="#FF2a2416"
-                            BorderBrush="#FFf5a623"
                             BorderThickness="2"
                             CornerRadius="8"
                             Padding="16,12"
@@ -124,7 +122,7 @@
                             </Style>
                         </Border.Styles>
                         <TextBlock Text="{Binding Message}"
-                                   Foreground="#FFffffff"
+                                   Classes="primary"
                                    FontSize="14"
                                    FontWeight="Medium"
                                    TextAlignment="Center"

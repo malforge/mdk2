@@ -55,7 +55,7 @@
                                     <ContentControl Content="{Binding ProjectType}" Width="32" Height="32" Grid.Column="0" />
                                     <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
                                         <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" />
-                                        <TextBlock Text="{Binding Description}" FontSize="11" Foreground="#FF999999" />
+                                        <TextBlock Text="{Binding Description}" FontSize="11" Classes="very-muted" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -80,7 +80,7 @@
                                 HorizontalAlignment="Center" />
                         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
                             <TextBlock Text="Add Existing Project" FontSize="13" FontWeight="Medium" />
-                            <TextBlock Text="Open an existing MDK2 project" FontSize="11" Foreground="#FF999999" />
+                            <TextBlock Text="Open an existing MDK2 project" FontSize="11" Classes="very-muted" />
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -111,12 +111,12 @@
                         IsVisible="{Binding ConfigurationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                     <StackPanel Spacing="4">
                         <TextBlock Text="⚠ Configuration Issues" 
-                                   Foreground="#FFff6666" 
+                                   Classes="danger" 
                                    FontWeight="SemiBold" 
                                    FontSize="12" />
                         <TextBlock Text="{Binding ConfigurationWarning}" 
                                    TextWrapping="Wrap"
-                                   Foreground="#FFff6666"
+                                   Classes="danger"
                                    FontSize="11" />
                     </StackPanel>
                 </Border>
@@ -130,9 +130,8 @@
                         <TextBlock Classes="info-value" 
                                    Text="{Binding IsDeployed, Converter={StaticResource BoolToDeploymentStatusConverter}}" 
                                    IsVisible="{Binding !DeploymentError}" />
-                        <TextBlock Classes="info-value" 
+                        <TextBlock Classes="info-value danger" 
                                    Text="{Binding DeploymentError}" 
-                                   Foreground="#FFff6666"
                                    IsVisible="{Binding DeploymentError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     
@@ -149,9 +148,8 @@
                         <TextBlock Classes="info-label" Text="Last Changed:" />
                         <controls:DateTimeDisplay Value="{Binding LastChanged}" 
                                                   IsVisible="{Binding !LastChangedError}" />
-                        <TextBlock Classes="info-value" 
+                        <TextBlock Classes="info-value danger" 
                                    Text="{Binding LastChangedError}" 
-                                   Foreground="#FFff6666"
                                    IsVisible="{Binding LastChangedError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     
@@ -167,9 +165,8 @@
                             <TextBlock Classes="info-label" Text="Script Size:" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Classes="info-value" Text="{Binding ScriptSizeCharacters, StringFormat='{}{0:N0} characters'}" />
-                                <TextBlock Classes="info-value" 
+                                <TextBlock Classes="info-value danger" 
                                            Text="⚠ Exceeds SE limit (100,000 characters)" 
-                                           Foreground="#FFff6666"
                                            FontWeight="Bold"
                                            IsVisible="{Binding IsScriptTooLarge}" />
                             </StackPanel>
@@ -233,8 +230,8 @@
         
         <!-- Options Drawer (slides in from right) -->
         <Border x:Name="OptionsDrawer"
-                Background="#FF1a1a2e"
-                BorderBrush="#44ffffff"
+                Classes="drawer-content"
+                BorderBrush="{StaticResource BorderPrimaryBrush}"
                 BorderThickness="1,0,0,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
@@ -249,17 +246,14 @@
             <Grid RowDefinitions="Auto,*">
                 <!-- Header with close button -->
                 <Border Grid.Row="0" 
-                        Background="#FF0f0f1a" 
-                        Padding="16,12"
-                        BorderBrush="#44ffffff"
-                        BorderThickness="0,0,0,1"
+                        Classes="drawer-header"
                         Margin="-16,-16,-16,16">
                     <Grid ColumnDefinitions="*,Auto,Auto">
                         <TextBlock Grid.Column="0"
                                    Text="Project Options"
                                    FontSize="18"
                                    FontWeight="Bold"
-                                   Foreground="#FFe0e0e0"
+                                   Classes="primary"
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="1"
                                 Classes="subtle"

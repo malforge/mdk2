@@ -41,7 +41,7 @@
         </Border.RenderTransform>
         <TextBlock Text="{Binding Message}"
                    FontSize="14"
-                   Foreground="#FFe0e0e0"
+                   Classes="primary"
                    TextAlignment="Center"
                    TextWrapping="Wrap"
                    MaxWidth="400" />

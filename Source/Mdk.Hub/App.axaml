@@ -13,30 +13,33 @@
 
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://Mdk.Hub/Theme/FluentExtensionStyles.axaml" />
-        <StyleInclude Source="avares://Mdk.Hub/Theme/SelectableCardStyles.axaml" />
-        <StyleInclude Source="avares://Mdk.Hub/Framework/Controls/DateTimeDisplayStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Theme/BaseStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Theme/SemanticStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Components/SelectableCard/SelectableCardStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Components/DateTimeDisplay/DateTimeDisplayStyles.axaml" />
     </Application.Styles>
 
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <MergeResourceInclude Source="avares://Mdk.Hub/Theme/FluentExtensionResources.axaml" />
+                <ResourceInclude Source="avares://Mdk.Hub/Theme/Colors.axaml" />
+                <ResourceInclude Source="avares://Mdk.Hub/Theme/Brushes.axaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <ControlTheme x:Key="{x:Type icons:Symbol}" TargetType="icons:Symbol">
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <Viewbox HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch">
+                            <ContentPresenter
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Viewbox>
+                    </ControlTemplate>
+                </Setter>
+            </ControlTheme>
         </ResourceDictionary>
-        <ControlTheme x:Key="{x:Type icons:Symbol}" TargetType="icons:Symbol">
-            <Setter Property="Template">
-                <ControlTemplate>
-                    <Viewbox HorizontalAlignment="Stretch"
-                             VerticalAlignment="Stretch">
-                        <ContentPresenter
-                            Content="{TemplateBinding Content}"
-                            ContentTemplate="{TemplateBinding ContentTemplate}"
-                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </Viewbox>
-                </ControlTemplate>
-            </Setter>
-        </ControlTheme>
     </Application.Resources>
 </Application>

@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Brushes created from Color resources -->
+    
+    <!-- Text Brushes -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="{StaticResource TextTertiaryColor}"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}"/>
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}"/>
+    <SolidColorBrush x:Key="TextVeryMutedBrush" Color="{StaticResource TextVeryMutedColor}"/>
+    
+    <!-- Accent Brushes -->
+    <SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimaryColor}"/>
+    <SolidColorBrush x:Key="AccentWarningBrush" Color="{StaticResource AccentWarningColor}"/>
+    <SolidColorBrush x:Key="AccentDangerBrush" Color="{StaticResource AccentDangerColor}"/>
+    <SolidColorBrush x:Key="AccentSuccessBrush" Color="{StaticResource AccentSuccessColor}"/>
+    <SolidColorBrush x:Key="AccentEasterEggBrush" Color="{StaticResource AccentEasterEggColor}"/>
+    
+    <!-- Background Brushes -->
+    <SolidColorBrush x:Key="BackgroundPrimaryBrush" Color="{StaticResource BackgroundPrimaryColor}"/>
+    <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}"/>
+    <SolidColorBrush x:Key="BackgroundDialogBrush" Color="{StaticResource BackgroundDialogColor}"/>
+    <SolidColorBrush x:Key="BackgroundEasterEggBrush" Color="{StaticResource BackgroundEasterEggColor}"/>
+    
+    <!-- Border Brushes -->
+    <SolidColorBrush x:Key="BorderPrimaryBrush" Color="{StaticResource BorderPrimaryColor}"/>
+    
+    <!-- Button Brushes -->
+    <SolidColorBrush x:Key="DangerButtonBackgroundBrush" Color="{StaticResource ButtonDangerColor}"/>
+    <SolidColorBrush x:Key="DangerButtonHoverBrush" Color="{StaticResource ButtonDangerHoverColor}"/>
+    
+</ResourceDictionary>

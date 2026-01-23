@@ -36,7 +36,7 @@
                 <Setter Property="Foreground" Value="{DynamicResource MessageBoxDangerForegroundBrush}" />
                 <Setter Property="CaretBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
                 <Setter Property="SelectionBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
-                <Setter Property="SelectionForegroundBrush" Value="#FFffffff" />
+                <Setter Property="SelectionForegroundBrush" Value="White" />
                 
                 <Style Selector="^:pointerover /template/ Border#PART_BorderElement">
                     <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
@@ -52,14 +52,14 @@
                 <Setter Property="FontFamily" Value="Segoe UI" />
                 <Setter Property="Background" Value="{DynamicResource MessageBoxDangerBorderBrush}" />
                 <Setter Property="BorderBrush" Value="Transparent" />
-                <Setter Property="Foreground" Value="#FFffffff" />
+                <Setter Property="Foreground" Value="White" />
                 
                 <Style Selector="^:pointerover /template/ ContentPresenter">
-                    <Setter Property="Background" Value="#FFc82333" />
+                    <Setter Property="Background" Value="{StaticResource DangerButtonBackgroundBrush}" />
                 </Style>
                 
                 <Style Selector="^:pressed /template/ ContentPresenter">
-                    <Setter Property="Background" Value="#FFbd2130" />
+                    <Setter Property="Background" Value="{StaticResource DangerButtonHoverBrush}" />
                 </Style>
                 
                 <Style Selector="^.cancel">

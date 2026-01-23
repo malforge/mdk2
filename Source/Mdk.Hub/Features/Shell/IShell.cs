@@ -58,6 +58,11 @@ public interface IShell
     /// Registers or updates unsaved changes state for a project.
     /// </summary>
     void SetProjectUnsavedState(string projectPath, bool hasUnsavedChanges);
+    
+    /// <summary>
+    /// Navigates to the first project with unsaved changes (if any).
+    /// </summary>
+    void NavigateToFirstProjectWithUnsavedChanges();
 }
 
 public partial class ToastMessage : ObservableObject

@@ -24,7 +24,7 @@
             <TextBlock Text="Disable Easter Egg:" 
                        FontSize="11"
                        VerticalAlignment="Center"
-                       Foreground="#FFb0b0b0"/>
+                       Classes="muted"/>
             
             <Button Content="For Today" 
                     Command="{Binding DisableForTodayCommand}"

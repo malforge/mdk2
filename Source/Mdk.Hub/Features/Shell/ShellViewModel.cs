@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Projects.Actions;
@@ -22,13 +23,19 @@ namespace Mdk.Hub.Features.Shell;
 public class ShellViewModel : ViewModel
 {
     readonly IShell _shell;
+    readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs? _commonDialogs;
     ViewModel? _currentView;
     ViewModel? _navigationView;
 
     /// <summary>
+    ///     Raised when the ViewModel requests the window to close.
+    /// </summary>
+    public event EventHandler? CloseRequested;
+
+    /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -38,15 +45,25 @@ public class ShellViewModel : ViewModel
     /// </summary>
     /// <param name="shell">Shell service for access to toast messages.</param>
     /// <param name="settings">Application settings service.</param>
+    /// <param name="commonDialogs">Common dialogs service.</param>
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
-    public ShellViewModel(IShell shell, ISettings settings, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel)
+    public ShellViewModel(IShell shell, ISettings settings, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel)
     {
         _shell = shell;
+        _commonDialogs = commonDialogs;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
         CurrentView = projectActionsViewModel;
+    }
+    
+    /// <summary>
+    ///     Initializes easter egg. Should be called from view once easter egg control is available.
+    /// </summary>
+    public void InitializeEasterEgg(EasterEgg easterEggControl)
+    {
+        easterEggControl?.Initialize(_shell);
     }
 
     /// <summary>
@@ -103,6 +120,53 @@ public class ShellViewModel : ViewModel
     ///     Gets the collection of toast messages displayed non-blockingly.
     /// </summary>
     public ObservableCollection<ToastMessage> ToastMessages => IsDesignMode ? new() : _shell.ToastMessages;
+
+    /// <summary>
+    ///     Notifies the ViewModel that the window focus was gained.
+    /// </summary>
+    public void WindowFocusWasGained()
+    {
+        if (_shell is Shell shellService)
+            shellService.RaiseWindowFocusGained();
+    }
+
+    /// <summary>
+    ///     Checks if the window can close. Returns false if there are unsaved changes and user cancels.
+    /// </summary>
+    public async System.Threading.Tasks.Task<bool> CanCloseAsync()
+    {
+        if (!_shell.HasUnsavedChanges())
+            return true;
+
+        if (_commonDialogs == null)
+            return true;
+
+        var result = await _commonDialogs.ShowAsync(new Mdk.Hub.Features.CommonDialogs.ConfirmationMessage
+        {
+            Title = "Unsaved Changes",
+            Message = "You have unsaved project configuration changes. Are you sure you want to exit?",
+            OkText = "Exit Anyway",
+            CancelText = "Show Me"
+        });
+
+        if (result)
+        {
+            // User chose "Exit Anyway" - allow close
+            return true;
+        }
+
+        // User chose "Show Me" - navigate to first project with changes and don't close
+        _shell.NavigateToFirstProjectWithUnsavedChanges();
+        return false;
+    }
+
+    /// <summary>
+    ///     Requests the window to close programmatically (bypasses CanClose check).
+    /// </summary>
+    public void RequestClose()
+    {
+        CloseRequested?.Invoke(this, EventArgs.Empty);
+    }
 
     void OnOverlayViewsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => OnPropertyChanged(nameof(HasOverlays));
 }

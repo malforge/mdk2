@@ -1,0 +1,159 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Text Styles -->
+    
+    <!-- Dialog/Modal Headings -->
+    <Style Selector="TextBlock.dialog-title">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    
+    <!-- Section Headings -->
+    <Style Selector="TextBlock.section-heading">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    
+    <!-- Field Labels -->
+    <Style Selector="TextBlock.field-label">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+    </Style>
+    
+    <!-- Help/Description Text -->
+    <Style Selector="TextBlock.help-text">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    
+    <!-- Small help text (even smaller) -->
+    <Style Selector="TextBlock.help-text-small">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    
+    <!-- Muted/Secondary Text -->
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+    </Style>
+    
+    <!-- Very muted text (descriptions, etc) -->
+    <Style Selector="TextBlock.very-muted">
+        <Setter Property="Foreground" Value="{StaticResource TextVeryMutedBrush}"/>
+    </Style>
+    
+    <!-- Warning Text -->
+    <Style Selector="TextBlock.warning">
+        <Setter Property="Foreground" Value="{StaticResource AccentWarningBrush}"/>
+        <Setter Property="FontStyle" Value="Italic"/>
+    </Style>
+    
+    <!-- Danger Text -->
+    <Style Selector="TextBlock.danger">
+        <Setter Property="Foreground" Value="{StaticResource AccentDangerBrush}"/>
+    </Style>
+    
+    <!-- Accent/Link Text -->
+    <Style Selector="TextBlock.accent">
+        <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}"/>
+    </Style>
+    
+    <!-- Primary Text (default readable) -->
+    <Style Selector="TextBlock.primary">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    
+    <!-- Secondary Text (slightly dimmed) -->
+    <Style Selector="TextBlock.secondary">
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+    </Style>
+    
+    <!-- Container Styles -->
+    
+    <!-- Dialog/Modal Container -->
+    <Style Selector="Border.dialog-container">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Background" Value="{StaticResource BackgroundDialogBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderPrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="24"/>
+    </Style>
+    
+    <!-- Drawer Header -->
+    <Style Selector="Border.drawer-header">
+        <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderPrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="16,12"/>
+    </Style>
+    
+    <!-- Drawer Content Area -->
+    <Style Selector="Border.drawer-content">
+        <Setter Property="Background" Value="{StaticResource BackgroundPrimaryBrush}"/>
+    </Style>
+    
+    <!-- Warning Indicator (dot/ellipse) -->
+    <Style Selector="Ellipse.warning-indicator">
+        <Setter Property="Fill" Value="{StaticResource AccentWarningBrush}"/>
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="Height" Value="8"/>
+    </Style>
+    
+    <!-- Page/Section Heading (larger than section-heading, for main titles) -->
+    <Style Selector="TextBlock.page-title">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+    </Style>
+    
+    <!-- Button Variants -->
+    
+    <!-- Subtle button for less prominent actions -->
+    <Style Selector="Button.subtle">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#22ffffff" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33ffffff" />
+        </Style>
+    </Style>
+    
+    <!-- Danger button for destructive actions -->
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="{StaticResource ButtonDangerColor}" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ButtonDangerHoverColor}" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource ButtonDangerPressedColor}" />
+        </Style>
+    </Style>
+    
+    <!-- Subtle danger - for icon buttons -->
+    <Style Selector="Button.subtle.danger">
+        <Setter Property="Background" Value="Transparent" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#22ff4444" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33ff4444" />
+        </Style>
+    </Style>
+    
+</Styles>

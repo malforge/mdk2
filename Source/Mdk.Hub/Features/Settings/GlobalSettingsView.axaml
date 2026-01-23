@@ -11,27 +11,21 @@
              Background="Transparent"
              x:DataType="settings:GlobalSettingsViewModel">
     <Grid ColumnDefinitions="10*, 80*, 10*">
-        <Border Grid.Column="1"
-                CornerRadius="8"
-                Background="#DD1a1a2e"
-                BorderBrush="#44ffffff"
-                BorderThickness="1"
-                Padding="24"
+        <Border Classes="dialog-container"
+                Grid.Column="1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 MinWidth="500">
             <StackPanel Spacing="16">
                 <!-- Header -->
                 <TextBlock Text="Global Settings"
-                           Foreground="#FFe0e0e0"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           Margin="0,0,0,8"/>
+                           Classes="page-title"
+                           Margin="0,0,0,8" />
                 
                 <!-- Explanation -->
-                <TextBlock TextWrapping="Wrap"
-                           Foreground="#FFb0b0b0"
+                <TextBlock Classes="muted"
                            FontSize="12"
+                           TextWrapping="Wrap"
                            Margin="0,0,0,8">
                     These settings apply globally to all projects in MDK Hub.
                 </TextBlock>
@@ -39,13 +33,10 @@
                 <!-- Custom Auto Script Output Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
-                               Foreground="#FFe0e0e0"
-                               FontSize="14"
-                               FontWeight="SemiBold"/>
+                               Classes="section-heading"/>
                     
                     <TextBlock TextWrapping="Wrap"
-                               Foreground="#FF909090"
-                               FontSize="11"
+                               Classes="help-text"
                                Margin="0,0,0,4">
                         When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
                     </TextBlock>
@@ -58,13 +49,10 @@
                 <!-- Custom Auto Mod Output Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Output Path (Mods)"
-                               Foreground="#FFe0e0e0"
-                               FontSize="14"
-                               FontWeight="SemiBold"/>
+                               Classes="section-heading"/>
                     
                     <TextBlock TextWrapping="Wrap"
-                               Foreground="#FF909090"
-                               FontSize="11"
+                               Classes="help-text"
                                Margin="0,0,0,4">
                         When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
                     </TextBlock>
@@ -77,13 +65,10 @@
                 <!-- Custom Auto Binary Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Binary Path"
-                               Foreground="#FFe0e0e0"
-                               FontSize="14"
-                               FontWeight="SemiBold"/>
+                               Classes="section-heading"/>
                     
                     <TextBlock TextWrapping="Wrap"
-                               Foreground="#FF909090"
-                               FontSize="11"
+                               Classes="help-text"
                                Margin="0,0,0,4">
                         When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
                     </TextBlock>

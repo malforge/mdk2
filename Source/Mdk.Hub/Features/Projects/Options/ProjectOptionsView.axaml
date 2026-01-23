@@ -16,17 +16,15 @@
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
             <TextBlock Grid.Column="0"
                        Text="{Binding ProjectName, StringFormat='Options - {0}'}"
-                       Foreground="#FFe0e0e0"
-                       FontSize="20"
-                       FontWeight="Bold"/>
+                       Classes="page-title"/>
             <StackPanel Grid.Column="1" 
                         Orientation="Horizontal" 
                         Spacing="8" 
                         VerticalAlignment="Center"
                         IsVisible="{Binding HasUnsavedChanges}">
-                <Ellipse Width="8" Height="8" Fill="#FFffa500"/>
+                <Ellipse Width="8" Height="8" Classes="warning-indicator"/>
                 <TextBlock Text="Unsaved changes"
-                           Foreground="#FFffa500"
+                           Classes="warning"
                            FontSize="12"
                            FontStyle="Italic"/>
             </StackPanel>
@@ -54,8 +52,7 @@
                         <ScrollViewer>
                             <StackPanel Spacing="12" Margin="0,12,12,0">
                                 <TextBlock Text="Shared project configuration, committed to source control. Settings here apply to all developers."
-                                           Foreground="#FF808080"
-                                           FontSize="10"
+                                           Classes="help-text-small"
                                            TextWrapping="Wrap"
                                            MinHeight="28"
                                            Margin="0,0,0,8"/>
@@ -65,9 +62,7 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Output Path"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                     </Grid>
                                     <controls:PathSelectorControl Path="{Binding MainConfig.OutputPath}"
                                                                   DefaultPath="{Binding DefaultOutputPath}"
@@ -79,9 +74,7 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Binary Path"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                     </Grid>
                                     <controls:PathSelectorControl Path="{Binding MainConfig.BinaryPath}"
                                                                   DefaultPath="{Binding DefaultBinaryPath}"
@@ -94,16 +87,14 @@
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                             <TextBlock Grid.Column="0"
                                                        Text="Minify"
-                                                       Foreground="#FFb0b0b0"
-                                                       FontSize="11"
-                                                       FontWeight="SemiBold"/>
+                                                       Classes="field-label"/>
                                             <StackPanel Grid.Column="1" 
                                                         Orientation="Horizontal" 
                                                         Spacing="4"
                                                         IsVisible="{Binding IsMinifyOverridden}">
                                                 <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
                                                 <TextBlock Text="Overridden in Local"
-                                                           Foreground="#FFffa500"
+                                                           Classes="warning"
                                                            FontSize="10"
                                                            FontStyle="Italic"
                                                            VerticalAlignment="Center"/>
@@ -123,16 +114,14 @@
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                             <TextBlock Grid.Column="0"
                                                        Text="Minify Extra Options"
-                                                       Foreground="#FFb0b0b0"
-                                                       FontSize="11"
-                                                       FontWeight="SemiBold"/>
+                                                       Classes="field-label"/>
                                             <StackPanel Grid.Column="1" 
                                                         Orientation="Horizontal" 
                                                         Spacing="4"
                                                         IsVisible="{Binding IsMinifyExtraOptionsOverridden}">
                                                 <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
                                                 <TextBlock Text="Overridden in Local"
-                                                           Foreground="#FFffa500"
+                                                           Classes="warning"
                                                            FontSize="10"
                                                            FontStyle="Italic"
                                                            VerticalAlignment="Center"/>
@@ -155,16 +144,14 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Trace"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                         <StackPanel Grid.Column="1" 
                                                     Orientation="Horizontal" 
                                                     Spacing="4"
                                                     IsVisible="{Binding IsTraceOverridden}">
                                             <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
                                             <TextBlock Text="Overridden in Local"
-                                                       Foreground="#FFffa500"
+                                                       Classes="warning"
                                                        FontSize="10"
                                                        FontStyle="Italic"
                                                        VerticalAlignment="Center"/>
@@ -186,16 +173,14 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Ignores"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                         <StackPanel Grid.Column="1" 
                                                     Orientation="Horizontal" 
                                                     Spacing="4"
                                                     IsVisible="{Binding IsIgnoresOverridden}">
                                             <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
                                             <TextBlock Text="Overridden in Local"
-                                                       Foreground="#FFffa500"
+                                                       Classes="warning"
                                                        FontSize="10"
                                                        FontStyle="Italic"
                                                        VerticalAlignment="Center"/>
@@ -209,16 +194,14 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Namespaces"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                         <StackPanel Grid.Column="1" 
                                                     Orientation="Horizontal" 
                                                     Spacing="4"
                                                     IsVisible="{Binding IsNamespacesOverridden}">
                                             <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
                                             <TextBlock Text="Overridden in Local"
-                                                       Foreground="#FFffa500"
+                                                       Classes="warning"
                                                        FontSize="10"
                                                        FontStyle="Italic"
                                                        VerticalAlignment="Center"/>
@@ -235,8 +218,7 @@
                         <ScrollViewer>
                             <StackPanel Spacing="12" Margin="0,12,12,0">
                                 <TextBlock Text="Local overrides, gitignored and not committed. Settings here override Main settings and are specific to your machine."
-                                           Foreground="#FF808080"
-                                           FontSize="10"
+                                           Classes="help-text-small"
                                            TextWrapping="Wrap"
                                            MinHeight="28"
                                            Margin="0,0,0,8"/>
@@ -246,9 +228,7 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Output Path"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
                                         <controls:PathSelectorControl Grid.Column="0"
@@ -271,9 +251,7 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Binary Path"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
                                         <controls:PathSelectorControl Grid.Column="0"
@@ -297,9 +275,7 @@
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                             <TextBlock Grid.Column="0"
                                                        Text="Minify"
-                                                       Foreground="#FFb0b0b0"
-                                                       FontSize="11"
-                                                       FontWeight="SemiBold"/>
+                                                       Classes="field-label"/>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,Auto">
                                             <ComboBox Grid.Column="0"
@@ -326,9 +302,7 @@
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                             <TextBlock Grid.Column="0"
                                                        Text="Minify Extra Options"
-                                                       Foreground="#FFb0b0b0"
-                                                       FontSize="11"
-                                                       FontWeight="SemiBold"/>
+                                                       Classes="field-label"/>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,Auto">
                                             <ComboBox Grid.Column="0"
@@ -358,9 +332,7 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Trace"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
                                         <ComboBox Grid.Column="0"
@@ -389,9 +361,7 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Ignores"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0"
@@ -412,9 +382,7 @@
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                         <TextBlock Grid.Column="0"
                                                    Text="Namespaces"
-                                                   Foreground="#FFb0b0b0"
-                                                   FontSize="11"
-                                                   FontWeight="SemiBold"/>
+                                                   Classes="field-label"/>
                                     </Grid>
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0"

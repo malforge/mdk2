@@ -1,13 +1,10 @@
 using System;
-using System.Linq;
 using System.Text.Json.Serialization;
 using Avalonia;
 using Avalonia.Controls;
 using JetBrains.Annotations;
 using Mal.DependencyInjection;
-using Mdk.Hub.Features.Projects;
-// ReSharper disable ConvertToPrimaryConstructor
-// ReSharper disable MemberCanBePrivate.Local
+using Mdk.Hub.Features.Shell;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -15,68 +12,69 @@ namespace Mdk.Hub.Features.Shell;
 [UsedImplicitly]
 public partial class ShellWindow : Window
 {
-    readonly IShell _shell;
-    readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs _commonDialogs;
-    readonly IProjectService _projectService;
-    
-    public ShellWindow(IShell shell, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, IProjectService projectService)
+    public ShellWindow()
     {
-        _shell = shell;
-        _commonDialogs = commonDialogs;
-        _projectService = projectService;
         InitializeComponent();
-        
-        // Initialize easter egg
-        var easterEgg = this.FindControl<EasterEgg>("EasterEggControl");
-        easterEgg?.Initialize(shell);
     }
 
     protected override void OnGotFocus(global::Avalonia.Input.GotFocusEventArgs e)
     {
         base.OnGotFocus(e);
         
-        if (_shell is Shell shellService)
-            shellService.RaiseWindowFocusGained();
+        if (DataContext is ShellViewModel viewModel)
+            viewModel.WindowFocusWasGained();
     }
 
     protected override void OnDataContextChanged(EventArgs e)
     {
+        base.OnDataContextChanged(e);
+        
         if (DataContext is ShellViewModel viewModel)
         {
+            // Initialize easter egg
+            var easterEgg = this.FindControl<EasterEgg>("EasterEggControl");
+            if (easterEgg != null)
+                viewModel.InitializeEasterEgg(easterEgg);
+            
+            // Subscribe to close requests
+            viewModel.CloseRequested += OnCloseRequested;
+            
+            // Restore window settings
             try
             {
-                var settings = viewModel.Settings;
-                var windowSettings = settings.GetValue("MainWindowSettings", new WindowSettings(this));
+                var windowSettings = viewModel.Settings.GetValue("MainWindowSettings", new WindowSettings(this));
                 if (!windowSettings.IsNew())
                     windowSettings.Restore(this);
             }
             catch
             {
-                // If settings are corrupt, just use defaults (current window state)
+                // If settings are corrupt, just use defaults
             }
         }
-
-        base.OnDataContextChanged(e);
+    }
+    
+    void OnCloseRequested(object? sender, EventArgs e)
+    {
+        Close();
     }
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
-        // Check for unsaved changes before allowing close
-        if (_shell.HasUnsavedChanges() && !e.IsProgrammatic)
+        if (DataContext is ShellViewModel viewModel && !e.IsProgrammatic)
         {
-            // Cancel the close
+            // Cancel the close and check with ViewModel
             e.Cancel = true;
             
-            // Show warning dialog
-            _ = WarnAboutUnsavedChangesAsync();
+            _ = CheckCanCloseAsync(viewModel);
             return;
         }
         
-        if (DataContext is ShellViewModel viewModel)
+        // Save window settings
+        if (DataContext is ShellViewModel vm)
         {
             try
             {
-                var settings = viewModel.Settings;
+                var settings = vm.Settings;
                 var windowSettings = new WindowSettings(this);
                 settings.SetValue("MainWindowSettings", windowSettings);
             }
@@ -85,43 +83,16 @@ public partial class ShellWindow : Window
                 // If we can't save settings, don't crash on close
             }
         }
+        
         base.OnClosing(e);
     }
     
-    async System.Threading.Tasks.Task WarnAboutUnsavedChangesAsync()
+    async System.Threading.Tasks.Task CheckCanCloseAsync(ShellViewModel viewModel)
     {
-        var result = await _commonDialogs.ShowAsync(new Mdk.Hub.Features.CommonDialogs.ConfirmationMessage
+        if (await viewModel.CanCloseAsync())
         {
-            Title = "Unsaved Changes",
-            Message = "You have unsaved project configuration changes. Are you sure you want to exit?",
-            OkText = "Exit Anyway",
-            CancelText = "Show Me"
-        });
-        
-        if (result)
-        {
-            // Exit Anyway - Close programmatically to bypass the check
+            // Close programmatically to bypass the check
             Close();
-        }
-        else
-        {
-            // Show Me - Navigate to first project with changes
-            var projectPath = _shell.GetFirstProjectWithUnsavedChanges();
-            if (projectPath != null && DataContext is ShellViewModel viewModel)
-            {
-                // Find the project in the overview
-                if (viewModel.NavigationView is Mdk.Hub.Features.Projects.Overview.ProjectOverviewViewModel overviewVm)
-                {
-                    var projectModel = overviewVm.Projects
-                        .OfType<Mdk.Hub.Features.Projects.Overview.ProjectModel>()
-                        .FirstOrDefault(p => p.ProjectPath == projectPath);
-                    
-                    if (projectModel != null)
-                    {
-                        projectModel.SelectCommand.Execute(projectModel);
-                    }
-                }
-            }
         }
     }
 
