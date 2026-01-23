@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Utility;
@@ -10,14 +11,10 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects;
 
 [Dependency<IProjectService>]
-public class ProjectService : IProjectService
+public class ProjectService(ILogger logger, ProjectRegistry registry) : IProjectService
 {
-    readonly ProjectRegistry _registry;
-
-    public ProjectService()
-    {
-        _registry = new ProjectRegistry();
-    }
+    readonly ProjectRegistry _registry = registry;
+    readonly ILogger _logger = logger;
 
     public IReadOnlyList<ProjectInfo> GetProjects()
     {
@@ -63,11 +60,15 @@ public class ProjectService : IProjectService
             if (Ini.TryParse(File.ReadAllText(mainIniPath), out var parsed))
                 mainIni = parsed;
             else
+            {
                 warnings.Add($"Main configuration file is corrupt or malformed: {Path.GetFileName(mainIniPath)}");
+                _logger.Warning($"Failed to parse main INI file: {mainIniPath}");
+            }
         }
         else if (mainIniPath != null)
         {
             warnings.Add($"Main configuration file not found: {Path.GetFileName(mainIniPath)}");
+            _logger.Info($"Main INI file not found: {mainIniPath}");
         }
 
         if (localIniPath != null && File.Exists(localIniPath))
@@ -75,7 +76,10 @@ public class ProjectService : IProjectService
             if (Ini.TryParse(File.ReadAllText(localIniPath), out var parsed))
                 localIni = parsed;
             else
+            {
                 warnings.Add($"Local configuration file is corrupt or malformed: {Path.GetFileName(localIniPath)}");
+                _logger.Warning($"Failed to parse local INI file: {localIniPath}");
+            }
         }
 
         return new ProjectConfiguration
@@ -153,7 +157,7 @@ public class ProjectService : IProjectService
 
         // Load the target INI file or create a new one
         Ini targetIni;
-        if (File.Exists(targetIniPath) && Ini.TryParse(File.ReadAllText(targetIniPath), out var parsed))
+        if (File.Exists(targetIniPath) && Ini.TryParse(await File.ReadAllTextAsync(targetIniPath), out var parsed))
             targetIni = parsed;
         else
             targetIni = new Ini();
@@ -169,6 +173,6 @@ public class ProjectService : IProjectService
             .WithKey("mdk", "namespaces", namespaces);
 
         // Write the file
-        File.WriteAllText(targetIniPath, targetIni.ToString());
+        await File.WriteAllTextAsync(targetIniPath, targetIni.ToString());
     }
 }

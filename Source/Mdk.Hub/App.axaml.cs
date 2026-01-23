@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Shell;
 
 namespace Mdk.Hub;
@@ -18,6 +19,9 @@ public class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var logger = Container.Resolve<ILogger>();
+            logger.Info("MDK Hub application starting");
+            
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
@@ -27,6 +31,8 @@ public class App : Application
             desktop.MainWindow = shellWindow;
             var shell = Container.Resolve<IShell>();
             shell.Start();
+            
+            logger.Info("MDK Hub application started successfully");
         }
 
         base.OnFrameworkInitializationCompleted();

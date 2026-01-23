@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Mal.DependencyInjection;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Utility;
 
@@ -12,14 +14,17 @@ namespace Mdk.Hub.Features.Projects;
 /// Stores and manages the registry of known MDK projects.
 /// Projects are persisted to %appdata%\MDK2\Hub\projects.json
 /// </summary>
+[Dependency<ProjectRegistry>]
 public class ProjectRegistry
 {
     readonly string _registryPath;
     readonly string _versionFilesPath;
+    readonly ILogger _logger;
     List<ProjectInfo> _projects = new();
 
-    public ProjectRegistry()
+    public ProjectRegistry(ILogger logger)
     {
+        _logger = logger;
         var appDataMdk2 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2");
         var hubFolder = Path.Combine(appDataMdk2, "Hub");
         _registryPath = Path.Combine(hubFolder, "projects.json");
@@ -46,7 +51,14 @@ public class ProjectRegistry
             string.Equals(Path.GetFullPath(p.ProjectPath), Path.GetFullPath(project.ProjectPath), StringComparison.OrdinalIgnoreCase));
         
         if (existing != null)
+        {
+            _logger.Debug($"Updating project: {project.Name}");
             _projects.Remove(existing);
+        }
+        else
+        {
+            _logger.Info($"Adding new project: {project.Name} at {project.ProjectPath}");
+        }
         
         _projects.Add(project with { LastReferenced = DateTimeOffset.Now });
         Save();
@@ -58,8 +70,12 @@ public class ProjectRegistry
     public void RemoveProject(string projectPath)
     {
         var fullPath = Path.GetFullPath(projectPath);
-        _projects.RemoveAll(p => string.Equals(Path.GetFullPath(p.ProjectPath), fullPath, StringComparison.OrdinalIgnoreCase));
-        Save();
+        var removed = _projects.RemoveAll(p => string.Equals(Path.GetFullPath(p.ProjectPath), fullPath, StringComparison.OrdinalIgnoreCase));
+        if (removed > 0)
+        {
+            _logger.Info($"Removed project: {projectPath}");
+            Save();
+        }
     }
 
     void Load()
@@ -70,15 +86,17 @@ public class ProjectRegistry
             {
                 var json = File.ReadAllText(_registryPath);
                 _projects = JsonSerializer.Deserialize<List<ProjectInfo>>(json) ?? new List<ProjectInfo>();
+                _logger.Info($"Loaded {_projects.Count} projects from registry");
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
+                _logger.Error($"Failed to parse project registry file: {_registryPath}", ex);
                 _projects = new List<ProjectInfo>();
             }
         }
         else
         {
-            // First run - try to import from .version files
+            _logger.Info("No existing registry found, importing from .version files");
             _projects = new List<ProjectInfo>();
             ImportFromVersionFiles();
         }
@@ -114,18 +132,21 @@ public class ProjectRegistry
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Skip invalid version files
+                    _logger.Warning($"Failed to import version file: {versionFile} - {ex.Message}");
                 }
             }
 
             if (importedCount > 0)
+            {
+                _logger.Info($"Imported {importedCount} projects from .version files");
                 Save();
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            // If import fails, just start with empty list
+            _logger.Error("Failed to import from .version files", ex);
         }
     }
 
@@ -173,25 +194,22 @@ public class ProjectRegistry
             }
             catch (IOException ex) when (attempt < maxRetries - 1)
             {
-                // Retry on transient failures (file locked, etc)
+                _logger.Warning($"Registry save attempt {attempt + 1} failed (retrying): {ex.Message}");
                 System.Threading.Thread.Sleep(retryDelayMs);
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException ex)
             {
-                // Permission issue - no point retrying
-                System.Diagnostics.Debug.WriteLine("Project registry save failed: permission denied");
+                _logger.Error("Registry save failed: permission denied", ex);
                 return;
             }
             catch (Exception ex)
             {
-                // Unexpected error - log and give up
-                System.Diagnostics.Debug.WriteLine($"Project registry save failed: {ex.Message}");
+                _logger.Error("Registry save failed", ex);
                 return;
             }
         }
         
-        // All retries exhausted
-        System.Diagnostics.Debug.WriteLine($"Project registry save failed after {maxRetries} attempts");
+        _logger.Error($"Registry save failed after {maxRetries} attempts");
     }
 
     void RefreshLastReferencedTimes()
