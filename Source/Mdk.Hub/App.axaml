@@ -11,14 +11,6 @@
 
     </Application.DataTemplates>
 
-    <Application.Styles>
-        <FluentTheme />
-        <StyleInclude Source="avares://Mdk.Hub/Theme/BaseStyles.axaml" />
-        <StyleInclude Source="avares://Mdk.Hub/Theme/SemanticStyles.axaml" />
-        <StyleInclude Source="avares://Mdk.Hub/Components/SelectableCard/SelectableCardStyles.axaml" />
-        <StyleInclude Source="avares://Mdk.Hub/Components/DateTimeDisplay/DateTimeDisplayStyles.axaml" />
-    </Application.Styles>
-
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -42,4 +34,12 @@
             </ControlTheme>
         </ResourceDictionary>
     </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Mdk.Hub/Theme/BaseStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Theme/SemanticStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Components/SelectableCard/SelectableCardStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Components/DateTimeDisplay/DateTimeDisplayStyles.axaml" />
+    </Application.Styles>
 </Application>
