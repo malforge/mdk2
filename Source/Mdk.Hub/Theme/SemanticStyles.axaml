@@ -117,16 +117,16 @@
     
     <!-- Subtle button for less prominent actions -->
     <Style Selector="Button.subtle">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{StaticResource BorderLightColor}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
         <Setter Property="FontWeight" Value="Normal" />
         
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#22ffffff" />
+            <Setter Property="Background" Value="{StaticResource BorderMediumColor}" />
         </Style>
         
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#33ffffff" />
+            <Setter Property="Background" Value="{StaticResource BorderPrimaryColor}" />
         </Style>
     </Style>
     
@@ -143,16 +143,43 @@
         </Style>
     </Style>
     
-    <!-- Subtle danger - for icon buttons -->
-    <Style Selector="Button.subtle.danger">
-        <Setter Property="Background" Value="Transparent" />
+    <!-- Success button for positive actions -->
+    <Style Selector="Button.success">
+        <Setter Property="Background" Value="#FF4caf50" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#22ff4444" />
+            <Setter Property="Background" Value="#FF66bb6a" />
         </Style>
         
         <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#FF388e3c" />
+        </Style>
+    </Style>
+    
+    <!-- Subtle danger - for subtle destructive actions -->
+    <Style Selector="Button.subtle.danger">
+        <Setter Property="Background" Value="#22ff4444" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#33ff4444" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#44ff4444" />
+        </Style>
+    </Style>
+    
+    <!-- Subtle success - for subtle positive actions -->
+    <Style Selector="Button.subtle.success">
+        <Setter Property="Background" Value="#224caf50" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#334caf50" />
+        </Style>
+        
+        <Style Selector="^:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#444caf50" />
         </Style>
     </Style>
     

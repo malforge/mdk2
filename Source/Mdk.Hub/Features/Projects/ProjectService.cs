@@ -9,6 +9,7 @@ using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.Snackbars;
 using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
@@ -18,13 +19,18 @@ public class ProjectService : IProjectService
 {
     readonly IProjectRegistry _registry;
     readonly ILogger _logger;
+    readonly IShell _shell;
+    readonly ISnackbarService _snackbarService;
 
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
+    public event EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
 
-    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell)
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService)
     {
         _registry = registry;
         _logger = logger;
+        _shell = shell;
+        _snackbarService = snackbarService;
         
         // Subscribe to IPC messages
         ipc.MessageReceived += async (_, e) => await HandleBuildNotificationAsync(e.Message);
@@ -269,6 +275,12 @@ public class ProjectService : IProjectService
                     ProjectPath = projectPath,
                     Source = ProjectAdditionSource.BuildNotification
                 });
+                
+                // Show toast notification for script deployments
+                if (message.Type == NotificationType.Script)
+                {
+                    ShowScriptDeployedToast(projectName, projectPath);
+                }
             }
             else
             {
@@ -284,6 +296,12 @@ public class ProjectService : IProjectService
                         ProjectPath = projectPath,
                         Source = ProjectAdditionSource.BuildNotification
                     });
+                    
+                    // Show toast notification for script deployments
+                    if (message.Type == NotificationType.Script)
+                    {
+                        ShowScriptDeployedToast(projectName, projectPath);
+                    }
                 }
                 else
                 {
@@ -293,9 +311,14 @@ public class ProjectService : IProjectService
         }
         else
         {
-            // Existing project - update last referenced
+            // Existing project - show deployment toast
             _logger.Debug($"Build notification for existing project: {projectPath}");
-            // TODO: Handle based on user's build notification preference (Phase 2+)
+            
+            // Show toast notification for script deployments
+            if (message.Type == NotificationType.Script)
+            {
+                ShowScriptDeployedToast(projectName, projectPath);
+            }
         }
     }
     
@@ -329,5 +352,156 @@ public class ProjectService : IProjectService
         // Create message and handle it
         var message = new InterConnectMessage(type, args.Skip(1).ToArray());
         _ = HandleBuildNotificationAsync(message); // Fire and forget
+    }
+
+    public async Task<bool> CopyScriptToClipboardAsync(string projectPath)
+    {
+        try
+        {
+            var config = LoadConfiguration(projectPath);
+            if (config == null)
+                return false;
+
+            var outputPath = config.GetResolvedOutputPath();
+            if (string.IsNullOrEmpty(outputPath) || !Directory.Exists(outputPath))
+                return false;
+
+            var scriptFile = Path.Combine(outputPath, "Script.cs");
+            if (!File.Exists(scriptFile))
+                return false;
+
+            var content = await File.ReadAllTextAsync(scriptFile);
+
+            // Get clipboard from TopLevel
+            var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? Avalonia.Controls.TopLevel.GetTopLevel(desktop.MainWindow)
+                : null;
+
+            if (topLevel?.Clipboard != null)
+            {
+                await topLevel.Clipboard.SetTextAsync(content);
+                _logger.Info($"Script copied to clipboard: {content.Length} characters");
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to copy script to clipboard: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool OpenProjectFolder(string projectPath)
+    {
+        try
+        {
+            if (!File.Exists(projectPath))
+                return false;
+
+            var folder = Path.GetDirectoryName(projectPath);
+            if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+                return false;
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = folder,
+                UseShellExecute = true
+            });
+
+            _logger.Info($"Opened project folder: {folder}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to open project folder: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool OpenOutputFolder(string projectPath)
+    {
+        try
+        {
+            var config = LoadConfiguration(projectPath);
+            if (config == null)
+                return false;
+
+            var outputPath = config.GetResolvedOutputPath();
+            if (string.IsNullOrEmpty(outputPath) || !Directory.Exists(outputPath))
+                return false;
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = outputPath,
+                UseShellExecute = true
+            });
+
+            _logger.Info($"Opened output folder: {outputPath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to open output folder: {ex.Message}");
+            return false;
+        }
+    }
+
+    public void NavigateToProject(string projectPath)
+    {
+        // Raise event for view models to handle navigation
+        ProjectNavigationRequested?.Invoke(this, new ProjectNavigationRequestedEventArgs 
+        { 
+            ProjectPath = projectPath 
+        });
+        _logger.Info($"Navigation requested for project: {projectPath}");
+    }
+    
+    void ShowScriptDeployedToast(string projectName, string projectPath)
+    {
+        var message = $"Your script \"{projectName}\" has been successfully deployed.";
+        var actions = new List<SnackbarAction>
+        {
+            new()
+            {
+                Text = "Open in Hub",
+                Action = _ => NavigateToProject(projectPath),
+                Context = projectPath,
+                IsClosingAction = true
+            },
+            new()
+            {
+                Text = "Copy to clipboard",
+                Action = async ctx =>
+                {
+                    if (ctx is string path)
+                    {
+                        var success = await CopyScriptToClipboardAsync(path);
+                        if (success)
+                        {
+                            _snackbarService.Show("Script copied to clipboard.", timeout: 2000);
+                        }
+                    }
+                },
+                Context = projectPath,
+                IsClosingAction = true
+            },
+            new()
+            {
+                Text = "Show me",
+                Action = ctx =>
+                {
+                    if (ctx is string path)
+                    {
+                        OpenOutputFolder(path);
+                    }
+                },
+                Context = projectPath,
+                IsClosingAction = true
+            }
+        };
+        
+        _snackbarService.Show(message, actions, timeout: 15000);
     }
 }

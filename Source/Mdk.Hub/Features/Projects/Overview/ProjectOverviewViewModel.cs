@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Settings;
+using Mdk.Hub.Features.Snackbars;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Overview;
@@ -20,6 +21,7 @@ public class ProjectOverviewViewModel : ViewModel
     readonly IProjectService _projectService;
     readonly IProjectState _projectState;
     readonly ISettings _settings;
+    readonly ISnackbarService _snackbarService;
     readonly ThrottledAction<string> _throttledSearch;
     bool _filterModsOnly;
     bool _filterScriptsOnly;
@@ -32,21 +34,23 @@ public class ProjectOverviewViewModel : ViewModel
     
     static readonly TimeSpan SelectionCooldown = TimeSpan.FromSeconds(30);
 
-    public ProjectOverviewViewModel() : this(null!, null!, null!, null!)
+    public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
 
-    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService, ISettings settings)
+    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService, ISettings settings, ISnackbarService snackbarService)
     {
         _commonDialogs = commonDialogs;
         _projectState = projectState;
         _projectService = projectService;
         _settings = settings;
+        _snackbarService = snackbarService;
         Projects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
         SelectProjectCommand = new RelayCommand<ProjectListItem>(SelectProject);
+        TestToastCommand = new RelayCommand(TestToast);
 
         if (IsDesignMode)
         {
@@ -65,6 +69,9 @@ public class ProjectOverviewViewModel : ViewModel
             
             // Subscribe to new project notifications
             _projectService.ProjectAdded += OnProjectAdded;
+            
+            // Subscribe to navigation requests
+            _projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
         }
     }
 
@@ -143,6 +150,8 @@ public class ProjectOverviewViewModel : ViewModel
     public ICommand ClearSearchCommand { get; }
 
     public ICommand SelectProjectCommand { get; }
+    
+    public ICommand TestToastCommand { get; }
 
     public void ClearSearch()
     {
@@ -337,5 +346,80 @@ public class ProjectOverviewViewModel : ViewModel
             // (No need to set NeedsAttention since SelectProject clears it anyway)
             SelectProject(newProject);
         }
+    }
+
+    void OnProjectNavigationRequested(object? sender, ProjectNavigationRequestedEventArgs e)
+    {
+        // Find the project in the list
+        var project = _projects.OfType<ProjectModel>().FirstOrDefault(p => 
+            string.Equals(p.ProjectPath, e.ProjectPath, StringComparison.OrdinalIgnoreCase));
+        
+        if (project != null)
+        {
+            // Clear any filters that might hide the project
+            ShowAll = true;
+            FilterScriptsOnly = false;
+            FilterModsOnly = false;
+            SearchText = string.Empty;
+            
+            // Select the project
+            SelectProject(project);
+        }
+    }
+
+    void TestToast()
+    {
+        // Simulate a script deployment snackbar with a test project
+        var testProjectPath = @"C:\Projects\TestScript\TestScript.csproj";
+        
+        // Get the first script project if available, otherwise use fake path
+        var firstScript = _projects.OfType<ProjectModel>()
+            .FirstOrDefault(p => p.Type == ProjectType.IngameScript);
+        
+        if (firstScript != null)
+        {
+            testProjectPath = firstScript.ProjectPath;
+        }
+        
+        _snackbarService.Show($"Your script \"Test Project\" has been successfully deployed.", new[]
+        {
+            new SnackbarAction
+            {
+                Text = "Open in Hub",
+                Action = _ => _projectService.NavigateToProject(testProjectPath),
+                Context = testProjectPath,
+                IsClosingAction = true
+            },
+            new SnackbarAction
+            {
+                Text = "Copy to clipboard",
+                Action = async ctx =>
+                {
+                    if (ctx is string path)
+                    {
+                        var success = await _projectService.CopyScriptToClipboardAsync(path);
+                        if (success)
+                        {
+                            _snackbarService.Show("Script copied to clipboard.", timeout: 2000);
+                        }
+                    }
+                },
+                Context = testProjectPath,
+                IsClosingAction = true
+            },
+            new SnackbarAction
+            {
+                Text = "Show me",
+                Action = ctx =>
+                {
+                    if (ctx is string path)
+                    {
+                        _projectService.OpenOutputFolder(path);
+                    }
+                },
+                Context = testProjectPath,
+                IsClosingAction = true
+            }
+        }, 15000);
     }
 }

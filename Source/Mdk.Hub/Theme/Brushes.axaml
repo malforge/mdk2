@@ -23,6 +23,7 @@
     <SolidColorBrush x:Key="BackgroundPrimaryBrush" Color="{StaticResource BackgroundPrimaryColor}"/>
     <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}"/>
     <SolidColorBrush x:Key="BackgroundDialogBrush" Color="{StaticResource BackgroundDialogColor}"/>
+    <SolidColorBrush x:Key="BackgroundSuccessBrush" Color="{StaticResource BackgroundSuccessColor}" Opacity="0.95"/>
     <SolidColorBrush x:Key="BackgroundEasterEggBrush" Color="{StaticResource BackgroundEasterEggColor}"/>
     
     <!-- Border Brushes -->

@@ -10,6 +10,7 @@ using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.Snackbars;
 
 namespace Mdk.Hub;
 
@@ -37,6 +38,12 @@ public class App : Application
             var shellWindow = Container.Resolve<ShellWindow>();
             shellWindow.DataContext = shellViewModel;
             desktop.MainWindow = shellWindow;
+            
+            // Initialize snackbar service with main window for screen detection
+            var snackbarService = Container.Resolve<ISnackbarService>();
+            if (snackbarService is SnackbarService ss)
+                ss.SetMainWindow(shellWindow);
+            
             var shell = Container.Resolve<IShell>();
             shell.Start(desktop.Args ?? Array.Empty<string>());
             

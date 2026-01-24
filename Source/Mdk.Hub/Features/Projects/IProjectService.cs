@@ -35,6 +35,14 @@ public class ProjectAddedEventArgs : System.EventArgs
 }
 
 /// <summary>
+/// Event arguments for when navigation to a project is requested.
+/// </summary>
+public class ProjectNavigationRequestedEventArgs : System.EventArgs
+{
+    public string ProjectPath { get; init; } = string.Empty;
+}
+
+/// <summary>
 /// Unified service for accessing project data and configuration.
 /// Provides both project listing/management and configuration reading.
 /// </summary>
@@ -44,6 +52,12 @@ public interface IProjectService
     /// Raised when a new project is added to the registry (typically via build notification).
     /// </summary>
     event System.EventHandler<ProjectAddedEventArgs>? ProjectAdded;
+    
+    /// <summary>
+    /// Raised when navigation to a project is requested (e.g., from a toast notification).
+    /// View models should subscribe to this and handle the navigation.
+    /// </summary>
+    event System.EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
     
     /// <summary>
     /// Gets all projects known to MDK Hub.
@@ -87,4 +101,31 @@ public interface IProjectService
     /// <param name="namespaces">Namespaces value.</param>
     /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
     Task SaveConfiguration(string projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
+
+    /// <summary>
+    /// Copies the deployed script to the clipboard.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <returns>True if the script was copied successfully.</returns>
+    Task<bool> CopyScriptToClipboardAsync(string projectPath);
+
+    /// <summary>
+    /// Opens the project folder in the system file explorer.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <returns>True if the folder was opened successfully.</returns>
+    bool OpenProjectFolder(string projectPath);
+
+    /// <summary>
+    /// Opens the output/deployment folder in the system file explorer.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <returns>True if the folder was opened successfully.</returns>
+    bool OpenOutputFolder(string projectPath);
+
+    /// <summary>
+    /// Navigates to and selects the specified project in the Hub UI.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    void NavigateToProject(string projectPath);
 }

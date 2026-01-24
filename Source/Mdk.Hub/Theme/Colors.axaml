@@ -17,13 +17,14 @@
     <Color x:Key="AccentPrimaryDarkColor">#FF0056b3</Color>
     <Color x:Key="AccentWarningColor">#FFffa500</Color>
     <Color x:Key="AccentDangerColor">#FFff6666</Color>
-    <Color x:Key="AccentSuccessColor">#FF4da6ff</Color>
+    <Color x:Key="AccentSuccessColor">#FF4caf50</Color>
     <Color x:Key="AccentEasterEggColor">#FFf5a623</Color>
     
     <!-- Background Colors -->
     <Color x:Key="BackgroundPrimaryColor">#FF1a1a2e</Color>
     <Color x:Key="BackgroundSecondaryColor">#FF0f0f1a</Color>
     <Color x:Key="BackgroundDialogColor">#FF1a1a2e</Color>
+    <Color x:Key="BackgroundSuccessColor">#FF1a2e1a</Color>
     <Color x:Key="BackgroundCardColor">#CC1a1a2e</Color>
     <Color x:Key="BackgroundCardHoverColor">#DD16213e</Color>
     <Color x:Key="BackgroundCardSelectedColor">#EE16213e</Color>

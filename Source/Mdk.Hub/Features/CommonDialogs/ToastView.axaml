@@ -30,7 +30,8 @@
     </UserControl.Styles>
     
     <Border Classes="toast"
-            Background="#EE1a1a2e"
+            Background="{StaticResource BackgroundDialogBrush}"
+            Opacity="0.93"
             CornerRadius="8"
             Padding="16,12"
             Margin="0,0,0,40"
