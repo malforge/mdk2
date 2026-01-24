@@ -1,4 +1,7 @@
-﻿v.2.1.17
+﻿v.2.1.18
+   - Bugfix on unused field minification
+
+v.2.1.17
    - Moved the "Smallifier" processor to the Trim minifying level.
 
 v.2.1.16
