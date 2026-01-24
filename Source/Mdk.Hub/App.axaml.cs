@@ -38,7 +38,7 @@ public class App : Application
             shellWindow.DataContext = shellViewModel;
             desktop.MainWindow = shellWindow;
             var shell = Container.Resolve<IShell>();
-            shell.Start();
+            shell.Start(desktop.Args ?? Array.Empty<string>());
             
             logger.Info("MDK Hub application started successfully");
         }

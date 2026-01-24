@@ -14,8 +14,11 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
     readonly ISettings _settings = settings;
     readonly System.Collections.Generic.List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
+    readonly System.Collections.Generic.List<Action<string[]>> _startupCallbacks = new();
     DateTime? _easterEggDisabledUntil;
     bool _easterEggDisabledForever;
+    string[]? _startupArgs;
+    bool _hasStarted;
     
     class UnsavedChangesRegistration
     {
@@ -45,13 +48,29 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         }
     }
 
-    public void Start()
+    public void Start(string[] args)
     {
+        _startupArgs = args;
+        _hasStarted = true;
+        
         // Load easter egg settings
         _easterEggDisabledForever = _settings.GetValue("EasterEggDisabledForever", false);
         var disabledUntilTicks = _settings.GetValue("EasterEggDisabledUntilTicks", 0L);
         if (disabledUntilTicks > 0)
             _easterEggDisabledUntil = new DateTime(disabledUntilTicks);
+        
+        // Invoke queued callbacks
+        foreach (var callback in _startupCallbacks)
+            callback(args);
+        _startupCallbacks.Clear();
+    }
+
+    public void WhenStarted(Action<string[]> callback)
+    {
+        if (_hasStarted)
+            callback(_startupArgs!);
+        else
+            _startupCallbacks.Add(callback);
     }
 
     public void AddOverlay(OverlayModel model)

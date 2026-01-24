@@ -6,7 +6,14 @@ namespace Mdk.Hub.Features.Shell;
 
 public interface IShell
 {
-    void Start();
+    void Start(string[] args);
+    
+    /// <summary>
+    /// Registers a callback to be invoked when Shell has started.
+    /// If already started, invokes immediately. Otherwise queues until Start() is called.
+    /// </summary>
+    void WhenStarted(Action<string[]> callback);
+    
     void AddOverlay(OverlayModel model);
     
     /// <summary>

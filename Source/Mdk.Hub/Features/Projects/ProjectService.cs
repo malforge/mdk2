@@ -8,6 +8,7 @@ using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
@@ -20,13 +21,16 @@ public class ProjectService : IProjectService
 
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
 
-    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc)
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell)
     {
         _registry = registry;
         _logger = logger;
         
         // Subscribe to IPC messages
         ipc.MessageReceived += async (_, e) => await HandleBuildNotificationAsync(e.Message);
+        
+        // Handle startup arguments when shell is ready
+        shell.WhenStarted(args => HandleStartupArguments(args));
     }
 
     public IReadOnlyList<ProjectInfo> GetProjects()
@@ -292,5 +296,37 @@ public class ProjectService : IProjectService
             _logger.Debug($"Build notification for existing project: {projectPath}");
             // TODO: Handle based on user's build notification preference (Phase 2+)
         }
+    }
+    
+    void HandleStartupArguments(string[] args)
+    {
+        // First instance was launched with arguments - treat like an IPC message
+        if (args.Length == 0)
+            return;
+        
+        _logger.Info($"Handling startup arguments: {string.Join(" ", args)}");
+        
+        // Parse as if it's a notification: type projectName projectPath [message] [--simulate]
+        if (args.Length < 3)
+        {
+            _logger.Warning($"Insufficient startup arguments: {string.Join(" ", args)}");
+            return;
+        }
+        
+        // Determine notification type
+        NotificationType type;
+        if (string.Equals(args[0], "script", StringComparison.OrdinalIgnoreCase))
+            type = NotificationType.Script;
+        else if (string.Equals(args[0], "mod", StringComparison.OrdinalIgnoreCase))
+            type = NotificationType.Mod;
+        else
+        {
+            _logger.Warning($"Unknown notification type in startup args: {args[0]}");
+            return;
+        }
+        
+        // Create message and handle it
+        var message = new InterConnectMessage(type, args.Skip(1).ToArray());
+        _ = HandleBuildNotificationAsync(message); // Fire and forget
     }
 }
