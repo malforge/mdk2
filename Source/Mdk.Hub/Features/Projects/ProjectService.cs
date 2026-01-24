@@ -169,7 +169,7 @@ public class ProjectService : IProjectService
         return new ConfigurationValue<bool>(defaultValue, SourceLayer.Default);
     }
 
-    public async Task SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
+    public async Task SaveConfiguration(string projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
     {
         if (string.IsNullOrWhiteSpace(projectPath))
             throw new ArgumentNullException(nameof(projectPath));
@@ -198,6 +198,7 @@ public class ProjectService : IProjectService
 
         // Update values in the [mdk] section
         targetIni = targetIni
+            .WithKey("mdk", "interactive", interactive)
             .WithKey("mdk", "output", output)
             .WithKey("mdk", "binarypath", binaryPath)
             .WithKey("mdk", "minify", minify)

@@ -57,6 +57,35 @@
                                            MinHeight="28"
                                            Margin="0,0,0,8"/>
                                 
+                                <!-- Build Notifications -->
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="20">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="When Build Completes"
+                                                   Classes="field-label"/>
+                                        <StackPanel Grid.Column="1" 
+                                                    Orientation="Horizontal" 
+                                                    Spacing="4"
+                                                    IsVisible="{Binding IsInteractiveOverridden}">
+                                            <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Overridden in Local"
+                                                       Classes="warning"
+                                                       FontSize="10"
+                                                       FontStyle="Italic"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.InteractiveOptionsList}"
+                                              SelectedItem="{Binding MainConfig.Interactive}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Display}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                
                                 <!-- Output Path -->
                                 <StackPanel Spacing="4">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="20">
@@ -222,6 +251,32 @@
                                            TextWrapping="Wrap"
                                            MinHeight="28"
                                            Margin="0,0,0,8"/>
+                                
+                                <!-- Build Notifications -->
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="When Build Completes"
+                                               Classes="field-label"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <ComboBox Grid.Column="0"
+                                                  ItemsSource="{x:Static options:ConfigurationSectionViewModel.InteractiveOptionsList}"
+                                                  SelectedItem="{Binding LocalConfig.Interactive}"
+                                                  HorizontalAlignment="Stretch"
+                                                  PlaceholderText="(inherits from Main)">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                        <Button Grid.Column="1"
+                                                Content="✕"
+                                                Command="{Binding ClearLocalInteractiveCommand}"
+                                                IsEnabled="{Binding LocalConfig.Interactive, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                Margin="5,0,0,0"
+                                                VerticalAlignment="Center"
+                                                ToolTip.Tip="Clear (inherit from Main)"/>
+                                    </Grid>
+                                </StackPanel>
                                 
                                 <!-- Output Path -->
                                 <StackPanel Spacing="4">

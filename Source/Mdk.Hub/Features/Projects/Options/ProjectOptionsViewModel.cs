@@ -24,6 +24,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
     bool _defaultBinaryPathLoaded;
     
     // Store original values to detect changes
+    string? _originalMainInteractive;
     string? _originalMainOutputPath;
     string? _originalMainBinaryPath;
     string? _originalMainMinify;
@@ -31,6 +32,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
     string? _originalMainTrace;
     string? _originalMainIgnores;
     string? _originalMainNamespaces;
+    string? _originalLocalInteractive;
     string? _originalLocalOutputPath;
     string? _originalLocalBinaryPath;
     string? _originalLocalMinify;
@@ -60,7 +62,9 @@ public partial class ProjectOptionsViewModel : ObservableObject
         
         LocalConfig.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(ConfigurationSectionViewModel.OutputPath))
+            if (e.PropertyName == nameof(ConfigurationSectionViewModel.Interactive))
+                OnPropertyChanged(nameof(IsInteractiveOverridden));
+            else if (e.PropertyName == nameof(ConfigurationSectionViewModel.OutputPath))
                 OnPropertyChanged(nameof(IsOutputOverridden));
             else if (e.PropertyName == nameof(ConfigurationSectionViewModel.BinaryPath))
                 OnPropertyChanged(nameof(IsBinaryPathOverridden));
@@ -87,6 +91,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
     public bool IsProgrammableBlock => _configuration?.Type.Value?.Equals("programmableblock", StringComparison.OrdinalIgnoreCase) ?? true;
     
     public bool HasUnsavedChanges =>
+        MainConfig.Interactive?.Value != _originalMainInteractive ||
         MainConfig.OutputPath != _originalMainOutputPath ||
         MainConfig.BinaryPath != _originalMainBinaryPath ||
         MainConfig.Minify?.Value != _originalMainMinify ||
@@ -94,6 +99,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
         MainConfig.Trace?.Value != _originalMainTrace ||
         MainConfig.Ignores != _originalMainIgnores ||
         MainConfig.Namespaces != _originalMainNamespaces ||
+        LocalConfig.Interactive?.Value != _originalLocalInteractive ||
         LocalConfig.OutputPath != _originalLocalOutputPath ||
         LocalConfig.BinaryPath != _originalLocalBinaryPath ||
         LocalConfig.Minify?.Value != _originalLocalMinify ||
@@ -135,6 +141,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
         }
     }
     
+    public bool IsInteractiveOverridden => LocalConfig.Interactive != null;
     public bool IsOutputOverridden => !string.IsNullOrWhiteSpace(LocalConfig.OutputPath);
     public bool IsBinaryPathOverridden => !string.IsNullOrWhiteSpace(LocalConfig.BinaryPath);
     public bool IsMinifyOverridden => LocalConfig.Minify != null;
@@ -149,6 +156,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
         OnPropertyChanged(nameof(IsProgrammableBlock));
         
         // Set defaults for Main
+        MainConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList[0]; // "OpenHub"
         MainConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList[0]; // "none"
         MainConfig.MinifyExtraOptions = ConfigurationSectionViewModel.MinifyExtraOptionsList[0]; // "none"
         MainConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList[0]; // "false"
@@ -161,6 +169,8 @@ public partial class ProjectOptionsViewModel : ObservableObject
         if (_configuration.MainIni != null)
         {
             var section = _configuration.MainIni["mdk"];
+            if (section.TryGet("interactive", out string? interactive))
+                MainConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value == interactive) ?? MainConfig.Interactive;
             MainConfig.OutputPath = section.TryGet("output", out string? output) ? output : "auto";
             MainConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : "auto";
             if (section.TryGet("minify", out string? minify))
@@ -177,6 +187,8 @@ public partial class ProjectOptionsViewModel : ObservableObject
         if (_configuration.LocalIni != null)
         {
             var section = _configuration.LocalIni["mdk"];
+            if (section.TryGet("interactive", out string? interactive))
+                LocalConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value == interactive);
             LocalConfig.OutputPath = section.TryGet("output", out string? output) ? output : string.Empty;
             LocalConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : string.Empty;
             if (section.TryGet("minify", out string? minify))
@@ -190,6 +202,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
         }
         
         // Store original values for dirty tracking
+        _originalMainInteractive = MainConfig.Interactive?.Value;
         _originalMainOutputPath = MainConfig.OutputPath;
         _originalMainBinaryPath = MainConfig.BinaryPath;
         _originalMainMinify = MainConfig.Minify?.Value;
@@ -197,6 +210,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
         _originalMainTrace = MainConfig.Trace?.Value;
         _originalMainIgnores = MainConfig.Ignores;
         _originalMainNamespaces = MainConfig.Namespaces;
+        _originalLocalInteractive = LocalConfig.Interactive?.Value;
         _originalLocalOutputPath = LocalConfig.OutputPath;
         _originalLocalBinaryPath = LocalConfig.BinaryPath;
         _originalLocalMinify = LocalConfig.Minify?.Value;
@@ -213,10 +227,12 @@ public partial class ProjectOptionsViewModel : ObservableObject
         {
             // Save both Main and Local INI files
             await _projectService.SaveConfiguration(_projectPath, 
+                MainConfig.Interactive?.Value ?? "OpenHub",
                 MainConfig.OutputPath, MainConfig.BinaryPath, 
                 MainConfig.Minify?.Value ?? "none", MainConfig.MinifyExtraOptions?.Value ?? "none", 
                 MainConfig.Trace?.Value ?? "false", MainConfig.Ignores, MainConfig.Namespaces, saveToLocal: false);
             await _projectService.SaveConfiguration(_projectPath, 
+                LocalConfig.Interactive?.Value ?? string.Empty,
                 LocalConfig.OutputPath, LocalConfig.BinaryPath, 
                 LocalConfig.Minify?.Value ?? string.Empty, LocalConfig.MinifyExtraOptions?.Value ?? string.Empty, 
                 LocalConfig.Trace?.Value ?? string.Empty, LocalConfig.Ignores, LocalConfig.Namespaces, saveToLocal: true);
@@ -255,6 +271,9 @@ public partial class ProjectOptionsViewModel : ObservableObject
     {
         _onClose(false); // Cancelled
     }
+
+    [RelayCommand]
+    void ClearLocalInteractive() => LocalConfig.Interactive = null;
 
     [RelayCommand]
     void ClearLocalOutputPath() => LocalConfig.OutputPath = string.Empty;

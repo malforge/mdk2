@@ -77,6 +77,7 @@ public interface IProjectService
     /// Saves configuration changes to the specified INI file.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <param name="interactive">Interactive/notification behavior value.</param>
     /// <param name="output">Output path value.</param>
     /// <param name="binaryPath">Binary path value.</param>
     /// <param name="minify">Minify value.</param>
@@ -85,5 +86,5 @@ public interface IProjectService
     /// <param name="ignores">Ignores value.</param>
     /// <param name="namespaces">Namespaces value.</param>
     /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
-    Task SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
+    Task SaveConfiguration(string projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
 }

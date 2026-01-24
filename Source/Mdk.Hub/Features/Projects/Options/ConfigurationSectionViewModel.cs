@@ -8,6 +8,13 @@ public record ComboBoxOption(string Value, string Display);
 
 public partial class ConfigurationSectionViewModel : ObservableObject
 {
+    public static List<ComboBoxOption> InteractiveOptionsList { get; } = new()
+    {
+        new("OpenHub", "Open Hub"),
+        new("ShowToast", "Show Toast (Not Implemented)"),
+        new("DoNothing", "Do Nothing")
+    };
+    
     public static List<ComboBoxOption> MinifyOptionsList { get; } = new()
     {
         new("none", "None"),
@@ -29,6 +36,9 @@ public partial class ConfigurationSectionViewModel : ObservableObject
         new("true", "On")
     };
 
+    [ObservableProperty]
+    ComboBoxOption? _interactive;
+    
     [ObservableProperty]
     string _outputPath = string.Empty;
     
@@ -52,6 +62,7 @@ public partial class ConfigurationSectionViewModel : ObservableObject
 
     public void Clear()
     {
+        Interactive = null;
         OutputPath = "auto";
         BinaryPath = "auto";
         Minify = null;
