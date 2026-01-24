@@ -1,5 +1,9 @@
 ﻿using Avalonia;
 using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Mdk.Hub.Features.Interop;
 using Projektanker.Icons.Avalonia;
 using Projektanker.Icons.Avalonia.FontAwesome;
 
@@ -11,8 +15,28 @@ sealed class Program
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static async Task<int> Main(string[] args)
+    {
+        // Handle IPC before initializing Avalonia
+        if (args.Length > 0)
+        {
+            using var ipc = new InterProcessCommunication.Standalone();
+            
+            // If another instance is running, send message and exit
+            if (ipc.IsAlreadyRunning())
+            {
+                await ipc.SendMessageAsync(args);
+                return 0; // Exit immediately
+            }
+            
+            // We are first instance with args - store them for later
+            App.StartupArgs = args;
+        }
+        
+        // Start Avalonia UI
+        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        return 0;
+    }
 
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()

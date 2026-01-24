@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -74,6 +75,9 @@ public class FileLogger : ILogger
                     : "";
                 var logLine = $"[{timestamp}] [{entry.Level}]{location} {entry.Message}";
                 File.AppendAllText(_logFilePath, logLine + Environment.NewLine);
+                
+                // Also write to debug output for development
+                System.Diagnostics.Debug.WriteLine(logLine);
             }
         }
         catch
