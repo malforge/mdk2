@@ -113,4 +113,15 @@ public class ProjectModel : ProjectListItem
             return false;
         return true;
     }
+    
+    /// <summary>
+    /// Updates this model's properties from a ProjectInfo without losing UI state.
+    /// </summary>
+    public void UpdateFromProjectInfo(ProjectInfo projectInfo)
+    {
+        Name = projectInfo.Name;
+        Type = projectInfo.Type;
+        LastReferenced = projectInfo.LastReferenced;
+        // Note: ProjectPath, IsSelected, NeedsAttention, HasUnsavedChanges are NOT updated - those preserve UI state
+    }
 }

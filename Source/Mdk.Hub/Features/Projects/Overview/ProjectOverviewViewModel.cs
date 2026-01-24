@@ -28,6 +28,9 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchTerm = string.Empty;
     string _searchText = string.Empty;
     bool _showAll = true;
+    DateTimeOffset _lastProjectSelectionTime = DateTimeOffset.MinValue;
+    
+    static readonly TimeSpan SelectionCooldown = TimeSpan.FromSeconds(30);
 
     public ProjectOverviewViewModel() : this(null!, null!, null!, null!)
     {
@@ -59,6 +62,9 @@ public class ProjectOverviewViewModel : ViewModel
         {
             LoadProjects();
             RestoreSelectedProject();
+            
+            // Subscribe to new project notifications
+            _projectService.ProjectAdded += OnProjectAdded;
         }
     }
 
@@ -161,7 +167,10 @@ public class ProjectOverviewViewModel : ViewModel
         
         // Clear needs attention flag when selected
         if (project.IsSelected)
+        {
             project.NeedsAttention = false;
+            _lastProjectSelectionTime = DateTimeOffset.Now; // Track selection time
+        }
 
         // Save selected project path
         if (project.IsSelected && project is ProjectModel model)
@@ -256,11 +265,28 @@ public class ProjectOverviewViewModel : ViewModel
     void LoadProjects()
     {
         var projects = _projectService.GetProjects();
+        var existingModels = (ItemsSource as IEnumerable<ProjectListItem>)?.OfType<ProjectModel>().ToList() 
+            ?? new List<ProjectModel>();
+        
         var viewModels = new List<ProjectListItem>();
         
         foreach (var project in projects)
         {
-            viewModels.Add(new ProjectModel(project.Type, project.Name, project.ProjectPath, project.LastReferenced, _commonDialogs, _projectService));
+            // Try to reuse existing model to preserve UI state
+            var existingModel = existingModels.FirstOrDefault(m => 
+                string.Equals(m.ProjectPath, project.ProjectPath, StringComparison.OrdinalIgnoreCase));
+            
+            if (existingModel != null)
+            {
+                // Update properties but keep the same instance
+                existingModel.UpdateFromProjectInfo(project);
+                viewModels.Add(existingModel);
+            }
+            else
+            {
+                // New project - create new model
+                viewModels.Add(new ProjectModel(project.Type, project.Name, project.ProjectPath, project.LastReferenced, _commonDialogs, _projectService));
+            }
         }
         
         ItemsSource = viewModels;
@@ -277,6 +303,39 @@ public class ProjectOverviewViewModel : ViewModel
         {
             project.IsSelected = true;
             UpdateState();
+        }
+    }
+    
+    void OnProjectAdded(object? sender, ProjectAddedEventArgs e)
+    {
+        // Ignore startup imports - those are loaded in bulk
+        if (e.Source == ProjectAdditionSource.Startup)
+            return;
+        
+        // Refresh the project list to include the new project
+        LoadProjects();
+        
+        // Find the newly added project
+        var newProject = _projects.OfType<ProjectModel>().FirstOrDefault(p => 
+            string.Equals(p.ProjectPath, e.ProjectPath, StringComparison.OrdinalIgnoreCase));
+        
+        if (newProject == null)
+            return;
+        
+        // Check if user is actively working (selected a project recently)
+        var timeSinceLastSelection = DateTimeOffset.Now - _lastProjectSelectionTime;
+        bool userIsActivelyWorking = timeSinceLastSelection < SelectionCooldown;
+        
+        if (userIsActivelyWorking)
+        {
+            // User is busy - just mark for attention, don't interrupt
+            newProject.NeedsAttention = true;
+        }
+        else
+        {
+            // User hasn't selected anything recently - auto-select the new project
+            // (No need to set NeedsAttention since SelectProject clears it anyway)
+            SelectProject(newProject);
         }
     }
 }

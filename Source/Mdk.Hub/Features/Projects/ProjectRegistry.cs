@@ -200,7 +200,9 @@ public class ProjectRegistry : IProjectRegistry
                 if (!Directory.Exists(directory))
                     Directory.CreateDirectory(directory!);
 
-                var json = JsonSerializer.Serialize(_projects, new JsonSerializerOptions { WriteIndented = true });
+                // Filter out simulated projects before saving
+                var projectsToSave = _projects.Where(p => !p.Flags.HasFlag(ProjectFlags.Simulated)).ToList();
+                var json = JsonSerializer.Serialize(projectsToSave, new JsonSerializerOptions { WriteIndented = true });
                 
                 // Use temp file + rename for atomic write
                 var tempPath = _registryPath + ".tmp";

@@ -18,6 +18,8 @@ public class ProjectService : IProjectService
     readonly IProjectRegistry _registry;
     readonly ILogger _logger;
 
+    public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
+
     public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc)
     {
         _registry = registry;
@@ -34,9 +36,26 @@ public class ProjectService : IProjectService
 
     public bool TryAddProject(string projectPath, out string? errorMessage)
     {
+        if (TryAddProjectInternal(projectPath, out errorMessage))
+        {
+            // Raise event for manual addition
+            ProjectAdded?.Invoke(this, new ProjectAddedEventArgs 
+            { 
+                ProjectPath = projectPath,
+                Source = ProjectAdditionSource.Manual
+            });
+            return true;
+        }
+        return false;
+    }
+    
+    bool TryAddProjectInternal(string projectPath, out string? errorMessage, ProjectFlags flags = ProjectFlags.None)
+    {
         if (ProjectDetector.TryDetectProject(projectPath, out var projectInfo))
         {
-            _registry.AddOrUpdateProject(projectInfo!);
+            // Apply flags to the project
+            var projectWithFlags = projectInfo! with { Flags = flags };
+            _registry.AddOrUpdateProject(projectWithFlags);
             errorMessage = null;
             return true;
         }
@@ -187,19 +206,27 @@ public class ProjectService : IProjectService
         await File.WriteAllTextAsync(targetIniPath, targetIni.ToString());
     }
     
-    public async Task HandleBuildNotificationAsync(InterConnectMessage message)
+    async Task HandleBuildNotificationAsync(InterConnectMessage message)
     {
         // Parse project path from message arguments
-        // Expected format: script/mod <ProjectName> <ProjectPath> <OptionalMessage>
+        // Expected format: script/mod <ProjectName> <ProjectPath> <OptionalMessage> [--simulate]
         if (message.Arguments.Length < 2)
         {
             _logger.Warning($"Build notification has insufficient arguments: {string.Join(", ", message.Arguments)}");
             return;
         }
         
+        var projectName = message.Arguments[0]; // First argument is project name
         var projectPath = message.Arguments[1]; // Second argument is the project path
         
-        _logger.Info($"Handling build notification for project: {projectPath}");
+        // Check for --simulate flag in arguments
+        bool isSimulated = message.Arguments.Any(arg => 
+            string.Equals(arg, "--simulate", StringComparison.OrdinalIgnoreCase));
+        
+        if (isSimulated)
+            _logger.Info($"Handling SIMULATED build notification for project: {projectPath}");
+        else
+            _logger.Info($"Handling build notification for project: {projectPath}");
         
         // Check if project already exists
         var existingProject = _registry.GetProjects().FirstOrDefault(p => 
@@ -210,21 +237,60 @@ public class ProjectService : IProjectService
             // New project - try to add it
             _logger.Info($"New project detected: {projectPath}");
             
-            if (TryAddProject(projectPath, out var errorMessage))
+            ProjectInfo? projectInfo;
+            
+            if (isSimulated)
             {
-                _logger.Info($"Successfully added new project: {projectPath}");
-                // TODO: Trigger UI to select project, set NeedsAttention, and open options drawer
+                // For simulated projects, create fake ProjectInfo without validation
+                var projectType = message.Type == NotificationType.Script 
+                    ? ProjectType.IngameScript 
+                    : ProjectType.Mod;
+                
+                projectInfo = new ProjectInfo
+                {
+                    Name = projectName,
+                    ProjectPath = projectPath,
+                    Type = projectType,
+                    LastReferenced = DateTimeOffset.Now,
+                    Flags = ProjectFlags.Simulated
+                };
+                
+                _registry.AddOrUpdateProject(projectInfo);
+                _logger.Info($"Successfully added simulated project: {projectPath}");
+                
+                // Raise event for build notification addition
+                ProjectAdded?.Invoke(this, new ProjectAddedEventArgs 
+                { 
+                    ProjectPath = projectPath,
+                    Source = ProjectAdditionSource.BuildNotification
+                });
             }
             else
             {
-                _logger.Error($"Failed to add project: {errorMessage}");
+                // Real project - validate it
+                var flags = ProjectFlags.None;
+                if (TryAddProjectInternal(projectPath, out var errorMessage, flags))
+                {
+                    _logger.Info($"Successfully added new project: {projectPath}");
+                    
+                    // Raise event for build notification addition
+                    ProjectAdded?.Invoke(this, new ProjectAddedEventArgs 
+                    { 
+                        ProjectPath = projectPath,
+                        Source = ProjectAdditionSource.BuildNotification
+                    });
+                }
+                else
+                {
+                    _logger.Error($"Failed to add project: {errorMessage}");
+                }
             }
         }
         else
         {
             // Existing project - update last referenced
             _logger.Debug($"Build notification for existing project: {projectPath}");
-            // TODO: Handle based on user's build notification preference
+            // TODO: Handle based on user's build notification preference (Phase 2+)
         }
     }
 }
