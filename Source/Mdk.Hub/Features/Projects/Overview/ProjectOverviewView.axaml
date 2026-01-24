@@ -37,6 +37,7 @@
             <controls:SelectableCard Classes="project-item" 
                                    HorizontalAlignment="Stretch"
                                    IsSelected="{Binding IsSelected}"
+                                   NeedsAttention="{Binding NeedsAttention}"
                                    Command="{Binding SelectCommand}"
                                    CommandParameter="{Binding}">
                 <Grid ColumnDefinitions="Auto,*,Auto">

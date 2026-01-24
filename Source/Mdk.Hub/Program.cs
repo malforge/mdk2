@@ -29,8 +29,8 @@ sealed class Program
                 return 0; // Exit immediately
             }
             
-            // We are first instance with args - store them for later
-            App.StartupArgs = args;
+            // We are first instance with args - they'll be handled via IPC MessageReceived
+            // after services initialize, so just continue to start UI
         }
         
         // Start Avalonia UI

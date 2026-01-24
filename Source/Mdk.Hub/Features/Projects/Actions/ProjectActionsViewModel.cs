@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
@@ -22,6 +23,7 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly IProjectService _projectService;
     readonly Dictionary<string, ProjectOptionsViewModel> _cachedOptionsViewModels = new();
     readonly Dictionary<string, ProjectModel> _projectModelCache = new();
+    UnsavedChangesHandle? _unsavedChangesHandle;
     
     [ObservableProperty]
     bool _isOptionsDrawerOpen;
@@ -87,7 +89,40 @@ public partial class ProjectActionsViewModel : ViewModel
         {
             bool hasChanges = HasUnsavedChanges(projectPath);
             projectModel.HasUnsavedChanges = hasChanges;
-            _shell.SetProjectUnsavedState(projectPath, hasChanges);
+            
+            // Update unsaved changes registration
+            UpdateUnsavedChangesRegistration();
+        }
+    }
+    
+    void UpdateUnsavedChangesRegistration()
+    {
+        // Check if any projects have unsaved changes
+        bool anyUnsavedChanges = _cachedOptionsViewModels.Values.Any(vm => vm.HasUnsavedChanges);
+        
+        if (anyUnsavedChanges && _unsavedChangesHandle == null)
+        {
+            // Register unsaved changes - navigate to first project with unsaved changes
+            _unsavedChangesHandle = _shell.RegisterUnsavedChanges(
+                "You have unsaved changes in project options.",
+                () =>
+                {
+                    // Find first project with unsaved changes
+                    var firstUnsavedPath = _cachedOptionsViewModels
+                        .FirstOrDefault(kvp => kvp.Value.HasUnsavedChanges)
+                        .Key;
+                    
+                    if (firstUnsavedPath != null && _projectModelCache.TryGetValue(firstUnsavedPath, out var projectModel))
+                    {
+                        projectModel.SelectCommand?.Execute(projectModel);
+                    }
+                });
+        }
+        else if (!anyUnsavedChanges && _unsavedChangesHandle != null)
+        {
+            // Dispose handle when no more unsaved changes
+            _unsavedChangesHandle.Value.Dispose();
+            _unsavedChangesHandle = null;
         }
     }
     
@@ -101,8 +136,8 @@ public partial class ProjectActionsViewModel : ViewModel
             projectModel.HasUnsavedChanges = false;
         }
         
-        // Update shell
-        _shell.SetProjectUnsavedState(projectPath, false);
+        // Update unsaved changes registration
+        UpdateUnsavedChangesRegistration();
         
         // Remove the current project from cache (whether saved or cancelled)
         _cachedOptionsViewModels.Remove(projectPath);

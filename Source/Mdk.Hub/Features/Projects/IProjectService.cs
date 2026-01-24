@@ -51,4 +51,9 @@ public interface IProjectService
     /// <param name="namespaces">Namespaces value.</param>
     /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
     Task SaveConfiguration(string projectPath, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
+    
+    /// <summary>
+    /// Handles a build notification received via IPC.
+    /// </summary>
+    Task HandleBuildNotificationAsync(Interop.InterConnectMessage message);
 }

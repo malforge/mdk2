@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Utility;
@@ -11,10 +13,19 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects;
 
 [Dependency<IProjectService>]
-public class ProjectService(ILogger logger, ProjectRegistry registry) : IProjectService
+public class ProjectService : IProjectService
 {
-    readonly ProjectRegistry _registry = registry;
-    readonly ILogger _logger = logger;
+    readonly IProjectRegistry _registry;
+    readonly ILogger _logger;
+
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc)
+    {
+        _registry = registry;
+        _logger = logger;
+        
+        // Subscribe to IPC messages
+        ipc.MessageReceived += async (_, e) => await HandleBuildNotificationAsync(e.Message);
+    }
 
     public IReadOnlyList<ProjectInfo> GetProjects()
     {
@@ -174,5 +185,46 @@ public class ProjectService(ILogger logger, ProjectRegistry registry) : IProject
 
         // Write the file
         await File.WriteAllTextAsync(targetIniPath, targetIni.ToString());
+    }
+    
+    public async Task HandleBuildNotificationAsync(InterConnectMessage message)
+    {
+        // Parse project path from message arguments
+        // Expected format: script/mod <ProjectName> <ProjectPath> <OptionalMessage>
+        if (message.Arguments.Length < 2)
+        {
+            _logger.Warning($"Build notification has insufficient arguments: {string.Join(", ", message.Arguments)}");
+            return;
+        }
+        
+        var projectPath = message.Arguments[1]; // Second argument is the project path
+        
+        _logger.Info($"Handling build notification for project: {projectPath}");
+        
+        // Check if project already exists
+        var existingProject = _registry.GetProjects().FirstOrDefault(p => 
+            string.Equals(p.ProjectPath, projectPath, StringComparison.OrdinalIgnoreCase));
+        
+        if (existingProject == null)
+        {
+            // New project - try to add it
+            _logger.Info($"New project detected: {projectPath}");
+            
+            if (TryAddProject(projectPath, out var errorMessage))
+            {
+                _logger.Info($"Successfully added new project: {projectPath}");
+                // TODO: Trigger UI to select project, set NeedsAttention, and open options drawer
+            }
+            else
+            {
+                _logger.Error($"Failed to add project: {errorMessage}");
+            }
+        }
+        else
+        {
+            // Existing project - update last referenced
+            _logger.Debug($"Build notification for existing project: {projectPath}");
+            // TODO: Handle based on user's build notification preference
+        }
     }
 }

@@ -26,6 +26,18 @@
             <Setter Property="BorderBrush" Value="#FF007bff" />
         </Style>
         
+        <!-- Needs Attention state - subtle warning glow -->
+        <Style Selector="^:needs-attention">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentWarningSubtleBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        
+        <!-- Needs Attention + Selected - warning accent with blue background -->
+        <Style Selector="^:needs-attention:selected">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentWarningBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        
         <!-- Disabled state -->
         <Style Selector="^:disabled">
             <Setter Property="Opacity" Value="0.4" />

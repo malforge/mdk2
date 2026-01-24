@@ -13,9 +13,15 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     readonly IDependencyContainer _container = container;
     readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
     readonly ISettings _settings = settings;
-    readonly System.Collections.Generic.HashSet<string> _projectsWithUnsavedChanges = new();
+    readonly System.Collections.Generic.List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
     DateTime? _easterEggDisabledUntil;
     bool _easterEggDisabledForever;
+    
+    class UnsavedChangesRegistration
+    {
+        public string Description { get; init; } = string.Empty;
+        public Action NavigateAction { get; init; } = () => { };
+    }
 
     public event EventHandler? WindowFocusGained;
     public event EventHandler? EasterEggActiveChanged;
@@ -98,41 +104,47 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         EasterEggActiveChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public bool HasUnsavedChanges()
+    public UnsavedChangesHandle RegisterUnsavedChanges(string description, Action navigateToChanges)
     {
-        return _projectsWithUnsavedChanges.Count > 0;
-    }
-
-    public string? GetFirstProjectWithUnsavedChanges()
-    {
-        return _projectsWithUnsavedChanges.FirstOrDefault();
-    }
-
-    public void SetProjectUnsavedState(string projectPath, bool hasUnsavedChanges)
-    {
-        if (hasUnsavedChanges)
-            _projectsWithUnsavedChanges.Add(projectPath);
-        else
-            _projectsWithUnsavedChanges.Remove(projectPath);
-    }
-    
-    public void NavigateToFirstProjectWithUnsavedChanges()
-    {
-        var projectPath = GetFirstProjectWithUnsavedChanges();
-        if (projectPath == null)
-            return;
-            
-        // Find the project in the overview and select it
-        if (_viewModel.Value.NavigationView is Features.Projects.Overview.ProjectOverviewViewModel overviewVm)
+        var registration = new UnsavedChangesRegistration
         {
-            var projectModel = overviewVm.Projects
-                .OfType<Features.Projects.Overview.ProjectModel>()
-                .FirstOrDefault(p => p.ProjectPath == projectPath);
-            
-            if (projectModel != null)
-            {
-                projectModel.SelectCommand?.Execute(projectModel);
-            }
+            Description = description,
+            NavigateAction = navigateToChanges
+        };
+        
+        _unsavedChangesRegistrations.Add(registration);
+        
+        return new UnsavedChangesHandle(() => _unsavedChangesRegistrations.Remove(registration));
+    }
+
+    public bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info)
+    {
+        if (_unsavedChangesRegistrations.Count == 0)
+        {
+            info = default;
+            return false;
         }
+        
+        if (_unsavedChangesRegistrations.Count == 1)
+        {
+            // Single registration: use its description and action
+            var registration = _unsavedChangesRegistrations[0];
+            info = new UnsavedChangesInfo
+            {
+                Description = registration.Description,
+                GoThereAction = registration.NavigateAction
+            };
+        }
+        else
+        {
+            // Multiple registrations: generic message with no-op action
+            info = new UnsavedChangesInfo
+            {
+                Description = "You have unsaved changes.",
+                GoThereAction = () => { }
+            };
+        }
+        
+        return true;
     }
 }

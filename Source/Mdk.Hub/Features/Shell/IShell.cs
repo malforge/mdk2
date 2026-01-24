@@ -45,24 +45,17 @@ public interface IShell
     event EventHandler? EasterEggActiveChanged;
     
     /// <summary>
-    /// Checks if there are any projects with unsaved changes.
+    /// Registers unsaved changes with a description and navigation action.
+    /// Returns a handle that must be disposed when changes are saved.
     /// </summary>
-    bool HasUnsavedChanges();
+    UnsavedChangesHandle RegisterUnsavedChanges(string description, Action navigateToChanges);
     
     /// <summary>
-    /// Gets the first project path with unsaved changes, or null if none.
+    /// Tries to get unsaved changes information for display in dialogs.
     /// </summary>
-    string? GetFirstProjectWithUnsavedChanges();
-    
-    /// <summary>
-    /// Registers or updates unsaved changes state for a project.
-    /// </summary>
-    void SetProjectUnsavedState(string projectPath, bool hasUnsavedChanges);
-    
-    /// <summary>
-    /// Navigates to the first project with unsaved changes (if any).
-    /// </summary>
-    void NavigateToFirstProjectWithUnsavedChanges();
+    /// <param name="info">Info containing description and navigation action. For multiple registrations, action is empty.</param>
+    /// <returns>True if there are unsaved changes, false otherwise.</returns>
+    bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info);
 }
 
 public partial class ToastMessage : ObservableObject

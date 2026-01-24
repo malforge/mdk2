@@ -13,6 +13,9 @@ public class SelectableCard : ContentControl
     public static readonly StyledProperty<bool> IsSelectedProperty =
         AvaloniaProperty.Register<SelectableCard, bool>(nameof(IsSelected), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+    public static readonly StyledProperty<bool> NeedsAttentionProperty =
+        AvaloniaProperty.Register<SelectableCard, bool>(nameof(NeedsAttention), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+
     public static readonly StyledProperty<ICommand?> CommandProperty =
         AvaloniaProperty.Register<SelectableCard, ICommand?>(nameof(Command));
 
@@ -23,6 +26,12 @@ public class SelectableCard : ContentControl
     {
         get => GetValue(IsSelectedProperty);
         set => SetValue(IsSelectedProperty, value);
+    }
+
+    public bool NeedsAttention
+    {
+        get => GetValue(NeedsAttentionProperty);
+        set => SetValue(NeedsAttentionProperty, value);
     }
 
     public ICommand? Command
@@ -62,7 +71,7 @@ public class SelectableCard : ContentControl
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == IsSelectedProperty || change.Property == IsEnabledProperty)
+        if (change.Property == IsSelectedProperty || change.Property == IsEnabledProperty || change.Property == NeedsAttentionProperty)
         {
             UpdatePseudoClasses();
         }
@@ -72,5 +81,6 @@ public class SelectableCard : ContentControl
     {
         PseudoClasses.Set(":selected", IsSelected);
         PseudoClasses.Set(":disabled", !IsEnabled);
+        PseudoClasses.Set(":needs-attention", NeedsAttention);
     }
 }

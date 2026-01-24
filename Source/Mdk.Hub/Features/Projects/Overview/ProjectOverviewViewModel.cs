@@ -158,6 +158,10 @@ public class ProjectOverviewViewModel : ViewModel
 
         // Toggle selection on clicked item
         project.IsSelected = !project.IsSelected;
+        
+        // Clear needs attention flag when selected
+        if (project.IsSelected)
+            project.NeedsAttention = false;
 
         // Save selected project path
         if (project.IsSelected && project is ProjectModel model)
@@ -200,15 +204,52 @@ public class ProjectOverviewViewModel : ViewModel
 
     void RefreshWithFilters()
     {
-        _projects.Clear();
         if (ItemsSource == null)
-            return;
-        foreach (var item in ItemsSource)
         {
-            if (!item.MatchesFilter(_searchTerm, FilterScriptsOnly, FilterModsOnly))
-                continue;
+            _projects.Clear();
+            return;
+        }
+        
+        // Remember currently selected project to restore after refresh
+        var selectedProject = _projects.FirstOrDefault(p => p.IsSelected);
+        
+        // Build new filtered list
+        var filteredItems = ItemsSource
+            .Where(item => item.MatchesFilter(_searchTerm, FilterScriptsOnly, FilterModsOnly))
+            .ToList();
+        
+        // Set select command
+        foreach (var item in filteredItems)
             item.SelectCommand = SelectProjectCommand;
-            _projects.Add(item);
+        
+        // Update collection without clearing (to minimize visual disruption)
+        // Remove items that are no longer in filtered list
+        for (int i = _projects.Count - 1; i >= 0; i--)
+        {
+            if (!filteredItems.Contains(_projects[i]))
+                _projects.RemoveAt(i);
+        }
+        
+        // Add new items that aren't already in the collection
+        foreach (var item in filteredItems)
+        {
+            if (!_projects.Contains(item))
+                _projects.Add(item);
+        }
+        
+        // Re-sort in place (minimizes UI disruption compared to clear+add)
+        var sorted = _projects.OrderByDescending(p => p is ProjectModel m ? m.LastReferenced : DateTimeOffset.MinValue).ToList();
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            var currentIndex = _projects.IndexOf(sorted[i]);
+            if (currentIndex != i)
+                _projects.Move(currentIndex, i);
+        }
+        
+        // Restore selection if the selected project is still in the list
+        if (selectedProject != null && _projects.Contains(selectedProject))
+        {
+            selectedProject.IsSelected = true;
         }
     }
 

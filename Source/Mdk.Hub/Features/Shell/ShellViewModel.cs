@@ -135,7 +135,7 @@ public class ShellViewModel : ViewModel
     /// </summary>
     public async System.Threading.Tasks.Task<bool> CanCloseAsync()
     {
-        if (!_shell.HasUnsavedChanges())
+        if (!_shell.TryGetUnsavedChangesInfo(out var info))
             return true;
 
         if (_commonDialogs == null)
@@ -144,7 +144,7 @@ public class ShellViewModel : ViewModel
         var result = await _commonDialogs.ShowAsync(new Mdk.Hub.Features.CommonDialogs.ConfirmationMessage
         {
             Title = "Unsaved Changes",
-            Message = "You have unsaved project configuration changes. Are you sure you want to exit?",
+            Message = info.Description,
             OkText = "Exit Anyway",
             CancelText = "Show Me"
         });
@@ -155,8 +155,8 @@ public class ShellViewModel : ViewModel
             return true;
         }
 
-        // User chose "Show Me" - navigate to first project with changes and don't close
-        _shell.NavigateToFirstProjectWithUnsavedChanges();
+        // User chose "Show Me" - execute navigation action and don't close
+        info.GoThereAction?.Invoke();
         return false;
     }
 

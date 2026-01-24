@@ -14,6 +14,7 @@
     <!-- Accent Brushes -->
     <SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimaryColor}"/>
     <SolidColorBrush x:Key="AccentWarningBrush" Color="{StaticResource AccentWarningColor}"/>
+    <SolidColorBrush x:Key="AccentWarningSubtleBrush" Color="{StaticResource AccentWarningColor}" Opacity="0.53"/>
     <SolidColorBrush x:Key="AccentDangerBrush" Color="{StaticResource AccentDangerColor}"/>
     <SolidColorBrush x:Key="AccentSuccessBrush" Color="{StaticResource AccentSuccessColor}"/>
     <SolidColorBrush x:Key="AccentEasterEggBrush" Color="{StaticResource AccentEasterEggColor}"/>
