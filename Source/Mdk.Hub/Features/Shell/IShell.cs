@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -65,10 +65,14 @@ public interface IShell
     bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info);
 }
 
-public partial class ToastMessage : ObservableObject
+public class ToastMessage : ViewModel
 {
     public string Message { get; set; } = string.Empty;
     
-    [ObservableProperty]
     bool _isDismissing;
+    public bool IsDismissing
+    {
+        get => _isDismissing;
+        set => SetProperty(ref _isDismissing, value);
+    }
 }

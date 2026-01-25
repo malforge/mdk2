@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Options;
 
 public record ComboBoxOption(string Value, string Display);
 
-public partial class ConfigurationSectionViewModel : ObservableObject
+public class ConfigurationSectionViewModel : ViewModel
 {
     public static List<ComboBoxOption> InteractiveOptionsList { get; } = new()
     {
@@ -36,29 +35,61 @@ public partial class ConfigurationSectionViewModel : ObservableObject
         new("true", "On")
     };
 
-    [ObservableProperty]
     ComboBoxOption? _interactive;
+    public ComboBoxOption? Interactive
+    {
+        get => _interactive;
+        set => SetProperty(ref _interactive, value);
+    }
     
-    [ObservableProperty]
     string _outputPath = string.Empty;
+    public string OutputPath
+    {
+        get => _outputPath;
+        set => SetProperty(ref _outputPath, value);
+    }
     
-    [ObservableProperty]
     string _binaryPath = string.Empty;
+    public string BinaryPath
+    {
+        get => _binaryPath;
+        set => SetProperty(ref _binaryPath, value);
+    }
     
-    [ObservableProperty]
     ComboBoxOption? _minify;
+    public ComboBoxOption? Minify
+    {
+        get => _minify;
+        set => SetProperty(ref _minify, value);
+    }
     
-    [ObservableProperty]
     ComboBoxOption? _minifyExtraOptions;
+    public ComboBoxOption? MinifyExtraOptions
+    {
+        get => _minifyExtraOptions;
+        set => SetProperty(ref _minifyExtraOptions, value);
+    }
     
-    [ObservableProperty]
     ComboBoxOption? _trace;
+    public ComboBoxOption? Trace
+    {
+        get => _trace;
+        set => SetProperty(ref _trace, value);
+    }
     
-    [ObservableProperty]
     string _ignores = string.Empty;
+    public string Ignores
+    {
+        get => _ignores;
+        set => SetProperty(ref _ignores, value);
+    }
     
-    [ObservableProperty]
     string _namespaces = string.Empty;
+    public string Namespaces
+    {
+        get => _namespaces;
+        set => SetProperty(ref _namespaces, value);
+    }
 
     public void Clear()
     {

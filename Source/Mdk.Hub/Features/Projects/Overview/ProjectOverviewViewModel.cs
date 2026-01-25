@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
-using CommunityToolkit.Mvvm.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Settings;

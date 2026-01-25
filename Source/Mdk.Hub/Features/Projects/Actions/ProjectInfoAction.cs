@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Platform.Storage;
-using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;

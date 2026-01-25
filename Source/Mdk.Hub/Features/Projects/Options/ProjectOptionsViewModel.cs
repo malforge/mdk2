@@ -2,8 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+using System.Windows.Input;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
@@ -12,7 +11,7 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects.Options;
 
 [ViewModelFor<ProjectOptionsView>]
-public partial class ProjectOptionsViewModel : ObservableObject
+public class ProjectOptionsViewModel : ViewModel
 {
     readonly IProjectService _projectService;
     readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs _commonDialogs;
@@ -41,9 +40,33 @@ public partial class ProjectOptionsViewModel : ObservableObject
     string? _originalLocalTrace;
     string? _originalLocalIgnores;
     string? _originalLocalNamespaces;
+    
+    readonly AsyncRelayCommand _saveCommand;
+    readonly RelayCommand _cancelCommand;
+    readonly RelayCommand _clearLocalInteractiveCommand;
+    readonly RelayCommand _clearLocalOutputPathCommand;
+    readonly RelayCommand _clearLocalBinaryPathCommand;
+    readonly RelayCommand _clearLocalMinifyCommand;
+    readonly RelayCommand _clearLocalMinifyExtraOptionsCommand;
+    readonly RelayCommand _clearLocalTraceCommand;
+    readonly RelayCommand _clearLocalIgnoresCommand;
+    readonly RelayCommand _clearLocalNamespacesCommand;
+    readonly RelayCommand _openGlobalSettingsCommand;
 
     public ConfigurationSectionViewModel MainConfig { get; } = new();
     public ConfigurationSectionViewModel LocalConfig { get; } = new();
+
+    public ICommand SaveCommand => _saveCommand;
+    public ICommand CancelCommand => _cancelCommand;
+    public ICommand ClearLocalInteractiveCommand => _clearLocalInteractiveCommand;
+    public ICommand ClearLocalOutputPathCommand => _clearLocalOutputPathCommand;
+    public ICommand ClearLocalBinaryPathCommand => _clearLocalBinaryPathCommand;
+    public ICommand ClearLocalMinifyCommand => _clearLocalMinifyCommand;
+    public ICommand ClearLocalMinifyExtraOptionsCommand => _clearLocalMinifyExtraOptionsCommand;
+    public ICommand ClearLocalTraceCommand => _clearLocalTraceCommand;
+    public ICommand ClearLocalIgnoresCommand => _clearLocalIgnoresCommand;
+    public ICommand ClearLocalNamespacesCommand => _clearLocalNamespacesCommand;
+    public ICommand OpenGlobalSettingsCommand => _openGlobalSettingsCommand;
 
     public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, IShell shell, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
@@ -53,6 +76,18 @@ public partial class ProjectOptionsViewModel : ObservableObject
         _shell = shell;
         _onClose = onClose;
         _onDirtyStateChanged = onDirtyStateChanged;
+        
+        _saveCommand = new AsyncRelayCommand(Save);
+        _cancelCommand = new RelayCommand(Cancel);
+        _clearLocalInteractiveCommand = new RelayCommand(ClearLocalInteractive);
+        _clearLocalOutputPathCommand = new RelayCommand(ClearLocalOutputPath);
+        _clearLocalBinaryPathCommand = new RelayCommand(ClearLocalBinaryPath);
+        _clearLocalMinifyCommand = new RelayCommand(ClearLocalMinify);
+        _clearLocalMinifyExtraOptionsCommand = new RelayCommand(ClearLocalMinifyExtraOptions);
+        _clearLocalTraceCommand = new RelayCommand(ClearLocalTrace);
+        _clearLocalIgnoresCommand = new RelayCommand(ClearLocalIgnores);
+        _clearLocalNamespacesCommand = new RelayCommand(ClearLocalNamespaces);
+        _openGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);
         
         // Subscribe to property changes to update override indicators and dirty state
         MainConfig.PropertyChanged += (_, e) =>
@@ -230,7 +265,6 @@ public partial class ProjectOptionsViewModel : ObservableObject
         _originalLocalNamespaces = LocalConfig.Namespaces;
     }
 
-    [RelayCommand]
     async Task Save()
     {
         try
@@ -276,37 +310,27 @@ public partial class ProjectOptionsViewModel : ObservableObject
         _onDirtyStateChanged?.Invoke();
     }
 
-    [RelayCommand]
     void Cancel()
     {
         _onClose(false); // Cancelled
     }
 
-    [RelayCommand]
     void ClearLocalInteractive() => LocalConfig.Interactive = null;
 
-    [RelayCommand]
     void ClearLocalOutputPath() => LocalConfig.OutputPath = string.Empty;
 
-    [RelayCommand]
     void ClearLocalBinaryPath() => LocalConfig.BinaryPath = string.Empty;
 
-    [RelayCommand]
     void ClearLocalMinify() => LocalConfig.Minify = null;
 
-    [RelayCommand]
     void ClearLocalMinifyExtraOptions() => LocalConfig.MinifyExtraOptions = null;
 
-    [RelayCommand]
     void ClearLocalTrace() => LocalConfig.Trace = null;
 
-    [RelayCommand]
     void ClearLocalIgnores() => LocalConfig.Ignores = string.Empty;
 
-    [RelayCommand]
     void ClearLocalNamespaces() => LocalConfig.Namespaces = string.Empty;
 
-    [RelayCommand]
     void OpenGlobalSettings()
     {
         var viewModel = App.Container.Resolve<Mdk.Hub.Features.Settings.GlobalSettingsViewModel>();

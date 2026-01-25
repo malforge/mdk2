@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Options;
@@ -26,14 +25,26 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModelCache = new(CanonicalPathComparer.Instance);
     UnsavedChangesHandle? _unsavedChangesHandle;
     
-    [ObservableProperty]
     bool _isOptionsDrawerOpen;
+    public bool IsOptionsDrawerOpen
+    {
+        get => _isOptionsDrawerOpen;
+        set => SetProperty(ref _isOptionsDrawerOpen, value);
+    }
     
-    [ObservableProperty]
     CanonicalPath? _optionsProjectPath;
+    public CanonicalPath? OptionsProjectPath
+    {
+        get => _optionsProjectPath;
+        set => SetProperty(ref _optionsProjectPath, value);
+    }
     
-    [ObservableProperty]
     ProjectOptionsViewModel? _optionsViewModel;
+    public ProjectOptionsViewModel? OptionsViewModel
+    {
+        get => _optionsViewModel;
+        set => SetProperty(ref _optionsViewModel, value);
+    }
 
     public ProjectActionsViewModel(IProjectState projectState, IShell shell, ICommonDialogs dialogs, IProjectService projectService)
     {

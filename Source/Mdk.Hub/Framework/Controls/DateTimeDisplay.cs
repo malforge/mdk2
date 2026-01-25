@@ -8,62 +8,103 @@ using Avalonia.Interactivity;
 
 namespace Mdk.Hub.Framework.Controls;
 
+/// <summary>
+/// A control that displays a <see cref="DateTimeOffset"/> value in different formats (relative, local, UTC).
+/// Users can click to cycle between available display modes.
+/// </summary>
 public class DateTimeDisplay : TemplatedControl
 {
+    /// <summary>
+    /// Defines the <see cref="Value"/> property.
+    /// </summary>
     public static readonly StyledProperty<DateTimeOffset?> ValueProperty =
         AvaloniaProperty.Register<DateTimeDisplay, DateTimeOffset?>(nameof(Value));
 
+    /// <summary>
+    /// Defines the <see cref="AllowRelative"/> property.
+    /// </summary>
     public static readonly StyledProperty<bool> AllowRelativeProperty =
         AvaloniaProperty.Register<DateTimeDisplay, bool>(nameof(AllowRelative), defaultValue: true);
 
+    /// <summary>
+    /// Defines the <see cref="AllowLocal"/> property.
+    /// </summary>
     public static readonly StyledProperty<bool> AllowLocalProperty =
         AvaloniaProperty.Register<DateTimeDisplay, bool>(nameof(AllowLocal), defaultValue: true);
 
+    /// <summary>
+    /// Defines the <see cref="AllowUtc"/> property.
+    /// </summary>
     public static readonly StyledProperty<bool> AllowUtcProperty =
         AvaloniaProperty.Register<DateTimeDisplay, bool>(nameof(AllowUtc), defaultValue: true);
 
+    /// <summary>
+    /// Defines the <see cref="CurrentMode"/> property.
+    /// </summary>
     public static readonly StyledProperty<DateTimeDisplayMode> CurrentModeProperty =
         AvaloniaProperty.Register<DateTimeDisplay, DateTimeDisplayMode>(nameof(CurrentMode), defaultValue: DateTimeDisplayMode.Relative);
 
+    /// <summary>
+    /// Defines the <see cref="DisplayText"/> property.
+    /// </summary>
     public static readonly StyledProperty<string> DisplayTextProperty =
         AvaloniaProperty.Register<DateTimeDisplay, string>(nameof(DisplayText), defaultValue: string.Empty);
 
+    /// <summary>
+    /// Gets or sets the date/time value to display.
+    /// </summary>
     public DateTimeOffset? Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets whether relative time display is allowed (e.g., "5 minutes ago").
+    /// </summary>
     public bool AllowRelative
     {
         get => GetValue(AllowRelativeProperty);
         set => SetValue(AllowRelativeProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets whether local time display is allowed.
+    /// </summary>
     public bool AllowLocal
     {
         get => GetValue(AllowLocalProperty);
         set => SetValue(AllowLocalProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets whether UTC time display is allowed.
+    /// </summary>
     public bool AllowUtc
     {
         get => GetValue(AllowUtcProperty);
         set => SetValue(AllowUtcProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the current display mode.
+    /// </summary>
     public DateTimeDisplayMode CurrentMode
     {
         get => GetValue(CurrentModeProperty);
         set => SetValue(CurrentModeProperty, value);
     }
 
+    /// <summary>
+    /// Gets the formatted display text based on the current mode and value.
+    /// </summary>
     public string DisplayText
     {
         get => GetValue(DisplayTextProperty);
         private set => SetValue(DisplayTextProperty, value);
     }
 
+    /// <inheritdoc/>
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
@@ -75,6 +116,7 @@ public class DateTimeDisplay : TemplatedControl
         UpdateDisplayText();
     }
 
+    /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

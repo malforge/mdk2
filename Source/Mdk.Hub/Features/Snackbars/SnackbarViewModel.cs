@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.Input;
+using System.Windows.Input;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Snackbars;
@@ -12,15 +12,23 @@ namespace Mdk.Hub.Features.Snackbars;
 /// View model for a snackbar notification window.
 /// </summary>
 [ViewModelFor<SnackbarWindow>]
-public partial class SnackbarViewModel : ViewModel
+public class SnackbarViewModel : ViewModel
 {
     CancellationTokenSource? _timeoutCts;
+    readonly RelayCommand _closeCommand;
     
     public string Message { get; set; } = string.Empty;
     public IReadOnlyList<SnackbarActionViewModel> Actions { get; set; } = Array.Empty<SnackbarActionViewModel>();
     public int Timeout { get; set; }
     
+    public ICommand CloseCommand => _closeCommand;
+
     public event EventHandler? CloseRequested;
+    
+    public SnackbarViewModel()
+    {
+        _closeCommand = new RelayCommand(Close);
+    }
 
     public void SetActions(IEnumerable<SnackbarAction> actions)
     {
@@ -61,7 +69,6 @@ public partial class SnackbarViewModel : ViewModel
         _timeoutCts = null;
     }
     
-    [RelayCommand]
     void Close()
     {
         CloseIfRequested();
