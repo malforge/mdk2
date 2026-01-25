@@ -8,6 +8,7 @@ using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Snackbars;
 using Mdk.Hub.Utility;
@@ -21,16 +22,21 @@ public class ProjectService : IProjectService
     readonly ILogger _logger;
     readonly IShell _shell;
     readonly ISnackbarService _snackbarService;
+    readonly ISettings _settings;
 
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
+    public event EventHandler<CanonicalPath>? ProjectRemoved;
     public event EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
 
-    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService)
+    public ISettings Settings => _settings;
+
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings)
     {
         _registry = registry;
         _logger = logger;
         _shell = shell;
         _snackbarService = snackbarService;
+        _settings = settings;
         
         // Subscribe to IPC messages
         ipc.MessageReceived += async (_, e) => await HandleBuildNotificationAsync(e.Message);
@@ -85,6 +91,9 @@ public class ProjectService : IProjectService
         if (projectPath.IsEmpty())
             return;
         _registry.RemoveProject(projectPath.Value!);
+        
+        // Raise event so UI can refresh
+        ProjectRemoved?.Invoke(this, projectPath);
     }
 
     public ProjectConfiguration? LoadConfiguration(CanonicalPath projectPath)
@@ -590,5 +599,73 @@ public class ProjectService : IProjectService
         };
         
         _snackbarService.Show(message, actions, timeout: 15000);
+    }
+
+    public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProgrammableBlockProjectAsync(string projectName, string location)
+    {
+        return await CreateProjectInternalAsync(projectName, location, "mdk2pbscript");
+    }
+
+    public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateModProjectAsync(string projectName, string location)
+    {
+        return await CreateProjectInternalAsync(projectName, location, "mdk2mod");
+    }
+
+    async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProjectInternalAsync(string projectName, string location, string templateName)
+    {
+        try
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(projectName))
+                return (null, "Project name cannot be empty.");
+
+            if (string.IsNullOrWhiteSpace(location) || !Directory.Exists(location))
+                return (null, "Invalid location specified.");
+
+            var projectPath = Path.Combine(location, projectName);
+            if (Directory.Exists(projectPath))
+                return (null, $"A directory named '{projectName}' already exists at this location.");
+
+            // Create the project using dotnet new
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"new {templateName} -n \"{projectName}\" -o \"{projectPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            if (process == null)
+                return (null, "Failed to start dotnet process.");
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                var error = await process.StandardError.ReadToEndAsync();
+                _logger.Error($"Failed to create project '{projectName}': {error}");
+                return (null, $"dotnet new failed: {error}");
+            }
+
+            // Find the .csproj file - get actual casing from disk
+            var csprojFiles = Directory.GetFiles(projectPath, "*.csproj", SearchOption.TopDirectoryOnly);
+            if (csprojFiles.Length == 0)
+            {
+                _logger.Error($"Created project but cannot find .csproj in: {projectPath}");
+                return (null, "Project was created but .csproj file not found.");
+            }
+
+            var csprojPath = csprojFiles[0]; // Use the actual file path from disk (preserves casing)
+            _logger.Info($"Successfully created project: {csprojPath}");
+            return (new CanonicalPath(csprojPath), null);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Exception while creating project: {ex}");
+            return (null, $"Unexpected error: {ex.Message}");
+        }
     }
 }

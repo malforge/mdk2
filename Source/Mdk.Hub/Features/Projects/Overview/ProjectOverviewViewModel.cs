@@ -75,6 +75,9 @@ public class ProjectOverviewViewModel : ViewModel
 
             // Subscribe to new project notifications
             _projectService.ProjectAdded += OnProjectAdded;
+            
+            // Subscribe to project removal
+            _projectService.ProjectRemoved += OnProjectRemoved;
 
             // Subscribe to navigation requests
             _projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
@@ -382,17 +385,24 @@ public class ProjectOverviewViewModel : ViewModel
 
     void OnProjectNavigationRequested(object? sender, ProjectNavigationRequestedEventArgs e)
     {
-        // Find the project in the list
+        // Find the project in the ALL projects list
         var project = _projects.OfType<ProjectModel>().FirstOrDefault(p =>
             p.ProjectPath == e.ProjectPath);
 
         if (project != null)
         {
-            // Clear any filters that might hide the project
-            ShowAll = true;
-            FilterScriptsOnly = false;
-            FilterModsOnly = false;
-            SearchText = string.Empty;
+            // Check if project is visible in the current filtered list
+            var isVisibleInFilteredList = _filteredProjects.OfType<ProjectModel>().Any(p =>
+                p.ProjectPath == e.ProjectPath);
+
+            // Only clear filters if the project is not visible with current filters
+            if (!isVisibleInFilteredList)
+            {
+                ShowAll = true;
+                FilterScriptsOnly = false;
+                FilterModsOnly = false;
+                SearchText = string.Empty;
+            }
 
             // Select the project and scroll to it (programmatic navigation)
             SelectProject(project, true);
@@ -403,5 +413,11 @@ public class ProjectOverviewViewModel : ViewModel
             // Store path for delayed selection after next LoadProjects()
             _pendingNavigationPath = e.ProjectPath.Value;
         }
+    }
+    
+    void OnProjectRemoved(object? sender, CanonicalPath projectPath)
+    {
+        // Refresh the project list to remove the deleted project
+        LoadProjects();
     }
 }

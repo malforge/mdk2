@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:dialog="clr-namespace:Mdk.Hub.Features.Projects.NewProjectDialog"
+             xmlns:controls="clr-namespace:Mdk.Hub.Controls"
+             xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
+             x:Class="Mdk.Hub.Features.Projects.NewProjectDialog.NewProjectDialogView"
+             x:DataType="dialog:NewProjectDialogViewModel">
+    <Design.DataContext>
+        <dialog:NewProjectDialogViewModel Message="{x:Static dialog:NewProjectDialogView.DesignMessage}" />
+    </Design.DataContext>
+
+    <UserControl.DataTemplates>
+        <icons:SymbolSelector>
+            <icons:ProjectTypeDefinition Type="IngameScript">
+                <DataTemplate>
+                    <icons:ProgrammableBlockSymbol />
+                </DataTemplate>
+            </icons:ProjectTypeDefinition>
+            <icons:ProjectTypeDefinition Type="Mod">
+                <DataTemplate>
+                    <icons:ModSymbol />
+                </DataTemplate>
+            </icons:ProjectTypeDefinition>
+        </icons:SymbolSelector>
+    </UserControl.DataTemplates>
+
+    <Grid ColumnDefinitions="10*, 80*, 10*">
+        <Border Classes="dialog-container"
+                Grid.Column="1"
+                Padding="16"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="520"
+                Height="400">
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,Auto">
+                <!-- Icon on left -->
+                <ContentControl Content="{Binding Message.ProjectType}" 
+                                Width="64" 
+                                Height="64" 
+                                Grid.Column="0" 
+                                Grid.Row="0"
+                                Margin="0,0,16,0"
+                                VerticalAlignment="Top" />
+                
+                <!-- Content on right -->
+                <StackPanel Grid.Column="1" 
+                            Grid.Row="0"
+                            Spacing="12">
+                    <TextBlock Text="{Binding Message.Title}"
+                               Classes="dialog-title"
+                               Margin="0,0,0,8" />
+                    
+                    <TextBlock Text="{Binding Message.Message}"
+                               Classes="secondary"
+                               FontSize="14"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,16" />
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Project Name" 
+                                   Classes="secondary"
+                                   FontSize="13" />
+                        <TextBox Text="{Binding ProjectName}"
+                                 Watermark="MyProject"
+                                 Name="ProjectNameTextBox" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Location" 
+                                   Classes="secondary"
+                                   FontSize="13" />
+                        <controls:FolderBrowserControl Path="{Binding Location}"
+                                                       Watermark="Select a folder..." />
+                    </StackPanel>
+
+                    <!-- Preview of final path -->
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Project will be created at:" 
+                                   Classes="secondary"
+                                   FontSize="12" />
+                        <TextBlock Text="{Binding FinalPath}"
+                                   FontSize="12"
+                                   FontFamily="Consolas,Courier New,monospace"
+                                   Classes="muted"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="PathSegmentEllipsis"
+                                   MinHeight="20" />
+                    </StackPanel>
+
+                    <!-- Validation messages - allow wrapping up to 3 lines -->
+                    <Grid MinHeight="60" MaxHeight="60">
+                        <!-- Error takes precedence over warning -->
+                        <TextBlock Text="{Binding ValidationError}"
+                                   Foreground="{DynamicResource MessageBoxDangerAccentBrush}"
+                                   FontWeight="Medium"
+                                   TextWrapping="Wrap"
+                                   VerticalAlignment="Top"
+                                   IsVisible="{Binding ValidationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        
+                        <TextBlock Text="{Binding ValidationWarning}"
+                                   Foreground="{DynamicResource AccentWarningBrush}"
+                                   FontWeight="Medium"
+                                   TextWrapping="Wrap"
+                                   VerticalAlignment="Top"
+                                   IsVisible="{Binding ValidationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </Grid>
+                </StackPanel>
+                
+                <!-- Buttons at bottom -->
+                <StackPanel Grid.Column="1"
+                            Grid.Row="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8"
+                            Margin="0,8,0,0">
+                    <Button Content="{Binding Message.OkText}"
+                            Command="{Binding OkCommand}"
+                            IsDefault="True"
+                            MinWidth="100" />
+                    <Button Content="{Binding Message.CancelText}"
+                            Command="{Binding CancelCommand}"
+                            IsCancel="True"
+                            MinWidth="100" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

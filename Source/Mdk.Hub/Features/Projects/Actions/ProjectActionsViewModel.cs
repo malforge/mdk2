@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
@@ -215,7 +217,7 @@ public partial class ProjectActionsViewModel : ViewModel
         if (availableTypes.Count > 0)
         {
             var addExistingAction = new AddExistingProjectAction(_shell, _dialogs, _projectService);
-            allActions.Add(new CreateProjectAction(availableTypes, addExistingAction));
+            allActions.Add(new CreateProjectAction(availableTypes, addExistingAction, _projectService, this));
         }
 
         // Project-specific actions
@@ -243,6 +245,37 @@ public partial class ProjectActionsViewModel : ViewModel
                 lastCategory = action.Category;
                 isFirstItem = false;
             }
+        }
+    }
+
+    public async Task<NewProjectDialogResult?> ShowNewProjectDialogAsync(NewProjectDialogMessage message)
+    {
+        var viewModel = new NewProjectDialogViewModel(message);
+        await _shell.ShowOverlayAsync(viewModel);
+        return viewModel.Result;
+    }
+
+    public async Task ShowBusyOverlayAsync(CommonDialogs.BusyOverlayViewModel busyOverlay)
+    {
+        await _shell.ShowOverlayAsync(busyOverlay);
+    }
+
+    public async Task ShowErrorAsync(string title, string message)
+    {
+        await _dialogs.ShowAsync(new ConfirmationMessage
+        {
+            Title = title,
+            Message = message,
+            OkText = "OK",
+            CancelText = "Cancel"
+        });
+    }
+
+    public void OpenOptionsDrawer()
+    {
+        if (_projectState.SelectedProject is ProjectModel projectModel && !projectModel.ProjectPath.IsEmpty())
+        {
+            ShowOptionsDrawer(projectModel.ProjectPath.Value!);
         }
     }
 }

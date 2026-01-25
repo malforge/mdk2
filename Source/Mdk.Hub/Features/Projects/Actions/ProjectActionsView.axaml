@@ -50,7 +50,12 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Classes="create-hover-row" Padding="10" CornerRadius="4" Cursor="Hand">
+                            <Border Classes="create-hover-row" 
+                                    Padding="10" 
+                                    CornerRadius="4" 
+                                    Cursor="Hand"
+                                    Tapped="OnCreateOptionTapped"
+                                    Tag="{Binding}">
                                 <Grid ColumnDefinitions="Auto,*">
                                     <ContentControl Content="{Binding ProjectType}" Width="32" Height="32" Grid.Column="0" />
                                     <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">

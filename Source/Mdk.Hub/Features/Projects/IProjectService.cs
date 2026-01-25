@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.Projects.Configuration;
+using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
@@ -53,6 +54,11 @@ public interface IProjectService
     /// Raised when a new project is added to the registry (typically via build notification).
     /// </summary>
     event System.EventHandler<ProjectAddedEventArgs>? ProjectAdded;
+    
+    /// <summary>
+    /// Raised when a project is removed from the registry.
+    /// </summary>
+    event System.EventHandler<CanonicalPath>? ProjectRemoved;
     
     /// <summary>
     /// Raised when navigation to a project is requested (e.g., from a toast notification).
@@ -129,4 +135,25 @@ public interface IProjectService
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     bool NavigateToProject(CanonicalPath projectPath);
+
+    /// <summary>
+    /// Creates a new Programmable Block script project.
+    /// </summary>
+    /// <param name="projectName">Name of the project (will be used for folder and project file).</param>
+    /// <param name="location">Parent directory where the project folder will be created.</param>
+    /// <returns>Result containing path to the created .csproj file and optional error message.</returns>
+    Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProgrammableBlockProjectAsync(string projectName, string location);
+
+    /// <summary>
+    /// Creates a new Mod project.
+    /// </summary>
+    /// <param name="projectName">Name of the project (will be used for folder and project file).</param>
+    /// <param name="location">Parent directory where the project folder will be created.</param>
+    /// <returns>Result containing path to the created .csproj file and optional error message.</returns>
+    Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateModProjectAsync(string projectName, string location);
+    
+    /// <summary>
+    /// Gets the settings service for storing user preferences.
+    /// </summary>
+    ISettings Settings { get; }
 }

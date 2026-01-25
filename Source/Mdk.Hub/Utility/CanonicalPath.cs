@@ -13,8 +13,8 @@ namespace Mdk.Hub.Utility;
 ///         and applies platform-specific case sensitivity rules to ensure consistent path comparisons.
 ///     </para>
 ///     <para>
-///         On Windows, paths are case-insensitive (lowercased).
-///         On Unix-like systems, paths retain their original casing.
+///         On Windows, paths are compared case-insensitively but preserve their original casing.
+///         On Unix-like systems, paths are compared case-sensitively.
 ///     </para>
 /// </remarks>
 [JsonConverter(typeof(CanonicalPathJsonConverter))]
@@ -32,13 +32,27 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
     /// </summary>
     /// <param name="other">The path to compare with this instance.</param>
     /// <returns><see langword="true" /> if the paths are equal; otherwise, <see langword="false" />.</returns>
-    public bool Equals(CanonicalPath other) => Value == other.Value;
+    public bool Equals(CanonicalPath other)
+    {
+        var comparison = OperatingSystem.IsWindows() 
+            ? StringComparison.OrdinalIgnoreCase 
+            : StringComparison.Ordinal;
+        return string.Equals(Value, other.Value, comparison);
+    }
 
     /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CanonicalPath other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => Value?.GetHashCode() ?? 0;
+    public override int GetHashCode()
+    {
+        if (Value == null)
+            return 0;
+            
+        return OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase.GetHashCode(Value)
+            : Value.GetHashCode();
+    }
 
     /// <summary>
     ///     Determines whether the canonical path is empty (i.e., has no value).
@@ -107,12 +121,6 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
 
         if (Path.AltDirectorySeparatorChar != Path.DirectorySeparatorChar)
             fullPath = fullPath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-
-        if (OperatingSystem.IsWindows())
-        {
-            // On Windows, make the path case-insensitive by lowercasing it.
-            fullPath = fullPath.ToLowerInvariant();
-        }
 
         Value = fullPath;
     }

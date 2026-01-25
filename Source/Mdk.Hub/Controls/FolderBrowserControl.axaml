@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:Mdk.Hub.Controls"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="35"
+             x:Class="Mdk.Hub.Controls.FolderBrowserControl"
+             x:DataType="controls:FolderBrowserControl">
+    
+    <Grid ColumnDefinitions="*,Auto">
+        <TextBox Grid.Column="0"
+                 Text="{Binding Path, RelativeSource={RelativeSource AncestorType=controls:FolderBrowserControl}, Mode=TwoWay}"
+                 Watermark="{Binding Watermark, RelativeSource={RelativeSource AncestorType=controls:FolderBrowserControl}}"
+                 VerticalAlignment="Stretch" />
+        
+        <Button Grid.Column="1"
+                Margin="4,0,0,0"
+                Padding="8,0"
+                Click="OnBrowseClick"
+                VerticalAlignment="Stretch">
+            <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
+        </Button>
+    </Grid>
+    
+</UserControl>

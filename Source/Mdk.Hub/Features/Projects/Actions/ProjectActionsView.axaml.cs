@@ -109,6 +109,18 @@ public partial class ProjectActionsView : UserControl
         }
     }
 
+    void OnCreateOptionTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not Border border)
+            return;
+
+        if (border.Tag is not CreateOption createOption)
+            return;
+
+        if (createOption.CreateCommand?.CanExecute(null) == true)
+            createOption.CreateCommand.Execute(null);
+    }
+
     void OnCloseDrawerClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is ProjectActionsViewModel vm)

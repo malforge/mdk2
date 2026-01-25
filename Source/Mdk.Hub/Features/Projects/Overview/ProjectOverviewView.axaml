@@ -101,7 +101,7 @@
 
     <Grid
         RowDefinitions="Auto,*"
-        ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+        ColumnDefinitions="*,Auto,Auto,Auto">
 
         <TextBox
             Grid.Row="0"
@@ -120,21 +120,21 @@
             
         <RadioButton
             Grid.Row="0"
-            Grid.Column="2"
+            Grid.Column="1"
             Margin="0,8,8,8"
             Content="All"
             GroupName="FilterGroup"
             IsChecked="{Binding ShowAll }" />
         <RadioButton
             Grid.Row="0"
-            Grid.Column="3"
+            Grid.Column="2"
             Margin="0,8,8,8"
             Content="Mods"
             GroupName="FilterGroup"
             IsChecked="{Binding FilterScriptsOnly }" />
         <RadioButton
             Grid.Row="0"
-            Grid.Column="4"
+            Grid.Column="3"
             Margin="0,8,8,8"
             Content="Scripts"
             GroupName="FilterGroup"
