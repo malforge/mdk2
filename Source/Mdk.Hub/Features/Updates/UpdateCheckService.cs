@@ -13,11 +13,18 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
     readonly ILogger _logger = logger;
     readonly INuGetService _nuGetService = nuGetService;
     readonly IGitHubService _gitHubService = gitHubService;
+    readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();
     int _isChecking = 0; // 0 = not checking, 1 = checking
     
-    public event EventHandler<VersionCheckCompletedEventArgs>? VersionCheckCompleted;
-    
     public VersionCheckCompletedEventArgs? LastKnownVersions { get; private set; }
+
+    public void WhenVersionCheckCompleted(Action<VersionCheckCompletedEventArgs> callback)
+    {
+        if (LastKnownVersions != null)
+            callback(LastKnownVersions);
+        else
+            _completionCallbacks.Add(callback);
+    }
 
     public async Task<bool> CheckForUpdatesAsync()
     {
@@ -46,7 +53,11 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
             LastKnownVersions = results;
             
             _logger.Info($"Update check completed - found {packages.Count} package versions");
-            VersionCheckCompleted?.Invoke(this, results);
+            
+            // Invoke queued callbacks
+            foreach (var callback in _completionCallbacks)
+                callback(results);
+            _completionCallbacks.Clear();
             
             return true;
         }

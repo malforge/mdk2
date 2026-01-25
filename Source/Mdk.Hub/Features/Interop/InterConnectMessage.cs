@@ -8,23 +8,17 @@ namespace Mdk.Hub.Features.Interop;
 /// <summary>
 /// A message sent between MDK CommandLine and Hub via IPC.
 /// </summary>
-public sealed class InterConnectMessage
+public sealed class InterConnectMessage(NotificationType type, params string[] arguments)
 {
-    public InterConnectMessage(NotificationType type, params string[] arguments)
-    {
-        Type = type;
-        Arguments = arguments;
-    }
-
     /// <summary>
     /// The type of notification.
     /// </summary>
-    public NotificationType Type { get; }
+    public NotificationType Type { get; } = type;
 
     /// <summary>
     /// Arguments passed with the notification.
     /// </summary>
-    public string[] Arguments { get; }
+    public string[] Arguments { get; } = arguments;
 
     /// <summary>
     /// Reads a message from a stream.
@@ -45,7 +39,7 @@ public sealed class InterConnectMessage
     /// <summary>
     /// Writes the message to a stream.
     /// </summary>
-    public Task WriteAsync(Stream stream)
+    public void Write(Stream stream)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true);
         writer.Write((int)Type);
@@ -55,6 +49,5 @@ public sealed class InterConnectMessage
             writer.Write(argument);
         
         writer.Flush();
-        return Task.CompletedTask;
     }
 }

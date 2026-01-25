@@ -82,9 +82,7 @@
                                    Classes="secondary"
                                    FontSize="12" />
                         <TextBlock Text="{Binding FinalPath}"
-                                   FontSize="12"
-                                   FontFamily="Consolas,Courier New,monospace"
-                                   Classes="muted"
+                                   Classes="muted monospace"
                                    TextWrapping="NoWrap"
                                    TextTrimming="PathSegmentEllipsis"
                                    MinHeight="20" />

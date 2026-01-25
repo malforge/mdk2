@@ -51,10 +51,25 @@
                             Grid.Row="0"
                             Text="{Binding Name}" />
 
-                        <TextBlock
-                            Classes="last-referenced"
-                            Grid.Row="1"
-                            Text="{Binding LastReferenced, Converter={m:SmartDate}}" />
+                        <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+                            <!-- Update indicator text -->
+                            <TextBlock
+                                Grid.Column="0"
+                                Classes="last-referenced"
+                                Text="MDK updates available"
+                                Foreground="{StaticResource AccentWarningBrush}"
+                                Margin="16,2,0,0"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Bottom"
+                                IsVisible="{Binding NeedsUpdate}" />
+                            
+                            <!-- Last referenced date -->
+                            <TextBlock
+                                Grid.Column="1"
+                                Classes="last-referenced"
+                                Text="{Binding LastReferenced, Converter={m:SmartDate}}"
+                                Margin="0,2,0,0" />
+                        </Grid>
                     </Grid>
                     
                     <!-- Needs Attention Badge with Pulse Animation -->

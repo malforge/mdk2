@@ -20,8 +20,9 @@
                 VerticalAlignment="Center"
                 MinWidth="200">
             <StackPanel Spacing="16" HorizontalAlignment="Center">
-                <!-- Simple progress indicator -->
-                <ProgressBar IsIndeterminate="True" 
+                <!-- Progress indicator -->
+                <ProgressBar IsIndeterminate="{Binding IsIndeterminate}"
+                             Value="{Binding Progress}"
                              Width="200"
                              Height="4" />
                 

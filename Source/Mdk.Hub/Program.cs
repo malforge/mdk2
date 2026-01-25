@@ -15,9 +15,10 @@ sealed class Program
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
-    public static async Task<int> Main(string[] args)
+    public static int Main(string[] args)
     {
         // Handle IPC before initializing Avalonia
+        // Must stay synchronous with [STAThread] for COM/clipboard to work properly
         if (args.Length > 0)
         {
             using var ipc = new InterProcessCommunication.Standalone();
@@ -25,7 +26,7 @@ sealed class Program
             // If another instance is running, send message and exit
             if (ipc.IsAlreadyRunning())
             {
-                await ipc.SendMessageAsync(args);
+                ipc.SendMessage(args); // Fully synchronous - no deadlock risk
                 return 0; // Exit immediately
             }
             
@@ -37,6 +38,7 @@ sealed class Program
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
     }
+
 
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()

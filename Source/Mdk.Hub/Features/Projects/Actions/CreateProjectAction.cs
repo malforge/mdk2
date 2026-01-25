@@ -27,6 +27,8 @@ public class CreateProjectAction : ActionItem
     public AddExistingProjectAction AddExistingAction { get; }
 
     public override string? Category => null; // Global actions, no category
+    
+    public override bool IsGlobal => true; // Shared instance across all contexts
 
     public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
     {

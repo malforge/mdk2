@@ -75,6 +75,18 @@
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
     </Style>
     
+    <!-- Monospace Text (code, paths, technical output) -->
+    <Style Selector="TextBlock.monospace">
+        <Setter Property="FontFamily" Value="Consolas,Courier New,monospace"/>
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
+    
+    <!-- Monospace TextBox (readonly code/output display) -->
+    <Style Selector="TextBox.monospace">
+        <Setter Property="FontFamily" Value="Consolas,Courier New,monospace"/>
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
+    
     <!-- Container Styles -->
     
     <!-- Dialog/Modal Container -->

@@ -11,6 +11,7 @@ using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Snackbars;
+using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
@@ -23,20 +24,37 @@ public class ProjectService : IProjectService
     readonly IShell _shell;
     readonly ISnackbarService _snackbarService;
     readonly ISettings _settings;
+    readonly ProjectUpdateChecker _updateChecker;
+    readonly Dictionary<CanonicalPath, (bool needsUpdate, int updateCount)> _updateStates = new();
+    readonly object _updateStatesLock = new();
 
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
     public event EventHandler<CanonicalPath>? ProjectRemoved;
     public event EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
+    public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
 
     public ISettings Settings => _settings;
 
-    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings)
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateCheckService updateCheckService)
     {
         _registry = registry;
         _logger = logger;
         _shell = shell;
         _snackbarService = snackbarService;
         _settings = settings;
+        _updateChecker = new ProjectUpdateChecker(logger);
+        
+        _updateChecker.ProjectUpdateAvailable += OnProjectUpdateAvailable;
+        
+        // When version data is available, start checking projects
+        updateCheckService.WhenVersionCheckCompleted(versionData =>
+        {
+            _updateChecker.OnVersionDataAvailable(versionData);
+            
+            // Queue all existing projects for checking
+            var projects = _registry.GetProjects();
+            _updateChecker.QueueProjectsCheck(projects.Select(p => p.ProjectPath));
+        });
         
         // Subscribe to IPC messages
         ipc.MessageReceived += async (_, e) => await HandleBuildNotificationAsync(e.Message);
@@ -45,9 +63,34 @@ public class ProjectService : IProjectService
         shell.WhenStarted(args => HandleStartupArguments(args));
     }
 
+    void OnProjectUpdateAvailable(object? sender, ProjectUpdateAvailableEventArgs e)
+    {
+        lock (_updateStatesLock)
+        {
+            _updateStates[e.ProjectPath] = (true, e.AvailableUpdates.Count);
+        }
+        
+        // Forward event to subscribers (view models, etc.)
+        ProjectUpdateAvailable?.Invoke(this, e);
+    }
+
     public IReadOnlyList<ProjectInfo> GetProjects()
     {
-        return _registry.GetProjects();
+        var projects = _registry.GetProjects();
+        
+        lock (_updateStatesLock)
+        {
+            // Populate update state for each project
+            return projects.Select(p =>
+            {
+                var hasUpdateState = _updateStates.TryGetValue(p.ProjectPath, out var state);
+                return p with
+                {
+                    NeedsUpdate = hasUpdateState && state.needsUpdate,
+                    UpdateCount = hasUpdateState ? state.updateCount : 0
+                };
+            }).ToList();
+        }
     }
 
     public bool TryAddProject(CanonicalPath projectPath, out string? errorMessage)
@@ -496,6 +539,22 @@ public class ProjectService : IProjectService
         });
         _logger.Info($"Navigation requested for project: {projectPath}");
         return true;
+    }
+
+    public void ClearProjectUpdateState(CanonicalPath projectPath)
+    {
+        lock (_updateStatesLock)
+        {
+            _updateStates.Remove(projectPath);
+        }
+        _logger.Debug($"Cleared update state for project: {projectPath}");
+        
+        // Fire event so view models can update their UI state
+        ProjectUpdateAvailable?.Invoke(this, new ProjectUpdateAvailableEventArgs
+        {
+            ProjectPath = projectPath,
+            AvailableUpdates = Array.Empty<PackageUpdateInfo>()
+        });
     }
     
     void HandleBuildNotification(string projectName, string projectPath, bool isNewProject)

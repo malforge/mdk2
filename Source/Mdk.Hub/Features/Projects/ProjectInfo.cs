@@ -29,6 +29,8 @@ public record ProjectInfo
     public required ProjectType Type { get; init; }
     public required DateTimeOffset LastReferenced { get; init; }
     public ProjectFlags Flags { get; init; } = ProjectFlags.None;
+    public bool NeedsUpdate { get; init; }
+    public int UpdateCount { get; init; }
 
     public bool IsPath(string projectPath) => ProjectPath == new CanonicalPath(projectPath);
 }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Snackbars;
 using Mdk.Hub.Framework;
@@ -29,6 +30,7 @@ public class ProjectOverviewViewModel : ViewModel
     readonly IProjectState _projectState;
     readonly ISettings _settings;
     readonly ISnackbarService _snackbarService;
+    readonly ILogger _logger;
     readonly ThrottledAction<string> _throttledSearch;
     ImmutableArray<ProjectListItem> _allProjects;
     bool _filterModsOnly;
@@ -40,18 +42,19 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchText = string.Empty;
     bool _showAll = true;
 
-    public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!)
+    public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
 
-    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService, ISettings settings, ISnackbarService snackbarService)
+    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService, ISettings settings, ISnackbarService snackbarService, ILogger logger)
     {
         _commonDialogs = commonDialogs;
         _projectState = projectState;
         _projectService = projectService;
         _settings = settings;
         _snackbarService = snackbarService;
+        _logger = logger;
         FilteredProjects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
@@ -78,6 +81,9 @@ public class ProjectOverviewViewModel : ViewModel
             
             // Subscribe to project removal
             _projectService.ProjectRemoved += OnProjectRemoved;
+            
+            // Subscribe to project updates
+            _projectService.ProjectUpdateAvailable += OnProjectUpdateAvailable;
 
             // Subscribe to navigation requests
             _projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
@@ -419,5 +425,33 @@ public class ProjectOverviewViewModel : ViewModel
     {
         // Refresh the project list to remove the deleted project
         LoadProjects();
+    }
+    
+    void OnProjectUpdateAvailable(object? sender, ProjectUpdateAvailableEventArgs e)
+    {
+        _logger.Info($"Update available for project: {e.ProjectPath}");
+        
+        // Find the project model and update its status
+        var projectModel = AllProjects.OfType<ProjectModel>().FirstOrDefault(p => p.ProjectPath == e.ProjectPath);
+        if (projectModel != null)
+        {
+            if (e.AvailableUpdates.Count == 0)
+            {
+                // Empty update list means clear the update state
+                _logger.Info($"Clearing update state for project {projectModel.Name}");
+                projectModel.NeedsUpdate = false;
+                projectModel.UpdateCount = 0;
+            }
+            else
+            {
+                _logger.Info($"Project {projectModel.Name} has {e.AvailableUpdates.Count} update(s) available");
+                projectModel.NeedsUpdate = true;
+                projectModel.UpdateCount = e.AvailableUpdates.Count;
+            }
+        }
+        else
+        {
+            _logger.Warning($"Could not find project model for {e.ProjectPath}");
+        }
     }
 }

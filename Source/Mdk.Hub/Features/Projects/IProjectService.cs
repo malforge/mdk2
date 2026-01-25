@@ -67,6 +67,11 @@ public interface IProjectService
     event System.EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
     
     /// <summary>
+    /// Raised when updates are available for a project.
+    /// </summary>
+    event System.EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
+    
+    /// <summary>
     /// Gets all projects known to MDK Hub.
     /// </summary>
     /// <returns>Collection of project information.</returns>
@@ -135,6 +140,12 @@ public interface IProjectService
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     bool NavigateToProject(CanonicalPath projectPath);
+
+    /// <summary>
+    /// Clears the update state for a project after packages have been successfully updated.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    void ClearProjectUpdateState(CanonicalPath projectPath);
 
     /// <summary>
     /// Creates a new Programmable Block script project.

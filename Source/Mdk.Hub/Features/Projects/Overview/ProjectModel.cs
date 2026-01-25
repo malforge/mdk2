@@ -17,6 +17,8 @@ public class ProjectModel : ProjectListItem
     DateTimeOffset _lastReferenced;
     string _name;
     ProjectType _type;
+    bool _needsUpdate;
+    int _updateCount;
 
     public ProjectModel(ProjectType type, string name, CanonicalPath projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)
         : base(projectPath)
@@ -51,6 +53,18 @@ public class ProjectModel : ProjectListItem
     {
         get => _hasUnsavedChanges;
         set => SetProperty(ref _hasUnsavedChanges, value);
+    }
+
+    public bool NeedsUpdate
+    {
+        get => _needsUpdate;
+        set => SetProperty(ref _needsUpdate, value);
+    }
+
+    public int UpdateCount
+    {
+        get => _updateCount;
+        set => SetProperty(ref _updateCount, value);
     }
 
     public ICommand DeleteCommand => _deleteCommand;
