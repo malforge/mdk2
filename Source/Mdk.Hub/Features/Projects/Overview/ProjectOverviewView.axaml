@@ -117,14 +117,6 @@
             Command="{Binding ClearSearchCommand}">
             <avalonia:Icon Value="fa-solid fa-xmark" Width="16" Height="16" />
         </Button>
-        
-        <!-- TEST TOAST BUTTON - TEMPORARY -->
-        <Button
-            Grid.Row="0"
-            Grid.Column="1"
-            Margin="0,8,8,8"
-            Content="Test Toast"
-            Command="{Binding TestToastCommand}" />
             
         <RadioButton
             Grid.Row="0"

@@ -74,12 +74,6 @@ public class SnackbarService : ISnackbarService
         var snackbarWidth = snackbar.Bounds.Width * scaling;
         var snackbarHeight = snackbar.Bounds.Height * scaling;
         
-        // Debug output
-        System.Diagnostics.Debug.WriteLine($"Screen WorkingArea (physical pixels): {workingArea}");
-        System.Diagnostics.Debug.WriteLine($"Screen Scaling: {scaling}");
-        System.Diagnostics.Debug.WriteLine($"Snackbar Bounds (logical): {snackbar.Bounds.Width} x {snackbar.Bounds.Height}");
-        System.Diagnostics.Debug.WriteLine($"Snackbar Size (physical): {snackbarWidth} x {snackbarHeight}");
-        
         lock (_lock)
         {
             // Stack snackbars from bottom up - calculate in physical pixels
@@ -89,19 +83,12 @@ public class SnackbarService : ISnackbarService
             var x = (int)((workingArea.Width - snackbarWidth) / 2 + workingArea.X);
             var y = (int)(workingArea.Bottom - snackbarHeight - totalHeight - 20 * scaling);
             
-            System.Diagnostics.Debug.WriteLine($"Calculated Position (physical pixels): {x}, {y}");
-            
             snackbar.Position = new PixelPoint(x, y);
             _activeSnackbars.Add(snackbar);
         }
         
         // Now trigger the fade-in by setting opacity back to 1
         snackbar.Opacity = 1;
-        
-        // Debug: Check actual position after a moment
-        await Task.Delay(100);
-        System.Diagnostics.Debug.WriteLine($"Actual Position after show: {snackbar.Position}");
-        System.Diagnostics.Debug.WriteLine($"Actual Bounds: {snackbar.Bounds}");
         
         // Handle closing
         snackbar.Closed += (_, _) =>

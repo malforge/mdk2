@@ -57,7 +57,6 @@ public class ProjectOverviewViewModel : ViewModel
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
         SelectProjectCommand = new RelayCommand<ProjectListItem>(p => SelectProject(p));
-        TestToastCommand = new RelayCommand(TestToast);
 
         if (IsDesignMode)
         {
@@ -159,8 +158,6 @@ public class ProjectOverviewViewModel : ViewModel
     public ICommand ClearSearchCommand { get; }
 
     public ICommand SelectProjectCommand { get; }
-
-    public ICommand TestToastCommand { get; }
 
     /// <summary>
     ///     Raised when a request is made to show a specific project in the hub.
@@ -407,56 +404,5 @@ public class ProjectOverviewViewModel : ViewModel
             // Store path for delayed selection after next LoadProjects()
             _pendingNavigationPath = e.ProjectPath.Value;
         }
-    }
-
-    void TestToast()
-    {
-        // Simulate a script deployment snackbar with a test project
-        var testProjectPath = @"C:\Projects\TestScript\TestScript.csproj";
-
-        // Get the first script project if available, otherwise use fake path
-        var firstScript = _projects.OfType<ProjectModel>()
-            .FirstOrDefault(p => p.Type == ProjectType.IngameScript);
-
-        if (firstScript != null && !firstScript.ProjectPath.IsEmpty())
-            testProjectPath = firstScript.ProjectPath.Value!;
-
-        _snackbarService.Show("Your script \"Test Project\" has been successfully deployed.",
-            new[]
-            {
-                new SnackbarAction
-                {
-                    Text = "Open in Hub",
-                    Action = _ => _projectService.NavigateToProject(new CanonicalPath(testProjectPath)),
-                    Context = testProjectPath,
-                    IsClosingAction = true
-                },
-                new SnackbarAction
-                {
-                    Text = "Copy to clipboard",
-                    Action = async ctx =>
-                    {
-                        if (ctx is string path)
-                        {
-                            var success = await _projectService.CopyScriptToClipboardAsync(new CanonicalPath(path));
-                            if (success)
-                                _snackbarService.Show("Script copied to clipboard.", 2000);
-                        }
-                    },
-                    Context = testProjectPath,
-                    IsClosingAction = true
-                },
-                new SnackbarAction
-                {
-                    Text = "Show me",
-                    Action = ctx =>
-                    {
-                        if (ctx is string path)
-                            _projectService.OpenOutputFolder(new CanonicalPath(path));
-                    },
-                    Context = testProjectPath,
-                    IsClosingAction = true
-                }
-            });
     }
 }
