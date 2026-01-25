@@ -57,6 +57,35 @@
                             Text="{Binding LastReferenced, Converter={m:SmartDate}}" />
                     </Grid>
                     
+                    <!-- Needs Attention Badge with Pulse Animation -->
+                    <Ellipse Grid.Column="2" 
+                             Width="10" 
+                             Height="10"
+                             Fill="{StaticResource AccentWarningBrush}"
+                             VerticalAlignment="Center"
+                             Margin="8,0,4,0"
+                             IsVisible="{Binding NeedsAttention}"
+                             ToolTip.Tip="New build notification">
+                        <Ellipse.Styles>
+                            <Style Selector="Ellipse">
+                                <Style.Animations>
+                                    <Animation Duration="0:0:1.5" IterationCount="Infinite">
+                                        <KeyFrame Cue="0%">
+                                            <Setter Property="Opacity" Value="1.0"/>
+                                        </KeyFrame>
+                                        <KeyFrame Cue="50%">
+                                            <Setter Property="Opacity" Value="0.3"/>
+                                        </KeyFrame>
+                                        <KeyFrame Cue="100%">
+                                            <Setter Property="Opacity" Value="1.0"/>
+                                        </KeyFrame>
+                                    </Animation>
+                                </Style.Animations>
+                            </Style>
+                        </Ellipse.Styles>
+                    </Ellipse>
+                    
+                    <!-- Unsaved Changes Indicator -->
                     <Ellipse Grid.Column="2" 
                              Width="8" 
                              Height="8"
@@ -120,14 +149,16 @@
             IsChecked="{Binding FilterModsOnly }" />
 
         <ScrollViewer
+            x:Name="ProjectScrollViewer"
             Grid.ColumnSpan="4"
             Grid.Column="0"
             Grid.Row="1"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch">
             <ItemsControl
+                x:Name="ProjectItemsControl"
                 Classes="project-list"
-                ItemsSource="{Binding Projects}">
+                ItemsSource="{Binding FilteredProjects}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel Orientation="Vertical" />

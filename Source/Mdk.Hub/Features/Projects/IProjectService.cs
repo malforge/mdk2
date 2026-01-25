@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.Projects.Configuration;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
 
@@ -30,7 +31,7 @@ public enum ProjectAdditionSource
 /// </summary>
 public class ProjectAddedEventArgs : System.EventArgs
 {
-    public string ProjectPath { get; init; } = string.Empty;
+    public required CanonicalPath ProjectPath { get; init; }
     public ProjectAdditionSource Source { get; init; }
 }
 
@@ -39,7 +40,7 @@ public class ProjectAddedEventArgs : System.EventArgs
 /// </summary>
 public class ProjectNavigationRequestedEventArgs : System.EventArgs
 {
-    public string ProjectPath { get; init; } = string.Empty;
+    public required CanonicalPath ProjectPath { get; init; }
 }
 
 /// <summary>
@@ -71,13 +72,13 @@ public interface IProjectService
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <param name="errorMessage">Error message if the project is invalid.</param>
     /// <returns>True if the project was added successfully.</returns>
-    bool TryAddProject(string projectPath, out string? errorMessage);
+    bool TryAddProject(CanonicalPath projectPath, out string? errorMessage);
 
     /// <summary>
     /// Removes a project from the registry.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
-    void RemoveProject(string projectPath);
+    void RemoveProject(CanonicalPath projectPath);
 
     /// <summary>
     /// Loads and merges configuration from mdk.ini and mdk.local.ini for the specified project.
@@ -85,7 +86,7 @@ public interface IProjectService
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <returns>Merged project configuration, or null if no configuration files found.</returns>
-    ProjectConfiguration? LoadConfiguration(string projectPath);
+    ProjectConfiguration? LoadConfiguration(CanonicalPath projectPath);
 
     /// <summary>
     /// Saves configuration changes to the specified INI file.
@@ -100,32 +101,32 @@ public interface IProjectService
     /// <param name="ignores">Ignores value.</param>
     /// <param name="namespaces">Namespaces value.</param>
     /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
-    Task SaveConfiguration(string projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
+    Task SaveConfiguration(CanonicalPath projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
 
     /// <summary>
     /// Copies the deployed script to the clipboard.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <returns>True if the script was copied successfully.</returns>
-    Task<bool> CopyScriptToClipboardAsync(string projectPath);
+    Task<bool> CopyScriptToClipboardAsync(CanonicalPath projectPath);
 
     /// <summary>
     /// Opens the project folder in the system file explorer.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <returns>True if the folder was opened successfully.</returns>
-    bool OpenProjectFolder(string projectPath);
+    bool OpenProjectFolder(CanonicalPath projectPath);
 
     /// <summary>
     /// Opens the output/deployment folder in the system file explorer.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <returns>True if the folder was opened successfully.</returns>
-    bool OpenOutputFolder(string projectPath);
+    bool OpenOutputFolder(CanonicalPath projectPath);
 
     /// <summary>
     /// Navigates to and selects the specified project in the Hub UI.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
-    void NavigateToProject(string projectPath);
+    bool NavigateToProject(CanonicalPath projectPath);
 }

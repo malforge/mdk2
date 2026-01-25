@@ -9,6 +9,7 @@ using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
@@ -21,15 +22,15 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
     readonly IProjectService _projectService;
-    readonly Dictionary<string, ProjectOptionsViewModel> _cachedOptionsViewModels = new();
-    readonly Dictionary<string, ProjectModel> _projectModelCache = new();
+    readonly Dictionary<CanonicalPath, ProjectOptionsViewModel> _cachedOptionsViewModels = new(CanonicalPathComparer.Instance);
+    readonly Dictionary<CanonicalPath, ProjectModel> _projectModelCache = new(CanonicalPathComparer.Instance);
     UnsavedChangesHandle? _unsavedChangesHandle;
     
     [ObservableProperty]
     bool _isOptionsDrawerOpen;
     
     [ObservableProperty]
-    string? _optionsProjectPath;
+    CanonicalPath? _optionsProjectPath;
     
     [ObservableProperty]
     ProjectOptionsViewModel? _optionsViewModel;
@@ -51,18 +52,21 @@ public partial class ProjectActionsViewModel : ViewModel
     
     public bool HasUnsavedChanges(string projectPath)
     {
-        return _cachedOptionsViewModels.TryGetValue(projectPath, out var viewModel) && viewModel.HasUnsavedChanges;
+        var canonicalPath = new CanonicalPath(projectPath);
+        return _cachedOptionsViewModels.TryGetValue(canonicalPath, out var viewModel) && viewModel.HasUnsavedChanges;
     }
     
     public void ShowOptionsDrawer(string projectPath)
     {
-        OptionsProjectPath = projectPath;
+        OptionsProjectPath = new CanonicalPath(projectPath);
+        
+        var canonicalPath = new CanonicalPath(projectPath);
         
         // Reuse cached ViewModel if it exists, otherwise create new
-        if (!_cachedOptionsViewModels.TryGetValue(projectPath, out var viewModel))
+        if (!_cachedOptionsViewModels.TryGetValue(canonicalPath, out var viewModel))
         {
             viewModel = new ProjectOptionsViewModel(projectPath, _projectService, _dialogs, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
-            _cachedOptionsViewModels[projectPath] = viewModel;
+            _cachedOptionsViewModels[canonicalPath] = viewModel;
         }
         
         OptionsViewModel = viewModel;
@@ -74,14 +78,16 @@ public partial class ProjectActionsViewModel : ViewModel
         // Find the project and update its HasUnsavedChanges flag
         ProjectModel? projectModel = null;
         
+        var canonicalPath = new CanonicalPath(projectPath);
+        
         // Try to get from cache first
-        if (!_projectModelCache.TryGetValue(projectPath, out projectModel))
+        if (!_projectModelCache.TryGetValue(canonicalPath, out projectModel))
         {
             // If not cached, check if it's the currently selected project
-            if (_projectState.SelectedProject is ProjectModel selected && selected.ProjectPath == projectPath)
+            if (_projectState.SelectedProject is ProjectModel selected && selected.ProjectPath == canonicalPath)
             {
                 projectModel = selected;
-                _projectModelCache[projectPath] = projectModel;
+                _projectModelCache[canonicalPath] = projectModel;
             }
         }
         
@@ -108,13 +114,12 @@ public partial class ProjectActionsViewModel : ViewModel
                 () =>
                 {
                     // Find first project with unsaved changes
-                    var firstUnsavedPath = _cachedOptionsViewModels
-                        .FirstOrDefault(kvp => kvp.Value.HasUnsavedChanges)
-                        .Key;
+                    var firstUnsaved = _cachedOptionsViewModels
+                        .FirstOrDefault(kvp => kvp.Value.HasUnsavedChanges);
                     
-                    if (firstUnsavedPath != null && _projectModelCache.TryGetValue(firstUnsavedPath, out var projectModel))
+                    if (!firstUnsaved.Key.IsEmpty())
                     {
-                        projectModel.SelectCommand?.Execute(projectModel);
+                        _projectService.NavigateToProject(firstUnsaved.Key);
                     }
                 });
         }
@@ -130,8 +135,10 @@ public partial class ProjectActionsViewModel : ViewModel
     {
         IsOptionsDrawerOpen = false;
         
+        var canonicalPath = new CanonicalPath(projectPath);
+        
         // Clear HasUnsavedChanges flag and cache for the current project only
-        if (_projectModelCache.TryGetValue(projectPath, out var projectModel))
+        if (_projectModelCache.TryGetValue(canonicalPath, out var projectModel))
         {
             projectModel.HasUnsavedChanges = false;
         }
@@ -140,8 +147,8 @@ public partial class ProjectActionsViewModel : ViewModel
         UpdateUnsavedChangesRegistration();
         
         // Remove the current project from cache (whether saved or cancelled)
-        _cachedOptionsViewModels.Remove(projectPath);
-        _projectModelCache.Remove(projectPath);
+        _cachedOptionsViewModels.Remove(canonicalPath);
+        _projectModelCache.Remove(canonicalPath);
         
         OptionsViewModel = null;
         OptionsProjectPath = null;
@@ -166,13 +173,14 @@ public partial class ProjectActionsViewModel : ViewModel
             {
                 if (OptionsProjectPath != selectedProject.ProjectPath)
                 {
-                    ShowOptionsDrawer(selectedProject.ProjectPath);
+                    if (!selectedProject.ProjectPath.IsEmpty())
+                        ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
                 }
             }
             // If drawer is closed and selected project has unsaved changes, open the drawer
-            else if (HasUnsavedChanges(selectedProject.ProjectPath))
+            else if (!selectedProject.ProjectPath.IsEmpty() && HasUnsavedChanges(selectedProject.ProjectPath.Value!))
             {
-                ShowOptionsDrawer(selectedProject.ProjectPath);
+                ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
             }
         }
     }

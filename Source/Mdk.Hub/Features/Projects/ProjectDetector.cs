@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
 
@@ -51,7 +52,7 @@ public static class ProjectDetector
             projectInfo = new ProjectInfo
             {
                 Name = projectName,
-                ProjectPath = projectPath,
+                ProjectPath = new CanonicalPath(projectPath),
                 Type = projectType,
                 LastReferenced = new DateTimeOffset(lastReferenced)
             };

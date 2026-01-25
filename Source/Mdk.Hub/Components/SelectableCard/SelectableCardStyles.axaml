@@ -26,18 +26,14 @@
             <Setter Property="BorderBrush" Value="#FF007bff" />
         </Style>
         
-        <!-- Needs Attention state - thicker border but reduce padding to compensate -->
+        <!-- Needs Attention state - add a visual indicator without changing border -->
         <Style Selector="^:needs-attention">
-            <Setter Property="BorderBrush" Value="{StaticResource AccentWarningSubtleBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="Padding" Value="3" />
+            <!-- Border styling removed - will use badge indicator instead -->
         </Style>
         
-        <!-- Needs Attention + Selected - warning accent with blue background -->
+        <!-- Needs Attention + Selected - keep selected styling -->
         <Style Selector="^:needs-attention:selected">
-            <Setter Property="BorderBrush" Value="{StaticResource AccentWarningBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="Padding" Value="3" />
+            <!-- No special styling - selected state is clear enough -->
         </Style>
         
         <!-- Disabled state -->

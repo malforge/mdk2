@@ -68,8 +68,7 @@ public class ProjectRegistry : IProjectRegistry
     /// </summary>
     public void AddOrUpdateProject(ProjectInfo project)
     {
-        var existing = _projects.FirstOrDefault(p => 
-            string.Equals(Path.GetFullPath(p.ProjectPath), Path.GetFullPath(project.ProjectPath), StringComparison.OrdinalIgnoreCase));
+        var existing = _projects.FirstOrDefault(p => p.ProjectPath == project.ProjectPath);
         
         if (existing != null)
         {
@@ -90,8 +89,8 @@ public class ProjectRegistry : IProjectRegistry
     /// </summary>
     public void RemoveProject(string projectPath)
     {
-        var fullPath = Path.GetFullPath(projectPath);
-        var removed = _projects.RemoveAll(p => string.Equals(Path.GetFullPath(p.ProjectPath), fullPath, StringComparison.OrdinalIgnoreCase));
+        var canonicalPath = new CanonicalPath(projectPath);
+        var removed = _projects.RemoveAll(p => p.ProjectPath == canonicalPath);
         if (removed > 0)
         {
             _logger.Info($"Removed project: {projectPath}");
@@ -145,8 +144,7 @@ public class ProjectRegistry : IProjectRegistry
                     if (ProjectDetector.TryDetectProject(projectPath, out var projectInfo) && projectInfo != null)
                     {
                         // Check if not already in the list
-                        if (!_projects.Any(p => string.Equals(Path.GetFullPath(p.ProjectPath), 
-                            Path.GetFullPath(projectPath), StringComparison.OrdinalIgnoreCase)))
+                        if (!_projects.Any(p => p.ProjectPath == new CanonicalPath(projectPath)))
                         {
                             _projects.Add(projectInfo);
                             importedCount++;
@@ -241,9 +239,9 @@ public class ProjectRegistry : IProjectRegistry
         for (var i = 0; i < _projects.Count; i++)
         {
             var project = _projects[i];
-            if (File.Exists(project.ProjectPath))
+            if (File.Exists(project.ProjectPath.Value))
             {
-                var lastWrite = File.GetLastWriteTimeUtc(project.ProjectPath);
+                var lastWrite = File.GetLastWriteTimeUtc(project.ProjectPath.Value);
                 if (lastWrite > project.LastReferenced.UtcDateTime)
                 {
                     _projects[i] = project with { LastReferenced = new DateTimeOffset(lastWrite) };

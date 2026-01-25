@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Options;
 
@@ -16,7 +17,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
     readonly IProjectService _projectService;
     readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs _commonDialogs;
     readonly IShell _shell;
-    readonly string _projectPath;
+    readonly CanonicalPath _projectPath;
     readonly Action<bool> _onClose; // bool parameter: true if saved, false if cancelled
     readonly Action? _onDirtyStateChanged;
     ProjectConfiguration? _configuration;
@@ -46,7 +47,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
 
     public ProjectOptionsViewModel(string projectPath, IProjectService projectService, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, IShell shell, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
-        _projectPath = projectPath;
+        _projectPath = new CanonicalPath(projectPath);
         _projectService = projectService;
         _commonDialogs = commonDialogs;
         _shell = shell;
@@ -86,7 +87,7 @@ public partial class ProjectOptionsViewModel : ObservableObject
         LoadConfiguration();
     }
 
-    public string ProjectName => Path.GetFileNameWithoutExtension(_projectPath);
+    public string ProjectName => _projectPath.IsEmpty() ? string.Empty : Path.GetFileNameWithoutExtension(_projectPath.Value!);
     
     public bool IsProgrammableBlock => _configuration?.Type.Value?.Equals("programmableblock", StringComparison.OrdinalIgnoreCase) ?? true;
     
@@ -199,6 +200,15 @@ public partial class ProjectOptionsViewModel : ObservableObject
                 LocalConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList.FirstOrDefault(o => o.Value == trace);
             LocalConfig.Ignores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
             LocalConfig.Namespaces = section.TryGet("namespaces", out string? namespaces) ? namespaces : string.Empty;
+        }
+        
+        // If interactive is not set anywhere (neither Main nor Local), default LocalConfig to "ShowNotification"
+        // This triggers unsaved changes and teaches users to explicitly save their preference
+        bool hasInteractiveInMain = _configuration.MainIni != null && _configuration.MainIni["mdk"].TryGet("interactive", out string? _);
+        bool hasInteractiveInLocal = LocalConfig.Interactive != null;
+        if (!hasInteractiveInMain && !hasInteractiveInLocal)
+        {
+            LocalConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value == "ShowNotification");
         }
         
         // Store original values for dirty tracking

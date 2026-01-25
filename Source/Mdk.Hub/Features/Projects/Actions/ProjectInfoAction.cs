@@ -132,7 +132,7 @@ public class ProjectInfoAction : ActionItem
 
     bool CanOpenProjectFolder()
     {
-        return File.Exists(Project.ProjectPath);
+        return File.Exists(Project.ProjectPath.Value);
     }
 
     void OpenProjectFolder()
@@ -140,15 +140,7 @@ public class ProjectInfoAction : ActionItem
         if (!CanOpenProjectFolder())
             return;
 
-        var folder = Path.GetDirectoryName(Project.ProjectPath);
-        if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = folder,
-                UseShellExecute = true
-            });
-        }
+        _projectService.OpenProjectFolder(Project.ProjectPath);
     }
 
     bool CanOpenOutputFolder()
@@ -161,16 +153,12 @@ public class ProjectInfoAction : ActionItem
         if (!CanOpenOutputFolder())
             return;
 
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = _outputPath!,
-            UseShellExecute = true
-        });
+        _projectService.OpenOutputFolder(Project.ProjectPath);
     }
 
     bool CanOpenInIde()
     {
-        return File.Exists(Project.ProjectPath);
+        return File.Exists(Project.ProjectPath.Value);
     }
 
     void OpenInIde()
@@ -182,7 +170,7 @@ public class ProjectInfoAction : ActionItem
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = Project.ProjectPath,
+                FileName = Project.ProjectPath.Value,
                 UseShellExecute = true
             });
         }
@@ -250,14 +238,17 @@ public class ProjectInfoAction : ActionItem
         }
     }
 
-    bool CanShowOptions() => File.Exists(Project.ProjectPath);
+    bool CanShowOptions() => File.Exists(Project.ProjectPath.Value);
 
     void ShowOptions()
     {
         if (!CanShowOptions())
             return;
 
-        _actionsViewModel.ShowOptionsDrawer(Project.ProjectPath);
+        if (Project.ProjectPath.IsEmpty())
+            return;
+
+        _actionsViewModel.ShowOptionsDrawer(Project.ProjectPath.Value!);
     }
 
     async Task LoadProjectDataAsync(IProjectService projectService)
@@ -278,9 +269,9 @@ public class ProjectInfoAction : ActionItem
                 // Load last changed time from project file
                 try
                 {
-                    if (File.Exists(Project.ProjectPath))
+                    if (File.Exists(Project.ProjectPath.Value))
                     {
-                        lastChanged = File.GetLastWriteTime(Project.ProjectPath);
+                        lastChanged = File.GetLastWriteTime(Project.ProjectPath.Value);
                     }
                 }
                 catch (UnauthorizedAccessException)

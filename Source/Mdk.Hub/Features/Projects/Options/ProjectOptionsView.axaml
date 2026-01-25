@@ -46,7 +46,7 @@
         </StackPanel>
         
         <!-- Tabs fill remaining space -->
-        <TabControl>
+        <TabControl SelectedIndex="1">
                     <!-- Main INI Tab -->
                     <TabItem Header="Main (mdk.ini)">
                         <ScrollViewer>

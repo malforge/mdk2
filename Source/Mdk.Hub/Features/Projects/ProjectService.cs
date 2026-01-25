@@ -44,9 +44,15 @@ public class ProjectService : IProjectService
         return _registry.GetProjects();
     }
 
-    public bool TryAddProject(string projectPath, out string? errorMessage)
+    public bool TryAddProject(CanonicalPath projectPath, out string? errorMessage)
     {
-        if (TryAddProjectInternal(projectPath, out errorMessage))
+        if (projectPath.IsEmpty())
+        {
+            errorMessage = "Project path cannot be empty.";
+            return false;
+        }
+        
+        if (TryAddProjectInternal(projectPath.Value!, out errorMessage))
         {
             // Raise event for manual addition
             ProjectAdded?.Invoke(this, new ProjectAddedEventArgs 
@@ -74,18 +80,23 @@ public class ProjectService : IProjectService
         return false;
     }
 
-    public void RemoveProject(string projectPath)
+    public void RemoveProject(CanonicalPath projectPath)
     {
-        _registry.RemoveProject(projectPath);
+        if (projectPath.IsEmpty())
+            return;
+        _registry.RemoveProject(projectPath.Value!);
     }
 
-    public ProjectConfiguration? LoadConfiguration(string projectPath)
+    public ProjectConfiguration? LoadConfiguration(CanonicalPath projectPath)
     {
-        if (string.IsNullOrWhiteSpace(projectPath) || !File.Exists(projectPath))
+        if (projectPath.IsEmpty())
+            return null;
+            
+        if (!File.Exists(projectPath.Value))
             return null;
 
-        var mainIniPath = IniFileFinder.FindMainIni(projectPath);
-        var localIniPath = IniFileFinder.FindLocalIni(projectPath);
+        var mainIniPath = IniFileFinder.FindMainIni(projectPath.Value!);
+        var localIniPath = IniFileFinder.FindLocalIni(projectPath.Value!);
 
         // Need at least one INI file to proceed
         if (mainIniPath == null && localIniPath == null)
@@ -139,7 +150,8 @@ public class ProjectService : IProjectService
             Ignores = GetConfigValue(mainIni, localIni, "ignores", "obj/**/*,MDK/**/*,**/*.debug.cs"),
             Namespaces = GetConfigValue(mainIni, localIni, "namespaces", "IngameScript"),
             Output = GetConfigValue(mainIni, localIni, "output", "auto"),
-            BinaryPath = GetConfigValue(mainIni, localIni, "binarypath", "auto")
+            BinaryPath = GetConfigValue(mainIni, localIni, "binarypath", "auto"),
+            Interactive = GetConfigValue(mainIni, localIni, "interactive", "")
         };
     }
 
@@ -175,20 +187,20 @@ public class ProjectService : IProjectService
         return new ConfigurationValue<bool>(defaultValue, SourceLayer.Default);
     }
 
-    public async Task SaveConfiguration(string projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
+    public async Task SaveConfiguration(CanonicalPath projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
     {
-        if (string.IsNullOrWhiteSpace(projectPath))
-            throw new ArgumentNullException(nameof(projectPath));
+        if (projectPath.IsEmpty())
+            return;
 
-        var mainIniPath = IniFileFinder.FindMainIni(projectPath);
-        var localIniPath = IniFileFinder.FindLocalIni(projectPath);
+        var mainIniPath = IniFileFinder.FindMainIni(projectPath.Value!);
+        var localIniPath = IniFileFinder.FindLocalIni(projectPath.Value!);
         var targetIniPath = saveToLocal ? localIniPath : mainIniPath;
         
         // Ensure we have a target path
         if (string.IsNullOrWhiteSpace(targetIniPath))
         {
             // Create the path if it doesn't exist
-            var projectDir = Path.GetDirectoryName(projectPath);
+            var projectDir = Path.GetDirectoryName(projectPath.Value);
             if (string.IsNullOrWhiteSpace(projectDir))
                 throw new InvalidOperationException("Cannot determine project directory");
                 
@@ -240,8 +252,7 @@ public class ProjectService : IProjectService
             _logger.Info($"Handling build notification for project: {projectPath}");
         
         // Check if project already exists
-        var existingProject = _registry.GetProjects().FirstOrDefault(p => 
-            string.Equals(p.ProjectPath, projectPath, StringComparison.OrdinalIgnoreCase));
+        var existingProject = _registry.GetProjects().FirstOrDefault(p => p.IsPath(projectPath));
         
         if (existingProject == null)
         {
@@ -260,7 +271,7 @@ public class ProjectService : IProjectService
                 projectInfo = new ProjectInfo
                 {
                     Name = projectName,
-                    ProjectPath = projectPath,
+                    ProjectPath = new CanonicalPath(projectPath),
                     Type = projectType,
                     LastReferenced = DateTimeOffset.Now,
                     Flags = ProjectFlags.Simulated
@@ -272,14 +283,14 @@ public class ProjectService : IProjectService
                 // Raise event for build notification addition
                 ProjectAdded?.Invoke(this, new ProjectAddedEventArgs 
                 { 
-                    ProjectPath = projectPath,
+                    ProjectPath = new CanonicalPath(projectPath),
                     Source = ProjectAdditionSource.BuildNotification
                 });
                 
-                // Show toast notification for script deployments
+                // Handle build notification based on user preference
                 if (message.Type == NotificationType.Script)
                 {
-                    ShowScriptDeployedToast(projectName, projectPath);
+                    HandleBuildNotification(projectName, projectPath, isNewProject: true);
                 }
             }
             else
@@ -293,14 +304,14 @@ public class ProjectService : IProjectService
                     // Raise event for build notification addition
                     ProjectAdded?.Invoke(this, new ProjectAddedEventArgs 
                     { 
-                        ProjectPath = projectPath,
+                        ProjectPath = new CanonicalPath(projectPath),
                         Source = ProjectAdditionSource.BuildNotification
                     });
                     
-                    // Show toast notification for script deployments
+                    // Handle build notification based on user preference
                     if (message.Type == NotificationType.Script)
                     {
-                        ShowScriptDeployedToast(projectName, projectPath);
+                        HandleBuildNotification(projectName, projectPath, isNewProject: true);
                     }
                 }
                 else
@@ -311,13 +322,13 @@ public class ProjectService : IProjectService
         }
         else
         {
-            // Existing project - show deployment toast
+            // Existing project - handle build notification based on preference
             _logger.Debug($"Build notification for existing project: {projectPath}");
             
-            // Show toast notification for script deployments
+            // Handle build notification based on user preference
             if (message.Type == NotificationType.Script)
             {
-                ShowScriptDeployedToast(projectName, projectPath);
+                HandleBuildNotification(projectName, projectPath, isNewProject: false);
             }
         }
     }
@@ -354,8 +365,11 @@ public class ProjectService : IProjectService
         _ = HandleBuildNotificationAsync(message); // Fire and forget
     }
 
-    public async Task<bool> CopyScriptToClipboardAsync(string projectPath)
+    public async Task<bool> CopyScriptToClipboardAsync(CanonicalPath projectPath)
     {
+        if (projectPath.IsEmpty())
+            return false;
+
         try
         {
             var config = LoadConfiguration(projectPath);
@@ -393,14 +407,17 @@ public class ProjectService : IProjectService
         }
     }
 
-    public bool OpenProjectFolder(string projectPath)
+    public bool OpenProjectFolder(CanonicalPath projectPath)
     {
+        if (projectPath.IsEmpty())
+            return false;
+            
         try
         {
-            if (!File.Exists(projectPath))
+            if (!File.Exists(projectPath.Value))
                 return false;
 
-            var folder = Path.GetDirectoryName(projectPath);
+            var folder = Path.GetDirectoryName(projectPath.Value);
             if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
                 return false;
 
@@ -420,8 +437,11 @@ public class ProjectService : IProjectService
         }
     }
 
-    public bool OpenOutputFolder(string projectPath)
+    public bool OpenOutputFolder(CanonicalPath projectPath)
     {
+        if (projectPath.IsEmpty())
+            return false;
+            
         try
         {
             var config = LoadConfiguration(projectPath);
@@ -448,17 +468,84 @@ public class ProjectService : IProjectService
         }
     }
 
-    public void NavigateToProject(string projectPath)
+    public bool NavigateToProject(CanonicalPath projectPath)
     {
+        if (projectPath.IsEmpty())
+            return false;
+            
+        var project = _registry.GetProjects().FirstOrDefault(p => p.ProjectPath == projectPath);
+        if (project is null)
+        {
+            _logger.Warning($"Cannot navigate to project, not found: {projectPath}");
+            return false;
+        }
+        
         // Raise event for view models to handle navigation
         ProjectNavigationRequested?.Invoke(this, new ProjectNavigationRequestedEventArgs 
         { 
-            ProjectPath = projectPath 
+            ProjectPath = projectPath
         });
         _logger.Info($"Navigation requested for project: {projectPath}");
+        return true;
     }
     
-    void ShowScriptDeployedToast(string projectName, string projectPath)
+    void HandleBuildNotification(string projectName, string projectPath, bool isNewProject)
+    {
+        // Load configuration to check notification preference
+        var config = LoadConfiguration(new CanonicalPath(projectPath));
+        var preference = config?.Interactive.Value ?? "";
+        
+        // If not set in INI, default to "OpenHub" (teaches new users about Hub)
+        // But UI will show "ShowNotification" as the default choice when they open settings
+        if (string.IsNullOrWhiteSpace(preference))
+        {
+            preference = "OpenHub";
+            _logger.Info($"Build notification preference not set for {projectName}, using OpenHub");
+        }
+        else
+        {
+            _logger.Info($"Build notification preference for {projectName}: {preference}");
+        }
+        
+        switch (preference.ToLowerInvariant())
+        {
+            case "shownotification":
+            case "showtoast": // Legacy compatibility
+                // Show snackbar notification
+                ShowScriptDeployedSnackbar(projectName, projectPath);
+                break;
+                
+            case "openhub":
+                // For new projects, ProjectAdded event already handles selection with cooldown logic
+                // For existing projects, navigate explicitly
+                if (!isNewProject)
+                {
+                    NavigateToProject(new CanonicalPath(projectPath));
+                }
+                // else: let OnProjectAdded handle it (respects user activity cooldown)
+                break;
+                
+            case "donothing":
+                // Silent - do nothing
+                _logger.Info($"Build notification suppressed (DoNothing preference) for: {projectName}");
+                break;
+                
+            default:
+                // Unknown preference - default to OpenHub for new projects, ShowNotification for existing
+                _logger.Warning($"Unknown notification preference '{preference}', using default");
+                if (isNewProject)
+                {
+                    // Let OnProjectAdded handle selection
+                }
+                else
+                {
+                    ShowScriptDeployedSnackbar(projectName, projectPath);
+                }
+                break;
+        }
+    }
+    
+    void ShowScriptDeployedSnackbar(string projectName, string projectPath)
     {
         var message = $"Your script \"{projectName}\" has been successfully deployed.";
         var actions = new List<SnackbarAction>
@@ -466,7 +553,7 @@ public class ProjectService : IProjectService
             new()
             {
                 Text = "Open in Hub",
-                Action = _ => NavigateToProject(projectPath),
+                Action = _ => NavigateToProject(new CanonicalPath(projectPath)),
                 Context = projectPath,
                 IsClosingAction = true
             },
@@ -477,7 +564,7 @@ public class ProjectService : IProjectService
                 {
                     if (ctx is string path)
                     {
-                        var success = await CopyScriptToClipboardAsync(path);
+                        var success = await CopyScriptToClipboardAsync(new CanonicalPath(path));
                         if (success)
                         {
                             _snackbarService.Show("Script copied to clipboard.", timeout: 2000);
@@ -494,7 +581,7 @@ public class ProjectService : IProjectService
                 {
                     if (ctx is string path)
                     {
-                        OpenOutputFolder(path);
+                        OpenOutputFolder(new CanonicalPath(path));
                     }
                 },
                 Context = projectPath,

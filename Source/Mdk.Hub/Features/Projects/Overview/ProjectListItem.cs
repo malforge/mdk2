@@ -1,13 +1,16 @@
 ﻿using System.Windows.Input;
 using Mdk.Hub.Framework;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
-public abstract class ProjectListItem: ViewModel
+public abstract class ProjectListItem(CanonicalPath projectPath): ViewModel
 {
     bool _isSelected;
     bool _needsAttention;
     ICommand? _selectCommand;
+    
+    public CanonicalPath ProjectPath { get; } = projectPath;
     
     public bool IsSelected
     {

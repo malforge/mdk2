@@ -4,27 +4,27 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
 public class ProjectModel : ProjectListItem
 {
     readonly ICommonDialogs _commonDialogs;
-    readonly IProjectService? _projectService;
     readonly AsyncRelayCommand _deleteCommand;
+    readonly IProjectService? _projectService;
+    bool _hasUnsavedChanges;
     DateTimeOffset _lastReferenced;
     string _name;
-    string _projectPath;
     ProjectType _type;
-    bool _hasUnsavedChanges;
 
-    public ProjectModel(ProjectType type, string name, string projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)
+    public ProjectModel(ProjectType type, string name, CanonicalPath projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)
+        : base(projectPath)
     {
         _lastReferenced = lastReferenced;
         _commonDialogs = commonDialogs;
         _projectService = projectService;
         _name = name;
-        _projectPath = projectPath;
         _type = type;
         _deleteCommand = new AsyncRelayCommand(DeleteAsync, CanDelete);
     }
@@ -41,18 +41,12 @@ public class ProjectModel : ProjectListItem
         private set => SetProperty(ref _name, value);
     }
 
-    public string ProjectPath
-    {
-        get => _projectPath;
-        private set => SetProperty(ref _projectPath, value);
-    }
-
     public DateTimeOffset LastReferenced
     {
         get => _lastReferenced;
         private set => SetProperty(ref _lastReferenced, value);
     }
-    
+
     public bool HasUnsavedChanges
     {
         get => _hasUnsavedChanges;
@@ -82,14 +76,13 @@ public class ProjectModel : ProjectListItem
         try
         {
             // Delete the project directory
-            var projectDirectory = Path.GetDirectoryName(ProjectPath);
+            var projectDirectory = Path.GetDirectoryName(ProjectPath.Value);
             if (!string.IsNullOrEmpty(projectDirectory) && Directory.Exists(projectDirectory))
-            {
-                Directory.Delete(projectDirectory, recursive: true);
-            }
+                Directory.Delete(projectDirectory, true);
 
             // Remove from registry
-            _projectService?.RemoveProject(ProjectPath);
+            if (!ProjectPath.IsEmpty())
+                _projectService?.RemoveProject(ProjectPath);
         }
         catch (Exception ex)
         {
@@ -113,9 +106,9 @@ public class ProjectModel : ProjectListItem
             return false;
         return true;
     }
-    
+
     /// <summary>
-    /// Updates this model's properties from a ProjectInfo without losing UI state.
+    ///     Updates this model's properties from a ProjectInfo without losing UI state.
     /// </summary>
     public void UpdateFromProjectInfo(ProjectInfo projectInfo)
     {

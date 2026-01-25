@@ -1,5 +1,6 @@
 using System;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
 
@@ -24,8 +25,10 @@ public enum ProjectFlags
 public record ProjectInfo
 {
     public required string Name { get; init; }
-    public required string ProjectPath { get; init; }
+    public required CanonicalPath ProjectPath { get; init; }
     public required ProjectType Type { get; init; }
     public required DateTimeOffset LastReferenced { get; init; }
     public ProjectFlags Flags { get; init; } = ProjectFlags.None;
+
+    public bool IsPath(string projectPath) => ProjectPath == new CanonicalPath(projectPath);
 }

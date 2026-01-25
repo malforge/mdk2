@@ -32,7 +32,7 @@ public class SnackbarService : ISnackbarService
 
     public void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout = 15000)
     {
-        Dispatcher.UIThread.Post(() => ShowAsync(message, actions, timeout));
+        _ = Dispatcher.UIThread.InvokeAsync(() => ShowAsync(message, actions, timeout));
     }
 
     async Task ShowAsync(string message, IReadOnlyList<SnackbarAction> actions, int timeout)

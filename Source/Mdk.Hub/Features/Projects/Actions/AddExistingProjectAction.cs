@@ -8,6 +8,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Utility;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
 
@@ -65,7 +66,7 @@ public class AddExistingProjectAction : ActionItem
 
         var projectPath = files[0].Path.LocalPath;
 
-        if (_projectService.TryAddProject(projectPath, out var errorMessage))
+        if (_projectService.TryAddProject(new CanonicalPath(projectPath), out var errorMessage))
         {
             // Success - the project overview will automatically refresh when it gets focus
             // TODO: Add event system to notify project list of changes

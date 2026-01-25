@@ -32,7 +32,7 @@ public class ProjectConfiguration
     /// <summary>
     /// Path to the project (.csproj) file.
     /// </summary>
-    public string ProjectPath { get; init; } = string.Empty;
+    public required CanonicalPath ProjectPath { get; init; }
     
     /// <summary>
     /// List of warnings encountered while loading configuration (e.g., corrupt or missing INI files).
@@ -80,6 +80,11 @@ public class ProjectConfiguration
     /// Binary path override: "auto" or specific path.
     /// </summary>
     public ConfigurationValue<string> BinaryPath { get; init; }
+    
+    /// <summary>
+    /// Build notification behavior: "OpenHub", "ShowToast", or "DoNothing".
+    /// </summary>
+    public ConfigurationValue<string> Interactive { get; init; }
 
     /// <summary>
     /// Gets the resolved output path, converting "auto" to the actual deployment location.
@@ -88,7 +93,7 @@ public class ProjectConfiguration
     public string? GetResolvedOutputPath()
     {
         // Validate ProjectPath first
-        if (string.IsNullOrWhiteSpace(ProjectPath))
+        if (ProjectPath.Value == null)
         {
             System.Diagnostics.Debug.WriteLine("GetResolvedOutputPath: ProjectPath is null or empty");
             return null;
@@ -100,7 +105,7 @@ public class ProjectConfiguration
         if (!string.IsNullOrWhiteSpace(output) && !string.Equals(output, "auto", StringComparison.OrdinalIgnoreCase))
         {
             // Custom paths should include the project name subfolder
-            var projectName = System.IO.Path.GetFileNameWithoutExtension(ProjectPath);
+            var projectName = System.IO.Path.GetFileNameWithoutExtension(ProjectPath.Value);
             if (string.IsNullOrEmpty(projectName))
             {
                 System.Diagnostics.Debug.WriteLine($"GetResolvedOutputPath: Could not extract project name from path: {ProjectPath}");
@@ -111,11 +116,11 @@ public class ProjectConfiguration
 
         // Resolve "auto" based on project type
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var projectName2 = System.IO.Path.GetFileNameWithoutExtension(ProjectPath);
+        var projectName2 = System.IO.Path.GetFileNameWithoutExtension(ProjectPath.Value);
         
         if (string.IsNullOrEmpty(projectName2))
         {
-            System.Diagnostics.Debug.WriteLine($"GetResolvedOutputPath: Could not extract project name from path: {ProjectPath}");
+            System.Diagnostics.Debug.WriteLine($"GetResolvedOutputPath: Could not extract project name from path: {ProjectPath.Value}");
             return null;
         }
         

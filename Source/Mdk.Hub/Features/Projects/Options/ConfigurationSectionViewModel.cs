@@ -11,7 +11,7 @@ public partial class ConfigurationSectionViewModel : ObservableObject
     public static List<ComboBoxOption> InteractiveOptionsList { get; } = new()
     {
         new("OpenHub", "Open Hub"),
-        new("ShowToast", "Show Toast (Not Implemented)"),
+        new("ShowNotification", "Show Notification"),
         new("DoNothing", "Do Nothing")
     };
     
