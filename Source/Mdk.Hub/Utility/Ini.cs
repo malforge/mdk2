@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
+using Mdk.Hub.Features.Diagnostics;
 
 namespace Mdk.Hub.Utility;
 
@@ -93,7 +94,17 @@ public class Ini
     /// <param name="ini"></param>
     /// <param name="result"></param>
     /// <returns></returns>
-    public static bool TryParse(string? ini, out Ini result)
+    public static bool TryParse(string? ini, out Ini result) =>
+        TryParse(ini, null, out result);
+    
+    /// <summary>
+    /// Attempts to parse the specified INI file content with optional diagnostic logging.
+    /// </summary>
+    /// <param name="ini"></param>
+    /// <param name="logger"></param>
+    /// <param name="result"></param>
+    /// <returns></returns>
+    public static bool TryParse(string? ini, ILogger? logger, out Ini result)
     {
         if (string.IsNullOrWhiteSpace(ini))
         {
@@ -122,8 +133,10 @@ public class Ini
         bool addNewline = false;
         
         var index = 0;
+        var lineNumber = 0;
         while (tryReadLine(ini, ref index, out var line))
         {
+            lineNumber++;
             var trimmed = line.Trim();
             if (trimmed.StartsWith(";"))
             {
@@ -156,7 +169,10 @@ public class Ini
             {
                 var equals = trimmed.IndexOf('=');
                 if (equals < 0)
+                {
+                    logger?.Warning($"Skipping malformed INI line {lineNumber} (missing '='): {trimmed.ToString()}");
                     continue;
+                }
                 var key = trimmed[..equals].Trim();
                 var value = trimmed[(equals + 1)..].Trim();
                 if (comment.Length > 0)
@@ -165,6 +181,11 @@ public class Ini
                     currentSection = currentSection.Value.WithKey(key.ToString(), value.ToString());
                 comment.Clear();
                 addNewline = false;
+            }
+            else
+            {
+                // Key=value line outside of any section
+                logger?.Warning($"Skipping INI line {lineNumber} outside of section: {trimmed.ToString()}");
             }
         }
         if (currentSection is not null)

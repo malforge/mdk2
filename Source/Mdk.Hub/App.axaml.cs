@@ -27,6 +27,19 @@ public class App : Application
             var logger = Container.Resolve<ILogger>();
             logger.Info("MDK Hub application starting");
             
+            // Set up global exception handlers
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                var exception = e.ExceptionObject as Exception;
+                logger.Error("Unhandled exception in AppDomain", exception ?? new Exception(e.ExceptionObject?.ToString() ?? "Unknown error"));
+            };
+            
+            TaskScheduler.UnobservedTaskException += (sender, e) =>
+            {
+                logger.Error("Unobserved task exception", e.Exception);
+                e.SetObserved(); // Prevent process termination
+            };
+            
             // Initialize services (ProjectService subscribes to IPC internally)
             Container.Resolve<IInterProcessCommunication>();
             Container.Resolve<IProjectService>();
