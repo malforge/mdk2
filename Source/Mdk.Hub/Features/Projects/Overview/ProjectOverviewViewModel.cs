@@ -392,7 +392,7 @@ public class ProjectOverviewViewModel : ViewModel
         if (project != null)
         {
             // Check if project is visible in the current filtered list
-            var isVisibleInFilteredList = _filteredProjects.OfType<ProjectModel>().Any(p =>
+            var isVisibleInFilteredList = FilteredProjects.OfType<ProjectModel>().Any(p =>
                 p.ProjectPath == e.ProjectPath);
 
             // Only clear filters if the project is not visible with current filters
