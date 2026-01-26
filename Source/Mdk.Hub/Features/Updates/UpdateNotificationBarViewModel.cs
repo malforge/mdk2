@@ -1,3 +1,4 @@
+using System;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Framework;
@@ -100,9 +101,51 @@ public class UpdateNotificationBarViewModel : ViewModel
         IsVisible = false;
     }
 
-    void UpdateTemplates()
+    async void UpdateTemplates()
     {
-        // TODO: Implement
+        try
+        {
+            // Show progress
+            Message = "Updating script templates...";
+            IsTemplateUpdateAvailable = false;
+            OnPropertyChanged(nameof(IsTemplateUpdateAvailable));
+            
+            // Run dotnet new install
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "new install Mal.Mdk2.ScriptTemplates --force",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            if (process == null)
+            {
+                Message = "Failed to start template update";
+                return;
+            }
+            
+            await process.WaitForExitAsync();
+            
+            if (process.ExitCode == 0)
+            {
+                Message = "Script templates updated successfully";
+                await System.Threading.Tasks.Task.Delay(3000);
+                IsVisible = false;
+            }
+            else
+            {
+                var error = await process.StandardError.ReadToEndAsync();
+                Message = $"Template update failed: {error}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"Template update error: {ex.Message}";
+        }
     }
 
     void UpdateHub()
