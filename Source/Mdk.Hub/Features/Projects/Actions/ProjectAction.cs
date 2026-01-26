@@ -15,7 +15,7 @@ public class ProjectAction : ActionItem
 
     public override string? Category => "Project";
 
-    public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
     {
         // Only show if a project is selected
         return selectedProject is ProjectModel;

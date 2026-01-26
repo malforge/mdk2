@@ -33,7 +33,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
     public override string Category => "Updates";
 
-    public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
     {
         // Only show if a project is selected and it needs updates
         return selectedProject is ProjectModel model && model.NeedsUpdate;

@@ -20,7 +20,7 @@ public enum ProjectFlags
 
 /// <summary>
 /// Data model representing a project managed by MDK Hub.
-/// This is the data model that gets transformed into view models like ProjectListItem.
+/// This is the data model that gets transformed into view models like ProjectModel.
 /// </summary>
 public record ProjectInfo
 {

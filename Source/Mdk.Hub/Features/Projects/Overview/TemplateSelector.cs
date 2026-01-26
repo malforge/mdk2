@@ -13,7 +13,7 @@ public class TemplateSelector : IDataTemplate
     public Control? Build(object? param)
     {
         var type = param?.GetType();
-        if (type == null || !typeof(ProjectListItem).IsAssignableFrom(type))
+        if (type == null || !typeof(ProjectModel).IsAssignableFrom(type))
             return null;
 
         foreach (var def in Definitions)
@@ -25,5 +25,5 @@ public class TemplateSelector : IDataTemplate
         return null;
     }
 
-    public bool Match(object? data) => data is ProjectType;
+    public bool Match(object? data) => data is ProjectModel;
 }

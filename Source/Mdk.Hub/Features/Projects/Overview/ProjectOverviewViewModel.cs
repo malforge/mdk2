@@ -14,9 +14,9 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
-public class ShowProjectEventArgs(ProjectListItem project) : EventArgs
+public class ShowProjectEventArgs(ProjectModel project) : EventArgs
 {
-    public ProjectListItem Project { get; } = project;
+    public ProjectModel Project { get; } = project;
 }
 
 [Dependency]
@@ -25,14 +25,14 @@ public class ProjectOverviewViewModel : ViewModel
 {
     static readonly TimeSpan _selectionCooldown = TimeSpan.FromSeconds(30);
     readonly ICommonDialogs _commonDialogs;
-    readonly ObservableCollection<ProjectListItem> _projects = new();
+    readonly ObservableCollection<ProjectModel> _projects = new();
     readonly IProjectService _projectService;
     readonly IProjectState _projectState;
     readonly ISettings _settings;
     readonly ISnackbarService _snackbarService;
     readonly ILogger _logger;
     readonly ThrottledAction<string> _throttledSearch;
-    ImmutableArray<ProjectListItem> _allProjects;
+    ImmutableArray<ProjectModel> _allProjects;
     bool _filterModsOnly;
     bool _filterScriptsOnly;
     int _filterUpdateDepth;
@@ -41,6 +41,7 @@ public class ProjectOverviewViewModel : ViewModel
     string _searchTerm = string.Empty;
     string _searchText = string.Empty;
     bool _showAll = true;
+    Shell.ShellViewModel? _shell;
 
     public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!, null!)
     {
@@ -55,16 +56,16 @@ public class ProjectOverviewViewModel : ViewModel
         _settings = settings;
         _snackbarService = snackbarService;
         _logger = logger;
-        FilteredProjects = new ReadOnlyObservableCollection<ProjectListItem>(_projects);
+        FilteredProjects = new ReadOnlyObservableCollection<ProjectModel>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
-        SelectProjectCommand = new RelayCommand<ProjectListItem>(p => SelectProject(p));
+        SelectProjectCommand = new RelayCommand<ProjectModel>(p => SelectProject(p));
 
         if (IsDesignMode)
         {
             // Sample data for design-time
             AllProjects = ImmutableArray.Create(
-                new ProjectListItem[]
+                new ProjectModel[]
                 {
                     new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", new CanonicalPath(@"C:\Projects\MyScript\MyScript.csproj"), DateTimeOffset.Now, commonDialogs),
                     new ProjectModel(ProjectType.Mod, "My Mod", new CanonicalPath(@"C:\Projects\MyMod\MyMod.csproj"), DateTimeOffset.Now.AddDays(-1), commonDialogs),
@@ -90,9 +91,14 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
+    public void Initialize(Shell.ShellViewModel shell)
+    {
+        _shell = shell;
+    }
+
     public bool IsDesignMode { get; }
 
-    public ImmutableArray<ProjectListItem> AllProjects
+    public ImmutableArray<ProjectModel> AllProjects
     {
         get => _allProjects;
         set
@@ -102,7 +108,7 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
-    public ReadOnlyObservableCollection<ProjectListItem> FilteredProjects { get; }
+    public ReadOnlyObservableCollection<ProjectModel> FilteredProjects { get; }
 
 
     public string SearchText
@@ -178,7 +184,7 @@ public class ProjectOverviewViewModel : ViewModel
         SearchText = string.Empty;
     }
 
-    public void SelectProject(ProjectListItem? project, bool scrollToItem = false)
+    public void SelectProject(ProjectModel? project, bool scrollToItem = false)
     {
         if (project == null)
             return;
@@ -205,9 +211,9 @@ public class ProjectOverviewViewModel : ViewModel
         }
 
         // Save selected project path
-        if (project.IsSelected && project is ProjectModel model)
-            _settings.SetValue("LastSelectedProject", model.ProjectPath);
-        else if (!project.IsSelected)
+        if (project.IsSelected)
+            _settings.SetValue("LastSelectedProject", project.ProjectPath);
+        else
             _settings.SetValue("LastSelectedProject", string.Empty);
 
         UpdateState();
@@ -295,24 +301,20 @@ public class ProjectOverviewViewModel : ViewModel
     void LoadProjects()
     {
         var projects = _projectService.GetProjects();
-        var existingModels = _allProjects.OfType<ProjectModel>().ToList();
 
-        var viewModels = new List<ProjectListItem>();
+        var viewModels = new List<ProjectModel>();
 
         foreach (var project in projects)
         {
-            // Try to reuse existing model to preserve UI state
-            var existingModel = existingModels.FirstOrDefault(m => !m.ProjectPath.IsEmpty() && project.IsPath(m.ProjectPath.Value!));
-
-            if (existingModel != null)
+            // Get shared ProjectModel from ShellViewModel
+            if (_shell != null)
             {
-                // Update properties but keep the same instance
-                existingModel.UpdateFromProjectInfo(project);
-                viewModels.Add(existingModel);
+                var model = _shell.GetOrCreateProjectModel(project);
+                viewModels.Add(model);
             }
             else
             {
-                // New project - create new model
+                // Fallback for design mode or before Initialize called
                 viewModels.Add(new ProjectModel(project.Type, project.Name, project.ProjectPath, project.LastReferenced, _commonDialogs, _projectService));
             }
         }

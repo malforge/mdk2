@@ -30,7 +30,7 @@ public class CreateProjectAction : ActionItem
     
     public override bool IsGlobal => true; // Shared instance across all contexts
 
-    public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
     {
         // Always show if we can create anything
         return canMakeScript || canMakeMod;

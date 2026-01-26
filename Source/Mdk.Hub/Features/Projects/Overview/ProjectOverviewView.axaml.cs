@@ -40,7 +40,7 @@ public partial class ProjectOverviewView : UserControl
         // Scrolling now handled via ShowProjectRequested event
     }
 
-    void ScrollToItem(ProjectListItem item)
+    void ScrollToItem(ProjectModel item)
     {
         if (ProjectScrollViewer == null || ProjectItemsControl == null)
         {

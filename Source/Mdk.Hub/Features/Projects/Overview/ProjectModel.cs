@@ -8,27 +8,50 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
-public class ProjectModel : ProjectListItem
+public class ProjectModel : ViewModel
 {
     readonly ICommonDialogs _commonDialogs;
     readonly AsyncRelayCommand _deleteCommand;
     readonly IProjectService? _projectService;
     bool _hasUnsavedChanges;
+    bool _isSelected;
     DateTimeOffset _lastReferenced;
     string _name;
+    bool _needsAttention;
     ProjectType _type;
     bool _needsUpdate;
+    ICommand? _selectCommand;
     int _updateCount;
 
     public ProjectModel(ProjectType type, string name, CanonicalPath projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)
-        : base(projectPath)
     {
+        ProjectPath = projectPath;
         _lastReferenced = lastReferenced;
         _commonDialogs = commonDialogs;
         _projectService = projectService;
         _name = name;
         _type = type;
         _deleteCommand = new AsyncRelayCommand(DeleteAsync, CanDelete);
+    }
+
+    public CanonicalPath ProjectPath { get; }
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => SetProperty(ref _isSelected, value);
+    }
+
+    public bool NeedsAttention
+    {
+        get => _needsAttention;
+        set => SetProperty(ref _needsAttention, value);
+    }
+
+    public ICommand? SelectCommand
+    {
+        get => _selectCommand;
+        set => SetProperty(ref _selectCommand, value);
     }
 
     public ProjectType Type
@@ -55,16 +78,16 @@ public class ProjectModel : ProjectListItem
         set => SetProperty(ref _hasUnsavedChanges, value);
     }
 
-    public bool NeedsUpdate
-    {
-        get => _needsUpdate;
-        set => SetProperty(ref _needsUpdate, value);
-    }
-
     public int UpdateCount
     {
         get => _updateCount;
         set => SetProperty(ref _updateCount, value);
+    }
+
+    public bool NeedsUpdate
+    {
+        get => _needsUpdate;
+        set => SetProperty(ref _needsUpdate, value);
     }
 
     public ICommand DeleteCommand => _deleteCommand;
@@ -110,7 +133,7 @@ public class ProjectModel : ProjectListItem
         }
     }
 
-    public override bool MatchesFilter(string searchText, bool mustBeMod, bool mustBeScript)
+    public bool MatchesFilter(string searchText, bool mustBeMod, bool mustBeScript)
     {
         if (mustBeMod && Type != ProjectType.Mod)
             return false;

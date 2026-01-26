@@ -20,7 +20,7 @@ public abstract class ActionItem : ViewModel
     /// </summary>
     public event EventHandler? ShouldShowChanged;
     
-    public abstract bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod);
+    public abstract bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod);
     
     protected void RaiseShouldShowChanged()
     {

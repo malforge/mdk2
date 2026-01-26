@@ -7,9 +7,9 @@ public interface IProjectState
 {
     event EventHandler? StateChanged;
     
-    ProjectListItem? SelectedProject { get; }
+    ProjectModel? SelectedProject { get; }
     bool CanMakeScript { get; }
     bool CanMakeMod { get; }
     
-    void UpdateState(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod);
+    void UpdateState(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod);
 }

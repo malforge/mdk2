@@ -32,7 +32,7 @@ public class AddExistingProjectAction : ActionItem
 
     public override string? Category => null; // Global actions, no category
 
-    public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
     {
         // Always show
         return true;

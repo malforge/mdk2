@@ -29,6 +29,7 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly ILogger _logger;
     UnsavedChangesHandle? _unsavedChangesHandle;
     ProjectContext? _currentContext;
+    Shell.ShellViewModel? _shellViewModel;
     
     public bool CanMakeScript => _projectState.CanMakeScript;
     public bool CanMakeMod => _projectState.CanMakeMod;
@@ -67,6 +68,11 @@ public partial class ProjectActionsViewModel : ViewModel
         
         // Handle initial state (project may already be selected)
         OnProjectStateChanged(null, EventArgs.Empty);
+    }
+
+    public void Initialize(Shell.ShellViewModel shell)
+    {
+        _shellViewModel = shell;
     }
 
     public ReadOnlyObservableCollection<ActionItem> Actions { get; }

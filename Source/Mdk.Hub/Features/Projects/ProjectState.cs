@@ -9,11 +9,11 @@ public class ProjectState : IProjectState
 {
     public event EventHandler? StateChanged;
     
-    public ProjectListItem? SelectedProject { get; private set; }
+    public ProjectModel? SelectedProject { get; private set; }
     public bool CanMakeScript { get; private set; } = true;
     public bool CanMakeMod { get; private set; } = true;
     
-    public void UpdateState(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
+    public void UpdateState(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
     {
         SelectedProject = selectedProject;
         CanMakeScript = canMakeScript;

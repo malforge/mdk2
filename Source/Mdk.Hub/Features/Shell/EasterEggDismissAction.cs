@@ -28,7 +28,7 @@ public class EasterEggDismissAction : ActionItem
 
     public override string Category => "EasterEgg";
 
-    public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod) => _shell.IsEasterEggActive;
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod) => _shell.IsEasterEggActive;
 
     async Task DisableForToday()
     {

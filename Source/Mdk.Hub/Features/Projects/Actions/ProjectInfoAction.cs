@@ -124,7 +124,7 @@ public class ProjectInfoAction : ActionItem
 
     public override string? Category => "Project";
 
-    public override bool ShouldShow(ProjectListItem? selectedProject, bool canMakeScript, bool canMakeMod)
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
     {
         return selectedProject is ProjectModel;
     }

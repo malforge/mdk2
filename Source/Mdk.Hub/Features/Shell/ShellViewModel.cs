@@ -1,12 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Projects;
 using Mdk.Hub.Features.Projects.Actions;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
+using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -24,7 +28,9 @@ namespace Mdk.Hub.Features.Shell;
 public class ShellViewModel : ViewModel
 {
     readonly IShell _shell;
-    readonly Mdk.Hub.Features.CommonDialogs.ICommonDialogs? _commonDialogs;
+    readonly ICommonDialogs? _commonDialogs;
+    readonly IProjectService? _projectService;
+    readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
     ViewModel? _currentView;
     ViewModel? _navigationView;
 
@@ -36,7 +42,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -47,17 +53,23 @@ public class ShellViewModel : ViewModel
     /// <param name="shell">Shell service for access to toast messages.</param>
     /// <param name="settings">Application settings service.</param>
     /// <param name="commonDialogs">Common dialogs service.</param>
+    /// <param name="projectService">Project service for project management.</param>
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
     /// <param name="updateCheckService">Update check service for monitoring MDK versions.</param>
-    public ShellViewModel(IShell shell, ISettings settings, Mdk.Hub.Features.CommonDialogs.ICommonDialogs commonDialogs, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService)
+    public ShellViewModel(IShell shell, ISettings settings, ICommonDialogs commonDialogs, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService)
     {
         _shell = shell;
         _commonDialogs = commonDialogs;
+        _projectService = projectService;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
         CurrentView = projectActionsViewModel;
+        
+        // Initialize child VMs with reference to this shell
+        projectOverviewViewModel.Initialize(this);
+        projectActionsViewModel.Initialize(this);
         
         // Start background update check on startup (fire and forget)
         _ = updateCheckService.CheckForUpdatesAsync();
@@ -174,4 +186,35 @@ public class ShellViewModel : ViewModel
     }
 
     void OnOverlayViewsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => OnPropertyChanged(nameof(HasOverlays));
+
+    /// <summary>
+    /// Gets an existing ProjectModel or creates a new one for the specified project.
+    /// This ensures both ProjectOverviewViewModel and ProjectActionsViewModel share the same instances.
+    /// </summary>
+    public ProjectModel GetOrCreateProjectModel(ProjectInfo projectInfo)
+    {
+        if (_projectModels.TryGetValue(projectInfo.ProjectPath, out var existing))
+        {
+            // Update existing model with latest info
+            existing.UpdateFromProjectInfo(projectInfo);
+            return existing;
+        }
+
+        // Create new model
+        if (_commonDialogs == null || _projectService == null)
+            throw new InvalidOperationException("Cannot create ProjectModel in design mode");
+
+        var model = new ProjectModel(
+            projectInfo.Type,
+            projectInfo.Name,
+            projectInfo.ProjectPath,
+            projectInfo.LastReferenced,
+            _commonDialogs,
+            _projectService);
+
+        model.UpdateFromProjectInfo(projectInfo);
+        _projectModels[projectInfo.ProjectPath] = model;
+
+        return model;
+    }
 }
