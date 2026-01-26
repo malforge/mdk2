@@ -82,6 +82,7 @@ public class ShellViewModel : ViewModel
         {
             updateNotificationBar.IsTemplateUpdateAvailable = versionData.TemplatePackage != null;
             updateNotificationBar.IsHubUpdateAvailable = versionData.HubVersion != null;
+            updateNotificationBar.HubVersionInfo = versionData.HubVersion;
             updateNotificationBar.UpdateMessage();
             updateNotificationBar.IsVisible = updateNotificationBar.IsTemplateUpdateAvailable || updateNotificationBar.IsHubUpdateAvailable;
         });

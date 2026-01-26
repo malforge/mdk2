@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Input;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Updates;
@@ -9,6 +10,7 @@ namespace Mdk.Hub.Features.Updates;
 [ViewModelFor<UpdateNotificationBarView>]
 public class UpdateNotificationBarViewModel : ViewModel
 {
+    readonly ICommonDialogs _commonDialogs;
     string _message = "";
     bool _isVisible;
     bool _isTemplateUpdateAvailable;
@@ -16,9 +18,12 @@ public class UpdateNotificationBarViewModel : ViewModel
     bool _isDownloading;
     bool _isReadyToInstall;
     double _downloadProgress;
+    HubVersionInfo? _hubVersionInfo;
+    string? _downloadedMsiPath;
 
-    public UpdateNotificationBarViewModel()
+    public UpdateNotificationBarViewModel(ICommonDialogs commonDialogs)
     {
+        _commonDialogs = commonDialogs;
         DismissCommand = new RelayCommand(Dismiss);
         UpdateTemplatesCommand = new RelayCommand(UpdateTemplates);
         UpdateHubCommand = new RelayCommand(UpdateHub);
@@ -65,6 +70,12 @@ public class UpdateNotificationBarViewModel : ViewModel
     {
         get => _downloadProgress;
         set => SetProperty(ref _downloadProgress, value);
+    }
+    
+    public HubVersionInfo? HubVersionInfo
+    {
+        get => _hubVersionInfo;
+        set => SetProperty(ref _hubVersionInfo, value);
     }
 
     public ICommand DismissCommand { get; }
@@ -148,13 +159,131 @@ public class UpdateNotificationBarViewModel : ViewModel
         }
     }
 
-    void UpdateHub()
+    async void UpdateHub()
     {
-        // TODO: Implement
+        if (HubVersionInfo == null) return;
+        
+        // Check platform
+        if (OperatingSystem.IsWindows())
+        {
+            await DownloadHubUpdateAsync();
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            OpenBrowserToReleases();
+        }
+    }
+    
+    async System.Threading.Tasks.Task DownloadHubUpdateAsync()
+    {
+        if (HubVersionInfo == null) return;
+        
+        try
+        {
+            // Set downloading state
+            IsHubUpdateAvailable = false;
+            IsDownloading = true;
+            DownloadProgress = 0;
+            UpdateMessage();
+            
+            // Create temp path for MSI
+            var tempPath = System.IO.Path.GetTempPath();
+            var fileName = $"MdkHub-{HubVersionInfo.LatestVersion}.msi";
+            _downloadedMsiPath = System.IO.Path.Combine(tempPath, fileName);
+            
+            // Download with progress
+            using var client = new System.Net.Http.HttpClient();
+            using var response = await client.GetAsync(HubVersionInfo.DownloadUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+            
+            var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            using var contentStream = await response.Content.ReadAsStreamAsync();
+            using var fileStream = new System.IO.FileStream(_downloadedMsiPath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None, 8192, true);
+            
+            var buffer = new byte[8192];
+            long totalRead = 0;
+            int bytesRead;
+            
+            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                totalRead += bytesRead;
+                
+                if (totalBytes > 0)
+                {
+                    DownloadProgress = (double)totalRead / totalBytes;
+                    UpdateMessage();
+                }
+            }
+            
+            // Download complete
+            IsDownloading = false;
+            IsReadyToInstall = true;
+            UpdateMessage();
+        }
+        catch (Exception ex)
+        {
+            IsDownloading = false;
+            Message = $"Download failed: {ex.Message}";
+        }
+    }
+    
+    void OpenBrowserToReleases()
+    {
+        try
+        {
+            var url = "https://github.com/malware-dev/mdk2/releases";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+            
+            // Dismiss the notification after opening browser
+            IsVisible = false;
+        }
+        catch (Exception ex)
+        {
+            Message = $"Failed to open browser: {ex.Message}";
+        }
     }
 
-    void InstallHubUpdate()
+    async void InstallHubUpdate()
     {
-        // TODO: Implement
+        if (string.IsNullOrEmpty(_downloadedMsiPath) || !System.IO.File.Exists(_downloadedMsiPath))
+        {
+            Message = "Update file not found";
+            return;
+        }
+        
+        try
+        {
+            // Show confirmation dialog
+            var confirmed = await _commonDialogs.ShowAsync(new ConfirmationMessage
+            {
+                Title = "Install Hub Update",
+                Message = "Installing the update will close MDK Hub. The installer will launch and you can reopen the Hub when installation completes.\n\nContinue?",
+                OkText = "Install Now",
+                CancelText = "Cancel"
+            });
+            
+            if (!confirmed)
+                return;
+            
+            // Launch MSI installer
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "msiexec.exe",
+                Arguments = $"/i \"{_downloadedMsiPath}\"",
+                UseShellExecute = false
+            });
+            
+            // Exit the application
+            System.Environment.Exit(0);
+        }
+        catch (Exception ex)
+        {
+            Message = $"Failed to launch installer: {ex.Message}";
+        }
     }
 }
