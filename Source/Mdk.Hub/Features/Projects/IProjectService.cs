@@ -72,6 +72,17 @@ public interface IProjectService
     event System.EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
     
     /// <summary>
+    /// Raised when project state (selected project, capabilities) changes.
+    /// </summary>
+    event System.EventHandler? StateChanged;
+    
+    /// <summary>
+    /// Gets or sets the current project state (selected project and capabilities).
+    /// Setting this property raises StateChanged event.
+    /// </summary>
+    ProjectStateData State { get; set; }
+    
+    /// <summary>
     /// Gets all projects known to MDK Hub.
     /// </summary>
     /// <returns>Collection of project information.</returns>

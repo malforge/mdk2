@@ -22,7 +22,6 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly Dictionary<string, ActionItem> _globalActionCache = new(); // Shared action instances
     readonly ObservableCollection<ActionItem> _displayedActions = new();
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
-    readonly IProjectState _projectState;
     readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
     readonly IProjectService _projectService;
@@ -31,8 +30,8 @@ public partial class ProjectActionsViewModel : ViewModel
     ProjectContext? _currentContext;
     Shell.ShellViewModel? _shellViewModel;
     
-    public bool CanMakeScript => _projectState.CanMakeScript;
-    public bool CanMakeMod => _projectState.CanMakeMod;
+    public bool CanMakeScript => _projectService.State.CanMakeScript;
+    public bool CanMakeMod => _projectService.State.CanMakeMod;
     
     bool _isOptionsDrawerOpen;
     public bool IsOptionsDrawerOpen
@@ -55,24 +54,23 @@ public partial class ProjectActionsViewModel : ViewModel
         set => SetProperty(ref _optionsViewModel, value);
     }
 
-    public ProjectActionsViewModel(IProjectState projectState, IShell shell, ICommonDialogs dialogs, IProjectService projectService, ILogger logger)
+    public ProjectActionsViewModel(IShell shell, ICommonDialogs dialogs, IProjectService projectService, ILogger logger)
     {
-        _projectState = projectState;
         _shell = shell;
         _dialogs = dialogs;
         _projectService = projectService;
         _logger = logger;
-        _projectState.StateChanged += OnProjectStateChanged;
+        _projectService.StateChanged += OnProjectStateChanged;
         _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
         Actions = new ReadOnlyObservableCollection<ActionItem>(_displayedActions);
-        
-        // Handle initial state (project may already be selected)
-        OnProjectStateChanged(null, EventArgs.Empty);
     }
 
     public void Initialize(Shell.ShellViewModel shell)
     {
         _shellViewModel = shell;
+        
+        // Handle initial state now that shell is initialized
+        OnProjectStateChanged(null, EventArgs.Empty);
     }
 
     public ReadOnlyObservableCollection<ActionItem> Actions { get; }
@@ -95,12 +93,19 @@ public partial class ProjectActionsViewModel : ViewModel
         
         // Get or create context
         ProjectContext? context = null;
-        if (_projectState.SelectedProject is ProjectModel projectModel && projectModel.ProjectPath == canonicalPath)
+        var selectedProjectPath = _projectService.State.SelectedProject;
+        if (!selectedProjectPath.IsEmpty() && selectedProjectPath == canonicalPath && _shellViewModel != null)
         {
-            if (!_projectContexts.TryGetValue(canonicalPath, out context))
+            // Get the project info to create the model
+            var projectInfo = _projectService.GetProjects().FirstOrDefault(p => p.ProjectPath == canonicalPath);
+            if (projectInfo != null)
             {
-                context = new ProjectContext(projectModel, _shell, _dialogs, _projectService, this, _globalActionCache);
-                _projectContexts[canonicalPath] = context;
+                var projectModel = _shellViewModel.GetOrCreateProjectModel(projectInfo);
+                if (!_projectContexts.TryGetValue(canonicalPath, out context))
+                {
+                    context = new ProjectContext(projectModel, _shell, _dialogs, _projectService, this, _globalActionCache);
+                    _projectContexts[canonicalPath] = context;
+                }
             }
         }
         
@@ -131,12 +136,17 @@ public partial class ProjectActionsViewModel : ViewModel
         }
         
         // If not cached in context, check if it's the currently selected project
-        if (projectModel == null && _projectState.SelectedProject is ProjectModel selected && selected.ProjectPath == canonicalPath)
+        var selectedPath = _projectService.State.SelectedProject;
+        if (projectModel == null && !selectedPath.IsEmpty() && selectedPath == canonicalPath && _shellViewModel != null)
         {
-            projectModel = selected;
-            if (context != null)
+            var projectInfo = _projectService.GetProjects().FirstOrDefault(p => p.ProjectPath == canonicalPath);
+            if (projectInfo != null)
             {
-                context.CachedModel = projectModel;
+                projectModel = _shellViewModel.GetOrCreateProjectModel(projectInfo);
+                if (context != null)
+                {
+                    context.CachedModel = projectModel;
+                }
             }
         }
         
@@ -217,27 +227,34 @@ public partial class ProjectActionsViewModel : ViewModel
     void OnProjectStateChanged(object? sender, EventArgs e)
     {
         // Get or create context for the selected project
-        if (_projectState.SelectedProject is ProjectModel selectedProject && !selectedProject.ProjectPath.IsEmpty())
+        var selectedProjectPath = _projectService.State.SelectedProject;
+        if (!selectedProjectPath.IsEmpty() && _shellViewModel != null)
         {
-            var projectPath = selectedProject.ProjectPath;
-            if (!_projectContexts.TryGetValue(projectPath, out var context))
+            // Get the project info to create the model
+            var projectInfo = _projectService.GetProjects().FirstOrDefault(p => p.ProjectPath == selectedProjectPath);
+            if (projectInfo != null)
             {
-                context = new ProjectContext(selectedProject, _shell, _dialogs, _projectService, this, _globalActionCache);
-                _projectContexts[projectPath] = context;
-            }
-            _currentContext = context;
-            
-            // Handle drawer logic
-            if (IsOptionsDrawerOpen)
-            {
-                if (OptionsProjectPath != selectedProject.ProjectPath)
+                var selectedProject = _shellViewModel.GetOrCreateProjectModel(projectInfo);
+                
+                if (!_projectContexts.TryGetValue(selectedProjectPath, out var context))
+                {
+                    context = new ProjectContext(selectedProject, _shell, _dialogs, _projectService, this, _globalActionCache);
+                    _projectContexts[selectedProjectPath] = context;
+                }
+                _currentContext = context;
+                
+                // Handle drawer logic
+                if (IsOptionsDrawerOpen)
+                {
+                    if (OptionsProjectPath != selectedProject.ProjectPath)
+                    {
+                        ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
+                    }
+                }
+                else if (HasUnsavedChanges(selectedProject.ProjectPath.Value!))
                 {
                     ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
                 }
-            }
-            else if (HasUnsavedChanges(selectedProject.ProjectPath.Value!))
-            {
-                ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
             }
         }
         else
@@ -281,7 +298,7 @@ public partial class ProjectActionsViewModel : ViewModel
             {
                 // Optionally refresh the filtered actions first
                 if (refreshFilters)
-                    _currentContext.UpdateFilteredActions(_projectState.CanMakeScript, _projectState.CanMakeMod, _shell.IsEasterEggActive);
+                    _currentContext.UpdateFilteredActions(_projectService.State.CanMakeScript, _projectService.State.CanMakeMod, _shell.IsEasterEggActive);
                 
                 foreach (var action in _currentContext.FilteredActions)
                 {
@@ -326,9 +343,10 @@ public partial class ProjectActionsViewModel : ViewModel
 
     public void OpenOptionsDrawer()
     {
-        if (_projectState.SelectedProject is ProjectModel projectModel && !projectModel.ProjectPath.IsEmpty())
+        var selectedPath = _projectService.State.SelectedProject;
+        if (!selectedPath.IsEmpty())
         {
-            ShowOptionsDrawer(projectModel.ProjectPath.Value!);
+            ShowOptionsDrawer(selectedPath.Value!);
         }
     }
 }

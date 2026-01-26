@@ -27,13 +27,29 @@ public class ProjectService : IProjectService
     readonly ProjectUpdateChecker _updateChecker;
     readonly Dictionary<CanonicalPath, (bool needsUpdate, int updateCount)> _updateStates = new();
     readonly object _updateStatesLock = new();
+    
+    ProjectStateData _state;
 
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
     public event EventHandler<CanonicalPath>? ProjectRemoved;
     public event EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
     public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
+    public event EventHandler? StateChanged;
 
     public ISettings Settings => _settings;
+    
+    public ProjectStateData State
+    {
+        get => _state;
+        set
+        {
+            if (_state != value)
+            {
+                _state = value;
+                StateChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
 
     public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateCheckService updateCheckService)
     {
@@ -43,6 +59,7 @@ public class ProjectService : IProjectService
         _snackbarService = snackbarService;
         _settings = settings;
         _updateChecker = new ProjectUpdateChecker(logger);
+        _state = new ProjectStateData(default, canMakeScript: true, canMakeMod: true);
         
         _updateChecker.ProjectUpdateAvailable += OnProjectUpdateAvailable;
         

@@ -27,7 +27,6 @@ public class ProjectOverviewViewModel : ViewModel
     readonly ICommonDialogs _commonDialogs;
     readonly ObservableCollection<ProjectModel> _projects = new();
     readonly IProjectService _projectService;
-    readonly IProjectState _projectState;
     readonly ISettings _settings;
     readonly ISnackbarService _snackbarService;
     readonly ILogger _logger;
@@ -43,15 +42,14 @@ public class ProjectOverviewViewModel : ViewModel
     bool _showAll = true;
     Shell.ShellViewModel? _shell;
 
-    public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!, null!)
+    public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
 
-    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectState projectState, IProjectService projectService, ISettings settings, ISnackbarService snackbarService, ILogger logger)
+    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectService projectService, ISettings settings, ISnackbarService snackbarService, ILogger logger)
     {
         _commonDialogs = commonDialogs;
-        _projectState = projectState;
         _projectService = projectService;
         _settings = settings;
         _snackbarService = snackbarService;
@@ -72,28 +70,24 @@ public class ProjectOverviewViewModel : ViewModel
                     new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", new CanonicalPath(@"C:\Projects\AnotherScript\AnotherScript.csproj"), DateTimeOffset.Now.AddDays(-2), commonDialogs)
                 });
         }
-        else
-        {
-            LoadProjects();
-            RestoreSelectedProject();
-
-            // Subscribe to new project notifications
-            _projectService.ProjectAdded += OnProjectAdded;
-            
-            // Subscribe to project removal
-            _projectService.ProjectRemoved += OnProjectRemoved;
-            
-            // Subscribe to project updates
-            _projectService.ProjectUpdateAvailable += OnProjectUpdateAvailable;
-
-            // Subscribe to navigation requests
-            _projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
-        }
     }
 
     public void Initialize(Shell.ShellViewModel shell)
     {
         _shell = shell;
+        
+        if (!IsDesignMode)
+        {
+            // Subscribe to events
+            _projectService.ProjectAdded += OnProjectAdded;
+            _projectService.ProjectRemoved += OnProjectRemoved;
+            _projectService.ProjectUpdateAvailable += OnProjectUpdateAvailable;
+            _projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
+            
+            // Load and display projects
+            LoadProjects();
+            RestoreSelectedProject();
+        }
     }
 
     public bool IsDesignMode { get; }
@@ -225,7 +219,10 @@ public class ProjectOverviewViewModel : ViewModel
         var canMakeScript = !FilterModsOnly;
         var canMakeMod = !FilterScriptsOnly;
 
-        _projectState.UpdateState(selectedProject, canMakeScript, canMakeMod);
+        _projectService.State = new ProjectStateData(
+            selectedProject?.ProjectPath ?? default,
+            canMakeScript,
+            canMakeMod);
     }
 
     void SetSearchTerm(string searchTerm)
@@ -306,17 +303,9 @@ public class ProjectOverviewViewModel : ViewModel
 
         foreach (var project in projects)
         {
-            // Get shared ProjectModel from ShellViewModel
-            if (_shell != null)
-            {
-                var model = _shell.GetOrCreateProjectModel(project);
-                viewModels.Add(model);
-            }
-            else
-            {
-                // Fallback for design mode or before Initialize called
-                viewModels.Add(new ProjectModel(project.Type, project.Name, project.ProjectPath, project.LastReferenced, _commonDialogs, _projectService));
-            }
+            // Get shared ProjectModel from ShellViewModel - this is the ONLY way to get instances
+            var model = _shell!.GetOrCreateProjectModel(project);
+            viewModels.Add(model);
         }
 
         AllProjects = viewModels.ToImmutableArray();
