@@ -17,19 +17,21 @@ namespace Mdk.Hub.Features.Projects;
 class ProjectUpdateChecker
 {
     readonly ILogger _logger;
+    readonly IProjectService _projectService;
     readonly Queue<CanonicalPath> _queue = new();
     readonly HashSet<CanonicalPath> _queued = new();
     readonly object _lock = new();
     CancellationTokenSource? _cancellationTokenSource;
     Task? _processingTask;
     bool _hasVersionData;
-    int _processedCount;
+    Dictionary<string, string>? _latestVersions;
 
     public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
 
-    public ProjectUpdateChecker(ILogger logger)
+    public ProjectUpdateChecker(ILogger logger, IProjectService projectService)
     {
         _logger = logger;
+        _projectService = projectService;
     }
 
     /// <summary>
@@ -37,8 +39,15 @@ class ProjectUpdateChecker
     /// </summary>
     public void OnVersionDataAvailable(VersionCheckCompletedEventArgs versionData)
     {
-        _logger.Info("Version data available, starting background project update checks");
+        _logger.Info($"Version data available, storing latest versions for {versionData.Packages.Count} MDK package(s)");
         _hasVersionData = true;
+        
+        // Store the latest versions from the version check
+        _latestVersions = new Dictionary<string, string>();
+        foreach (var package in versionData.Packages)
+        {
+            _latestVersions[package.PackageId] = package.LatestVersion;
+        }
         
         // Start processing if we have queued projects
         lock (_lock)
@@ -180,27 +189,21 @@ class ProjectUpdateChecker
 
                 _logger.Debug($"Checking project for updates: {projectPath}");
                 
-                // TODO: Actually check the project's .csproj and compare versions
-                // For now, fake it: first 3 projects get updates (predictable for testing)
-                var hasUpdates = _processedCount < 3;
-                _processedCount++;
+                // Check for actual package updates using pre-fetched latest versions
+                var updates = CheckProjectForUpdates(projectPath);
                 
-                if (hasUpdates)
+                if (updates.Count > 0)
                 {
-                    _logger.Info($"Fake: Updates available for {projectPath}");
+                    _logger.Info($"Updates available for {projectPath}: {updates.Count} package(s)");
                     ProjectUpdateAvailable?.Invoke(this, new ProjectUpdateAvailableEventArgs
                     {
                         ProjectPath = projectPath,
-                        AvailableUpdates = new List<PackageUpdateInfo>
-                        {
-                            new() { PackageId = "Mal.Mdk2.PbAnalyzers", CurrentVersion = "2.1.15", LatestVersion = "2.1.16" },
-                            new() { PackageId = "Mal.Mdk2.References", CurrentVersion = "2.2.6", LatestVersion = "2.2.7" }
-                        }
+                        AvailableUpdates = updates
                     });
                 }
                 else
                 {
-                    _logger.Debug($"Fake: No updates for {projectPath}");
+                    _logger.Debug($"No updates available for {projectPath}");
                 }
                 
             }
@@ -215,6 +218,44 @@ class ProjectUpdateChecker
         }
 
         _logger.Info("Project update check processing cancelled");
+    }
+    
+    List<PackageUpdateInfo> CheckProjectForUpdates(CanonicalPath projectPath)
+    {
+        var updates = new List<PackageUpdateInfo>();
+        
+        if (_latestVersions == null)
+            return updates;
+        
+        try
+        {
+            // Get current package versions from .csproj
+            var currentVersions = _projectService.GetMdkPackageVersions(projectPath);
+            
+            // Compare against pre-fetched latest versions
+            foreach (var (packageId, currentVersion) in currentVersions)
+            {
+                if (_latestVersions.TryGetValue(packageId, out var latestVersion))
+                {
+                    if (latestVersion != currentVersion)
+                    {
+                        updates.Add(new PackageUpdateInfo
+                        {
+                            PackageId = packageId,
+                            CurrentVersion = currentVersion,
+                            LatestVersion = latestVersion
+                        });
+                        _logger.Debug($"Update available for {packageId}: {currentVersion} -> {latestVersion}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Error checking {projectPath} for updates", ex);
+        }
+        
+        return updates;
     }
 
     public void Dispose()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
@@ -24,8 +25,9 @@ public class ProjectService : IProjectService
     readonly IShell _shell;
     readonly ISnackbarService _snackbarService;
     readonly ISettings _settings;
+    readonly INuGetService _nugetService;
     readonly ProjectUpdateChecker _updateChecker;
-    readonly Dictionary<CanonicalPath, (bool needsUpdate, int updateCount)> _updateStates = new();
+    readonly Dictionary<CanonicalPath, (bool needsUpdate, int updateCount, IReadOnlyList<PackageUpdateInfo> updates)> _updateStates = new();
     readonly object _updateStatesLock = new();
     
     ProjectStateData _state;
@@ -51,14 +53,15 @@ public class ProjectService : IProjectService
         }
     }
 
-    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateCheckService updateCheckService)
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateCheckService updateCheckService, INuGetService nugetService)
     {
         _registry = registry;
         _logger = logger;
         _shell = shell;
         _snackbarService = snackbarService;
         _settings = settings;
-        _updateChecker = new ProjectUpdateChecker(logger);
+        _nugetService = nugetService;
+        _updateChecker = new ProjectUpdateChecker(logger, this);
         _state = new ProjectStateData(default, canMakeScript: true, canMakeMod: true);
         
         _updateChecker.ProjectUpdateAvailable += OnProjectUpdateAvailable;
@@ -84,7 +87,7 @@ public class ProjectService : IProjectService
     {
         lock (_updateStatesLock)
         {
-            _updateStates[e.ProjectPath] = (true, e.AvailableUpdates.Count);
+            _updateStates[e.ProjectPath] = (true, e.AvailableUpdates.Count, e.AvailableUpdates);
         }
         
         // Forward event to subscribers (view models, etc.)
@@ -572,6 +575,281 @@ public class ProjectService : IProjectService
             ProjectPath = projectPath,
             AvailableUpdates = Array.Empty<PackageUpdateInfo>()
         });
+    }
+    
+    public IReadOnlyDictionary<string, string> GetMdkPackageVersions(CanonicalPath projectPath)
+    {
+        var result = new Dictionary<string, string>();
+        
+        if (projectPath.IsEmpty() || !File.Exists(projectPath.Value))
+            return result;
+
+        try
+        {
+            var doc = System.Xml.Linq.XDocument.Load(projectPath.Value!);
+            var ns = doc.Root?.Name.Namespace ?? System.Xml.Linq.XNamespace.None;
+            
+            // Find all PackageReference elements with Mal.Mdk2.* package IDs
+            var packageReferences = doc.Descendants(ns + "PackageReference")
+                .Where(e => e.Attribute("Include")?.Value?.StartsWith("Mal.Mdk2.", StringComparison.OrdinalIgnoreCase) == true);
+            
+            foreach (var pkgRef in packageReferences)
+            {
+                var packageId = pkgRef.Attribute("Include")?.Value;
+                var version = pkgRef.Attribute("Version")?.Value;
+                
+                if (!string.IsNullOrWhiteSpace(packageId) && !string.IsNullOrWhiteSpace(version))
+                {
+                    result[packageId] = version;
+                }
+            }
+            
+            _logger.Debug($"Found {result.Count} MDK package(s) in {projectPath}: {string.Join(", ", result.Select(kvp => $"{kvp.Key} {kvp.Value}"))}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to parse project file for package versions: {projectPath}", ex);
+        }
+        
+        return result;
+    }
+    
+    public IReadOnlyList<PackageUpdateInfo>? GetCachedUpdates(CanonicalPath projectPath)
+    {
+        lock (_updateStatesLock)
+        {
+            if (_updateStates.TryGetValue(projectPath, out var state) && state.needsUpdate)
+            {
+                return state.updates;
+            }
+        }
+        return null;
+    }
+    
+    public async Task<IReadOnlyList<PackageUpdateInfo>> CheckForPackageUpdatesAsync(CanonicalPath projectPath, CancellationToken cancellationToken = default)
+    {
+        var updates = new List<PackageUpdateInfo>();
+        
+        if (projectPath.IsEmpty())
+            return updates;
+        
+        try
+        {
+            // Get current package versions from .csproj
+            var currentVersions = GetMdkPackageVersions(projectPath);
+            if (currentVersions.Count == 0)
+            {
+                _logger.Debug($"No MDK packages found in {projectPath}");
+                return updates;
+            }
+            
+            _logger.Info($"Checking for updates for {currentVersions.Count} package(s) in {projectPath.Value}");
+            
+            // Check all packages for updates in parallel
+            var checkTasks = currentVersions.Select(async kvp =>
+            {
+                var (packageId, currentVersion) = kvp;
+                try
+                {
+                    var latestVersion = await _nugetService.GetLatestVersionAsync(packageId, cancellationToken);
+                    
+                    if (latestVersion == null)
+                    {
+                        _logger.Warning($"Could not determine latest version for {packageId}");
+                        return null;
+                    }
+                    
+                    // Compare versions
+                    if (latestVersion != currentVersion)
+                    {
+                        _logger.Info($"Update available for {packageId}: {currentVersion} -> {latestVersion}");
+                        return new PackageUpdateInfo
+                        {
+                            PackageId = packageId,
+                            CurrentVersion = currentVersion,
+                            LatestVersion = latestVersion
+                        };
+                    }
+                    else
+                    {
+                        _logger.Debug($"{packageId} is up to date ({currentVersion})");
+                        return null;
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.Info($"Package update check cancelled for {packageId}");
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Error checking {packageId} for updates", ex);
+                    return null;
+                }
+            });
+            
+            var results = await Task.WhenAll(checkTasks);
+            updates.AddRange(results.Where(r => r != null)!);
+            
+            _logger.Info($"Update check complete for {projectPath.Value}: {updates.Count} update(s) available");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Info($"Package update check cancelled for {projectPath}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Unexpected error checking for package updates: {projectPath}", ex);
+        }
+        
+        return updates;
+    }
+    
+    public async Task<bool> UpdatePackagesAsync(CanonicalPath projectPath, IReadOnlyList<PackageUpdateInfo> packagesToUpdate, CancellationToken cancellationToken = default)
+    {
+        if (projectPath.IsEmpty() || !File.Exists(projectPath.Value))
+        {
+            _logger.Warning($"Cannot update packages: project file not found at {projectPath}");
+            return false;
+        }
+        
+        if (packagesToUpdate.Count == 0)
+        {
+            _logger.Info("No packages to update");
+            return true;
+        }
+        
+        try
+        {
+            _logger.Info($"Updating {packagesToUpdate.Count} package(s) in {projectPath.Value}");
+            
+            // Load and modify the .csproj file
+            var doc = System.Xml.Linq.XDocument.Load(projectPath.Value!);
+            var ns = doc.Root?.Name.Namespace ?? System.Xml.Linq.XNamespace.None;
+            bool modified = false;
+            
+            foreach (var update in packagesToUpdate)
+            {
+                // Find the PackageReference element
+                var packageRef = doc.Descendants(ns + "PackageReference")
+                    .FirstOrDefault(e => e.Attribute("Include")?.Value == update.PackageId);
+                
+                if (packageRef != null)
+                {
+                    var versionAttr = packageRef.Attribute("Version");
+                    if (versionAttr != null)
+                    {
+                        _logger.Info($"Updating {update.PackageId}: {versionAttr.Value} -> {update.LatestVersion}");
+                        versionAttr.Value = update.LatestVersion;
+                        modified = true;
+                    }
+                    else
+                    {
+                        _logger.Warning($"PackageReference for {update.PackageId} found but has no Version attribute");
+                    }
+                }
+                else
+                {
+                    _logger.Warning($"PackageReference for {update.PackageId} not found in project file");
+                }
+            }
+            
+            if (!modified)
+            {
+                _logger.Warning("No packages were updated in the project file");
+                return false;
+            }
+            
+            // Save the modified project file
+            doc.Save(projectPath.Value!);
+            _logger.Info($"Saved updated project file: {projectPath.Value}");
+            
+            // Run dotnet restore to apply the changes
+            _logger.Info($"Running dotnet restore for {projectPath.Value}");
+            var restoreSuccess = await RunDotnetRestoreAsync(projectPath, cancellationToken);
+            
+            if (restoreSuccess)
+            {
+                _logger.Info($"Package update complete for {projectPath.Value}");
+                
+                // Clear update state since packages are now up to date
+                ClearProjectUpdateState(projectPath);
+                return true;
+            }
+            else
+            {
+                _logger.Error($"dotnet restore failed for {projectPath.Value}");
+                return false;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Info($"Package update cancelled for {projectPath}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to update packages for {projectPath}", ex);
+            return false;
+        }
+    }
+    
+    async Task<bool> RunDotnetRestoreAsync(CanonicalPath projectPath, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"restore \"{projectPath.Value}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            if (process == null)
+            {
+                _logger.Error("Failed to start dotnet restore process");
+                return false;
+            }
+            
+            // Read output asynchronously
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            
+            await process.WaitForExitAsync(cancellationToken);
+            
+            var output = await outputTask;
+            var error = await errorTask;
+            
+            if (process.ExitCode == 0)
+            {
+                _logger.Info($"dotnet restore succeeded for {projectPath.Value}");
+                if (!string.IsNullOrWhiteSpace(output))
+                    _logger.Debug($"dotnet restore output: {output}");
+                return true;
+            }
+            else
+            {
+                _logger.Error($"dotnet restore failed with exit code {process.ExitCode}");
+                if (!string.IsNullOrWhiteSpace(error))
+                    _logger.Error($"dotnet restore error: {error}");
+                return false;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Info($"dotnet restore cancelled for {projectPath}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Error running dotnet restore for {projectPath}", ex);
+            return false;
+        }
     }
     
     void HandleBuildNotification(string projectName, string projectPath, bool isNewProject)

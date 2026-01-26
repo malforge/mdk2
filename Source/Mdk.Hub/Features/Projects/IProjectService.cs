@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.Projects.Configuration;
 using Mdk.Hub.Features.Settings;
@@ -157,6 +158,37 @@ public interface IProjectService
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     void ClearProjectUpdateState(CanonicalPath projectPath);
+    
+    /// <summary>
+    /// Gets the current versions of MDK packages referenced in the project file.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <returns>Dictionary of package IDs to their current versions, or empty if file cannot be read.</returns>
+    IReadOnlyDictionary<string, string> GetMdkPackageVersions(CanonicalPath projectPath);
+    
+    /// <summary>
+    /// Gets cached update information for a project if available.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <returns>Cached update information, or null if not available.</returns>
+    IReadOnlyList<PackageUpdateInfo>? GetCachedUpdates(CanonicalPath projectPath);
+    
+    /// <summary>
+    /// Checks for available updates for MDK packages in the project.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of packages with available updates, or empty if all up-to-date or if check fails.</returns>
+    Task<IReadOnlyList<PackageUpdateInfo>> CheckForPackageUpdatesAsync(CanonicalPath projectPath, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Updates MDK packages in the project file to their latest versions.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <param name="packagesToUpdate">List of packages to update with their new versions.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the update was successful, false otherwise.</returns>
+    Task<bool> UpdatePackagesAsync(CanonicalPath projectPath, IReadOnlyList<PackageUpdateInfo> packagesToUpdate, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a new Programmable Block script project.

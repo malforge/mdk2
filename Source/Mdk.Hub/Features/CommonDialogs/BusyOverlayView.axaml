@@ -30,6 +30,13 @@
                            FontSize="14"
                            TextAlignment="Center"
                            HorizontalAlignment="Center" />
+                
+                <!-- Cancel button -->
+                <Button Content="Cancel"
+                        Command="{Binding CancelCommand}"
+                        HorizontalAlignment="Center"
+                        IsVisible="{Binding IsCancellable}"
+                        MinWidth="80" />
             </StackPanel>
         </Border>
     </Grid>

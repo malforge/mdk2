@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Threading;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
@@ -64,33 +65,41 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         if (_project == null)
             return;
 
-        var busyOverlay = new BusyOverlayViewModel("Updating MDK packages...");
+        var busyOverlay = new BusyOverlayViewModel("Checking for updates...");
         _shell.AddOverlay(busyOverlay);
 
         try
         {
-            // Update Malware.MDK package for this specific project
-            var (updateSuccess, updateError) = await RunDotNetCommandAsync("add", _project.ProjectPath.Value!, "package", "Malware.MDK");
+            // Try to use cached updates first (from background checker)
+            var updates = _projectService.GetCachedUpdates(_project.ProjectPath);
             
-            if (!updateSuccess)
+            // If not cached, query NuGet
+            if (updates == null)
             {
-                await ShowErrorWithDetailsAsync("Update Failed", "Failed to update MDK package.", updateError);
+                updates = await _projectService.CheckForPackageUpdatesAsync(_project.ProjectPath);
+            }
+            
+            if (updates.Count == 0)
+            {
+                busyOverlay.Message = "No updates available";
+                await Task.Delay(1500);
                 return;
             }
 
-            // Run dotnet restore on this specific project
-            var (restoreSuccess, restoreError) = await RunDotNetCommandAsync("restore", _project.ProjectPath.Value!);
+            busyOverlay.Message = $"Updating {updates.Count} package(s)...";
             
-            if (!restoreSuccess)
+            // Update packages
+            var success = await _projectService.UpdatePackagesAsync(_project.ProjectPath, updates);
+            
+            if (success)
             {
-                await ShowErrorWithDetailsAsync("Restore Failed", "Package was updated but restore failed. The project may not build correctly.", restoreError);
-                return;
+                busyOverlay.Message = "Packages updated successfully!";
+                await Task.Delay(1500);
             }
-
-            // Reset update state
-            _project.NeedsUpdate = false;
-            _project.UpdateCount = 0;
-            _projectService.ClearProjectUpdateState(_project.ProjectPath);
+            else
+            {
+                await ShowErrorAsync("Update Failed", "Failed to update packages. Check the log for details.");
+            }
         }
         finally
         {
@@ -100,7 +109,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
     async Task UpdateAllProjectsAsync()
     {
-        // Get all projects with updates from the service
+        // Get all projects with updates
         var projectsToUpdate = _projectService.GetProjects()
             .Where(p => p.NeedsUpdate)
             .ToList();
@@ -108,95 +117,201 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         if (projectsToUpdate.Count == 0)
             return;
 
-        var busyOverlay = new BusyOverlayViewModel($"Updating 0 of {projectsToUpdate.Count} project(s)...")
+        var busyOverlay = new BusyOverlayViewModel($"Checking {projectsToUpdate.Count} project(s) for updates...")
         {
             IsIndeterminate = false,
             Progress = 0
         };
+        busyOverlay.EnableCancellation();
         _shell.AddOverlay(busyOverlay);
 
         var failures = new List<(string projectName, string error)>();
-        var completedCount = 0;
+        var wasCancelled = false;
 
         try
         {
-            // Update all projects in parallel
-            await Task.WhenAll(projectsToUpdate.Select(async projectInfo =>
+            // Phase 1: Get update info (use cache when available, otherwise query NuGet)
+            var updateTasks = projectsToUpdate.Select(async projectInfo =>
             {
                 try
                 {
-                    // Update package
-                    var (updateSuccess, updateError) = await RunDotNetCommandAsync("add", projectInfo.ProjectPath.Value!, "package", "Malware.MDK");
-                    if (!updateSuccess)
-                    {
-                        lock (failures)
-                        {
-                            failures.Add((projectInfo.Name, $"Update failed: {updateError}"));
-                            completedCount++;
-                            UpdateProgress(busyOverlay, completedCount, projectsToUpdate.Count);
-                        }
-                        return;
-                    }
-
-                    // Restore
-                    var (restoreSuccess, restoreError) = await RunDotNetCommandAsync("restore", projectInfo.ProjectPath.Value!);
-                    if (!restoreSuccess)
-                    {
-                        lock (failures)
-                        {
-                            failures.Add((projectInfo.Name, $"Restore failed: {restoreError}"));
-                            completedCount++;
-                            UpdateProgress(busyOverlay, completedCount, projectsToUpdate.Count);
-                        }
-                        return;
-                    }
-
-                    // Success - clear update state in service (will trigger event to update view models)
-                    _projectService.ClearProjectUpdateState(projectInfo.ProjectPath);
+                    // Try to use cached updates first (from background checker)
+                    var updates = _projectService.GetCachedUpdates(projectInfo.ProjectPath);
                     
-                    lock (failures)
+                    // If not cached, query NuGet
+                    if (updates == null)
                     {
-                        completedCount++;
-                        UpdateProgress(busyOverlay, completedCount, projectsToUpdate.Count);
+                        updates = await _projectService.CheckForPackageUpdatesAsync(projectInfo.ProjectPath, busyOverlay.CancellationToken);
                     }
+                    
+                    return (projectInfo, updates, error: (string?)null);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw; // Propagate cancellation
                 }
                 catch (Exception ex)
                 {
-                    lock (failures)
+                    return (projectInfo, updates: (IReadOnlyList<PackageUpdateInfo>)new List<PackageUpdateInfo>(), error: ex.Message);
+                }
+            }).ToList();
+
+            // Wait for all checks to complete (with progress updates)
+            var completedChecks = 0;
+            while (completedChecks < updateTasks.Count)
+            {
+                if (busyOverlay.CancellationToken.IsCancellationRequested)
+                {
+                    wasCancelled = true;
+                    break;
+                }
+
+                await Task.Delay(100); // Poll for completion
+                var nowCompleted = updateTasks.Count(t => t.IsCompleted);
+                if (nowCompleted > completedChecks)
+                {
+                    completedChecks = nowCompleted;
+                    await Dispatcher.UIThread.InvokeAsync(() =>
                     {
-                        failures.Add((projectInfo.Name, $"Unexpected error: {ex.Message}"));
-                        completedCount++;
-                        UpdateProgress(busyOverlay, completedCount, projectsToUpdate.Count);
+                        busyOverlay.Progress = (double)completedChecks / updateTasks.Count * 0.5; // First 50% is checking
+                        busyOverlay.Message = $"Checking for updates... ({completedChecks}/{updateTasks.Count})";
+                    });
+                }
+            }
+
+            if (wasCancelled)
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    busyOverlay.Message = "Cancelled";
+                });
+                await Task.Delay(1000);
+                return;
+            }
+
+            var checkResults = await Task.WhenAll(updateTasks);
+
+            // Collect any check failures
+            foreach (var (projectInfo, _, error) in checkResults.Where(r => r.error != null))
+            {
+                failures.Add((projectInfo.Name, error!));
+            }
+
+            // Phase 2: Update projects sequentially (to avoid overwhelming the system)
+            var projectsWithUpdates = checkResults
+                .Where(r => r.error == null && r.updates.Count > 0)
+                .ToList();
+
+            if (projectsWithUpdates.Count == 0)
+            {
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    busyOverlay.Message = failures.Count > 0 ? "Check failed" : "No updates available";
+                });
+                await Task.Delay(1500);
+                
+                if (failures.Count == 0)
+                {
+                    _shell.ShowToast("All projects are up to date");
+                }
+                
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                busyOverlay.Message = $"Updating {projectsWithUpdates.Count} project(s)...";
+            });
+
+            var completedCount = 0;
+            foreach (var (projectInfo, updates, _) in projectsWithUpdates)
+            {
+                // Check for cancellation between updates
+                if (busyOverlay.CancellationToken.IsCancellationRequested)
+                {
+                    wasCancelled = true;
+                    break;
+                }
+
+                try
+                {
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        busyOverlay.Message = $"Updating {projectInfo.Name}... ({completedCount + 1}/{projectsWithUpdates.Count})";
+                    });
+                    
+                    var success = await _projectService.UpdatePackagesAsync(projectInfo.ProjectPath, updates, busyOverlay.CancellationToken);
+                    
+                    if (!success)
+                    {
+                        failures.Add((projectInfo.Name, "Failed to update packages"));
                     }
                 }
-            }));
+                catch (OperationCanceledException)
+                {
+                    wasCancelled = true;
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    failures.Add((projectInfo.Name, ex.Message));
+                }
+                finally
+                {
+                    completedCount++;
+                    var progress = 0.5 + ((double)completedCount / projectsWithUpdates.Count * 0.5); // Second 50% is updating
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        busyOverlay.Progress = progress;
+                    });
+                }
+            }
 
             // Show results
-            var successCount = completedCount - failures.Count;
-            if (failures.Count == 0)
+            if (wasCancelled)
             {
-                _shell.ShowToast($"Successfully updated {successCount} project(s)");
-            }
-            else if (successCount > 0)
-            {
-                // Partial success
-                var errorSummary = string.Join(Environment.NewLine + Environment.NewLine, 
-                    failures.Select(f => $"{f.projectName}:{Environment.NewLine}{f.error}"));
-                await ShowErrorWithDetailsAsync(
-                    "Partial Update Success", 
-                    $"Updated {successCount} project(s), but {failures.Count} failed:", 
-                    errorSummary);
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    busyOverlay.Message = $"Cancelled after updating {completedCount}/{projectsWithUpdates.Count} project(s)";
+                });
+                await Task.Delay(1500);
             }
             else
             {
-                // Total failure
-                var errorSummary = string.Join(Environment.NewLine + Environment.NewLine, 
-                    failures.Select(f => $"{f.projectName}:{Environment.NewLine}{f.error}"));
-                await ShowErrorWithDetailsAsync(
-                    "Update Failed", 
-                    $"Failed to update all {failures.Count} project(s):", 
-                    errorSummary);
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    busyOverlay.Message = "Update complete!";
+                });
+                await Task.Delay(1000);
             }
+            
+            if (failures.Count == 0 && !wasCancelled)
+            {
+                _shell.ShowToast($"Successfully updated {completedCount} project(s)");
+            }
+            else if (failures.Count > 0)
+            {
+                // Show errors only if there were actual failures
+                if (completedCount - failures.Count > 0)
+                {
+                    // Partial success
+                    var errorSummary = string.Join(Environment.NewLine, failures.Select(f => $"- {f.projectName}: {f.error}"));
+                    await ShowErrorWithDetailsAsync(
+                        "Partial Update Success", 
+                        $"Updated {completedCount - failures.Count} project(s), but {failures.Count} failed:", 
+                        errorSummary);
+                }
+                else
+                {
+                    // Total failure
+                    var errorSummary = string.Join(Environment.NewLine, failures.Select(f => $"- {f.projectName}: {f.error}"));
+                    await ShowErrorWithDetailsAsync(
+                        "Update Failed", 
+                        $"Failed to update all {failures.Count} project(s):", 
+                        errorSummary);
+                }
+            }
+            // If wasCancelled && failures.Count == 0, we already showed the cancelled message above
         }
         finally
         {

@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Windows.Input;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
@@ -9,10 +11,13 @@ public class BusyOverlayViewModel : OverlayModel
     string _message;
     double _progress;
     bool _isIndeterminate = true;
+    bool _isCancellable;
+    CancellationTokenSource? _cancellationTokenSource;
 
     public BusyOverlayViewModel(string message)
     {
         _message = message;
+        CancelCommand = new RelayCommand(Cancel);
     }
 
     public string Message
@@ -31,5 +36,27 @@ public class BusyOverlayViewModel : OverlayModel
     {
         get => _isIndeterminate;
         set => SetProperty(ref _isIndeterminate, value);
+    }
+
+    public bool IsCancellable
+    {
+        get => _isCancellable;
+        set => SetProperty(ref _isCancellable, value);
+    }
+
+    public ICommand CancelCommand { get; }
+
+    public CancellationToken CancellationToken => _cancellationTokenSource?.Token ?? CancellationToken.None;
+
+    public void EnableCancellation()
+    {
+        _cancellationTokenSource = new CancellationTokenSource();
+        IsCancellable = true;
+    }
+
+    void Cancel()
+    {
+        _cancellationTokenSource?.Cancel();
+        IsCancellable = false;
     }
 }
