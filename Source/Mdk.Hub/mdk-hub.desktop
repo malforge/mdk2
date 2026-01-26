@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MDK Hub
+Comment=Malware's Development Kit Hub for Space Engineers
+Exec=Mdk.Hub
+Icon=mdk-hub
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=Mdk.Hub

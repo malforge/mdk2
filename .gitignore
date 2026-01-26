@@ -396,5 +396,9 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Linux AppImage files
+*.AppImage
+appimage-build/
+
 # JetBrains Rider
 *.sln.iml
