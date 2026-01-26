@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
@@ -20,7 +20,6 @@ namespace Mdk.Hub.Features.Projects.Actions;
 public partial class ProjectActionsViewModel : ViewModel
 {
     readonly Dictionary<string, ActionItem> _globalActionCache = new(); // Shared action instances
-    readonly ObservableCollection<ActionItem> _displayedActions = new();
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
     readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
@@ -29,6 +28,7 @@ public partial class ProjectActionsViewModel : ViewModel
     UnsavedChangesHandle? _unsavedChangesHandle;
     ProjectContext? _currentContext;
     Shell.ShellViewModel? _shellViewModel;
+    ImmutableArray<ActionItem> _actions = ImmutableArray<ActionItem>.Empty;
     
     public bool CanMakeScript => _projectService.State.CanMakeScript;
     public bool CanMakeMod => _projectService.State.CanMakeMod;
@@ -62,7 +62,6 @@ public partial class ProjectActionsViewModel : ViewModel
         _logger = logger;
         _projectService.StateChanged += OnProjectStateChanged;
         _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
-        Actions = new ReadOnlyObservableCollection<ActionItem>(_displayedActions);
     }
 
     public void Initialize(Shell.ShellViewModel shell)
@@ -73,7 +72,11 @@ public partial class ProjectActionsViewModel : ViewModel
         OnProjectStateChanged(null, EventArgs.Empty);
     }
 
-    public ReadOnlyObservableCollection<ActionItem> Actions { get; }
+    public ImmutableArray<ActionItem> Actions
+    {
+        get => _actions;
+        private set => SetProperty(ref _actions, value);
+    }
     
     public bool HasUnsavedChanges(string projectPath)
     {
@@ -288,29 +291,35 @@ public partial class ProjectActionsViewModel : ViewModel
         _isUpdatingDisplayedActions = true;
         try
         {
-            _displayedActions.Clear();
-            
+            // If we don't have a context, set empty list
+            if (_currentContext == null)
+            {
+                Actions = ImmutableArray<ActionItem>.Empty;
+                return;
+            }
+
+            // Optionally refresh the filtered actions first
+            if (refreshFilters)
+                _currentContext.UpdateFilteredActions(_projectService.State.CanMakeScript, _projectService.State.CanMakeMod, _shell.IsEasterEggActive);
+
+            // Build new list with separators
+            var builder = ImmutableArray.CreateBuilder<ActionItem>();
             string? lastCategory = null;
             bool isFirstAction = true;
             
-            // Get actions from current context (or empty if no project selected)
-            if (_currentContext != null)
+            foreach (var action in _currentContext.FilteredActions)
             {
-                // Optionally refresh the filtered actions first
-                if (refreshFilters)
-                    _currentContext.UpdateFilteredActions(_projectService.State.CanMakeScript, _projectService.State.CanMakeMod, _shell.IsEasterEggActive);
+                // Add separator if category changed
+                if (!isFirstAction && lastCategory != action.Category)
+                    builder.Add(new CategorySeparator());
                 
-                foreach (var action in _currentContext.FilteredActions)
-                {
-                    // Add separator if category changed (including null -> non-null transitions)
-                    if (!isFirstAction && lastCategory != action.Category)
-                        _displayedActions.Add(new CategorySeparator());
-                    
-                    _displayedActions.Add(action);
-                    lastCategory = action.Category;
-                    isFirstAction = false;
-                }
+                builder.Add(action);
+                lastCategory = action.Category;
+                isFirstAction = false;
             }
+
+            // Replace entire list
+            Actions = builder.ToImmutable();
         }
         finally
         {
