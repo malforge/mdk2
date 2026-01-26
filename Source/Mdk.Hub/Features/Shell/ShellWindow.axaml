@@ -37,15 +37,25 @@
         <Grid x:Name="MainContentGrid"
               Classes="main-content" 
               Classes.has-overlays="{Binding HasOverlays}"
-              RowDefinitions="*">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="400" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" MinWidth="400" />
-            </Grid.ColumnDefinitions>
-            <ContentControl Grid.Column="0" Content="{Binding NavigationView}" />
-            <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns" Width="4" />
-            <ContentControl Grid.Column="2" Content="{Binding CurrentView}" />
+              RowDefinitions="Auto,*">
+            
+            <!-- Update notification bar (row 0) -->
+            <ContentControl Grid.Row="0" 
+                            Grid.Column="0" 
+                            Grid.ColumnSpan="3"
+                            Content="{Binding UpdateNotificationBar}" />
+            
+            <!-- Main content (row 1) -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="400" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="400" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Grid.Column="0" Content="{Binding NavigationView}" />
+                <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns" Width="4" />
+                <ContentControl Grid.Column="2" Content="{Binding CurrentView}" />
+            </Grid>
         </Grid>
         
         <!-- Overlay Layer (blocking dialogs) -->

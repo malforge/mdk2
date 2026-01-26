@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Mdk.Hub.Features.Updates"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="50"
+             x:Class="Mdk.Hub.Features.Updates.UpdateNotificationBarView"
+             x:DataType="local:UpdateNotificationBarViewModel"
+             IsVisible="{Binding IsVisible}">
+    
+    <Border Background="{StaticResource BackgroundSecondaryBrush}"
+            BorderBrush="{StaticResource AccentPrimaryBrush}"
+            BorderThickness="0,0,0,2"
+            Padding="16,8">
+        <Grid ColumnDefinitions="*,Auto">
+            <!-- Message and progress -->
+            <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Message}"
+                           FontSize="13"
+                           FontWeight="Medium"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
+                
+                <!-- Download progress bar -->
+                <ProgressBar IsVisible="{Binding IsDownloading}"
+                             Value="{Binding DownloadProgress}"
+                             Height="4"
+                             Width="300"
+                             HorizontalAlignment="Left" />
+            </StackPanel>
+            
+            <!-- Action buttons -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <!-- Template update button -->
+                <Button Content="Update Templates"
+                        Command="{Binding UpdateTemplatesCommand}"
+                        IsVisible="{Binding IsTemplateUpdateAvailable}"
+                        Classes="accent" />
+                
+                <!-- Hub update button (download) -->
+                <Button Content="Update Hub"
+                        Command="{Binding UpdateHubCommand}"
+                        IsVisible="{Binding IsHubUpdateAvailable}"
+                        Classes="accent" />
+                
+                <!-- Install button (after download) -->
+                <Button Content="Install Now"
+                        Command="{Binding InstallHubUpdateCommand}"
+                        IsVisible="{Binding IsReadyToInstall}"
+                        Classes="accent" />
+                
+                <!-- Dismiss button -->
+                <Button Content="✕"
+                        Command="{Binding DismissCommand}"
+                        Width="28"
+                        Height="28"
+                        Padding="0"
+                        ToolTip.Tip="Dismiss"
+                        Background="Transparent"
+                        Foreground="{StaticResource TextPrimaryBrush}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

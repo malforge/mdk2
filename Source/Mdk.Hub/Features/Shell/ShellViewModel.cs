@@ -33,6 +33,7 @@ public class ShellViewModel : ViewModel
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
     ViewModel? _currentView;
     ViewModel? _navigationView;
+    UpdateNotificationBarViewModel? _updateNotificationBar;
 
     /// <summary>
     ///     Raised when the ViewModel requests the window to close.
@@ -42,7 +43,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -57,11 +58,13 @@ public class ShellViewModel : ViewModel
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
     /// <param name="updateCheckService">Update check service for monitoring MDK versions.</param>
-    public ShellViewModel(IShell shell, ISettings settings, ICommonDialogs commonDialogs, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService)
+    /// <param name="updateNotificationBar">Update notification bar view model.</param>
+    public ShellViewModel(IShell shell, ISettings settings, ICommonDialogs commonDialogs, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService, UpdateNotificationBarViewModel updateNotificationBar)
     {
         _shell = shell;
         _commonDialogs = commonDialogs;
         _projectService = projectService;
+        _updateNotificationBar = updateNotificationBar;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
@@ -73,6 +76,15 @@ public class ShellViewModel : ViewModel
         
         // Start background update check on startup (fire and forget)
         _ = updateCheckService.CheckForUpdatesAsync();
+        
+        // Wire up update notification bar
+        updateCheckService.WhenVersionCheckCompleted(versionData =>
+        {
+            updateNotificationBar.IsTemplateUpdateAvailable = versionData.TemplatePackage != null;
+            updateNotificationBar.IsHubUpdateAvailable = versionData.HubVersion != null;
+            updateNotificationBar.UpdateMessage();
+            updateNotificationBar.IsVisible = updateNotificationBar.IsTemplateUpdateAvailable || updateNotificationBar.IsHubUpdateAvailable;
+        });
     }
     
     /// <summary>
@@ -92,6 +104,11 @@ public class ShellViewModel : ViewModel
     ///     Gets the application settings service accessible to shell-level views.
     /// </summary>
     public ISettings Settings { get; }
+
+    /// <summary>
+    ///     Gets the update notification bar view model.
+    /// </summary>
+    public UpdateNotificationBarViewModel? UpdateNotificationBar => _updateNotificationBar;
 
     /// <summary>
     ///     Gets the view model currently displayed in the main content area of the shell.
