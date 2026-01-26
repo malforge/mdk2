@@ -630,6 +630,78 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenFieldDeclarationHasMixedUsage_RemovesUnusedVariables()
+    {
+        const string testCode =
+            """
+            class Container
+            {
+                int UsedField = 1, UnusedField = 2;
+            }
+
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                    var container = new Container();
+                    _ = container.UsedField;
+                }
+            }
+            """;
+
+        const string expectedCode =
+            """
+            class Container
+            {
+                int UsedField = 1;
+            }
+
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                    var container = new Container();
+                    _ = container.UsedField;
+                }
+            }
+            """;
+
+        // Arrange
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+
+        // Assert
+        var expected = await project.AddDocument("TestDocument", expectedCode).GetTextAsync();
+        var actual = await result.GetTextAsync();
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenRecursiveTypeUsage_RemovesUnusedChain()
     {
         const string testCode =
