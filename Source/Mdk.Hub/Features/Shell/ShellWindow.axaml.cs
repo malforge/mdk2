@@ -1,10 +1,11 @@
 using System;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using JetBrains.Annotations;
 using Mal.DependencyInjection;
-using Mdk.Hub.Features.Shell;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -17,10 +18,10 @@ public partial class ShellWindow : Window
         InitializeComponent();
     }
 
-    protected override void OnGotFocus(global::Avalonia.Input.GotFocusEventArgs e)
+    protected override void OnGotFocus(GotFocusEventArgs e)
     {
         base.OnGotFocus(e);
-        
+
         if (DataContext is ShellViewModel viewModel)
             viewModel.WindowFocusWasGained();
     }
@@ -28,17 +29,17 @@ public partial class ShellWindow : Window
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        
+
         if (DataContext is ShellViewModel viewModel)
         {
             // Initialize easter egg
             var easterEgg = this.FindControl<EasterEgg>("EasterEggControl");
             if (easterEgg != null)
                 viewModel.InitializeEasterEgg(easterEgg);
-            
+
             // Subscribe to close requests
             viewModel.CloseRequested += OnCloseRequested;
-            
+
             // Restore window settings
             try
             {
@@ -52,11 +53,8 @@ public partial class ShellWindow : Window
             }
         }
     }
-    
-    void OnCloseRequested(object? sender, EventArgs e)
-    {
-        Close();
-    }
+
+    void OnCloseRequested(object? sender, EventArgs e) => Close();
 
     protected override void OnClosing(WindowClosingEventArgs e)
     {
@@ -64,11 +62,11 @@ public partial class ShellWindow : Window
         {
             // Cancel the close and check with ViewModel
             e.Cancel = true;
-            
+
             _ = CheckCanCloseAsync(viewModel);
             return;
         }
-        
+
         // Save window settings
         if (DataContext is ShellViewModel vm)
         {
@@ -83,11 +81,11 @@ public partial class ShellWindow : Window
                 // If we can't save settings, don't crash on close
             }
         }
-        
+
         base.OnClosing(e);
     }
-    
-    async System.Threading.Tasks.Task CheckCanCloseAsync(ShellViewModel viewModel)
+
+    async Task CheckCanCloseAsync(ShellViewModel viewModel)
     {
         if (await viewModel.CanCloseAsync())
         {
@@ -107,7 +105,7 @@ public partial class ShellWindow : Window
             Top = window.Position.Y;
             Left = window.Position.X;
             WindowState = window.WindowState;
-            
+
             if (window is ShellWindow shellWindow)
             {
                 var mainGrid = shellWindow.FindControl<Grid>("MainContentGrid");
@@ -117,10 +115,8 @@ public partial class ShellWindow : Window
                     LeftPanelWidth = Width / 2;
             }
             else
-            {
                 LeftPanelWidth = Width / 2;
-            }
-            
+
             _isNew = true;
         }
 
@@ -168,7 +164,7 @@ public partial class ShellWindow : Window
             window.Height = Height;
             window.Position = new PixelPoint((int)left, (int)top);
             window.WindowState = WindowState;
-            
+
             if (window is ShellWindow shellWindow)
             {
                 var mainGrid = shellWindow.FindControl<Grid>("MainContentGrid");
@@ -177,10 +173,10 @@ public partial class ShellWindow : Window
                     const double minLeftWidth = 400;
                     const double minRightWidth = 400;
                     const double splitterWidth = 4;
-                    
+
                     var maxLeftWidth = Width - splitterWidth - minRightWidth;
                     var clampedWidth = Math.Max(minLeftWidth, Math.Min(LeftPanelWidth, maxLeftWidth));
-                    
+
                     mainGrid.ColumnDefinitions[0].Width = new GridLength(clampedWidth, GridUnitType.Pixel);
                 }
             }

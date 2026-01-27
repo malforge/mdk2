@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
@@ -11,30 +10,33 @@ namespace Mdk.Hub.Features.Projects.NewProjectDialog;
 [ViewModelFor<NewProjectDialogView>]
 public class NewProjectDialogViewModel : OverlayModel
 {
-    string _projectName = "";
+    readonly RelayCommand _cancelCommand;
+
+    readonly RelayCommand _okCommand;
     string _location = "";
+    string _projectName = "";
     string _validationError = "";
     string _validationWarning = "";
 
     public NewProjectDialogViewModel(NewProjectDialogMessage message)
     {
         Message = message;
-        
+
         // Create commands first before setting properties that trigger validation
         _okCommand = new RelayCommand(Ok, CanOk);
         _cancelCommand = new RelayCommand(Cancel);
-        
+
         // Set default project name based on project type
-        ProjectName = message.ProjectType == ProjectType.IngameScript 
-            ? "MdkScriptProject" 
+        ProjectName = message.ProjectType == ProjectType.IngameScript
+            ? "MdkScriptProject"
             : "MdkModProject";
-        
+
         // Now set Location which will trigger validation and NotifyCanExecuteChanged
         Location = message.DefaultLocation;
     }
 
     public NewProjectDialogMessage Message { get; }
-    
+
     public NewProjectDialogResult? Result { get; private set; }
 
     public string ProjectName
@@ -71,7 +73,7 @@ public class NewProjectDialogViewModel : OverlayModel
         {
             if (string.IsNullOrWhiteSpace(ProjectName) || string.IsNullOrWhiteSpace(Location))
                 return "";
-            
+
             try
             {
                 return Path.Combine(Location, ProjectName);
@@ -95,10 +97,7 @@ public class NewProjectDialogViewModel : OverlayModel
         private set => SetProperty(ref _validationWarning, value);
     }
 
-    readonly RelayCommand _okCommand;
     public ICommand OkCommand => _okCommand;
-
-    readonly RelayCommand _cancelCommand;
     public ICommand CancelCommand => _cancelCommand;
 
     void ValidateInput()
@@ -142,21 +141,15 @@ public class NewProjectDialogViewModel : OverlayModel
 
         // Warnings (only show if no errors)
         if (ProjectName.Contains(' '))
-        {
             ValidationWarning = "Project name contains spaces. This may cause issues with some tools.";
-        }
         else if (ProjectName.Any(c => !char.IsLetterOrDigit(c) && c != '_' && c != '-' && c != '.'))
-        {
             ValidationWarning = "Project name contains special characters. Consider using only letters, numbers, underscores, hyphens, and periods.";
-        }
     }
 
-    bool CanOk()
-    {
-        return !string.IsNullOrWhiteSpace(ProjectName) 
-            && !string.IsNullOrWhiteSpace(Location)
-            && string.IsNullOrEmpty(ValidationError);
-    }
+    bool CanOk() =>
+        !string.IsNullOrWhiteSpace(ProjectName)
+        && !string.IsNullOrWhiteSpace(Location)
+        && string.IsNullOrEmpty(ValidationError);
 
     void Ok()
     {
@@ -169,7 +162,7 @@ public class NewProjectDialogViewModel : OverlayModel
             ProjectName = ProjectName.Trim(),
             Location = Location.Trim()
         };
-        
+
         Dismiss();
     }
 

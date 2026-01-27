@@ -9,38 +9,35 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.Snackbars;
 
 /// <summary>
-/// View model for a snackbar notification window.
+///     View model for a snackbar notification window.
 /// </summary>
 [ViewModelFor<SnackbarWindow>]
 public class SnackbarViewModel : ViewModel
 {
-    CancellationTokenSource? _timeoutCts;
     readonly RelayCommand _closeCommand;
-    
-    public string Message { get; set; } = string.Empty;
-    public IReadOnlyList<SnackbarActionViewModel> Actions { get; set; } = Array.Empty<SnackbarActionViewModel>();
-    public int Timeout { get; set; }
-    
-    public ICommand CloseCommand => _closeCommand;
+    CancellationTokenSource? _timeoutCts;
 
-    public event EventHandler? CloseRequested;
-    
     public SnackbarViewModel()
     {
         _closeCommand = new RelayCommand(Close);
     }
 
-    public void SetActions(IEnumerable<SnackbarAction> actions)
-    {
-        Actions = actions.Select(a => new SnackbarActionViewModel(a, CloseIfRequested)).ToList();
-    }
+    public string Message { get; set; } = string.Empty;
+    public IReadOnlyList<SnackbarActionViewModel> Actions { get; set; } = Array.Empty<SnackbarActionViewModel>();
+    public int Timeout { get; set; }
+
+    public ICommand CloseCommand => _closeCommand;
+
+    public event EventHandler? CloseRequested;
+
+    public void SetActions(IEnumerable<SnackbarAction> actions) => Actions = actions.Select(a => new SnackbarActionViewModel(a, CloseIfRequested)).ToList();
 
     void CloseIfRequested()
     {
         CancelTimeout();
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
-    
+
     public void StartTimeout()
     {
         if (Timeout > 0)
@@ -61,16 +58,13 @@ public class SnackbarViewModel : ViewModel
             });
         }
     }
-    
+
     public void CancelTimeout()
     {
         _timeoutCts?.Cancel();
         _timeoutCts?.Dispose();
         _timeoutCts = null;
     }
-    
-    void Close()
-    {
-        CloseIfRequested();
-    }
+
+    void Close() => CloseIfRequested();
 }

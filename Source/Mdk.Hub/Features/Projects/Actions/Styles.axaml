@@ -1,6 +1,5 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Section Title -->
     <Style Selector="TextBlock.section-title">
@@ -13,7 +12,7 @@
     <Style Selector="Border.create-hover-row">
         <Setter Property="Background" Value="Transparent" />
     </Style>
-    
+
     <Style Selector="Border.create-hover-row:pointerover">
         <Setter Property="Background" Value="#18ffffff" />
     </Style>

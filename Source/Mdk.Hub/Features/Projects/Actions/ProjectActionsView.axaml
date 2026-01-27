@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
-             xmlns:overview="clr-namespace:Mdk.Hub.Features.Projects.Overview"
              xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
              xmlns:options="clr-namespace:Mdk.Hub.Features.Projects.Options"
@@ -15,7 +14,7 @@
         <actions:BoolToDeploymentStatusConverter x:Key="BoolToDeploymentStatusConverter" />
         <actions:BoolToWarningBackgroundConverter x:Key="BoolToWarningBackgroundConverter" />
     </UserControl.Resources>
-    
+
     <Design.DataContext>
         <actions:ProjectActionsViewModel />
     </Design.DataContext>
@@ -37,7 +36,7 @@
                 </DataTemplate>
             </icons:ProjectTypeDefinition>
         </icons:SymbolSelector>
-        
+
         <!-- Create Project Action -->
         <DataTemplate DataType="actions:CreateProjectAction">
             <StackPanel Spacing="8" Margin="16,0">
@@ -50,15 +49,17 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Classes="create-hover-row" 
-                                    Padding="10" 
-                                    CornerRadius="4" 
+                            <Border Classes="create-hover-row"
+                                    Padding="10"
+                                    CornerRadius="4"
                                     Cursor="Hand"
                                     Tapped="OnCreateOptionTapped"
                                     Tag="{Binding}">
                                 <Grid ColumnDefinitions="Auto,*">
-                                    <ContentControl Content="{Binding ProjectType}" Width="32" Height="32" Grid.Column="0" />
-                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                                    <ContentControl Content="{Binding ProjectType}" Width="32" Height="32"
+                                                    Grid.Column="0" />
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                Spacing="1">
                                         <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" />
                                         <TextBlock Text="{Binding Description}" FontSize="11" Classes="very-muted" />
                                     </StackPanel>
@@ -67,19 +68,19 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                
+
                 <!-- Add Existing Project -->
-                <Border Classes="create-hover-row" 
-                        Padding="10" 
-                        CornerRadius="4" 
+                <Border Classes="create-hover-row"
+                        Padding="10"
+                        CornerRadius="4"
                         Cursor="Hand"
                         Tapped="OnAddExistingProjectTapped"
                         Tag="{Binding AddExistingAction}">
                     <Grid ColumnDefinitions="Auto,*">
-                        <i:Icon Value="fa-solid fa-folder-open" 
-                                FontSize="18" 
-                                Width="32" 
-                                Height="32" 
+                        <i:Icon Value="fa-solid fa-folder-open"
+                                FontSize="18"
+                                Width="32"
+                                Height="32"
                                 Grid.Column="0"
                                 VerticalAlignment="Center"
                                 HorizontalAlignment="Center" />
@@ -108,59 +109,59 @@
                         <TextBlock Classes="info-label" Text="{Binding ProjectTypeName}" />
                     </StackPanel>
                 </StackPanel>
-                
+
                 <!-- Configuration Warning -->
-                <Border Background="{StaticResource AccentDangerBrush}" 
+                <Border Background="{StaticResource AccentDangerBrush}"
                         Opacity="0.2"
-                        CornerRadius="4" 
+                        CornerRadius="4"
                         Padding="12"
                         IsVisible="{Binding ConfigurationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="⚠ Configuration Issues" 
-                                   Classes="danger" 
-                                   FontWeight="SemiBold" 
+                        <TextBlock Text="⚠ Configuration Issues"
+                                   Classes="danger"
+                                   FontWeight="SemiBold"
                                    FontSize="12" />
-                        <TextBlock Text="{Binding ConfigurationWarning}" 
+                        <TextBlock Text="{Binding ConfigurationWarning}"
                                    TextWrapping="Wrap"
                                    Classes="danger"
                                    FontSize="11" />
                     </StackPanel>
                 </Border>
-                
+
                 <!-- Info grid -->
                 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
                     <!-- Row 1: Deployment Status | Last Deployed -->
-                    <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4" 
+                    <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4"
                                 HorizontalAlignment="Left" VerticalAlignment="Top">
                         <TextBlock Classes="info-label" Text="Deployment Status:" />
-                        <TextBlock Classes="info-value" 
-                                   Text="{Binding IsDeployed, Converter={StaticResource BoolToDeploymentStatusConverter}}" 
+                        <TextBlock Classes="info-value"
+                                   Text="{Binding IsDeployed, Converter={StaticResource BoolToDeploymentStatusConverter}}"
                                    IsVisible="{Binding !DeploymentError}" />
-                        <TextBlock Classes="info-value danger" 
-                                   Text="{Binding DeploymentError}" 
+                        <TextBlock Classes="info-value danger"
+                                   Text="{Binding DeploymentError}"
                                    IsVisible="{Binding DeploymentError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
-                    
-                    <StackPanel Grid.Column="1" Grid.Row="0" Spacing="4" 
+
+                    <StackPanel Grid.Column="1" Grid.Row="0" Spacing="4"
                                 HorizontalAlignment="Left" VerticalAlignment="Top"
                                 IsVisible="{Binding IsDeployed}">
                         <TextBlock Classes="info-label" Text="Last Deployed:" />
                         <controls:DateTimeDisplay Value="{Binding LastDeployed}" />
                     </StackPanel>
-                    
+
                     <!-- Row 2: Last Changed (full width) -->
                     <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Spacing="4"
                                 HorizontalAlignment="Left" VerticalAlignment="Top">
                         <TextBlock Classes="info-label" Text="Last Changed:" />
-                        <controls:DateTimeDisplay Value="{Binding LastChanged}" 
+                        <controls:DateTimeDisplay Value="{Binding LastChanged}"
                                                   IsVisible="{Binding !LastChangedError}" />
-                        <TextBlock Classes="info-value danger" 
-                                   Text="{Binding LastChangedError}" 
+                        <TextBlock Classes="info-value danger"
+                                   Text="{Binding LastChangedError}"
                                    IsVisible="{Binding LastChangedError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
-                    
+
                     <!-- Row 3: Script Size (full width, highlighted if over limit) -->
-                    <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" 
+                    <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2"
                             IsVisible="{Binding IsScript}"
                             Background="{Binding IsScriptTooLarge, Converter={StaticResource BoolToWarningBackgroundConverter}}"
                             CornerRadius="4"
@@ -170,18 +171,20 @@
                         <StackPanel Spacing="4">
                             <TextBlock Classes="info-label" Text="Script Size:" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Classes="info-value" Text="{Binding ScriptSizeCharacters, StringFormat='{}{0:N0} characters'}" />
-                                <TextBlock Classes="info-value danger" 
-                                           Text="⚠ Exceeds SE limit (100,000 characters)" 
+                                <TextBlock Classes="info-value"
+                                           Text="{Binding ScriptSizeCharacters, StringFormat='{}{0:N0} characters'}" />
+                                <TextBlock Classes="info-value danger"
+                                           Text="⚠ Exceeds SE limit (100,000 characters)"
                                            FontWeight="Bold"
                                            IsVisible="{Binding IsScriptTooLarge}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
                 </Grid>
-                
+
                 <!-- Action toolbar -->
-                <Border Classes="action-toolbar" Padding="8" CornerRadius="4" Background="{StaticResource BorderLightColor}" Opacity="0.67">
+                <Border Classes="action-toolbar" Padding="8" CornerRadius="4"
+                        Background="{StaticResource BorderLightColor}" Opacity="0.67">
                     <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
                         <Button Classes="toolbar-button subtle" ToolTip.Tip="Open in IDE"
                                 Command="{Binding OpenInIdeCommand}">
@@ -218,16 +221,18 @@
 
         <!-- Project Action Button -->
         <DataTemplate DataType="actions:ProjectAction">
-            <Button Classes="action-button subtle" Content="{Binding Title}" HorizontalAlignment="Stretch" Margin="16,0" />
+            <Button Classes="action-button subtle" Content="{Binding Title}" HorizontalAlignment="Stretch"
+                    Margin="16,0" />
         </DataTemplate>
-        
+
         <!-- Update Packages Action -->
         <DataTemplate DataType="actions:UpdatePackagesAction">
             <Border Classes="action-item" Margin="16,0">
                 <StackPanel Spacing="8">
                     <TextBlock Classes="action-title" Text="MDK Package Updates" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock Classes="action-description" Text="Update MDK packages for this project or all projects" FontSize="12" />
-                    
+                    <TextBlock Classes="action-description" Text="Update MDK packages for this project or all projects"
+                               FontSize="12" />
+
                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
                         <Button Content="Update This Project"
                                 Command="{Binding UpdateThisProjectCommand}"
@@ -239,20 +244,20 @@
                 </StackPanel>
             </Border>
         </DataTemplate>
-        
+
         <!-- API Documentation Action -->
         <DataTemplate DataType="actions:ApiDocsAction">
-            <Button Classes="action-button subtle" 
-                    Command="{Binding ExecuteCommand}" 
-                    HorizontalAlignment="Stretch" 
+            <Button Classes="action-button subtle"
+                    Command="{Binding ExecuteCommand}"
+                    HorizontalAlignment="Stretch"
                     Margin="16,0"
                     Padding="10"
                     CornerRadius="4">
                 <Grid ColumnDefinitions="Auto,*">
-                    <i:Icon Value="{Binding Icon}" 
-                            FontSize="16" 
-                            Width="24" 
-                            Height="24" 
+                    <i:Icon Value="{Binding Icon}"
+                            FontSize="16"
+                            Width="24"
+                            Height="24"
                             Grid.Column="0"
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center" />
@@ -267,12 +272,12 @@
 
     <Grid RowDefinitions="Auto,*">
         <!-- Header bar with Global Settings and About buttons -->
-        <Border Grid.Row="0" 
+        <Border Grid.Row="0"
                 Height="40"
                 Margin="8"
                 Padding="8,0"
                 HorizontalAlignment="Stretch">
-            <StackPanel Orientation="Horizontal" 
+            <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         Spacing="4">
                 <Button Classes="subtle"
@@ -291,7 +296,7 @@
                 </Button>
             </StackPanel>
         </Border>
-        
+
         <!-- Main content -->
         <ScrollViewer Grid.Row="1">
             <ItemsControl ItemsSource="{Binding Actions}" Margin="0,16">
@@ -302,7 +307,7 @@
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
         </ScrollViewer>
-        
+
         <!-- Options Drawer (slides in from right) -->
         <Border x:Name="OptionsDrawer"
                 Grid.Row="0"
@@ -317,12 +322,12 @@
                 IsVisible="False"
                 RenderTransformOrigin="0.5,0.5">
             <Border.RenderTransform>
-                <TranslateTransform X="1000"/>
+                <TranslateTransform X="1000" />
             </Border.RenderTransform>
-            
+
             <Grid RowDefinitions="Auto,*">
                 <!-- Header with close button -->
-                <Border Grid.Row="0" 
+                <Border Grid.Row="0"
                         Classes="drawer-header"
                         Margin="-16,-16,-16,16">
                     <Grid ColumnDefinitions="*,Auto">
@@ -331,19 +336,19 @@
                                    FontSize="18"
                                    FontWeight="Bold"
                                    Classes="primary"
-                                   VerticalAlignment="Center"/>
+                                   VerticalAlignment="Center" />
                         <Button Grid.Column="1"
                                 Classes="subtle"
                                 Content="✕"
                                 FontSize="16"
                                 Padding="8,4"
                                 Click="OnCloseDrawerClick"
-                                ToolTip.Tip="Close"/>
+                                ToolTip.Tip="Close" />
                     </Grid>
                 </Border>
-                
+
                 <!-- Options content -->
-                <options:ProjectOptionsView Grid.Row="1" DataContext="{Binding OptionsViewModel}"/>
+                <options:ProjectOptionsView Grid.Row="1" DataContext="{Binding OptionsViewModel}" />
             </Grid>
         </Border>
     </Grid>

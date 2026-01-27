@@ -33,18 +33,18 @@
     <Grid>
         <!-- Easter Egg Layer -->
         <vm:EasterEgg x:Name="EasterEggControl" />
-        
+
         <Grid x:Name="MainContentGrid"
-              Classes="main-content" 
+              Classes="main-content"
               Classes.has-overlays="{Binding HasOverlays}"
               RowDefinitions="Auto,*">
-            
+
             <!-- Update notification bar (row 0) -->
-            <ContentControl Grid.Row="0" 
-                            Grid.Column="0" 
+            <ContentControl Grid.Row="0"
+                            Grid.Column="0"
                             Grid.ColumnSpan="3"
                             Content="{Binding UpdateNotificationBar}" />
-            
+
             <!-- Main content (row 1) -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
@@ -57,9 +57,9 @@
                 <ContentControl Grid.Column="2" Content="{Binding CurrentView}" />
             </Grid>
         </Grid>
-        
+
         <!-- Overlay Layer (blocking dialogs) -->
-        <ItemsControl Classes="overlay-content" 
+        <ItemsControl Classes="overlay-content"
                       Grid.Column="0"
                       Grid.Row="0"
                       IsVisible="{Binding HasOverlays}"
@@ -70,7 +70,7 @@
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
         </ItemsControl>
-        
+
         <!-- Toast Layer (non-blocking) -->
         <ItemsControl ItemsSource="{Binding ToastMessages}"
                       IsHitTestVisible="False"

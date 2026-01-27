@@ -1,11 +1,10 @@
 using System;
-using Velopack.Locators;
 using Velopack.Logging;
 
 namespace Mdk.Hub.Features.Diagnostics;
 
 /// <summary>
-/// Adapter that forwards Velopack logging to our ILogger implementation.
+///     Adapter that forwards Velopack logging to our ILogger implementation.
 /// </summary>
 internal class VelopackLoggerAdapter(ILogger hubLogger) : IVelopackLogger
 {

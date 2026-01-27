@@ -20,11 +20,11 @@
             <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}" />
             <Setter Property="Margin" Value="4" />
         </Style>
-        
+
 
         <Style Selector="^ controls|SelectableCard.project-item">
             <Setter Property="Margin" Value="8,4,8,4" />
-            
+
             <Style Selector="^.left">
                 <Setter Property="Margin" Value="8,4,4,4" />
             </Style>
@@ -39,15 +39,15 @@
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
-            
+
             <Style Selector="^:pointerover TextBlock.title">
                 <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}" />
             </Style>
-            
+
             <Style Selector="^:selected TextBlock.title">
                 <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}" />
             </Style>
-            
+
             <Style Selector="^ TextBlock.last-referenced">
                 <Setter Property="FontSize" Value="10" />
                 <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />

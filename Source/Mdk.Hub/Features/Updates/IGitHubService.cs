@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 namespace Mdk.Hub.Features.Updates;
 
 /// <summary>
-/// Service for querying GitHub repository information.
+///     Service for querying GitHub repository information.
 /// </summary>
 public interface IGitHubService
 {
     /// <summary>
-    /// Gets the latest release version from a GitHub repository.
+    ///     Gets the latest release version from a GitHub repository.
     /// </summary>
     /// <param name="owner">The repository owner (e.g., "malforge").</param>
     /// <param name="repo">The repository name (e.g., "mdk2").</param>

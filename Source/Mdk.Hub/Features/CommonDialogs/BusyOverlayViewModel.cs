@@ -8,11 +8,11 @@ namespace Mdk.Hub.Features.CommonDialogs;
 [ViewModelFor<BusyOverlayView>]
 public class BusyOverlayViewModel : OverlayModel
 {
+    CancellationTokenSource? _cancellationTokenSource;
+    bool _isCancellable;
+    bool _isIndeterminate = true;
     string _message;
     double _progress;
-    bool _isIndeterminate = true;
-    bool _isCancellable;
-    CancellationTokenSource? _cancellationTokenSource;
 
     public BusyOverlayViewModel(string message)
     {

@@ -22,7 +22,7 @@ public class SmartDateConverter : IValueConverter
     object? IValueConverter.ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 
     public string Convert(DateTime dateTime, CultureInfo culture) => Convert(new DateTimeOffset(dateTime), culture);
-    
+
     public string Convert(DateTimeOffset dateTimeOffset, CultureInfo culture)
     {
         // Rules:

@@ -5,14 +5,14 @@ using Avalonia.VisualTree;
 namespace Mdk.Hub.Framework;
 
 /// <summary>
-/// Behavior that automatically focuses the first focusable control when the parent control is loaded.
-/// Respects TabIndex ordering and only focuses visible, enabled controls.
+///     Behavior that automatically focuses the first focusable control when the parent control is loaded.
+///     Respects TabIndex ordering and only focuses visible, enabled controls.
 /// </summary>
 /// <param name="control">The parent control to search for focusable children.</param>
 public class InitialFocusBehavior(Control control) : Behavior(control)
 {
     /// <summary>
-    /// Called when the control is loaded. Finds and focuses the first focusable descendant.
+    ///     Called when the control is loaded. Finds and focuses the first focusable descendant.
     /// </summary>
     protected override void OnControlLoaded()
     {

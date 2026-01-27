@@ -37,22 +37,22 @@
                 Height="400">
             <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,Auto">
                 <!-- Icon on left -->
-                <ContentControl Content="{Binding Message.ProjectType}" 
-                                Width="64" 
-                                Height="64" 
-                                Grid.Column="0" 
+                <ContentControl Content="{Binding Message.ProjectType}"
+                                Width="64"
+                                Height="64"
+                                Grid.Column="0"
                                 Grid.Row="0"
                                 Margin="0,0,16,0"
                                 VerticalAlignment="Top" />
-                
+
                 <!-- Content on right -->
-                <StackPanel Grid.Column="1" 
+                <StackPanel Grid.Column="1"
                             Grid.Row="0"
                             Spacing="12">
                     <TextBlock Text="{Binding Message.Title}"
                                Classes="dialog-title"
                                Margin="0,0,0,8" />
-                    
+
                     <TextBlock Text="{Binding Message.Message}"
                                Classes="secondary"
                                FontSize="14"
@@ -60,7 +60,7 @@
                                Margin="0,0,0,16" />
 
                     <StackPanel Spacing="4">
-                        <TextBlock Text="Project Name" 
+                        <TextBlock Text="Project Name"
                                    Classes="secondary"
                                    FontSize="13" />
                         <TextBox Text="{Binding ProjectName}"
@@ -69,7 +69,7 @@
                     </StackPanel>
 
                     <StackPanel Spacing="4">
-                        <TextBlock Text="Location" 
+                        <TextBlock Text="Location"
                                    Classes="secondary"
                                    FontSize="13" />
                         <controls:FolderBrowserControl Path="{Binding Location}"
@@ -78,7 +78,7 @@
 
                     <!-- Preview of final path -->
                     <StackPanel Spacing="2">
-                        <TextBlock Text="Project will be created at:" 
+                        <TextBlock Text="Project will be created at:"
                                    Classes="secondary"
                                    FontSize="12" />
                         <TextBlock Text="{Binding FinalPath}"
@@ -97,7 +97,7 @@
                                    TextWrapping="Wrap"
                                    VerticalAlignment="Top"
                                    IsVisible="{Binding ValidationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                        
+
                         <TextBlock Text="{Binding ValidationWarning}"
                                    Foreground="{DynamicResource AccentWarningBrush}"
                                    FontWeight="Medium"
@@ -106,7 +106,7 @@
                                    IsVisible="{Binding ValidationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </Grid>
                 </StackPanel>
-                
+
                 <!-- Buttons at bottom -->
                 <StackPanel Grid.Column="1"
                             Grid.Row="1"

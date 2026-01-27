@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
@@ -10,18 +10,18 @@ using Mdk.Hub.Features.Shell;
 namespace Mdk.Hub.Features.Projects.Actions;
 
 /// <summary>
-/// Holds all state for a specific project (actions, options viewmodel, cached model, etc).
+///     Holds all state for a specific project (actions, options viewmodel, cached model, etc).
 /// </summary>
 class ProjectContext
 {
     readonly List<ActionItem> _allActions = new();
-    readonly ObservableCollection<ActionItem> _filteredActions = new();
-    readonly ProjectModel _project;
-    readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
-    readonly IProjectService _projectService;
-    readonly ProjectActionsViewModel _owner;
+    readonly ObservableCollection<ActionItem> _filteredActions = new();
     readonly Dictionary<string, ActionItem> _globalActionCache;
+    readonly ProjectActionsViewModel _owner;
+    readonly ProjectModel _project;
+    readonly IProjectService _projectService;
+    readonly IShell _shell;
 
     public ProjectContext(ProjectModel project, IShell shell, ICommonDialogs dialogs, IProjectService projectService, ProjectActionsViewModel owner, Dictionary<string, ActionItem> globalActionCache)
     {
@@ -31,17 +31,17 @@ class ProjectContext
         _projectService = projectService;
         _owner = owner;
         _globalActionCache = globalActionCache;
-        
+
         FilteredActions = new ReadOnlyObservableCollection<ActionItem>(_filteredActions);
-        
+
         BuildAllActions();
         UpdateFilteredActions();
     }
 
     public ReadOnlyObservableCollection<ActionItem> FilteredActions { get; }
-    
+
     public ProjectOptionsViewModel? OptionsViewModel { get; set; }
-    
+
     public ProjectModel? CachedModel { get; set; }
 
     void OnActionShouldShowChanged(object? sender, EventArgs e)
@@ -64,9 +64,9 @@ class ProjectContext
                     disposable.Dispose();
             }
         }
-        
+
         _allActions.Clear();
-        
+
         // Create Project action (if available)
         var availableTypes = new List<ProjectType>();
         if (_owner.CanMakeScript)
@@ -80,7 +80,7 @@ class ProjectContext
             {
                 var addExistingAction = new AddExistingProjectAction(_shell, _dialogs, _projectService);
                 createAction = new CreateProjectAction(availableTypes, addExistingAction, _projectService, _owner);
-                
+
                 // Cache if it's global and subscribe to it once
                 if (createAction.IsGlobal)
                 {
@@ -90,27 +90,27 @@ class ProjectContext
             }
             _allActions.Add(createAction);
         }
-        
+
         // Project-specific actions (new instances per project)
         var projectInfoAction = new ProjectInfoAction(_project, _projectService, _dialogs, _shell, _owner);
         projectInfoAction.ShouldShowChanged += OnActionShouldShowChanged;
         _allActions.Add(projectInfoAction);
-        
+
         // API docs action (below project info)
-        var apiDocsAction = new ApiDocsAction(_project, _projectService, App.Container.Resolve<Diagnostics.ILogger>());
+        var apiDocsAction = new ApiDocsAction(_project, _projectService, App.Container.Resolve<ILogger>());
         apiDocsAction.ShouldShowChanged += OnActionShouldShowChanged;
         _allActions.Add(apiDocsAction);
-        
+
         var updatePackagesAction = new UpdatePackagesAction(_project, _shell, _projectService);
         updatePackagesAction.ShouldShowChanged += OnActionShouldShowChanged;
         _allActions.Add(updatePackagesAction);
-        
+
         // Easter egg action
         var easterEggKey = typeof(EasterEggDismissAction).FullName!;
         if (!_globalActionCache.TryGetValue(easterEggKey, out var easterEggAction))
         {
             easterEggAction = new EasterEggDismissAction(_shell, _dialogs);
-            
+
             // Cache if it's global and subscribe to it once
             if (easterEggAction.IsGlobal)
             {
@@ -124,20 +124,16 @@ class ProjectContext
     public void UpdateFilteredActions(bool canMakeScript, bool canMakeMod, bool easterEggActive)
     {
         _filteredActions.Clear();
-        
+
         // Just add the actions that should show
         foreach (var action in _allActions)
         {
             if (action.ShouldShow(_project, canMakeScript, canMakeMod))
-            {
                 _filteredActions.Add(action);
-            }
         }
     }
-    
-    void UpdateFilteredActions()
-    {
+
+    void UpdateFilteredActions() =>
         // This overload is called from property changes
         UpdateFilteredActions(_owner.CanMakeScript, _owner.CanMakeMod, _shell.IsEasterEggActive);
-    }
 }

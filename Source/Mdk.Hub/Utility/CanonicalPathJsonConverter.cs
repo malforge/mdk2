@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Mdk.Hub.Utility;
 
 /// <summary>
-/// JSON converter for CanonicalPath that serializes/deserializes as a string.
+///     JSON converter for CanonicalPath that serializes/deserializes as a string.
 /// </summary>
 public class CanonicalPathJsonConverter : JsonConverter<CanonicalPath>
 {
@@ -15,8 +15,5 @@ public class CanonicalPathJsonConverter : JsonConverter<CanonicalPath>
         return string.IsNullOrEmpty(path) ? default : new CanonicalPath(path);
     }
 
-    public override void Write(Utf8JsonWriter writer, CanonicalPath value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.Value);
-    }
+    public override void Write(Utf8JsonWriter writer, CanonicalPath value, JsonSerializerOptions options) => writer.WriteStringValue(value.Value);
 }

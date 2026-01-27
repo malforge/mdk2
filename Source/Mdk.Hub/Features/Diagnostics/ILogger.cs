@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Mdk.Hub.Features.Diagnostics;
@@ -10,7 +11,7 @@ public interface ILogger
     void Warning(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
     void Error(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
     void Error(string message, Exception exception, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
-    
+
     string GetLogFilePath();
 }
 
@@ -31,6 +32,6 @@ public readonly struct LogEntry
     public int LineNumber { get; init; }
     public string MemberName { get; init; }
     public Exception? Exception { get; init; }
-    
-    public string FileName => System.IO.Path.GetFileName(FilePath);
+
+    public string FileName => Path.GetFileName(FilePath);
 }

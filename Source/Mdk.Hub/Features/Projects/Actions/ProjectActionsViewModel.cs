@@ -11,6 +11,7 @@ using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
@@ -21,40 +22,24 @@ namespace Mdk.Hub.Features.Projects.Actions;
 [ViewModelFor<ProjectActionsView>]
 public partial class ProjectActionsViewModel : ViewModel
 {
-    readonly Dictionary<string, ActionItem> _globalActionCache = new(); // Shared action instances
-    readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
-    readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
-    readonly IProjectService _projectService;
+    readonly Dictionary<string, ActionItem> _globalActionCache = new(); // Shared action instances
     readonly ILogger _logger;
-    UnsavedChangesHandle? _unsavedChangesHandle;
-    ProjectContext? _currentContext;
-    Shell.ShellViewModel? _shellViewModel;
+    readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
+    readonly IProjectService _projectService;
+    readonly IShell _shell;
     ImmutableArray<ActionItem> _actions = ImmutableArray<ActionItem>.Empty;
-    
-    public bool CanMakeScript => _projectService.State.CanMakeScript;
-    public bool CanMakeMod => _projectService.State.CanMakeMod;
-    
+    ProjectContext? _currentContext;
+
     bool _isOptionsDrawerOpen;
-    public bool IsOptionsDrawerOpen
-    {
-        get => _isOptionsDrawerOpen;
-        set => SetProperty(ref _isOptionsDrawerOpen, value);
-    }
-    
+
+    bool _isUpdatingDisplayedActions;
+
     CanonicalPath? _optionsProjectPath;
-    public CanonicalPath? OptionsProjectPath
-    {
-        get => _optionsProjectPath;
-        set => SetProperty(ref _optionsProjectPath, value);
-    }
-    
+
     ProjectOptionsViewModel? _optionsViewModel;
-    public ProjectOptionsViewModel? OptionsViewModel
-    {
-        get => _optionsViewModel;
-        set => SetProperty(ref _optionsViewModel, value);
-    }
+    ShellViewModel? _shellViewModel;
+    UnsavedChangesHandle? _unsavedChangesHandle;
 
     public ProjectActionsViewModel(IShell shell, ICommonDialogs dialogs, IProjectService projectService, ILogger logger)
     {
@@ -64,17 +49,30 @@ public partial class ProjectActionsViewModel : ViewModel
         _logger = logger;
         _projectService.StateChanged += OnProjectStateChanged;
         _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
-        
+
         ShowAboutCommand = new RelayCommand(ShowAbout);
         OpenGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);
     }
 
-    public void Initialize(Shell.ShellViewModel shell)
+    public bool CanMakeScript => _projectService.State.CanMakeScript;
+    public bool CanMakeMod => _projectService.State.CanMakeMod;
+
+    public bool IsOptionsDrawerOpen
     {
-        _shellViewModel = shell;
-        
-        // Handle initial state now that shell is initialized
-        OnProjectStateChanged(null, EventArgs.Empty);
+        get => _isOptionsDrawerOpen;
+        set => SetProperty(ref _isOptionsDrawerOpen, value);
+    }
+
+    public CanonicalPath? OptionsProjectPath
+    {
+        get => _optionsProjectPath;
+        set => SetProperty(ref _optionsProjectPath, value);
+    }
+
+    public ProjectOptionsViewModel? OptionsViewModel
+    {
+        get => _optionsViewModel;
+        set => SetProperty(ref _optionsViewModel, value);
     }
 
     public ImmutableArray<ActionItem> Actions
@@ -82,38 +80,44 @@ public partial class ProjectActionsViewModel : ViewModel
         get => _actions;
         private set => SetProperty(ref _actions, value);
     }
-    
+
     public ICommand ShowAboutCommand { get; }
     public ICommand OpenGlobalSettingsCommand { get; }
-    
+
+    public void Initialize(ShellViewModel shell)
+    {
+        _shellViewModel = shell;
+
+        // Handle initial state now that shell is initialized
+        OnProjectStateChanged(null, EventArgs.Empty);
+    }
+
     void ShowAbout()
     {
         var aboutViewModel = new AboutViewModel();
         _shell.AddOverlay(aboutViewModel);
     }
-    
+
     void OpenGlobalSettings()
     {
-        var viewModel = App.Container.Resolve<Mdk.Hub.Features.Settings.GlobalSettingsViewModel>();
+        var viewModel = App.Container.Resolve<GlobalSettingsViewModel>();
         _shell.AddOverlay(viewModel);
     }
-    
+
     public bool HasUnsavedChanges(string projectPath)
     {
         var canonicalPath = new CanonicalPath(projectPath);
         if (_projectContexts.TryGetValue(canonicalPath, out var context) && context.OptionsViewModel != null)
-        {
             return context.OptionsViewModel.HasUnsavedChanges;
-        }
         return false;
     }
-    
+
     public void ShowOptionsDrawer(string projectPath)
     {
         OptionsProjectPath = new CanonicalPath(projectPath);
-        
+
         var canonicalPath = new CanonicalPath(projectPath);
-        
+
         // Get or create context
         ProjectContext? context = null;
         var selectedProjectPath = _projectService.State.SelectedProject;
@@ -131,33 +135,29 @@ public partial class ProjectActionsViewModel : ViewModel
                 }
             }
         }
-        
+
         // Reuse cached ViewModel if it exists, otherwise create new
         if (context != null)
         {
             if (context.OptionsViewModel == null)
-            {
                 context.OptionsViewModel = new ProjectOptionsViewModel(projectPath, _projectService, _dialogs, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
-            }
-            
+
             OptionsViewModel = context.OptionsViewModel;
             IsOptionsDrawerOpen = true;
         }
     }
-    
+
     void UpdateProjectDirtyState(string projectPath)
     {
         // Find the project and update its HasUnsavedChanges flag
         ProjectModel? projectModel = null;
-        
+
         var canonicalPath = new CanonicalPath(projectPath);
-        
+
         // Try to get from context first
         if (_projectContexts.TryGetValue(canonicalPath, out var context))
-        {
             projectModel = context.CachedModel;
-        }
-        
+
         // If not cached in context, check if it's the currently selected project
         var selectedPath = _projectService.State.SelectedProject;
         if (projectModel == null && !selectedPath.IsEmpty() && selectedPath == canonicalPath && _shellViewModel != null)
@@ -167,27 +167,25 @@ public partial class ProjectActionsViewModel : ViewModel
             {
                 projectModel = _shellViewModel.GetOrCreateProjectModel(projectInfo);
                 if (context != null)
-                {
                     context.CachedModel = projectModel;
-                }
             }
         }
-        
+
         if (projectModel != null)
         {
-            bool hasChanges = HasUnsavedChanges(projectPath);
+            var hasChanges = HasUnsavedChanges(projectPath);
             projectModel.HasUnsavedChanges = hasChanges;
-            
+
             // Update unsaved changes registration
             UpdateUnsavedChangesRegistration();
         }
     }
-    
+
     void UpdateUnsavedChangesRegistration()
     {
         // Check if any projects have unsaved changes
-        bool anyUnsavedChanges = _projectContexts.Values.Any(ctx => ctx.OptionsViewModel?.HasUnsavedChanges == true);
-        
+        var anyUnsavedChanges = _projectContexts.Values.Any(ctx => ctx.OptionsViewModel?.HasUnsavedChanges == true);
+
         if (anyUnsavedChanges && _unsavedChangesHandle == null)
         {
             // Register unsaved changes - navigate to first project with unsaved changes
@@ -198,11 +196,9 @@ public partial class ProjectActionsViewModel : ViewModel
                     // Find first project with unsaved changes
                     var firstUnsaved = _projectContexts
                         .FirstOrDefault(kvp => kvp.Value.OptionsViewModel?.HasUnsavedChanges == true);
-                    
+
                     if (!firstUnsaved.Key.IsEmpty())
-                    {
                         _projectService.NavigateToProject(firstUnsaved.Key);
-                    }
                 });
         }
         else if (!anyUnsavedChanges && _unsavedChangesHandle != null)
@@ -212,33 +208,31 @@ public partial class ProjectActionsViewModel : ViewModel
             _unsavedChangesHandle = null;
         }
     }
-    
+
     void CloseOptionsDrawer(string projectPath, bool saved)
     {
         IsOptionsDrawerOpen = false;
-        
+
         var canonicalPath = new CanonicalPath(projectPath);
-        
+
         // Clear HasUnsavedChanges flag for the current project
         if (_projectContexts.TryGetValue(canonicalPath, out var context) && context.CachedModel != null)
-        {
             context.CachedModel.HasUnsavedChanges = false;
-        }
-        
+
         // Update unsaved changes registration
         UpdateUnsavedChangesRegistration();
-        
+
         // Remove the current project's cached viewmodels (whether saved or cancelled)
         if (context != null)
         {
             context.OptionsViewModel = null;
             context.CachedModel = null;
         }
-        
+
         OptionsViewModel = null;
         OptionsProjectPath = null;
     }
-    
+
     public void CloseOptionsDrawer()
     {
         // Just close the drawer without clearing any cache (ESC or X button)
@@ -258,56 +252,45 @@ public partial class ProjectActionsViewModel : ViewModel
             if (projectInfo != null)
             {
                 var selectedProject = _shellViewModel.GetOrCreateProjectModel(projectInfo);
-                
+
                 if (!_projectContexts.TryGetValue(selectedProjectPath, out var context))
                 {
                     context = new ProjectContext(selectedProject, _shell, _dialogs, _projectService, this, _globalActionCache);
                     _projectContexts[selectedProjectPath] = context;
                 }
                 _currentContext = context;
-                
+
                 // Handle drawer logic
                 if (IsOptionsDrawerOpen)
                 {
                     if (OptionsProjectPath != selectedProject.ProjectPath)
-                    {
                         ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
-                    }
                 }
                 else if (HasUnsavedChanges(selectedProject.ProjectPath.Value!))
-                {
                     ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
-                }
             }
         }
         else
-        {
             _currentContext = null;
-        }
-        
+
         UpdateDisplayedActions();
     }
 
-    void OnEasterEggActiveChanged(object? sender, EventArgs e)
-    {
-        UpdateDisplayedActions();
-    }
-    
-    bool _isUpdatingDisplayedActions;
+    void OnEasterEggActiveChanged(object? sender, EventArgs e) => UpdateDisplayedActions();
 
     public void OnContextActionsChanged()
     {
         // Called by ProjectContext when its filtered actions change
         // Context has already updated its filtered list, just refresh display
         if (!_isUpdatingDisplayedActions)
-            UpdateDisplayedActions(refreshFilters: false);
+            UpdateDisplayedActions(false);
     }
 
     void UpdateDisplayedActions(bool refreshFilters = true)
     {
         if (_isUpdatingDisplayedActions)
             return;
-            
+
         _isUpdatingDisplayedActions = true;
         try
         {
@@ -325,14 +308,14 @@ public partial class ProjectActionsViewModel : ViewModel
             // Build new list with separators
             var builder = ImmutableArray.CreateBuilder<ActionItem>();
             string? lastCategory = null;
-            bool isFirstAction = true;
-            
+            var isFirstAction = true;
+
             foreach (var action in _currentContext.FilteredActions)
             {
                 // Add separator if category changed
                 if (!isFirstAction && lastCategory != action.Category)
                     builder.Add(new CategorySeparator());
-                
+
                 builder.Add(action);
                 lastCategory = action.Category;
                 isFirstAction = false;
@@ -354,13 +337,9 @@ public partial class ProjectActionsViewModel : ViewModel
         return viewModel.Result;
     }
 
-    public async Task ShowBusyOverlayAsync(CommonDialogs.BusyOverlayViewModel busyOverlay)
-    {
-        await _shell.ShowOverlayAsync(busyOverlay);
-    }
+    public async Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay) => await _shell.ShowOverlayAsync(busyOverlay);
 
-    public async Task ShowErrorAsync(string title, string message)
-    {
+    public async Task ShowErrorAsync(string title, string message) =>
         await _dialogs.ShowAsync(new ConfirmationMessage
         {
             Title = title,
@@ -368,14 +347,11 @@ public partial class ProjectActionsViewModel : ViewModel
             OkText = "OK",
             CancelText = "Cancel"
         });
-    }
 
     public void OpenOptionsDrawer()
     {
         var selectedPath = _projectService.State.SelectedProject;
         if (!selectedPath.IsEmpty())
-        {
             ShowOptionsDrawer(selectedPath.Value!);
-        }
     }
 }

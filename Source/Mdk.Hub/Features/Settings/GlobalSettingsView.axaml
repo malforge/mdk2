@@ -21,7 +21,7 @@
                 <TextBlock Text="Global Settings"
                            Classes="page-title"
                            Margin="0,0,0,8" />
-                
+
                 <!-- Explanation -->
                 <TextBlock Classes="muted"
                            FontSize="12"
@@ -33,80 +33,80 @@
                 <!-- Custom Auto Script Output Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
-                               Classes="section-heading"/>
-                    
+                               Classes="section-heading" />
+
                     <TextBlock TextWrapping="Wrap"
                                Classes="help-text"
                                Margin="0,0,0,4">
                         When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
                     </TextBlock>
-                    
+
                     <controls:PathSelectorControl Path="{Binding CustomAutoScriptOutputPath}"
                                                   DefaultText="Default"
-                                                  HorizontalAlignment="Stretch"/>
+                                                  HorizontalAlignment="Stretch" />
                 </StackPanel>
 
                 <!-- Custom Auto Mod Output Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Output Path (Mods)"
-                               Classes="section-heading"/>
-                    
+                               Classes="section-heading" />
+
                     <TextBlock TextWrapping="Wrap"
                                Classes="help-text"
                                Margin="0,0,0,4">
                         When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
                     </TextBlock>
-                    
+
                     <controls:PathSelectorControl Path="{Binding CustomAutoModOutputPath}"
                                                   DefaultText="Default"
-                                                  HorizontalAlignment="Stretch"/>
+                                                  HorizontalAlignment="Stretch" />
                 </StackPanel>
 
                 <!-- Custom Auto Binary Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Binary Path"
-                               Classes="section-heading"/>
-                    
+                               Classes="section-heading" />
+
                     <TextBlock TextWrapping="Wrap"
                                Classes="help-text"
                                Margin="0,0,0,4">
                         When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
                     </TextBlock>
-                    
+
                     <controls:PathSelectorControl Path="{Binding CustomAutoBinaryPath}"
                                                   DefaultText="Default"
-                                                  HorizontalAlignment="Stretch"/>
+                                                  HorizontalAlignment="Stretch" />
                 </StackPanel>
 
                 <!-- Prerequisites Check -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Prerequisites"
-                               Classes="section-heading"/>
-                    
+                               Classes="section-heading" />
+
                     <TextBlock TextWrapping="Wrap"
                                Classes="help-text"
                                Margin="0,0,0,4">
                         Check if .NET SDK 9.0 and MDK² template package are installed.
                     </TextBlock>
-                    
+
                     <Button Content="Check Prerequisites"
                             Command="{Binding CheckPrerequisitesCommand}"
                             HorizontalAlignment="Left"
-                            MinWidth="150"/>
+                            MinWidth="150" />
                 </StackPanel>
 
                 <!-- Buttons -->
-                <StackPanel Orientation="Horizontal" 
+                <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="8"
                             Margin="0,8,0,0">
                     <Button Content="Save"
                             Command="{Binding SaveCommand}"
-                            MinWidth="75"/>
+                            MinWidth="75" />
                     <Button Content="Cancel"
                             Command="{Binding CancelCommand}"
                             Classes="subtle"
-                            MinWidth="75"/>
+                            MinWidth="75" />
                 </StackPanel>
             </StackPanel>
         </Border>

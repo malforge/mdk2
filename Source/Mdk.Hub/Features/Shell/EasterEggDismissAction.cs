@@ -11,9 +11,9 @@ namespace Mdk.Hub.Features.Shell;
 public class EasterEggDismissAction : ActionItem
 {
     readonly ICommonDialogs _dialogs;
-    readonly IShell _shell;
-    readonly AsyncRelayCommand _disableForTodayCommand;
     readonly AsyncRelayCommand _disableForeverCommand;
+    readonly AsyncRelayCommand _disableForTodayCommand;
+    readonly IShell _shell;
 
     public EasterEggDismissAction(IShell shell, ICommonDialogs dialogs)
     {

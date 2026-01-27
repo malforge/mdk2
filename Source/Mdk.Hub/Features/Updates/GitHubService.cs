@@ -11,23 +11,15 @@ using Mdk.Hub.Features.Diagnostics;
 namespace Mdk.Hub.Features.Updates;
 
 /// <summary>
-/// Service for querying GitHub repository information.
+///     Service for querying GitHub repository information.
 /// </summary>
 [Dependency<IGitHubService>]
 public class GitHubService(ILogger logger) : IGitHubService
 {
-    readonly ILogger _logger = logger;
     readonly HttpClient _httpClient = CreateHttpClient();
+    readonly ILogger _logger = logger;
 
-    static HttpClient CreateHttpClient()
-    {
-        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        // GitHub API requires User-Agent header
-        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("MDK-Hub", "2.0"));
-        return client;
-    }
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<string?> GetLatestReleaseAsync(string owner, string repo, CancellationToken cancellationToken = default)
     {
         _logger.Info($"Checking GitHub for latest release of {owner}/{repo}");
@@ -46,7 +38,7 @@ public class GitHubService(ILogger logger) : IGitHubService
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             var doc = JsonDocument.Parse(content);
-            
+
             var tagName = doc.RootElement.GetProperty("tag_name").GetString();
             if (tagName != null)
             {
@@ -72,5 +64,13 @@ public class GitHubService(ILogger logger) : IGitHubService
             _logger.Error($"Unexpected error checking {owner}/{repo}: {ex.Message}");
             return null;
         }
+    }
+
+    static HttpClient CreateHttpClient()
+    {
+        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        // GitHub API requires User-Agent header
+        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("MDK-Hub", "2.0"));
+        return client;
     }
 }

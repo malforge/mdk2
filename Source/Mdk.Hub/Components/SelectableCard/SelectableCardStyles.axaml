@@ -1,7 +1,7 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls">
-    
+
     <!-- SelectableCard - Reusable card control with selection state -->
     <Style Selector="controls|SelectableCard">
         <!-- Card-like appearance inspired by malforge.github.io -->
@@ -25,22 +25,22 @@
             <Setter Property="Background" Value="#EE16213e" />
             <Setter Property="BorderBrush" Value="#FF007bff" />
         </Style>
-        
+
         <!-- Needs Attention state - add a visual indicator without changing border -->
         <Style Selector="^:needs-attention">
             <!-- Border styling removed - will use badge indicator instead -->
         </Style>
-        
+
         <!-- Needs Attention + Selected - keep selected styling -->
         <Style Selector="^:needs-attention:selected">
             <!-- No special styling - selected state is clear enough -->
         </Style>
-        
+
         <!-- Disabled state -->
         <Style Selector="^:disabled">
             <Setter Property="Opacity" Value="0.4" />
             <Setter Property="Cursor" Value="Arrow" />
         </Style>
     </Style>
-    
+
 </Styles>

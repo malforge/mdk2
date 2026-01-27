@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
@@ -14,7 +13,7 @@ public partial class SnackbarWindow : Window
     public SnackbarWindow()
     {
         InitializeComponent();
-        
+
         Opened += OnOpened;
         Closing += OnClosing;
     }
@@ -26,11 +25,11 @@ public partial class SnackbarWindow : Window
             vm.CloseRequested += OnCloseRequested;
             vm.StartTimeout();
         }
-        
+
         // Fade in animation
         await FadeInAsync();
     }
-    
+
     void OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (DataContext is SnackbarViewModel vm)
@@ -39,20 +38,18 @@ public partial class SnackbarWindow : Window
             vm.CancelTimeout();
         }
     }
-    
-    async void OnCloseRequested(object? sender, EventArgs e)
-    {
+
+    async void OnCloseRequested(object? sender, EventArgs e) =>
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
             await FadeOutAsync();
             Close();
         });
-    }
-    
+
     async Task FadeInAsync()
     {
         Opacity = 0;
-        
+
         var animation = new Animation
         {
             Duration = TimeSpan.FromMilliseconds(300),
@@ -74,7 +71,7 @@ public partial class SnackbarWindow : Window
 
         await animation.RunAsync(this);
     }
-    
+
     async Task FadeOutAsync()
     {
         var animation = new Animation

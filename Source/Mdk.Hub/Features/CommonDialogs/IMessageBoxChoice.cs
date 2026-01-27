@@ -8,7 +8,7 @@ namespace Mdk.Hub.Features.CommonDialogs;
 ///     Provides a textual representation and an associated command for interacting with user selections.
 ///     Includes support for connecting the choice to a specific <see cref="MessageBoxViewModel" /> instance.
 /// </summary>
-public interface IMessageBoxChoice 
+public interface IMessageBoxChoice
 {
     /// <summary>
     ///     Gets the text representing the label or description of an option in a message box dialog.
@@ -23,15 +23,15 @@ public interface IMessageBoxChoice
     ICommand? Command { get; }
 
     /// <summary>
-    /// Indicates whether this choice is the default option in a message box dialog.
-    /// When set to true, this property designates the choice as the default action
-    /// triggered when the user presses the Enter key.
+    ///     Indicates whether this choice is the default option in a message box dialog.
+    ///     When set to true, this property designates the choice as the default action
+    ///     triggered when the user presses the Enter key.
     /// </summary>
     bool IsDefault { get; }
 
     /// <summary>
-    /// Indicates whether the choice represents a cancel action in a message box dialog.
-    /// If set to true, selecting this choice triggers the cancellation of the dialog action.
+    ///     Indicates whether the choice represents a cancel action in a message box dialog.
+    ///     If set to true, selecting this choice triggers the cancellation of the dialog action.
     /// </summary>
     bool IsCancel { get; }
 
@@ -44,12 +44,12 @@ public interface IMessageBoxChoice
     void Connect(MessageBoxViewModel model);
 
     /// <summary>
-    /// Disconnects the current <see cref="MessageBoxChoice" /> from the associated <see cref="MessageBoxViewModel" />,
-    /// effectively disabling interaction and value selection for this choice in the message box dialog.
+    ///     Disconnects the current <see cref="MessageBoxChoice" /> from the associated <see cref="MessageBoxViewModel" />,
+    ///     effectively disabling interaction and value selection for this choice in the message box dialog.
     /// </summary>
     /// <exception cref="InvalidOperationException">
-    /// Thrown when attempting to disconnect a choice that is not currently connected
-    /// or has already been disconnected.
+    ///     Thrown when attempting to disconnect a choice that is not currently connected
+    ///     or has already been disconnected.
     /// </exception>
     void Disconnect();
 }

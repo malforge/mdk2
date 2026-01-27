@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mdk.Hub.Utility;
+﻿namespace Mdk.Hub.Utility;
 
 /// <summary>
 ///     Provides a set of static methods for string operations that take into account human-centric factors such as
@@ -14,7 +12,10 @@ public static class HumanStringExtensions
     /// </summary>
     /// <param name="str1">The first string to compare.</param>
     /// <param name="str2">The second string to compare.</param>
-    /// <param name="ignoreCase">A value indicating whether to ignore case differences during comparison. Default is <c>true</c>.</param>
+    /// <param name="ignoreCase">
+    ///     A value indicating whether to ignore case differences during comparison. Default is
+    ///     <c>true</c>.
+    /// </param>
     /// <returns><c>true</c> if the strings are considered equal based on the specified comparison; otherwise, <c>false</c>.</returns>
     public static bool EqualsWhileHumanAware(this string? str1, string? str2, bool ignoreCase = true)
     {

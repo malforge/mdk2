@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -16,10 +15,10 @@ namespace Mdk.Hub.Features.Projects.Actions;
 
 public class UpdatePackagesAction : ActionItem, IDisposable
 {
-    readonly AsyncRelayCommand _updateThisProjectCommand;
-    readonly AsyncRelayCommand _updateAllProjectsCommand;
-    readonly IShell _shell;
     readonly IProjectService _projectService;
+    readonly IShell _shell;
+    readonly AsyncRelayCommand _updateAllProjectsCommand;
+    readonly AsyncRelayCommand _updateThisProjectCommand;
     ProjectModel? _project;
 
     public UpdatePackagesAction(ProjectModel project, IShell shell, IProjectService projectService)
@@ -34,23 +33,9 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
     public override string Category => "Updates";
 
-    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
-    {
-        // Only show if a project is selected and it needs updates
-        return selectedProject is ProjectModel model && model.NeedsUpdate;
-    }
-
     public ICommand UpdateThisProjectCommand => _updateThisProjectCommand;
     public ICommand UpdateAllProjectsCommand => _updateAllProjectsCommand;
 
-    void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(ProjectModel.NeedsUpdate))
-        {
-            RaiseShouldShowChanged();
-        }
-    }
-    
     public void Dispose()
     {
         if (_project != null)
@@ -58,6 +43,16 @@ public class UpdatePackagesAction : ActionItem, IDisposable
             _project.PropertyChanged -= OnProjectPropertyChanged;
             _project = null;
         }
+    }
+
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod) =>
+        // Only show if a project is selected and it needs updates
+        selectedProject is ProjectModel model && model.NeedsUpdate;
+
+    void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProjectModel.NeedsUpdate))
+            RaiseShouldShowChanged();
     }
 
     async Task UpdateThisProjectAsync()
@@ -72,13 +67,11 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         {
             // Try to use cached updates first (from background checker)
             var updates = _projectService.GetCachedUpdates(_project.ProjectPath);
-            
+
             // If not cached, query NuGet
             if (updates == null)
-            {
                 updates = await _projectService.CheckForPackageUpdatesAsync(_project.ProjectPath);
-            }
-            
+
             if (updates.Count == 0)
             {
                 busyOverlay.Message = "No updates available";
@@ -87,19 +80,17 @@ public class UpdatePackagesAction : ActionItem, IDisposable
             }
 
             busyOverlay.Message = $"Updating {updates.Count} package(s)...";
-            
+
             // Update packages
             var success = await _projectService.UpdatePackagesAsync(_project.ProjectPath, updates);
-            
+
             if (success)
             {
                 busyOverlay.Message = "Packages updated successfully!";
                 await Task.Delay(1500);
             }
             else
-            {
                 await ShowErrorAsync("Update Failed", "Failed to update packages. Check the log for details.");
-            }
         }
         finally
         {
@@ -137,14 +128,12 @@ public class UpdatePackagesAction : ActionItem, IDisposable
                 {
                     // Try to use cached updates first (from background checker)
                     var updates = _projectService.GetCachedUpdates(projectInfo.ProjectPath);
-                    
+
                     // If not cached, query NuGet
                     if (updates == null)
-                    {
                         updates = await _projectService.CheckForPackageUpdatesAsync(projectInfo.ProjectPath, busyOverlay.CancellationToken);
-                    }
-                    
-                    return (projectInfo, updates, error: (string?)null);
+
+                    return (projectInfo, updates, error: null);
                 }
                 catch (OperationCanceledException)
                 {
@@ -181,10 +170,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
             if (wasCancelled)
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    busyOverlay.Message = "Cancelled";
-                });
+                await Dispatcher.UIThread.InvokeAsync(() => { busyOverlay.Message = "Cancelled"; });
                 await Task.Delay(1000);
                 return;
             }
@@ -193,9 +179,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
             // Collect any check failures
             foreach (var (projectInfo, _, error) in checkResults.Where(r => r.error != null))
-            {
                 failures.Add((projectInfo.Name, error!));
-            }
 
             // Phase 2: Update projects sequentially (to avoid overwhelming the system)
             var projectsWithUpdates = checkResults
@@ -204,24 +188,16 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
             if (projectsWithUpdates.Count == 0)
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    busyOverlay.Message = failures.Count > 0 ? "Check failed" : "No updates available";
-                });
+                await Dispatcher.UIThread.InvokeAsync(() => { busyOverlay.Message = failures.Count > 0 ? "Check failed" : "No updates available"; });
                 await Task.Delay(1500);
-                
+
                 if (failures.Count == 0)
-                {
                     _shell.ShowToast("All projects are up to date");
-                }
-                
+
                 return;
             }
 
-            await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                busyOverlay.Message = $"Updating {projectsWithUpdates.Count} project(s)...";
-            });
+            await Dispatcher.UIThread.InvokeAsync(() => { busyOverlay.Message = $"Updating {projectsWithUpdates.Count} project(s)..."; });
 
             var completedCount = 0;
             foreach (var (projectInfo, updates, _) in projectsWithUpdates)
@@ -235,17 +211,12 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
                 try
                 {
-                    await Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        busyOverlay.Message = $"Updating {projectInfo.Name}... ({completedCount + 1}/{projectsWithUpdates.Count})";
-                    });
-                    
+                    await Dispatcher.UIThread.InvokeAsync(() => { busyOverlay.Message = $"Updating {projectInfo.Name}... ({completedCount + 1}/{projectsWithUpdates.Count})"; });
+
                     var success = await _projectService.UpdatePackagesAsync(projectInfo.ProjectPath, updates, busyOverlay.CancellationToken);
-                    
+
                     if (!success)
-                    {
                         failures.Add((projectInfo.Name, "Failed to update packages"));
-                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -259,36 +230,25 @@ public class UpdatePackagesAction : ActionItem, IDisposable
                 finally
                 {
                     completedCount++;
-                    var progress = 0.5 + ((double)completedCount / projectsWithUpdates.Count * 0.5); // Second 50% is updating
-                    await Dispatcher.UIThread.InvokeAsync(() =>
-                    {
-                        busyOverlay.Progress = progress;
-                    });
+                    var progress = 0.5 + (double)completedCount / projectsWithUpdates.Count * 0.5; // Second 50% is updating
+                    await Dispatcher.UIThread.InvokeAsync(() => { busyOverlay.Progress = progress; });
                 }
             }
 
             // Show results
             if (wasCancelled)
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    busyOverlay.Message = $"Cancelled after updating {completedCount}/{projectsWithUpdates.Count} project(s)";
-                });
+                await Dispatcher.UIThread.InvokeAsync(() => { busyOverlay.Message = $"Cancelled after updating {completedCount}/{projectsWithUpdates.Count} project(s)"; });
                 await Task.Delay(1500);
             }
             else
             {
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    busyOverlay.Message = "Update complete!";
-                });
+                await Dispatcher.UIThread.InvokeAsync(() => { busyOverlay.Message = "Update complete!"; });
                 await Task.Delay(1000);
             }
-            
+
             if (failures.Count == 0 && !wasCancelled)
-            {
                 _shell.ShowToast($"Successfully updated {completedCount} project(s)");
-            }
             else if (failures.Count > 0)
             {
                 // Show errors only if there were actual failures
@@ -297,8 +257,8 @@ public class UpdatePackagesAction : ActionItem, IDisposable
                     // Partial success
                     var errorSummary = string.Join(Environment.NewLine, failures.Select(f => $"- {f.projectName}: {f.error}"));
                     await ShowErrorWithDetailsAsync(
-                        "Partial Update Success", 
-                        $"Updated {completedCount - failures.Count} project(s), but {failures.Count} failed:", 
+                        "Partial Update Success",
+                        $"Updated {completedCount - failures.Count} project(s), but {failures.Count} failed:",
                         errorSummary);
                 }
                 else
@@ -306,8 +266,8 @@ public class UpdatePackagesAction : ActionItem, IDisposable
                     // Total failure
                     var errorSummary = string.Join(Environment.NewLine, failures.Select(f => $"- {f.projectName}: {f.error}"));
                     await ShowErrorWithDetailsAsync(
-                        "Update Failed", 
-                        $"Failed to update all {failures.Count} project(s):", 
+                        "Update Failed",
+                        $"Failed to update all {failures.Count} project(s):",
                         errorSummary);
                 }
             }
@@ -345,16 +305,16 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
         var errorOutput = await process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();
-        
+
         if (process.ExitCode != 0)
         {
             var output = await process.StandardOutput.ReadToEndAsync();
             var fullError = string.IsNullOrWhiteSpace(errorOutput) ? output : errorOutput;
-            
+
             // "no versions available" means package doesn't exist or is already latest - not really an error
             if (fullError.Contains("no versions available", StringComparison.OrdinalIgnoreCase))
                 return (true, string.Empty);
-            
+
             return (false, fullError);
         }
 

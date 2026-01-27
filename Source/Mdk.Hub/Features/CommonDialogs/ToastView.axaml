@@ -9,7 +9,7 @@
              HorizontalAlignment="Center"
              VerticalAlignment="Bottom"
              Background="Transparent">
-    
+
     <UserControl.Styles>
         <Style Selector="Border.toast">
             <Style.Animations>
@@ -28,7 +28,7 @@
             </Style.Animations>
         </Style>
     </UserControl.Styles>
-    
+
     <Border Classes="toast"
             Background="{StaticResource BackgroundDialogBrush}"
             Opacity="0.93"

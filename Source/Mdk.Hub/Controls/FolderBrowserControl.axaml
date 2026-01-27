@@ -7,13 +7,13 @@
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="35"
              x:Class="Mdk.Hub.Controls.FolderBrowserControl"
              x:DataType="controls:FolderBrowserControl">
-    
+
     <Grid ColumnDefinitions="*,Auto">
         <TextBox Grid.Column="0"
                  Text="{Binding Path, RelativeSource={RelativeSource AncestorType=controls:FolderBrowserControl}, Mode=TwoWay}"
                  Watermark="{Binding Watermark, RelativeSource={RelativeSource AncestorType=controls:FolderBrowserControl}}"
                  VerticalAlignment="Stretch" />
-        
+
         <Button Grid.Column="1"
                 Margin="4,0,0,0"
                 Padding="8,0"
@@ -22,5 +22,5 @@
             <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
         </Button>
     </Grid>
-    
+
 </UserControl>

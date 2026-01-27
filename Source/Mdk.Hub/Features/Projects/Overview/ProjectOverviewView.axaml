@@ -34,12 +34,12 @@
         </icons:SymbolSelector>
 
         <DataTemplate DataType="overview:ProjectModel">
-            <controls:SelectableCard Classes="project-item" 
-                                   HorizontalAlignment="Stretch"
-                                   IsSelected="{Binding IsSelected}"
-                                   NeedsAttention="{Binding NeedsAttention}"
-                                   Command="{Binding SelectCommand}"
-                                   CommandParameter="{Binding}">
+            <controls:SelectableCard Classes="project-item"
+                                     HorizontalAlignment="Stretch"
+                                     IsSelected="{Binding IsSelected}"
+                                     NeedsAttention="{Binding NeedsAttention}"
+                                     Command="{Binding SelectCommand}"
+                                     CommandParameter="{Binding}">
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <ContentControl Classes="project-icon"
                                     Content="{Binding Type}"
@@ -62,7 +62,7 @@
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Bottom"
                                 IsVisible="{Binding NeedsUpdate}" />
-                            
+
                             <!-- Last referenced date -->
                             <TextBlock
                                 Grid.Column="1"
@@ -71,10 +71,10 @@
                                 Margin="0,2,0,0" />
                         </Grid>
                     </Grid>
-                    
+
                     <!-- Needs Attention Badge with Pulse Animation -->
-                    <Ellipse Grid.Column="2" 
-                             Width="10" 
+                    <Ellipse Grid.Column="2"
+                             Width="10"
                              Height="10"
                              Fill="{StaticResource AccentWarningBrush}"
                              VerticalAlignment="Center"
@@ -86,29 +86,29 @@
                                 <Style.Animations>
                                     <Animation Duration="0:0:1.5" IterationCount="Infinite">
                                         <KeyFrame Cue="0%">
-                                            <Setter Property="Opacity" Value="1.0"/>
+                                            <Setter Property="Opacity" Value="1.0" />
                                         </KeyFrame>
                                         <KeyFrame Cue="50%">
-                                            <Setter Property="Opacity" Value="0.3"/>
+                                            <Setter Property="Opacity" Value="0.3" />
                                         </KeyFrame>
                                         <KeyFrame Cue="100%">
-                                            <Setter Property="Opacity" Value="1.0"/>
+                                            <Setter Property="Opacity" Value="1.0" />
                                         </KeyFrame>
                                     </Animation>
                                 </Style.Animations>
                             </Style>
                         </Ellipse.Styles>
                     </Ellipse>
-                    
+
                     <!-- Unsaved Changes Indicator -->
-                    <Ellipse Grid.Column="2" 
-                             Width="8" 
+                    <Ellipse Grid.Column="2"
+                             Width="8"
                              Height="8"
                              Classes="warning-indicator"
                              VerticalAlignment="Center"
                              Margin="8,0,0,0"
                              IsVisible="{Binding HasUnsavedChanges}"
-                             ToolTip.Tip="Unsaved changes"/>
+                             ToolTip.Tip="Unsaved changes" />
                 </Grid>
             </controls:SelectableCard>
         </DataTemplate>
@@ -132,7 +132,7 @@
             Command="{Binding ClearSearchCommand}">
             <avalonia:Icon Value="fa-solid fa-xmark" Width="16" Height="16" />
         </Button>
-            
+
         <RadioButton
             Grid.Row="0"
             Grid.Column="1"

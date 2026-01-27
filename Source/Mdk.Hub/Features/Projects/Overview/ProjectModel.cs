@@ -18,9 +18,9 @@ public class ProjectModel : ViewModel
     DateTimeOffset _lastReferenced;
     string _name;
     bool _needsAttention;
-    ProjectType _type;
     bool _needsUpdate;
     ICommand? _selectCommand;
+    ProjectType _type;
     int _updateCount;
 
     public ProjectModel(ProjectType type, string name, CanonicalPath projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)

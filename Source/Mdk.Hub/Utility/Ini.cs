@@ -3,27 +3,28 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using Mdk.Hub.Features.Diagnostics;
 
 namespace Mdk.Hub.Utility;
 
 /// <summary>
-/// A simple, immutable INI file reader and writer.
+///     A simple, immutable INI file reader and writer.
 /// </summary>
 public class Ini
 {
     readonly ImmutableDictionary<string, Section> _sections;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Ini"/> class.
+    ///     Initializes a new instance of the <see cref="Ini" /> class.
     /// </summary>
     /// <param name="trailingTrivia"></param>
     public Ini(string? trailingTrivia = null)
         : this(ImmutableDictionary<string, Section>.Empty, trailingTrivia) { }
-    
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="Ini"/> class.
+    ///     Initializes a new instance of the <see cref="Ini" /> class.
     /// </summary>
     /// <param name="sections"></param>
     /// <param name="trailingTrivia"></param>
@@ -31,7 +32,7 @@ public class Ini
         : this(sections.ToImmutableDictionary(s => s.Name, s => s, StringComparer.OrdinalIgnoreCase), trailingTrivia) { }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Ini"/> class.
+    ///     Initializes a new instance of the <see cref="Ini" /> class.
     /// </summary>
     /// <param name="sections"></param>
     /// <param name="trailingTrivia"></param>
@@ -42,12 +43,12 @@ public class Ini
     }
 
     /// <summary>
-    /// Gets an optional trailing comment (or whitespace) for the INI file.
+    ///     Gets an optional trailing comment (or whitespace) for the INI file.
     /// </summary>
     public string? TrailingTrivia { get; }
 
     /// <summary>
-    /// Gets a specific section by name.
+    ///     Gets a specific section by name.
     /// </summary>
     /// <param name="section"></param>
     public Section this[string section]
@@ -61,20 +62,20 @@ public class Ini
     }
 
     /// <summary>
-    /// Creates a clone of the current instance with the specified trailing comment.
+    ///     Creates a clone of the current instance with the specified trailing comment.
     /// </summary>
     /// <param name="trivia"></param>
     /// <returns></returns>
     public Ini WithTrailingTrivia(string trivia) => new(_sections, trivia);
 
     /// <summary>
-    /// Creates a clone of the current instance without a trailing comment.
+    ///     Creates a clone of the current instance without a trailing comment.
     /// </summary>
     /// <returns></returns>
     public Ini WithoutTrailingTrivia() => new(_sections);
 
     /// <summary>
-    /// Creates a new <see cref="Ini"/> instance from the specified file.
+    ///     Creates a new <see cref="Ini" /> instance from the specified file.
     /// </summary>
     /// <param name="fileName"></param>
     /// <returns></returns>
@@ -82,23 +83,23 @@ public class Ini
     public static Ini FromFile(string fileName)
     {
         ArgumentNullException.ThrowIfNull(fileName);
-        var ini = System.IO.File.ReadAllText(fileName);
+        var ini = File.ReadAllText(fileName);
         if (!TryParse(ini, out var result))
             throw new ArgumentException("Invalid INI file format.", nameof(fileName));
         return result;
     }
-    
+
     /// <summary>
-    /// Attempts to parse the specified INI file content.
+    ///     Attempts to parse the specified INI file content.
     /// </summary>
     /// <param name="ini"></param>
     /// <param name="result"></param>
     /// <returns></returns>
     public static bool TryParse(string? ini, out Ini result) =>
         TryParse(ini, null, out result);
-    
+
     /// <summary>
-    /// Attempts to parse the specified INI file content with optional diagnostic logging.
+    ///     Attempts to parse the specified INI file content with optional diagnostic logging.
     /// </summary>
     /// <param name="ini"></param>
     /// <param name="logger"></param>
@@ -111,7 +112,7 @@ public class Ini
             result = new Ini(ImmutableDictionary<string, Section>.Empty);
             return false;
         }
-        
+
         var sections = new List<Section>();
         Section? currentSection = null;
         StringBuilder comment = new();
@@ -130,8 +131,9 @@ public class Ini
                 line = line[..^1];
             return start < text.Length;
         }
-        bool addNewline = false;
-        
+
+        var addNewline = false;
+
         var index = 0;
         var lineNumber = 0;
         while (tryReadLine(ini, ref index, out var line))
@@ -196,14 +198,14 @@ public class Ini
     }
 
     /// <summary>
-    /// Creates a clone of the current instance with the specified section.
+    ///     Creates a clone of the current instance with the specified section.
     /// </summary>
     /// <param name="section"></param>
     /// <returns></returns>
     public Ini WithSection(Section section) => new(_sections.SetItem(section.Name, section));
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified section.
+    ///     Creates a clone of the current instance with the specified section.
     /// </summary>
     /// <param name="name"></param>
     /// <param name="buildSection"></param>
@@ -211,7 +213,7 @@ public class Ini
     public Ini WithSection(string name, Func<Section, Section> buildSection) => new(_sections.SetItem(name, buildSection(this[name])));
 
     /// <summary>
-    /// Creates a clone of the current instance with the specified section.
+    ///     Creates a clone of the current instance with the specified section.
     /// </summary>
     /// <param name="name"></param>
     /// <param name="keys"></param>
@@ -219,7 +221,7 @@ public class Ini
     public Ini WithSection(string name, IEnumerable<Key> keys) => new(_sections.SetItem(name, new Section(name, keys)));
 
     /// <summary>
-    /// Creates a clone of the current instance with the specified section.
+    ///     Creates a clone of the current instance with the specified section.
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
@@ -233,14 +235,14 @@ public class Ini
     }
 
     /// <summary>
-    /// Creates a clone of the current instance without the specified section.
+    ///     Creates a clone of the current instance without the specified section.
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
     public Ini WithoutSection(string name) => new(_sections.Remove(name));
 
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="key"></param>
@@ -253,7 +255,7 @@ public class Ini
     }
 
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -267,7 +269,7 @@ public class Ini
     }
 
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -275,9 +277,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey<T>(string section, string name, T value) where T : Enum
         => WithKey(section, name, value.ToString());
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -285,9 +287,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, bool value)
         => WithKey(section, name, value ? "true" : "false");
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -295,9 +297,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, int value)
         => WithKey(section, name, value.ToString());
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -305,9 +307,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, long value)
         => WithKey(section, name, value.ToString());
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -315,9 +317,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, short value)
         => WithKey(section, name, value.ToString());
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -325,9 +327,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, byte value)
         => WithKey(section, name, value.ToString());
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -335,9 +337,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, sbyte value)
         => WithKey(section, name, value.ToString());
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -345,9 +347,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, char value)
         => WithKey(section, name, value.ToString());
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -355,9 +357,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, float value)
         => WithKey(section, name, value.ToString(CultureInfo.InvariantCulture));
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -365,9 +367,9 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, double value)
         => WithKey(section, name, value.ToString(CultureInfo.InvariantCulture));
-    
+
     /// <summary>
-    /// Creates a clone of the current instance with the specified key.
+    ///     Creates a clone of the current instance with the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -377,7 +379,7 @@ public class Ini
         => WithKey(section, name, value.ToString(CultureInfo.InvariantCulture));
 
     /// <summary>
-    /// Creates a clone of the current instance without the specified key.
+    ///     Creates a clone of the current instance without the specified key.
     /// </summary>
     /// <param name="section"></param>
     /// <param name="name"></param>
@@ -411,12 +413,12 @@ public class Ini
     }
 
     /// <summary>
-    /// A section in an INI file.
+    ///     A section in an INI file.
     /// </summary>
     public readonly struct Section
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Section"/> class.
+        ///     Initializes a new instance of the <see cref="Section" /> class.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="leadingComment"></param>
@@ -424,7 +426,7 @@ public class Ini
             : this(name, ImmutableDictionary<string, Key>.Empty, leadingComment) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Section"/> class.
+        ///     Initializes a new instance of the <see cref="Section" /> class.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="keys"></param>
@@ -433,7 +435,7 @@ public class Ini
             : this(name, keys.ToImmutableDictionary(k => k.Name, k => k, StringComparer.OrdinalIgnoreCase), leadingComment) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Section"/> class.
+        ///     Initializes a new instance of the <see cref="Section" /> class.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="keys"></param>
@@ -446,22 +448,22 @@ public class Ini
         }
 
         /// <summary>
-        /// Gets an optional leading comment (or whitespace) for the section.
+        ///     Gets an optional leading comment (or whitespace) for the section.
         /// </summary>
         public string? LeadingComment { get; }
-        
+
         /// <summary>
-        /// Gets the name of the section.
+        ///     Gets the name of the section.
         /// </summary>
         public string Name { get; }
-        
+
         /// <summary>
-        /// Gets the keys in the section.
+        ///     Gets the keys in the section.
         /// </summary>
         public ImmutableDictionary<string, Key> Keys { get; }
 
         /// <summary>
-        /// Gets a specific key by name.
+        ///     Gets a specific key by name.
         /// </summary>
         /// <param name="key"></param>
         public Key this[string key]
@@ -475,14 +477,14 @@ public class Ini
         }
 
         /// <summary>
-        /// Creates a clone of the current instance with the specified key.
+        ///     Creates a clone of the current instance with the specified key.
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
         public Section WithKey(Key key) => new(Name, Keys.SetItem(key.Name, key), LeadingComment);
 
         /// <summary>
-        /// Creates a clone of the current instance with the specified key.
+        ///     Creates a clone of the current instance with the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -490,27 +492,27 @@ public class Ini
         public Section WithKey(string name, string value) => new(Name, Keys.SetItem(name, new Key(name, value, null)), LeadingComment);
 
         /// <summary>
-        /// Creates a clone of the current instance without the specified key.
+        ///     Creates a clone of the current instance without the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
         public Section WithoutKey(string name) => new(Name, Keys.Remove(name), LeadingComment);
 
         /// <summary>
-        /// Creates a clone of the current instance with the specified leading comment.
+        ///     Creates a clone of the current instance with the specified leading comment.
         /// </summary>
         /// <param name="comment"></param>
         /// <returns></returns>
         public Section WithComment(string comment) => new(Name, Keys, comment);
 
         /// <summary>
-        /// Creates a clone of the current instance without a leading comment.
+        ///     Creates a clone of the current instance without a leading comment.
         /// </summary>
         /// <returns></returns>
         public Section WithoutComment() => new(Name, Keys);
 
         /// <summary>
-        /// Attempts to get the specified key.
+        ///     Attempts to get the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="key"></param>
@@ -525,9 +527,9 @@ public class Ini
             key = new Key(name, null, null);
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -542,9 +544,9 @@ public class Ini
             value = false;
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -559,9 +561,9 @@ public class Ini
             value = string.Empty;
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -576,9 +578,9 @@ public class Ini
             value = 0;
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -593,9 +595,9 @@ public class Ini
             value = 0;
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -610,9 +612,9 @@ public class Ini
             value = 0;
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -627,9 +629,9 @@ public class Ini
             value = 0;
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -644,9 +646,9 @@ public class Ini
             value = 0;
             return false;
         }
-        
+
         /// <summary>
-        /// Attempts to get the value of the specified key.
+        ///     Attempts to get the value of the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -664,7 +666,7 @@ public class Ini
         }
 
         /// <summary>
-        /// Determines whether the section contains the specified key.
+        ///     Determines whether the section contains the specified key.
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
@@ -672,17 +674,17 @@ public class Ini
     }
 
     /// <summary>
-    /// A key in an INI file.
+    ///     A key in an INI file.
     /// </summary>
     public readonly struct Key
     {
         /// <summary>
-        /// An empty key.
+        ///     An empty key.
         /// </summary>
         public static readonly Key Empty = new();
-        
+
         /// <summary>
-        /// Creates a new key with the specified name and value.
+        ///     Creates a new key with the specified name and value.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -698,53 +700,54 @@ public class Ini
         }
 
         /// <summary>
-        /// Determines whether the key is empty.
+        ///     Determines whether the key is empty.
         /// </summary>
         public bool IsEmpty() => string.IsNullOrWhiteSpace(Name);
-        
+
         /// <summary>
-        /// An optional comment (or whitespace) for the key.
+        ///     An optional comment (or whitespace) for the key.
         /// </summary>
         public readonly string? Comment;
-        
+
         /// <summary>
-        /// The name of the key.
+        ///     The name of the key.
         /// </summary>
         public readonly string Name;
-        
+
         /// <summary>
-        /// The raw value of the key.
+        ///     The raw value of the key.
         /// </summary>
         public readonly string? Value;
 
         /// <summary>
-        /// Creates a clone of the current instance with the specified comment.
+        ///     Creates a clone of the current instance with the specified comment.
         /// </summary>
         /// <param name="comment"></param>
         /// <returns></returns>
         public Key WithComment(string comment) => new(Name, Value, comment);
 
         /// <summary>
-        /// Creates a clone of the current instance without a comment.
+        ///     Creates a clone of the current instance without a comment.
         /// </summary>
         /// <returns></returns>
         public Key WithoutComment() => new(Name, Value, null);
 
         /// <summary>
-        /// Creates a clone of the current instance with the specified value.
+        ///     Creates a clone of the current instance with the specified value.
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
         public Key WithValue(string value) => new(Name, value, Comment);
 
         /// <summary>
-        /// Creates a clone of the current instance without a value.
+        ///     Creates a clone of the current instance without a value.
         /// </summary>
         /// <returns></returns>
         public Key WithoutValue() => new(Name, null, Comment);
 
         /// <summary>
-        /// Attempts to read the raw value as the desired enum type. Returns the default value if the value is null or cannot be parsed. 
+        ///     Attempts to read the raw value as the desired enum type. Returns the default value if the value is null or cannot
+        ///     be parsed.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <typeparam name="T"></typeparam>
@@ -759,7 +762,7 @@ public class Ini
         }
 
         /// <summary>
-        /// Attempts to read the raw value as a boolean. Returns the default value if the value is null or cannot be parsed.
+        ///     Attempts to read the raw value as a boolean. Returns the default value if the value is null or cannot be parsed.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
@@ -777,9 +780,9 @@ public class Ini
                 return true;
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Attempts to read the raw value as an integer. Returns the default value if the value is null or cannot be parsed.
+        ///     Attempts to read the raw value as an integer. Returns the default value if the value is null or cannot be parsed.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
@@ -791,9 +794,10 @@ public class Ini
                 return result;
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Attempts to read the raw value as a long integer. Returns the default value if the value is null or cannot be parsed.
+        ///     Attempts to read the raw value as a long integer. Returns the default value if the value is null or cannot be
+        ///     parsed.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
@@ -805,9 +809,9 @@ public class Ini
                 return result;
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Attempts to read the raw value as a float. Returns the default value if the value is null or cannot be parsed.
+        ///     Attempts to read the raw value as a float. Returns the default value if the value is null or cannot be parsed.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
@@ -819,9 +823,9 @@ public class Ini
                 return result;
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Attempts to read the raw value as a double. Returns the default value if the value is null or cannot be parsed.
+        ///     Attempts to read the raw value as a double. Returns the default value if the value is null or cannot be parsed.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
@@ -835,7 +839,7 @@ public class Ini
         }
 
         /// <summary>
-        /// Attempts to read the raw value as a decimal. Returns the default value if the value is null or cannot be parsed.
+        ///     Attempts to read the raw value as a decimal. Returns the default value if the value is null or cannot be parsed.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
@@ -849,14 +853,14 @@ public class Ini
         }
 
         /// <summary>
-        /// Returns the raw value or the specified default value if the value is null.
+        ///     Returns the raw value or the specified default value if the value is null.
         /// </summary>
         /// <param name="defaultValue"></param>
         /// <returns></returns>
         public string ToString(string defaultValue) => Value ?? defaultValue;
-        
+
         /// <summary>
-        /// Returns the raw value or an empty string if the value is null.
+        ///     Returns the raw value or an empty string if the value is null.
         /// </summary>
         /// <returns></returns>
         public override string? ToString() => Value;

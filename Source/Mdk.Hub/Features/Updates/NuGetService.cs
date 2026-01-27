@@ -10,15 +10,15 @@ using Mdk.Hub.Features.Diagnostics;
 namespace Mdk.Hub.Features.Updates;
 
 /// <summary>
-/// Service for querying NuGet package information.
+///     Service for querying NuGet package information.
 /// </summary>
 [Dependency<INuGetService>]
 public class NuGetService(ILogger logger) : INuGetService
 {
-    readonly ILogger _logger = logger;
     readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
+    readonly ILogger _logger = logger;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<string?> GetLatestVersionAsync(string packageId, CancellationToken cancellationToken = default)
     {
         _logger.Info($"Checking NuGet for latest version of {packageId}");
@@ -27,7 +27,7 @@ public class NuGetService(ILogger logger) : INuGetService
         {
             var url = $"https://api.nuget.org/v3-flatcontainer/{packageId.ToLowerInvariant()}/index.json";
             var response = await _httpClient.GetStringAsync(url, cancellationToken);
-            
+
             var doc = JsonDocument.Parse(response);
             var versions = doc.RootElement.GetProperty("versions").EnumerateArray()
                 .Select(v => v.GetString())

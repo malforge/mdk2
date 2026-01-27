@@ -3,44 +3,44 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
-using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
-/// Interface for managing the registry of known MDK projects.
+///     Interface for managing the registry of known MDK projects.
 /// </summary>
 public interface IProjectRegistry
 {
     /// <summary>
-    /// Gets all registered projects.
+    ///     Gets all registered projects.
     /// </summary>
     IReadOnlyList<ProjectInfo> GetProjects();
 
     /// <summary>
-    /// Adds or updates a project in the registry.
+    ///     Adds or updates a project in the registry.
     /// </summary>
     void AddOrUpdateProject(ProjectInfo project);
 
     /// <summary>
-    /// Removes a project from the registry.
+    ///     Removes a project from the registry.
     /// </summary>
     void RemoveProject(string projectPath);
 }
 
 /// <summary>
-/// Stores and manages the registry of known MDK projects.
-/// Projects are persisted to %appdata%\MDK2\Hub\projects.json
+///     Stores and manages the registry of known MDK projects.
+///     Projects are persisted to %appdata%\MDK2\Hub\projects.json
 /// </summary>
 [Dependency<IProjectRegistry>]
 public class ProjectRegistry : IProjectRegistry
 {
+    readonly ILogger _logger;
     readonly string _registryPath;
     readonly string _versionFilesPath;
-    readonly ILogger _logger;
     List<ProjectInfo> _projects = new();
 
     public ProjectRegistry(ILogger logger)
@@ -54,7 +54,7 @@ public class ProjectRegistry : IProjectRegistry
     }
 
     /// <summary>
-    /// Gets all registered projects.
+    ///     Gets all registered projects.
     /// </summary>
     public IReadOnlyList<ProjectInfo> GetProjects()
     {
@@ -64,28 +64,26 @@ public class ProjectRegistry : IProjectRegistry
     }
 
     /// <summary>
-    /// Adds or updates a project in the registry.
+    ///     Adds or updates a project in the registry.
     /// </summary>
     public void AddOrUpdateProject(ProjectInfo project)
     {
         var existing = _projects.FirstOrDefault(p => p.ProjectPath == project.ProjectPath);
-        
+
         if (existing != null)
         {
             _logger.Debug($"Updating project: {project.Name}");
             _projects.Remove(existing);
         }
         else
-        {
             _logger.Info($"Adding new project: {project.Name} at {project.ProjectPath}");
-        }
-        
+
         _projects.Add(project with { LastReferenced = DateTimeOffset.Now });
         Save();
     }
 
     /// <summary>
-    /// Removes a project from the registry.
+    ///     Removes a project from the registry.
     /// </summary>
     public void RemoveProject(string projectPath)
     {
@@ -189,8 +187,8 @@ public class ProjectRegistry : IProjectRegistry
     {
         const int maxRetries = 3;
         const int retryDelayMs = 100;
-        
-        for (int attempt = 0; attempt < maxRetries; attempt++)
+
+        for (var attempt = 0; attempt < maxRetries; attempt++)
         {
             try
             {
@@ -201,22 +199,22 @@ public class ProjectRegistry : IProjectRegistry
                 // Filter out simulated projects before saving
                 var projectsToSave = _projects.Where(p => !p.Flags.HasFlag(ProjectFlags.Simulated)).ToList();
                 var json = JsonSerializer.Serialize(projectsToSave, new JsonSerializerOptions { WriteIndented = true });
-                
+
                 // Use temp file + rename for atomic write
                 var tempPath = _registryPath + ".tmp";
                 File.WriteAllText(tempPath, json);
-                
+
                 // Atomic replace
                 if (File.Exists(_registryPath))
                     File.Delete(_registryPath);
                 File.Move(tempPath, _registryPath);
-                
+
                 return; // Success
             }
             catch (IOException ex) when (attempt < maxRetries - 1)
             {
                 _logger.Warning($"Registry save attempt {attempt + 1} failed (retrying): {ex.Message}");
-                System.Threading.Thread.Sleep(retryDelayMs);
+                Thread.Sleep(retryDelayMs);
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -229,7 +227,7 @@ public class ProjectRegistry : IProjectRegistry
                 return;
             }
         }
-        
+
         _logger.Error($"Registry save failed after {maxRetries} attempts");
     }
 

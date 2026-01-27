@@ -83,8 +83,5 @@ public class CommonDialogs(IShell shell) : ICommonDialogs
         return (bool)(model.SelectedValue ?? false);
     }
 
-    public void ShowToast(string message, int durationMs = 3000)
-    {
-        _shell.ShowToast(message, durationMs);
-    }
+    public void ShowToast(string message, int durationMs = 3000) => _shell.ShowToast(message, durationMs);
 }

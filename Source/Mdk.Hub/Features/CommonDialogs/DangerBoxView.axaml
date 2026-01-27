@@ -27,7 +27,7 @@
                     <Setter Property="Foreground" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
                 </Style>
             </Style>
-            
+
             <Style Selector="^ TextBox">
                 <Setter Property="FontFamily" Value="Segoe UI" />
                 <Setter Property="Background" Value="#33000000" />
@@ -37,39 +37,39 @@
                 <Setter Property="CaretBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
                 <Setter Property="SelectionBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
                 <Setter Property="SelectionForegroundBrush" Value="White" />
-                
+
                 <Style Selector="^:pointerover /template/ Border#PART_BorderElement">
                     <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
                 </Style>
-                
+
                 <Style Selector="^:focus /template/ Border#PART_BorderElement">
                     <Setter Property="BorderBrush" Value="{DynamicResource MessageBoxDangerAccentBrush}" />
                     <Setter Property="BorderThickness" Value="2" />
                 </Style>
             </Style>
-            
+
             <Style Selector="^ Button">
                 <Setter Property="FontFamily" Value="Segoe UI" />
                 <Setter Property="Background" Value="{DynamicResource MessageBoxDangerBorderBrush}" />
                 <Setter Property="BorderBrush" Value="Transparent" />
                 <Setter Property="Foreground" Value="White" />
-                
+
                 <Style Selector="^:pointerover /template/ ContentPresenter">
                     <Setter Property="Background" Value="{StaticResource DangerButtonBackgroundBrush}" />
                 </Style>
-                
+
                 <Style Selector="^:pressed /template/ ContentPresenter">
                     <Setter Property="Background" Value="{StaticResource DangerButtonHoverBrush}" />
                 </Style>
-                
+
                 <Style Selector="^.cancel">
                     <Setter Property="Background" Value="#44ffffff" />
                     <Setter Property="Foreground" Value="{DynamicResource MessageBoxDangerForegroundBrush}" />
-                    
+
                     <Style Selector="^:pointerover /template/ ContentPresenter">
                         <Setter Property="Background" Value="#55ffffff" />
                     </Style>
-                    
+
                     <Style Selector="^:pressed /template/ ContentPresenter">
                         <Setter Property="Background" Value="#66ffffff" />
                     </Style>

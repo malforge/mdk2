@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Mdk.Hub.Features.Updates;
 
 /// <summary>
-/// Information about available package versions.
+///     Information about available package versions.
 /// </summary>
 public record PackageVersionInfo
 {
@@ -14,7 +14,7 @@ public record PackageVersionInfo
 }
 
 /// <summary>
-/// Information about available template versions.
+///     Information about available template versions.
 /// </summary>
 public record TemplateVersionInfo
 {
@@ -23,7 +23,7 @@ public record TemplateVersionInfo
 }
 
 /// <summary>
-/// Information about available Hub versions.
+///     Information about available Hub versions.
 /// </summary>
 public record HubVersionInfo
 {
@@ -34,7 +34,7 @@ public record HubVersionInfo
 }
 
 /// <summary>
-/// Event arguments for when version check completes.
+///     Event arguments for when version check completes.
 /// </summary>
 public class VersionCheckCompletedEventArgs : EventArgs
 {

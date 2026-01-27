@@ -1,60 +1,69 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    
+
     <!-- Base styles for built-in Avalonia controls -->
-    
+
     <!-- FluentTheme Overrides for Dark mode -->
     <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Dark">
                     <!-- Button overrides -->
-                    <SolidColorBrush x:Key="ButtonBackground" Color="{StaticResource BackgroundCardColor}"/>
-                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource BackgroundCardHoverColor}"/>
-                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource BackgroundCardSelectedColor}"/>
-                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource BorderMediumColor}"/>
-                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource AccentPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource TextSecondaryColor}"/>
-                    <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="{StaticResource TextMutedColor}"/>
-                    
+                    <SolidColorBrush x:Key="ButtonBackground" Color="{StaticResource BackgroundCardColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver"
+                                     Color="{StaticResource BackgroundCardHoverColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundPressed"
+                                     Color="{StaticResource BackgroundCardSelectedColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource BorderMediumColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource AccentPrimaryColor}" />
+                    <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource TextPrimaryColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource TextSecondaryColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="{StaticResource TextMutedColor}" />
+
                     <!-- TextBox overrides -->
-                    <SolidColorBrush x:Key="TextControlBackground" Color="{StaticResource BackgroundCardColor}"/>
-                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource BackgroundCardHoverColor}"/>
-                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{StaticResource BackgroundCardHoverColor}"/>
-                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource BorderMediumColor}"/>
-                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource BorderPrimaryColor}"/>
-                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource AccentPrimaryColor}"/>
-                    <SolidColorBrush x:Key="TextControlForeground" Color="{StaticResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="{StaticResource TextMutedColor}"/>
-                    <SolidColorBrush x:Key="TextControlSelectionHighlightColor" Color="{StaticResource AccentPrimaryColor}"/>
-                    
+                    <SolidColorBrush x:Key="TextControlBackground" Color="{StaticResource BackgroundCardColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver"
+                                     Color="{StaticResource BackgroundCardHoverColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundFocused"
+                                     Color="{StaticResource BackgroundCardHoverColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource BorderMediumColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"
+                                     Color="{StaticResource BorderPrimaryColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource AccentPrimaryColor}" />
+                    <SolidColorBrush x:Key="TextControlForeground" Color="{StaticResource TextPrimaryColor}" />
+                    <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="{StaticResource TextMutedColor}" />
+                    <SolidColorBrush x:Key="TextControlSelectionHighlightColor"
+                                     Color="{StaticResource AccentPrimaryColor}" />
+
                     <!-- ComboBox overrides -->
-                    <SolidColorBrush x:Key="ComboBoxBackground" Color="{StaticResource BackgroundCardColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{StaticResource BackgroundCardHoverColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{StaticResource BackgroundCardHoverColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="{StaticResource BackgroundCardHoverColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{StaticResource BorderMediumColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{StaticResource BorderPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{StaticResource AccentPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="{StaticResource AccentPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxForeground" Color="{StaticResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="{StaticResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="{StaticResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="ComboBoxPlaceHolderForeground" Color="{StaticResource TextMutedColor}"/>
-                    
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="{StaticResource BackgroundCardColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver"
+                                     Color="{StaticResource BackgroundCardHoverColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed"
+                                     Color="{StaticResource BackgroundCardHoverColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundFocused"
+                                     Color="{StaticResource BackgroundCardHoverColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{StaticResource BorderMediumColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{StaticResource BorderPrimaryColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{StaticResource AccentPrimaryColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="{StaticResource AccentPrimaryColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForeground" Color="{StaticResource TextPrimaryColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="{StaticResource TextPrimaryColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="{StaticResource TextPrimaryColor}" />
+                    <SolidColorBrush x:Key="ComboBoxPlaceHolderForeground" Color="{StaticResource TextMutedColor}" />
+
                     <!-- Text fill colors -->
-                    <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
-                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
-                    <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="{StaticResource TextTertiaryColor}"/>
-                    
+                    <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+                    <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="{StaticResource TextTertiaryColor}" />
+
                     <!-- Accent color -->
                     <Color x:Key="SystemAccentColor">#FF007bff</Color>
-                    <StaticResource x:Key="SystemAccentColorLight1" ResourceKey="AccentPrimaryLightColor"/>
+                    <StaticResource x:Key="SystemAccentColorLight1" ResourceKey="AccentPrimaryLightColor" />
                     <Color x:Key="SystemAccentColorLight2">#FF80b3ff</Color>
-                    <StaticResource x:Key="SystemAccentColorDark1" ResourceKey="AccentPrimaryDarkColor"/>
-                    
+                    <StaticResource x:Key="SystemAccentColorDark1" ResourceKey="AccentPrimaryDarkColor" />
+
                     <!-- MessageBox danger resources -->
                     <SolidColorBrush x:Key="MessageBoxDangerBackgroundBrush" Color="#DD2a1a1a" />
                     <SolidColorBrush x:Key="MessageBoxDangerBorderBrush" Color="{StaticResource ButtonDangerColor}" />
@@ -65,7 +74,7 @@
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Styles.Resources>
-    
+
     <!-- Window gradient background -->
     <Style Selector="Window">
         <Setter Property="Background">
@@ -76,11 +85,11 @@
             </LinearGradientBrush>
         </Setter>
     </Style>
-    
+
     <!-- Default Button Style -->
     <Style Selector="Button">
-        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Background" Value="{StaticResource ButtonPrimaryColor}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -88,34 +97,34 @@
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Cursor" Value="Hand" />
-        
+
         <Style Selector="^:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource ButtonPrimaryHoverColor}" />
         </Style>
-        
+
         <Style Selector="^:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource ButtonPrimaryPressedColor}" />
         </Style>
     </Style>
-    
+
     <!-- TextBlock default foreground -->
     <Style Selector="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
     </Style>
-    
+
     <!-- RadioButton default foreground -->
     <Style Selector="RadioButton">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
     </Style>
-    
+
     <!-- ScrollViewer transparent background -->
     <Style Selector="ScrollViewer">
         <Setter Property="Background" Value="Transparent" />
     </Style>
-    
+
     <!-- UserControl transparent background -->
     <Style Selector="UserControl">
         <Setter Property="Background" Value="Transparent" />
     </Style>
-    
+
 </Styles>

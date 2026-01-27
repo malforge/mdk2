@@ -28,26 +28,21 @@ public class AboutViewModel : OverlayModel
     {
         var versionFilePath = Path.Combine(AppContext.BaseDirectory, "PackageVersion.txt");
         if (File.Exists(versionFilePath))
-        {
             return File.ReadAllText(versionFilePath).Trim();
-        }
-        
+
         var assembly = Assembly.GetExecutingAssembly();
         var version = assembly.GetName().Version;
         return version?.ToString() ?? "Unknown";
     }
 
-    void Close()
-    {
-        Dismiss();
-    }
+    void Close() => Dismiss();
 
     void OpenLogs()
     {
         var logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Malforge.MdkHub", "logs");
         if (!Directory.Exists(logsPath))
             Directory.CreateDirectory(logsPath);
-        
+
         Process.Start(new ProcessStartInfo
         {
             FileName = logsPath,
@@ -55,12 +50,10 @@ public class AboutViewModel : OverlayModel
         });
     }
 
-    void OpenGitHub()
-    {
+    void OpenGitHub() =>
         Process.Start(new ProcessStartInfo
         {
             FileName = "https://github.com/malforge/mdk2",
             UseShellExecute = true
         });
-    }
 }

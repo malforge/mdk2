@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
@@ -14,14 +15,14 @@ namespace Mdk.Hub.Features.Updates;
 public class UpdateNotificationBarViewModel : ViewModel
 {
     readonly ICommonDialogs _commonDialogs;
-    string _message = "";
-    bool _isVisible;
-    bool _isTemplateUpdateAvailable;
-    bool _isHubUpdateAvailable;
-    bool _isDownloading;
-    bool _isReadyToInstall;
     double _downloadProgress;
     HubVersionInfo? _hubVersionInfo;
+    bool _isDownloading;
+    bool _isHubUpdateAvailable;
+    bool _isReadyToInstall;
+    bool _isTemplateUpdateAvailable;
+    bool _isVisible;
+    string _message = "";
     UpdateInfo? _pendingUpdate;
 
     public UpdateNotificationBarViewModel(ICommonDialogs commonDialogs)
@@ -74,7 +75,7 @@ public class UpdateNotificationBarViewModel : ViewModel
         get => _downloadProgress;
         set => SetProperty(ref _downloadProgress, value);
     }
-    
+
     public HubVersionInfo? HubVersionInfo
     {
         get => _hubVersionInfo;
@@ -89,31 +90,18 @@ public class UpdateNotificationBarViewModel : ViewModel
     public void UpdateMessage()
     {
         if (IsDownloading)
-        {
             Message = $"Downloading Hub update... {DownloadProgress:P0}";
-        }
         else if (IsReadyToInstall)
-        {
             Message = "Hub update ready to install";
-        }
         else if (IsTemplateUpdateAvailable && IsHubUpdateAvailable)
-        {
             Message = "Script templates and Hub updates available";
-        }
         else if (IsTemplateUpdateAvailable)
-        {
             Message = "Script templates update available";
-        }
         else if (IsHubUpdateAvailable)
-        {
             Message = "Hub update available";
-        }
     }
 
-    void Dismiss()
-    {
-        IsVisible = false;
-    }
+    void Dismiss() => IsVisible = false;
 
     async void UpdateTemplates()
     {
@@ -123,9 +111,9 @@ public class UpdateNotificationBarViewModel : ViewModel
             Message = "Updating script templates...";
             IsTemplateUpdateAvailable = false;
             OnPropertyChanged(nameof(IsTemplateUpdateAvailable));
-            
+
             // Run dotnet new install
-            var startInfo = new System.Diagnostics.ProcessStartInfo
+            var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
                 Arguments = "new install Mal.Mdk2.ScriptTemplates --force",
@@ -134,20 +122,20 @@ public class UpdateNotificationBarViewModel : ViewModel
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            
-            using var process = System.Diagnostics.Process.Start(startInfo);
+
+            using var process = Process.Start(startInfo);
             if (process == null)
             {
                 Message = "Failed to start template update";
                 return;
             }
-            
+
             await process.WaitForExitAsync();
-            
+
             if (process.ExitCode == 0)
             {
                 Message = "Script templates updated successfully";
-                await System.Threading.Tasks.Task.Delay(3000);
+                await Task.Delay(3000);
                 IsVisible = false;
             }
             else
@@ -171,10 +159,10 @@ public class UpdateNotificationBarViewModel : ViewModel
             IsDownloading = true;
             DownloadProgress = 0;
             UpdateMessage();
-            
+
             // Use Velopack to download update (works on both Windows and Linux!)
             var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
-            
+
             var newVersion = await mgr.CheckForUpdatesAsync();
             if (newVersion == null)
             {
@@ -182,14 +170,15 @@ public class UpdateNotificationBarViewModel : ViewModel
                 Message = "No update available";
                 return;
             }
-            
+
             // Download with progress
-            await mgr.DownloadUpdatesAsync(newVersion, progress =>
-            {
-                DownloadProgress = progress / 100.0;
-                UpdateMessage();
-            });
-            
+            await mgr.DownloadUpdatesAsync(newVersion,
+                progress =>
+                {
+                    DownloadProgress = progress / 100.0;
+                    UpdateMessage();
+                });
+
             // Download complete - save for install
             _pendingUpdate = newVersion;
             IsDownloading = false;
@@ -210,7 +199,7 @@ public class UpdateNotificationBarViewModel : ViewModel
             Message = "No update ready to install";
             return;
         }
-        
+
         try
         {
             // Show confirmation dialog
@@ -221,10 +210,10 @@ public class UpdateNotificationBarViewModel : ViewModel
                 OkText = "Install Now",
                 CancelText = "Cancel"
             });
-            
+
             if (!confirmed)
                 return;
-            
+
             // Use Velopack to apply update and restart (works on both Windows and Linux!)
             var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
             mgr.ApplyUpdatesAndRestart(_pendingUpdate);

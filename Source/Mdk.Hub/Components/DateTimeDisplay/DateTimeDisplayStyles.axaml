@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
         xmlns:i="https://github.com/projektanker/icons.avalonia">
-    
+
     <Style Selector="controls|DateTimeDisplay">
         <Setter Property="Template">
             <ControlTemplate>
@@ -17,16 +17,16 @@
                             VerticalAlignment="Center">
                         <i:Icon Value="fa-solid fa-clock" FontSize="10" Opacity="0.5" />
                     </Button>
-                    <TextBlock Text="{TemplateBinding DisplayText}" 
+                    <TextBlock Text="{TemplateBinding DisplayText}"
                                Classes="info-value"
                                VerticalAlignment="Center" />
                 </StackPanel>
             </ControlTemplate>
         </Setter>
     </Style>
-    
+
     <Style Selector="controls|DateTimeDisplay Button.icon-button:pointerover i|Icon">
         <Setter Property="Opacity" Value="1.0" />
     </Style>
-    
+
 </Styles>

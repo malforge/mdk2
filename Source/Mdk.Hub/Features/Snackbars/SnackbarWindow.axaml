@@ -14,8 +14,8 @@
         Topmost="True"
         CanResize="False"
         SizeToContent="WidthAndHeight">
-    
-    
+
+
     <Border Background="{StaticResource BackgroundSuccessBrush}"
             BorderBrush="{StaticResource AccentSuccessBrush}"
             BorderThickness="2"
@@ -24,20 +24,20 @@
             MinWidth="300"
             MaxWidth="500"
             BoxShadow="0 4 16 2 #40000000">
-        
+
         <Grid ColumnDefinitions="*,Auto">
             <!-- Message and Actions -->
             <StackPanel Grid.Column="0" Spacing="8">
                 <TextBlock Text="{Binding Message}"
                            TextWrapping="Wrap"
                            Classes="primary"
-                           FontSize="14"/>
-                
+                           FontSize="14" />
+
                 <ItemsControl ItemsSource="{Binding Actions}"
                               IsVisible="{Binding Actions.Count}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="8"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -45,12 +45,12 @@
                             <Button Content="{Binding Text}"
                                     Command="{Binding Command}"
                                     Classes="subtle success"
-                                    Padding="8,4"/>
+                                    Padding="8,4" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
-            
+
             <!-- Close button -->
             <Button Grid.Column="1"
                     Content="✕"
@@ -58,7 +58,7 @@
                     Classes="subtle"
                     VerticalAlignment="Top"
                     Padding="8,4"
-                    Margin="8,0,0,0"/>
+                    Margin="8,0,0,0" />
         </Grid>
     </Border>
 </Window>

@@ -21,110 +21,111 @@
             <Grid RowDefinitions="*,Auto">
                 <ScrollViewer Grid.Row="0">
                     <StackPanel Spacing="20">
-                <!-- Header -->
-                <StackPanel Spacing="8" HorizontalAlignment="Center">
-                    <Image Source="/Assets/malware256.png" 
-                           Width="64" 
-                           Height="64"
-                           HorizontalAlignment="Center" />
-                    <TextBlock Text="MDK²"
-                               Classes="dialog-title"
-                               FontSize="24"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="{Binding Version, StringFormat='Hub Version: {0}'}"
-                               Classes="secondary"
-                               FontSize="14"
-                               HorizontalAlignment="Center" />
-                </StackPanel>
-
-                <!-- Separator -->
-                <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
-
-                <!-- Description -->
-                <TextBlock Text="MDK² is a comprehensive development toolkit for Space Engineers scripting and modding."
-                           Classes="secondary"
-                           FontSize="13"
-                           TextWrapping="Wrap"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"
-                           MaxWidth="400" />
-
-                <!-- Actions -->
-                <StackPanel Spacing="8">
-                    <Button Command="{Binding OpenGitHubCommand}"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            Classes="subtle">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <i:Icon Value="fa-brands fa-github" FontSize="16" />
-                            <TextBlock Text="View on GitHub" VerticalAlignment="Center" />
+                        <!-- Header -->
+                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                            <Image Source="/Assets/malware256.png"
+                                   Width="64"
+                                   Height="64"
+                                   HorizontalAlignment="Center" />
+                            <TextBlock Text="MDK²"
+                                       Classes="dialog-title"
+                                       FontSize="24"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding Version, StringFormat='Hub Version: {0}'}"
+                                       Classes="secondary"
+                                       FontSize="14"
+                                       HorizontalAlignment="Center" />
                         </StackPanel>
-                    </Button>
-                    
-                    <Button Command="{Binding OpenLogsCommand}"
-                            HorizontalAlignment="Stretch"
-                            HorizontalContentAlignment="Left"
-                            Classes="subtle">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
-                            <TextBlock Text="Open Logs Folder" VerticalAlignment="Center" />
+
+                        <!-- Separator -->
+                        <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
+
+                        <!-- Description -->
+                        <TextBlock
+                            Text="MDK² is a comprehensive development toolkit for Space Engineers scripting and modding."
+                            Classes="secondary"
+                            FontSize="13"
+                            TextWrapping="Wrap"
+                            HorizontalAlignment="Center"
+                            TextAlignment="Center"
+                            MaxWidth="400" />
+
+                        <!-- Actions -->
+                        <StackPanel Spacing="8">
+                            <Button Command="{Binding OpenGitHubCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Classes="subtle">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <i:Icon Value="fa-brands fa-github" FontSize="16" />
+                                    <TextBlock Text="View on GitHub" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding OpenLogsCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Classes="subtle">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
+                                    <TextBlock Text="Open Logs Folder" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
-                    </Button>
-                </StackPanel>
 
-                <!-- Separator -->
-                <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
+                        <!-- Separator -->
+                        <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
 
-                <!-- Third-party licenses -->
-                <StackPanel Spacing="8">
-                    <TextBlock Text="Third-Party Software"
-                               Classes="secondary"
-                               FontSize="12"
-                               FontWeight="SemiBold" />
-                    <TextBlock Classes="very-muted" FontSize="11" TextWrapping="Wrap">
-                        <Run Text="MDK² uses the following third-party libraries:" />
-                        <LineBreak />
-                        <LineBreak />
-                        <Run Text="• Avalonia UI (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• Velopack (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• Microsoft Roslyn (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• Microsoft.Build (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• NUnit (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• Projektanker.Icons.Avalonia (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• JetBrains.Annotations (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• FakeItEasy (MIT License)" />
-                        <LineBreak />
-                        <Run Text="• MdXaml (MIT License)" />
-                    </TextBlock>
-                </StackPanel>
+                        <!-- Third-party licenses -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Third-Party Software"
+                                       Classes="secondary"
+                                       FontSize="12"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Classes="very-muted" FontSize="11" TextWrapping="Wrap">
+                                <Run Text="MDK² uses the following third-party libraries:" />
+                                <LineBreak />
+                                <LineBreak />
+                                <Run Text="• Avalonia UI (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• Velopack (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• Microsoft Roslyn (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• Microsoft.Build (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• NUnit (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• Projektanker.Icons.Avalonia (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• JetBrains.Annotations (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• FakeItEasy (MIT License)" />
+                                <LineBreak />
+                                <Run Text="• MdXaml (MIT License)" />
+                            </TextBlock>
+                        </StackPanel>
 
-                <!-- Separator -->
-                <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
+                        <!-- Separator -->
+                        <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
 
-                <!-- Copyright -->
-                <TextBlock Text="© 2023-2026 Malforge. All rights reserved."
-                           Classes="very-muted"
-                           FontSize="11"
-                           HorizontalAlignment="Center" />
-                </StackPanel>
-            </ScrollViewer>
+                        <!-- Copyright -->
+                        <TextBlock Text="© 2023-2026 Malforge. All rights reserved."
+                                   Classes="very-muted"
+                                   FontSize="11"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </ScrollViewer>
 
-            <!-- Close button -->
-            <Button Grid.Row="1"
-                    Content="Close"
-                    Command="{Binding CloseCommand}"
-                    HorizontalAlignment="Center"
-                    MinWidth="100"
-                    Margin="0,16,0,0"
-                    IsDefault="True" />
-        </Grid>
+                <!-- Close button -->
+                <Button Grid.Row="1"
+                        Content="Close"
+                        Command="{Binding CloseCommand}"
+                        HorizontalAlignment="Center"
+                        MinWidth="100"
+                        Margin="0,16,0,0"
+                        IsDefault="True" />
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

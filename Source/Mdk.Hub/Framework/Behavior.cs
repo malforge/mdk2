@@ -5,15 +5,15 @@ using Avalonia.Interactivity;
 namespace Mdk.Hub.Framework;
 
 /// <summary>
-/// Base class for Avalonia control behaviors that respond to control lifecycle events.
-/// Automatically handles subscription and unsubscription to control Loaded/Unloaded events.
+///     Base class for Avalonia control behaviors that respond to control lifecycle events.
+///     Automatically handles subscription and unsubscription to control Loaded/Unloaded events.
 /// </summary>
 public abstract class Behavior : IDisposable
 {
     Control? _control;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Behavior"/> class.
+    ///     Initializes a new instance of the <see cref="Behavior" /> class.
     /// </summary>
     /// <param name="control">The control to attach the behavior to.</param>
     protected Behavior(Control control)
@@ -24,13 +24,13 @@ public abstract class Behavior : IDisposable
     }
 
     /// <summary>
-    /// Gets the control this behavior is attached to.
+    ///     Gets the control this behavior is attached to.
     /// </summary>
     /// <exception cref="ObjectDisposedException">Thrown if the behavior has been disposed.</exception>
     protected Control Control => _control ?? throw new ObjectDisposedException(nameof(Behavior));
 
     /// <summary>
-    /// Disposes the behavior and unsubscribes from control events.
+    ///     Disposes the behavior and unsubscribes from control events.
     /// </summary>
     public void Dispose()
     {
@@ -48,16 +48,16 @@ public abstract class Behavior : IDisposable
     void OnControlUnloaded(object? sender, RoutedEventArgs e) => OnControlUnloaded();
 
     /// <summary>
-    /// Called when the control is unloaded from the visual tree.
-    /// Override to perform cleanup or unsubscribe from events.
+    ///     Called when the control is unloaded from the visual tree.
+    ///     Override to perform cleanup or unsubscribe from events.
     /// </summary>
     protected virtual void OnControlUnloaded() { }
 
     void OnControlLoaded(object? sender, RoutedEventArgs e) => OnControlLoaded();
 
     /// <summary>
-    /// Called when the control is loaded into the visual tree.
-    /// Override to perform initialization or subscribe to events.
+    ///     Called when the control is loaded into the visual tree.
+    ///     Override to perform initialization or subscribe to events.
     /// </summary>
     protected virtual void OnControlLoaded() { }
 }

@@ -23,8 +23,8 @@
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Linux.cs" />
-                <None Include="**\*.Linux.cs" />
+                <Compile Remove="**\*.Linux.cs"/>
+                <None Include="**\*.Linux.cs"/>
             </ItemGroup>
         </When>
 
@@ -35,33 +35,33 @@
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Windows.cs" />
-                <None Include="**\*.Windows.cs" />
+                <Compile Remove="**\*.Windows.cs"/>
+                <None Include="**\*.Windows.cs"/>
             </ItemGroup>
         </Otherwise>
     </Choose>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**" />
+        <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.3.11" />
-        <PackageReference Include="Avalonia.Desktop" Version="11.3.11" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.*" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
+        <PackageReference Include="Avalonia" Version="11.3.11"/>
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.11"/>
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.*"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11"/>
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Include="Avalonia.Diagnostics" Version="11.3.11">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
-        <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2" />
-        <PackageReference Include="Velopack" Version="0.0.1298" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
+        <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2"/>
+        <PackageReference Include="Velopack" Version="0.0.1298"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\DISourceGenerator\DISourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\DISourceGenerator\DISourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -70,16 +70,16 @@
             <SubType>Code</SubType>
         </Compile>
         <Compile Update="Features\CommonDialogs\CommonDialogsResources.Designer.cs">
-          <DesignTime>True</DesignTime>
-          <AutoGen>True</AutoGen>
-          <DependentUpon>CommonDialogsResources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>CommonDialogsResources.resx</DependentUpon>
         </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Update="Features\CommonDialogs\CommonDialogsResources.resx">
-        <Generator>ResXFileCodeGenerator</Generator>
-        <LastGenOutput>CommonDialogsResources.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
+        <EmbeddedResource Update="Features\CommonDialogs\CommonDialogsResources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>CommonDialogsResources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
     </ItemGroup>
 </Project>

@@ -1,9 +1,7 @@
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Mdk.Hub.Features.CommonDialogs;
@@ -16,9 +14,9 @@ namespace Mdk.Hub.Features.Projects.Actions;
 
 public class AddExistingProjectAction : ActionItem
 {
-    readonly IShell _shell;
     readonly ICommonDialogs _dialogs;
     readonly IProjectService _projectService;
+    readonly IShell _shell;
 
     public AddExistingProjectAction(IShell shell, ICommonDialogs dialogs, IProjectService projectService)
     {
@@ -32,11 +30,9 @@ public class AddExistingProjectAction : ActionItem
 
     public override string? Category => null; // Global actions, no category
 
-    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
-    {
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod) =>
         // Always show
-        return true;
-    }
+        true;
 
     async Task AddExistingProjectAsync()
     {

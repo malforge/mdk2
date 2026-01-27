@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Utility;
@@ -8,12 +10,12 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
-/// Detects whether a project is a valid MDK2 project and determines its type.
+///     Detects whether a project is a valid MDK2 project and determines its type.
 /// </summary>
 public static class ProjectDetector
 {
     /// <summary>
-    /// Attempts to detect if a .csproj file is a valid MDK2 project.
+    ///     Attempts to detect if a .csproj file is a valid MDK2 project.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <param name="projectInfo">The detected project information if valid.</param>
@@ -59,28 +61,28 @@ public static class ProjectDetector
 
             return true;
         }
-        catch (System.Xml.XmlException)
+        catch (XmlException)
         {
             // Corrupt XML - different from "not an MDK project"
-            System.Diagnostics.Debug.WriteLine($"Project file appears to be corrupted (invalid XML): {projectPath}");
+            Debug.WriteLine($"Project file appears to be corrupted (invalid XML): {projectPath}");
             return false;
         }
         catch (UnauthorizedAccessException)
         {
             // Can't read file
-            System.Diagnostics.Debug.WriteLine($"Cannot read project file (permission denied): {projectPath}");
+            Debug.WriteLine($"Cannot read project file (permission denied): {projectPath}");
             return false;
         }
         catch (IOException ex)
         {
             // Other I/O error
-            System.Diagnostics.Debug.WriteLine($"Cannot read project file (I/O error): {projectPath} - {ex.Message}");
+            Debug.WriteLine($"Cannot read project file (I/O error): {projectPath} - {ex.Message}");
             return false;
         }
         catch (Exception ex)
         {
             // Unexpected error - log it
-            System.Diagnostics.Debug.WriteLine($"Unexpected error reading project file: {projectPath} - {ex.GetType().Name}: {ex.Message}");
+            Debug.WriteLine($"Unexpected error reading project file: {projectPath} - {ex.GetType().Name}: {ex.Message}");
             return false;
         }
     }

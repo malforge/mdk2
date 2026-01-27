@@ -3,7 +3,7 @@
              x:Class="Mdk.Hub.App"
              xmlns:local="using:Mdk.Hub"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
-             RequestedThemeVariant="Dark" >
+             RequestedThemeVariant="Dark">
     <!-- Force dark mode for starfield easter egg -->
 
     <Application.DataTemplates>
@@ -17,7 +17,7 @@
                 <ResourceInclude Source="avares://Mdk.Hub/Theme/Colors.axaml" />
                 <ResourceInclude Source="avares://Mdk.Hub/Theme/Brushes.axaml" />
             </ResourceDictionary.MergedDictionaries>
-            
+
             <ControlTheme x:Key="{x:Type icons:Symbol}" TargetType="icons:Symbol">
                 <Setter Property="Template">
                     <ControlTemplate>

@@ -26,24 +26,24 @@ public class App : Application
         {
             var logger = Container.Resolve<ILogger>();
             logger.Info("MDK Hub application starting");
-            
+
             // Set up global exception handlers
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
                 var exception = e.ExceptionObject as Exception;
                 logger.Error("Unhandled exception in AppDomain", exception ?? new Exception(e.ExceptionObject?.ToString() ?? "Unknown error"));
             };
-            
+
             TaskScheduler.UnobservedTaskException += (sender, e) =>
             {
                 logger.Error("Unobserved task exception", e.Exception);
                 e.SetObserved(); // Prevent process termination
             };
-            
+
             // Initialize services (ProjectService subscribes to IPC internally)
             Container.Resolve<IInterProcessCommunication>();
             Container.Resolve<IProjectService>();
-            
+
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
@@ -51,15 +51,15 @@ public class App : Application
             var shellWindow = Container.Resolve<ShellWindow>();
             shellWindow.DataContext = shellViewModel;
             desktop.MainWindow = shellWindow;
-            
+
             // Initialize snackbar service with main window for screen detection
             var snackbarService = Container.Resolve<ISnackbarService>();
             if (snackbarService is SnackbarService ss)
                 ss.SetMainWindow(shellWindow);
-            
+
             var shell = Container.Resolve<IShell>();
             shell.Start(desktop.Args ?? Array.Empty<string>());
-            
+
             logger.Info("MDK Hub application started successfully");
         }
 

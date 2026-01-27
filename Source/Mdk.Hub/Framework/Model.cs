@@ -5,18 +5,18 @@ using System.Runtime.CompilerServices;
 namespace Mdk.Hub.Framework;
 
 /// <summary>
-/// Base class for models that implement <see cref="INotifyPropertyChanged"/> for data binding.
-/// Provides helper methods for property change notification.
+///     Base class for models that implement <see cref="INotifyPropertyChanged" /> for data binding.
+///     Provides helper methods for property change notification.
 /// </summary>
 public abstract class Model : INotifyPropertyChanged
 {
     /// <summary>
-    /// Occurs when a property value changes.
+    ///     Occurs when a property value changes.
     /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
-    /// Sets the property to the specified value and raises <see cref="PropertyChanged"/> if the value has changed.
+    ///     Sets the property to the specified value and raises <see cref="PropertyChanged" /> if the value has changed.
     /// </summary>
     /// <typeparam name="T">The type of the property.</typeparam>
     /// <param name="field">Reference to the backing field.</param>
@@ -36,7 +36,8 @@ public abstract class Model : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Sets the property to the specified value using a custom equality comparer and raises <see cref="PropertyChanged"/> if the value has changed.
+    ///     Sets the property to the specified value using a custom equality comparer and raises <see cref="PropertyChanged" />
+    ///     if the value has changed.
     /// </summary>
     /// <typeparam name="T">The type of the property.</typeparam>
     /// <param name="field">Reference to the backing field.</param>
@@ -58,7 +59,7 @@ public abstract class Model : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Raises the <see cref="PropertyChanged"/> event.
+    ///     Raises the <see cref="PropertyChanged" /> event.
     /// </summary>
     /// <param name="propertyName">The name of the property that changed (automatically provided by the compiler).</param>
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -9,7 +9,7 @@
              Background="#80000000"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
-    
+
     <Grid>
         <Border Background="{DynamicResource SystemChromeMediumColor}"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
@@ -25,12 +25,12 @@
                              Value="{Binding Progress}"
                              Width="200"
                              Height="4" />
-                
+
                 <TextBlock Text="{Binding Message}"
                            FontSize="14"
                            TextAlignment="Center"
                            HorizontalAlignment="Center" />
-                
+
                 <!-- Cancel button -->
                 <Button Content="Cancel"
                         Command="{Binding CancelCommand}"
@@ -40,5 +40,5 @@
             </StackPanel>
         </Border>
     </Grid>
-    
+
 </UserControl>

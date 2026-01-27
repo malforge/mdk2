@@ -4,13 +4,13 @@ using System.IO;
 namespace Mdk.Hub.Utility;
 
 /// <summary>
-/// Utility for finding INI configuration files with support for both new simplified naming
-/// (mdk.ini, mdk.local.ini) and legacy project-name-based naming ({projectName}.mdk.ini).
+///     Utility for finding INI configuration files with support for both new simplified naming
+///     (mdk.ini, mdk.local.ini) and legacy project-name-based naming ({projectName}.mdk.ini).
 /// </summary>
 public static class IniFileFinder
 {
     /// <summary>
-    /// Find the main INI file for a project. Checks new naming convention first, then falls back to legacy naming.
+    ///     Find the main INI file for a project. Checks new naming convention first, then falls back to legacy naming.
     /// </summary>
     /// <param name="projectFilePath">Full path to the .csproj file</param>
     /// <returns>Path to the INI file if found, null otherwise</returns>
@@ -37,7 +37,7 @@ public static class IniFileFinder
     }
 
     /// <summary>
-    /// Find the local INI file for a project. Checks new naming convention first, then falls back to legacy naming.
+    ///     Find the local INI file for a project. Checks new naming convention first, then falls back to legacy naming.
     /// </summary>
     /// <param name="projectFilePath">Full path to the .csproj file</param>
     /// <returns>Path to the local INI file if found, null otherwise</returns>
@@ -64,7 +64,7 @@ public static class IniFileFinder
     }
 
     /// <summary>
-    /// Get paths for the new naming convention. Does not check if files exist.
+    ///     Get paths for the new naming convention. Does not check if files exist.
     /// </summary>
     /// <param name="projectFilePath">Full path to the .csproj file</param>
     /// <returns>Tuple of (mainIni, localIni) paths using new naming convention</returns>
@@ -84,7 +84,7 @@ public static class IniFileFinder
     }
 
     /// <summary>
-    /// Get paths for the legacy naming convention. Does not check if files exist.
+    ///     Get paths for the legacy naming convention. Does not check if files exist.
     /// </summary>
     /// <param name="projectFilePath">Full path to the .csproj file</param>
     /// <returns>Tuple of (mainIni, localIni) paths using legacy naming convention</returns>

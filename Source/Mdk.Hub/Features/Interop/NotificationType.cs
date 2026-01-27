@@ -1,27 +1,27 @@
 namespace Mdk.Hub.Features.Interop;
 
 /// <summary>
-/// Defines the type of notification received from CommandLine.
+///     Defines the type of notification received from CommandLine.
 /// </summary>
 public enum NotificationType
 {
     /// <summary>
-    /// A custom notification message.
+    ///     A custom notification message.
     /// </summary>
     Custom,
-    
+
     /// <summary>
-    /// A script build/deployment notification.
+    ///     A script build/deployment notification.
     /// </summary>
     Script,
-    
+
     /// <summary>
-    /// A mod build/deployment notification.
+    ///     A mod build/deployment notification.
     /// </summary>
     Mod,
-    
+
     /// <summary>
-    /// A NuGet package version available notification.
+    ///     A NuGet package version available notification.
     /// </summary>
     Nuget
 }

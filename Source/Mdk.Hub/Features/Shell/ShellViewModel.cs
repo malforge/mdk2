@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects;
@@ -27,18 +28,12 @@ namespace Mdk.Hub.Features.Shell;
 [ViewModelFor<ShellWindow>]
 public class ShellViewModel : ViewModel
 {
-    readonly IShell _shell;
     readonly ICommonDialogs? _commonDialogs;
-    readonly IProjectService? _projectService;
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
+    readonly IProjectService? _projectService;
+    readonly IShell _shell;
     ViewModel? _currentView;
     ViewModel? _navigationView;
-    UpdateNotificationBarViewModel? _updateNotificationBar;
-
-    /// <summary>
-    ///     Raised when the ViewModel requests the window to close.
-    /// </summary>
-    public event EventHandler? CloseRequested;
 
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
@@ -64,25 +59,23 @@ public class ShellViewModel : ViewModel
         _shell = shell;
         _commonDialogs = commonDialogs;
         _projectService = projectService;
-        _updateNotificationBar = updateNotificationBar;
+        UpdateNotificationBar = updateNotificationBar;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
         CurrentView = projectActionsViewModel;
-        
+
         // Initialize child VMs with reference to this shell
         projectOverviewViewModel.Initialize(this);
         projectActionsViewModel.Initialize(this);
-        
+
         // Check for first-run setup (fire and forget)
         if (Program.IsFirstRun)
-        {
             _ = CheckFirstRunSetupAsync(updateCheckService, commonDialogs);
-        }
-        
+
         // Start background update check on startup (fire and forget)
         _ = updateCheckService.CheckForUpdatesAsync();
-        
+
         // Wire up update notification bar
         updateCheckService.WhenVersionCheckCompleted(versionData =>
         {
@@ -92,14 +85,6 @@ public class ShellViewModel : ViewModel
             updateNotificationBar.UpdateMessage();
             updateNotificationBar.IsVisible = updateNotificationBar.IsTemplateUpdateAvailable || updateNotificationBar.IsHubUpdateAvailable;
         });
-    }
-    
-    /// <summary>
-    ///     Initializes easter egg. Should be called from view once easter egg control is available.
-    /// </summary>
-    public void InitializeEasterEgg(EasterEgg easterEggControl)
-    {
-        easterEggControl?.Initialize(_shell);
     }
 
     /// <summary>
@@ -115,7 +100,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Gets the update notification bar view model.
     /// </summary>
-    public UpdateNotificationBarViewModel? UpdateNotificationBar => _updateNotificationBar;
+    public UpdateNotificationBarViewModel? UpdateNotificationBar { get; }
 
     /// <summary>
     ///     Gets the view model currently displayed in the main content area of the shell.
@@ -160,7 +145,17 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Gets the collection of toast messages displayed non-blockingly.
     /// </summary>
-    public ObservableCollection<ToastMessage> ToastMessages => IsDesignMode ? new() : _shell.ToastMessages;
+    public ObservableCollection<ToastMessage> ToastMessages => IsDesignMode ? new ObservableCollection<ToastMessage>() : _shell.ToastMessages;
+
+    /// <summary>
+    ///     Raised when the ViewModel requests the window to close.
+    /// </summary>
+    public event EventHandler? CloseRequested;
+
+    /// <summary>
+    ///     Initializes easter egg. Should be called from view once easter egg control is available.
+    /// </summary>
+    public void InitializeEasterEgg(EasterEgg easterEggControl) => easterEggControl.Initialize(_shell);
 
     /// <summary>
     ///     Notifies the ViewModel that the window focus was gained.
@@ -174,7 +169,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Checks if the window can close. Returns false if there are unsaved changes and user cancels.
     /// </summary>
-    public async System.Threading.Tasks.Task<bool> CanCloseAsync()
+    public async Task<bool> CanCloseAsync()
     {
         if (!_shell.TryGetUnsavedChangesInfo(out var info))
             return true;
@@ -182,7 +177,7 @@ public class ShellViewModel : ViewModel
         if (_commonDialogs == null)
             return true;
 
-        var result = await _commonDialogs.ShowAsync(new Mdk.Hub.Features.CommonDialogs.ConfirmationMessage
+        var result = await _commonDialogs.ShowAsync(new ConfirmationMessage
         {
             Title = "Unsaved Changes",
             Message = info.Description,
@@ -197,23 +192,20 @@ public class ShellViewModel : ViewModel
         }
 
         // User chose "Show Me" - execute navigation action and don't close
-        info.GoThereAction?.Invoke();
+        info.GoThereAction.Invoke();
         return false;
     }
 
     /// <summary>
     ///     Requests the window to close programmatically (bypasses CanClose check).
     /// </summary>
-    public void RequestClose()
-    {
-        CloseRequested?.Invoke(this, EventArgs.Empty);
-    }
+    public void RequestClose() => CloseRequested?.Invoke(this, EventArgs.Empty);
 
     void OnOverlayViewsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => OnPropertyChanged(nameof(HasOverlays));
 
     /// <summary>
-    /// Gets an existing ProjectModel or creates a new one for the specified project.
-    /// This ensures both ProjectOverviewViewModel and ProjectActionsViewModel share the same instances.
+    ///     Gets an existing ProjectModel or creates a new one for the specified project.
+    ///     This ensures both ProjectOverviewViewModel and ProjectActionsViewModel share the same instances.
     /// </summary>
     public ProjectModel GetOrCreateProjectModel(ProjectInfo projectInfo)
     {
@@ -241,19 +233,19 @@ public class ShellViewModel : ViewModel
 
         return model;
     }
-    
-    async System.Threading.Tasks.Task CheckFirstRunSetupAsync(IUpdateCheckService updateCheckService, ICommonDialogs commonDialogs)
+
+    async Task CheckFirstRunSetupAsync(IUpdateCheckService updateCheckService, ICommonDialogs commonDialogs)
     {
         try
         {
             // Show busy overlay while checking/installing prerequisites
             var busyOverlay = new BusyOverlayViewModel("Setting up MDK² for first use...");
             _shell.AddOverlay(busyOverlay);
-            
+
             try
             {
-                var messages = new System.Collections.Generic.List<string>();
-                
+                var messages = new List<string>();
+
                 // Check and install .NET SDK
                 busyOverlay.Message = "Checking .NET SDK...";
                 var (sdkInstalled, sdkVersion) = await updateCheckService.CheckDotNetSdkAsync();
@@ -271,10 +263,8 @@ public class ShellViewModel : ViewModel
                     }
                 }
                 else
-                {
                     messages.Add($"✓ .NET SDK {sdkVersion} is already installed");
-                }
-                
+
                 // Check and install template package
                 busyOverlay.Message = "Checking template package...";
                 var templateInstalled = await updateCheckService.IsTemplateInstalledAsync();
@@ -292,13 +282,11 @@ public class ShellViewModel : ViewModel
                     }
                 }
                 else
-                {
                     messages.Add("✓ MDK² template package is already installed");
-                }
-                
+
                 // Show results
                 busyOverlay.Dismiss();
-                
+
                 await commonDialogs.ShowAsync(new InformationMessage
                 {
                     Title = "First-Run Setup Complete",

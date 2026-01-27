@@ -1,6 +1,6 @@
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 
@@ -10,12 +10,17 @@ public partial class FolderBrowserControl : UserControl
 {
     public static readonly StyledProperty<string> PathProperty =
         AvaloniaProperty.Register<FolderBrowserControl, string>(
-            nameof(Path), 
+            nameof(Path),
             string.Empty,
-            defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+            defaultBindingMode: BindingMode.TwoWay);
 
     public static readonly StyledProperty<string> WatermarkProperty =
         AvaloniaProperty.Register<FolderBrowserControl, string>(nameof(Watermark), "Select a folder...");
+
+    public FolderBrowserControl()
+    {
+        InitializeComponent();
+    }
 
     public string Path
     {
@@ -29,11 +34,6 @@ public partial class FolderBrowserControl : UserControl
         set => SetValue(WatermarkProperty, value);
     }
 
-    public FolderBrowserControl()
-    {
-        InitializeComponent();
-    }
-
     async void OnBrowseClick(object? sender, RoutedEventArgs e)
     {
         var topLevel = TopLevel.GetTopLevel(this);
@@ -44,14 +44,12 @@ public partial class FolderBrowserControl : UserControl
         {
             Title = "Select Folder",
             AllowMultiple = false,
-            SuggestedStartLocation = string.IsNullOrWhiteSpace(Path) 
-                ? null 
+            SuggestedStartLocation = string.IsNullOrWhiteSpace(Path)
+                ? null
                 : await topLevel.StorageProvider.TryGetFolderFromPathAsync(Path)
         });
 
         if (result.Count > 0)
-        {
             Path = result[0].Path.LocalPath;
-        }
     }
 }

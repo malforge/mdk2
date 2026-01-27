@@ -5,22 +5,22 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
-/// Flags for project behavior and testing.
+///     Flags for project behavior and testing.
 /// </summary>
 [Flags]
 public enum ProjectFlags
 {
     None = 0,
-    
+
     /// <summary>
-    /// Project is simulated for testing - won't be persisted to registry.
+    ///     Project is simulated for testing - won't be persisted to registry.
     /// </summary>
     Simulated = 1 << 0
 }
 
 /// <summary>
-/// Data model representing a project managed by MDK Hub.
-/// This is the data model that gets transformed into view models like ProjectModel.
+///     Data model representing a project managed by MDK Hub.
+///     This is the data model that gets transformed into view models like ProjectModel.
 /// </summary>
 public record ProjectInfo
 {

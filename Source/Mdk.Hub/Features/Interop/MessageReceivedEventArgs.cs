@@ -3,7 +3,7 @@ using System;
 namespace Mdk.Hub.Features.Interop;
 
 /// <summary>
-/// Event args for IPC message received events.
+///     Event args for IPC message received events.
 /// </summary>
 public class MessageReceivedEventArgs : EventArgs
 {

@@ -29,11 +29,8 @@ public partial class ProjectOverviewView : UserControl
             viewModel.ShowProjectRequested += OnShowProjectRequested;
         }
     }
-    
-    void OnShowProjectRequested(object? sender, ShowProjectEventArgs e)
-    {
-        ScrollToItem(e.Project);
-    }
+
+    void OnShowProjectRequested(object? sender, ShowProjectEventArgs e) => ScrollToItem(e.Project);
 
     void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

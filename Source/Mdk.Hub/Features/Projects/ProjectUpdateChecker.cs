@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Utility;
@@ -12,21 +10,19 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
-/// Handles background checking of projects for available package updates.
+///     Handles background checking of projects for available package updates.
 /// </summary>
 class ProjectUpdateChecker
 {
+    readonly object _lock = new();
     readonly ILogger _logger;
     readonly IProjectService _projectService;
     readonly Queue<CanonicalPath> _queue = new();
     readonly HashSet<CanonicalPath> _queued = new();
-    readonly object _lock = new();
     CancellationTokenSource? _cancellationTokenSource;
-    Task? _processingTask;
     bool _hasVersionData;
     Dictionary<string, string>? _latestVersions;
-
-    public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
+    Task? _processingTask;
 
     public ProjectUpdateChecker(ILogger logger, IProjectService projectService)
     {
@@ -34,33 +30,31 @@ class ProjectUpdateChecker
         _projectService = projectService;
     }
 
+    public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
+
     /// <summary>
-    /// Starts background processing when version data becomes available.
+    ///     Starts background processing when version data becomes available.
     /// </summary>
     public void OnVersionDataAvailable(VersionCheckCompletedEventArgs versionData)
     {
         _logger.Info($"Version data available, storing latest versions for {versionData.Packages.Count} MDK package(s)");
         _hasVersionData = true;
-        
+
         // Store the latest versions from the version check
         _latestVersions = new Dictionary<string, string>();
         foreach (var package in versionData.Packages)
-        {
             _latestVersions[package.PackageId] = package.LatestVersion;
-        }
-        
+
         // Start processing if we have queued projects
         lock (_lock)
         {
             if (_queue.Count > 0 && _processingTask == null)
-            {
                 StartProcessing();
-            }
         }
     }
 
     /// <summary>
-    /// Queues a project for update checking. If project is selected, moves to front of queue.
+    ///     Queues a project for update checking. If project is selected, moves to front of queue.
     /// </summary>
     public void QueueProjectCheck(CanonicalPath projectPath, bool priority = false)
     {
@@ -98,33 +92,27 @@ class ProjectUpdateChecker
                     _queue.Enqueue(item);
             }
             else
-            {
                 _queue.Enqueue(projectPath);
-            }
 
             _queued.Add(projectPath);
 
             // Start processing if we have version data and not already running
             if (_hasVersionData && _processingTask == null)
-            {
                 StartProcessing();
-            }
         }
     }
 
     /// <summary>
-    /// Queues multiple projects for checking.
+    ///     Queues multiple projects for checking.
     /// </summary>
     public void QueueProjectsCheck(IEnumerable<CanonicalPath> projectPaths)
     {
         foreach (var path in projectPaths)
-        {
-            QueueProjectCheck(path, priority: false);
-        }
+            QueueProjectCheck(path, false);
     }
 
     /// <summary>
-    /// Removes a project from the queue if it's waiting.
+    ///     Removes a project from the queue if it's waiting.
     /// </summary>
     public void RemoveFromQueue(CanonicalPath projectPath)
     {
@@ -134,7 +122,7 @@ class ProjectUpdateChecker
                 return;
 
             _queued.Remove(projectPath);
-            
+
             var tempQueue = new Queue<CanonicalPath>();
             while (_queue.Count > 0)
             {
@@ -188,24 +176,22 @@ class ProjectUpdateChecker
                 }
 
                 _logger.Debug($"Checking project for updates: {projectPath}");
-                
+
                 // Check for actual package updates using pre-fetched latest versions
                 var updates = CheckProjectForUpdates(projectPath);
-                
+
                 if (updates.Count > 0)
                 {
                     _logger.Info($"Updates available for {projectPath}: {updates.Count} package(s)");
-                    ProjectUpdateAvailable?.Invoke(this, new ProjectUpdateAvailableEventArgs
-                    {
-                        ProjectPath = projectPath,
-                        AvailableUpdates = updates
-                    });
+                    ProjectUpdateAvailable?.Invoke(this,
+                        new ProjectUpdateAvailableEventArgs
+                        {
+                            ProjectPath = projectPath,
+                            AvailableUpdates = updates
+                        });
                 }
                 else
-                {
                     _logger.Debug($"No updates available for {projectPath}");
-                }
-                
             }
             catch (OperationCanceledException)
             {
@@ -219,19 +205,19 @@ class ProjectUpdateChecker
 
         _logger.Info("Project update check processing cancelled");
     }
-    
+
     List<PackageUpdateInfo> CheckProjectForUpdates(CanonicalPath projectPath)
     {
         var updates = new List<PackageUpdateInfo>();
-        
+
         if (_latestVersions == null)
             return updates;
-        
+
         try
         {
             // Get current package versions from .csproj
             var currentVersions = _projectService.GetMdkPackageVersions(projectPath);
-            
+
             // Compare against pre-fetched latest versions
             foreach (var (packageId, currentVersion) in currentVersions)
             {
@@ -254,7 +240,7 @@ class ProjectUpdateChecker
         {
             _logger.Error($"Error checking {projectPath} for updates", ex);
         }
-        
+
         return updates;
     }
 
@@ -267,7 +253,7 @@ class ProjectUpdateChecker
 }
 
 /// <summary>
-/// Event arguments for when a project has updates available.
+///     Event arguments for when a project has updates available.
 /// </summary>
 public class ProjectUpdateAvailableEventArgs : EventArgs
 {
@@ -276,7 +262,7 @@ public class ProjectUpdateAvailableEventArgs : EventArgs
 }
 
 /// <summary>
-/// Information about an available package update.
+///     Information about an available package update.
 /// </summary>
 public record PackageUpdateInfo
 {

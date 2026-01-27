@@ -8,6 +8,7 @@ using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Snackbars;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
@@ -25,11 +26,11 @@ public class ProjectOverviewViewModel : ViewModel
 {
     static readonly TimeSpan _selectionCooldown = TimeSpan.FromSeconds(30);
     readonly ICommonDialogs _commonDialogs;
+    readonly ILogger _logger;
     readonly ObservableCollection<ProjectModel> _projects = new();
     readonly IProjectService _projectService;
     readonly ISettings _settings;
     readonly ISnackbarService _snackbarService;
-    readonly ILogger _logger;
     readonly ThrottledAction<string> _throttledSearch;
     ImmutableArray<ProjectModel> _allProjects;
     bool _filterModsOnly;
@@ -39,8 +40,8 @@ public class ProjectOverviewViewModel : ViewModel
     string? _pendingNavigationPath;
     string _searchTerm = string.Empty;
     string _searchText = string.Empty;
+    ShellViewModel? _shell;
     bool _showAll = true;
-    Shell.ShellViewModel? _shell;
 
     public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!)
     {
@@ -63,30 +64,12 @@ public class ProjectOverviewViewModel : ViewModel
         {
             // Sample data for design-time
             AllProjects = ImmutableArray.Create(
-                new ProjectModel[]
+                new[]
                 {
                     new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", new CanonicalPath(@"C:\Projects\MyScript\MyScript.csproj"), DateTimeOffset.Now, commonDialogs),
                     new ProjectModel(ProjectType.Mod, "My Mod", new CanonicalPath(@"C:\Projects\MyMod\MyMod.csproj"), DateTimeOffset.Now.AddDays(-1), commonDialogs),
                     new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", new CanonicalPath(@"C:\Projects\AnotherScript\AnotherScript.csproj"), DateTimeOffset.Now.AddDays(-2), commonDialogs)
                 });
-        }
-    }
-
-    public void Initialize(Shell.ShellViewModel shell)
-    {
-        _shell = shell;
-        
-        if (!IsDesignMode)
-        {
-            // Subscribe to events
-            _projectService.ProjectAdded += OnProjectAdded;
-            _projectService.ProjectRemoved += OnProjectRemoved;
-            _projectService.ProjectUpdateAvailable += OnProjectUpdateAvailable;
-            _projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
-            
-            // Load and display projects
-            LoadProjects();
-            RestoreSelectedProject();
         }
     }
 
@@ -166,6 +149,24 @@ public class ProjectOverviewViewModel : ViewModel
     public ICommand ClearSearchCommand { get; }
 
     public ICommand SelectProjectCommand { get; }
+
+    public void Initialize(ShellViewModel shell)
+    {
+        _shell = shell;
+
+        if (!IsDesignMode)
+        {
+            // Subscribe to events
+            _projectService.ProjectAdded += OnProjectAdded;
+            _projectService.ProjectRemoved += OnProjectRemoved;
+            _projectService.ProjectUpdateAvailable += OnProjectUpdateAvailable;
+            _projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
+
+            // Load and display projects
+            LoadProjects();
+            RestoreSelectedProject();
+        }
+    }
 
     /// <summary>
     ///     Raised when a request is made to show a specific project in the hub.
@@ -411,17 +412,15 @@ public class ProjectOverviewViewModel : ViewModel
             _pendingNavigationPath = e.ProjectPath.Value;
         }
     }
-    
-    void OnProjectRemoved(object? sender, CanonicalPath projectPath)
-    {
+
+    void OnProjectRemoved(object? sender, CanonicalPath projectPath) =>
         // Refresh the project list to remove the deleted project
         LoadProjects();
-    }
-    
+
     void OnProjectUpdateAvailable(object? sender, ProjectUpdateAvailableEventArgs e)
     {
         _logger.Info($"Update available for project: {e.ProjectPath}");
-        
+
         // Find the project model and update its status
         var projectModel = AllProjects.OfType<ProjectModel>().FirstOrDefault(p => p.ProjectPath == e.ProjectPath);
         if (projectModel != null)
@@ -441,8 +440,6 @@ public class ProjectOverviewViewModel : ViewModel
             }
         }
         else
-        {
             _logger.Warning($"Could not find project model for {e.ProjectPath}");
-        }
     }
 }

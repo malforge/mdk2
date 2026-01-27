@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Settings;
@@ -11,20 +11,14 @@ namespace Mdk.Hub.Features.Shell;
 public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyViewModel, ISettings settings) : IShell
 {
     readonly IDependencyContainer _container = container;
-    readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
     readonly ISettings _settings = settings;
-    readonly System.Collections.Generic.List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
-    readonly System.Collections.Generic.List<Action<string[]>> _startupCallbacks = new();
-    DateTime? _easterEggDisabledUntil;
+    readonly List<Action<string[]>> _startupCallbacks = new();
+    readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
+    readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
     bool _easterEggDisabledForever;
-    string[]? _startupArgs;
+    DateTime? _easterEggDisabledUntil;
     bool _hasStarted;
-    
-    class UnsavedChangesRegistration
-    {
-        public string Description { get; init; } = string.Empty;
-        public Action NavigateAction { get; init; } = () => { };
-    }
+    string[]? _startupArgs;
 
     public event EventHandler? WindowFocusGained;
     public event EventHandler? EasterEggActiveChanged;
@@ -41,9 +35,8 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
             var today = DateTime.Now;
             var isEasterEggDay = today is { Month: 11, Day: 23 };
 #endif
-            var isDisabled = _easterEggDisabledForever || 
-                           (_easterEggDisabledUntil.HasValue && DateTime.Now < _easterEggDisabledUntil.Value);
-            
+            var isDisabled = _easterEggDisabledForever || (_easterEggDisabledUntil.HasValue && DateTime.Now < _easterEggDisabledUntil.Value);
+
             return isEasterEggDay && !isDisabled;
         }
     }
@@ -52,13 +45,13 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     {
         _startupArgs = args;
         _hasStarted = true;
-        
+
         // Load easter egg settings
         _easterEggDisabledForever = _settings.GetValue("EasterEggDisabledForever", false);
         var disabledUntilTicks = _settings.GetValue("EasterEggDisabledUntilTicks", 0L);
         if (disabledUntilTicks > 0)
             _easterEggDisabledUntil = new DateTime(disabledUntilTicks);
-        
+
         // Invoke queued callbacks
         foreach (var callback in _startupCallbacks)
             callback(args);
@@ -90,23 +83,12 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     {
         var toast = new ToastMessage { Message = message };
         ToastMessages.Add(toast);
-        
-        // Start dismiss animation before removal
-        Task.Delay(durationMs - 200).ContinueWith(_ =>
-        {
-            toast.IsDismissing = true;
-        }, TaskScheduler.FromCurrentSynchronizationContext());
-        
-        // Remove after fade-out animation completes
-        Task.Delay(durationMs).ContinueWith(_ =>
-        {
-            ToastMessages.Remove(toast);
-        }, TaskScheduler.FromCurrentSynchronizationContext());
-    }
 
-    public void RaiseWindowFocusGained()
-    {
-        WindowFocusGained?.Invoke(this, EventArgs.Empty);
+        // Start dismiss animation before removal
+        Task.Delay(durationMs - 200).ContinueWith(_ => { toast.IsDismissing = true; }, TaskScheduler.FromCurrentSynchronizationContext());
+
+        // Remove after fade-out animation completes
+        Task.Delay(durationMs).ContinueWith(_ => { ToastMessages.Remove(toast); }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
     public void DisableEasterEggForToday()
@@ -130,9 +112,9 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
             Description = description,
             NavigateAction = navigateToChanges
         };
-        
+
         _unsavedChangesRegistrations.Add(registration);
-        
+
         return new UnsavedChangesHandle(() => _unsavedChangesRegistrations.Remove(registration));
     }
 
@@ -143,7 +125,7 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
             info = default;
             return false;
         }
-        
+
         if (_unsavedChangesRegistrations.Count == 1)
         {
             // Single registration: use its description and action
@@ -163,7 +145,15 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
                 GoThereAction = () => { }
             };
         }
-        
+
         return true;
+    }
+
+    public void RaiseWindowFocusGained() => WindowFocusGained?.Invoke(this, EventArgs.Empty);
+
+    class UnsavedChangesRegistration
+    {
+        public string Description { get; init; } = string.Empty;
+        public Action NavigateAction { get; init; } = () => { };
     }
 }

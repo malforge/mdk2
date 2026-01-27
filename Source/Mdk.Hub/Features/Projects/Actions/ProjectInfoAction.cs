@@ -5,7 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
-using Avalonia.Platform.Storage;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
@@ -15,19 +16,19 @@ namespace Mdk.Hub.Features.Projects.Actions;
 
 public class ProjectInfoAction : ActionItem
 {
-    readonly IProjectService _projectService;
-    readonly ICommonDialogs _commonDialogs;
-    readonly IShell _shell;
     readonly ProjectActionsViewModel _actionsViewModel;
+    readonly ICommonDialogs _commonDialogs;
+    readonly IProjectService _projectService;
+    readonly IShell _shell;
+    string? _configurationWarning;
+    string? _deploymentError;
+    bool _isDeployed;
+    bool _isLoading = true;
     DateTimeOffset? _lastChanged;
     string? _lastChangedError;
-    bool _isDeployed;
-    string? _deploymentError;
     DateTimeOffset? _lastDeployed;
-    int? _scriptSizeCharacters;
-    bool _isLoading = true;
     string? _outputPath;
-    string? _configurationWarning;
+    int? _scriptSizeCharacters;
 
     public ProjectInfoAction(ProjectModel project, IProjectService projectService, ICommonDialogs commonDialogs, IShell shell, ProjectActionsViewModel actionsViewModel)
     {
@@ -36,13 +37,13 @@ public class ProjectInfoAction : ActionItem
         _commonDialogs = commonDialogs;
         _shell = shell;
         _actionsViewModel = actionsViewModel;
-        
+
         OpenProjectFolderCommand = new RelayCommand(OpenProjectFolder, CanOpenProjectFolder);
         OpenOutputFolderCommand = new RelayCommand(OpenOutputFolder, CanOpenOutputFolder);
         OpenInIdeCommand = new RelayCommand(OpenInIde, CanOpenInIde);
         CopyScriptCommand = new AsyncRelayCommand(CopyScriptAsync, CanCopyScript);
         ShowOptionsCommand = new RelayCommand(ShowOptions, CanShowOptions);
-        
+
         // Load data asynchronously
         _ = LoadProjectDataAsync(projectService);
     }
@@ -51,8 +52,8 @@ public class ProjectInfoAction : ActionItem
 
     public bool IsScript => Project.Type == ProjectType.IngameScript;
 
-    public string ProjectTypeName => Project.Type == ProjectType.IngameScript 
-        ? "Programmable Block Script" 
+    public string ProjectTypeName => Project.Type == ProjectType.IngameScript
+        ? "Programmable Block Script"
         : "Mod";
 
     public bool IsLoading
@@ -66,7 +67,7 @@ public class ProjectInfoAction : ActionItem
         get => _lastChanged;
         private set => SetProperty(ref _lastChanged, value);
     }
-    
+
     public string? LastChangedError
     {
         get => _lastChangedError;
@@ -85,7 +86,7 @@ public class ProjectInfoAction : ActionItem
             }
         }
     }
-    
+
     public string? DeploymentError
     {
         get => _deploymentError;
@@ -107,7 +108,7 @@ public class ProjectInfoAction : ActionItem
                 OnPropertyChanged(nameof(IsScriptTooLarge));
         }
     }
-    
+
     public string? ConfigurationWarning
     {
         get => _configurationWarning;
@@ -124,15 +125,9 @@ public class ProjectInfoAction : ActionItem
 
     public override string? Category => "Project";
 
-    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod)
-    {
-        return selectedProject is ProjectModel;
-    }
+    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod) => selectedProject is ProjectModel;
 
-    bool CanOpenProjectFolder()
-    {
-        return File.Exists(Project.ProjectPath.Value);
-    }
+    bool CanOpenProjectFolder() => File.Exists(Project.ProjectPath.Value);
 
     void OpenProjectFolder()
     {
@@ -142,10 +137,7 @@ public class ProjectInfoAction : ActionItem
         _projectService.OpenProjectFolder(Project.ProjectPath);
     }
 
-    bool CanOpenOutputFolder()
-    {
-        return IsDeployed && !string.IsNullOrEmpty(_outputPath) && Directory.Exists(_outputPath);
-    }
+    bool CanOpenOutputFolder() => IsDeployed && !string.IsNullOrEmpty(_outputPath) && Directory.Exists(_outputPath);
 
     void OpenOutputFolder()
     {
@@ -155,10 +147,7 @@ public class ProjectInfoAction : ActionItem
         _projectService.OpenOutputFolder(Project.ProjectPath);
     }
 
-    bool CanOpenInIde()
-    {
-        return File.Exists(Project.ProjectPath.Value);
-    }
+    bool CanOpenInIde() => File.Exists(Project.ProjectPath.Value);
 
     void OpenInIde()
     {
@@ -180,53 +169,48 @@ public class ProjectInfoAction : ActionItem
         }
     }
 
-    bool CanCopyScript()
-    {
-        return IsScript && IsDeployed && !string.IsNullOrEmpty(_outputPath);
-    }
+    bool CanCopyScript() => IsScript && IsDeployed && !string.IsNullOrEmpty(_outputPath);
 
     async Task CopyScriptAsync()
     {
-        System.Diagnostics.Debug.WriteLine($"CopyScriptAsync called. IsScript={IsScript}, IsDeployed={IsDeployed}, _outputPath={_outputPath}");
-        
+        Debug.WriteLine($"CopyScriptAsync called. IsScript={IsScript}, IsDeployed={IsDeployed}, _outputPath={_outputPath}");
+
         if (!CanCopyScript())
         {
-            System.Diagnostics.Debug.WriteLine("CanCopyScript returned false, exiting early");
+            Debug.WriteLine("CanCopyScript returned false, exiting early");
             return;
         }
 
         try
         {
             var scriptFile = Path.Combine(_outputPath!, "Script.cs");
-            System.Diagnostics.Debug.WriteLine($"Looking for script at: {scriptFile}");
-            
+            Debug.WriteLine($"Looking for script at: {scriptFile}");
+
             if (File.Exists(scriptFile))
             {
                 var content = await File.ReadAllTextAsync(scriptFile);
-                System.Diagnostics.Debug.WriteLine($"Script loaded, length={content.Length}");
-                
+                Debug.WriteLine($"Script loaded, length={content.Length}");
+
                 // Use TopLevel to get clipboard
-                var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-                    ? Avalonia.Controls.TopLevel.GetTopLevel(desktop.MainWindow)
+                var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                    ? TopLevel.GetTopLevel(desktop.MainWindow)
                     : null;
-                
-                System.Diagnostics.Debug.WriteLine($"TopLevel: {topLevel != null}, Clipboard: {topLevel?.Clipboard != null}");
-                
+
+                Debug.WriteLine($"TopLevel: {topLevel != null}, Clipboard: {topLevel?.Clipboard != null}");
+
                 if (topLevel?.Clipboard != null)
                 {
                     await topLevel.Clipboard.SetTextAsync(content);
-                    System.Diagnostics.Debug.WriteLine("Clipboard set successfully");
+                    Debug.WriteLine("Clipboard set successfully");
                     _commonDialogs.ShowToast($"Script copied ({content.Length:N0} characters)");
                 }
             }
             else
-            {
-                System.Diagnostics.Debug.WriteLine("Script file does not exist");
-            }
+                Debug.WriteLine("Script file does not exist");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Exception: {ex}");
+            Debug.WriteLine($"Exception: {ex}");
             await _commonDialogs.ShowAsync(new ConfirmationMessage
             {
                 Title = "Copy Failed",
@@ -259,7 +243,7 @@ public class ProjectInfoAction : ActionItem
             {
                 DateTimeOffset? lastChanged = null;
                 string? lastChangedError = null;
-                bool isDeployed = false;
+                var isDeployed = false;
                 string? deploymentError = null;
                 DateTimeOffset? lastDeployed = null;
                 int? scriptSize = null;
@@ -269,9 +253,7 @@ public class ProjectInfoAction : ActionItem
                 try
                 {
                     if (File.Exists(Project.ProjectPath.Value))
-                    {
                         lastChanged = File.GetLastWriteTime(Project.ProjectPath.Value);
-                    }
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -285,21 +267,19 @@ public class ProjectInfoAction : ActionItem
                 // Load configuration and check deployment
                 var config = projectService.LoadConfiguration(Project.ProjectPath);
                 string? configWarning = null;
-                
+
                 if (config != null)
                 {
                     // Check for configuration warnings
                     if (config.ConfigurationWarnings.Count > 0)
-                    {
                         configWarning = string.Join("\n", config.ConfigurationWarnings);
-                    }
-                    
+
                     outputPath = config.GetResolvedOutputPath();
-                    
+
                     if (!string.IsNullOrEmpty(outputPath) && Directory.Exists(outputPath))
                     {
                         isDeployed = true;
-                        
+
                         // Get the most recent file write time in the output directory
                         try
                         {

@@ -4,13 +4,13 @@ using Mdk.Hub.Features.Diagnostics;
 namespace Mdk.Hub.Features.Settings;
 
 /// <summary>
-/// Provides typed access to global MDK Hub settings
+///     Provides typed access to global MDK Hub settings
 /// </summary>
 [Dependency<GlobalSettings>]
 public class GlobalSettings
 {
-    readonly ISettings _settings;
     readonly ILogger _logger;
+    readonly ISettings _settings;
 
     public GlobalSettings(ISettings settings, ILogger logger)
     {
@@ -19,8 +19,8 @@ public class GlobalSettings
     }
 
     /// <summary>
-    /// Gets or sets the custom auto output path for ingame scripts.
-    /// When null or "auto", uses the default behavior (%AppData%/SpaceEngineers/IngameScripts/local).
+    ///     Gets or sets the custom auto output path for ingame scripts.
+    ///     When null or "auto", uses the default behavior (%AppData%/SpaceEngineers/IngameScripts/local).
     /// </summary>
     public string CustomAutoScriptOutputPath
     {
@@ -40,8 +40,8 @@ public class GlobalSettings
     }
 
     /// <summary>
-    /// Gets or sets the custom auto output path for mods.
-    /// When null or "auto", uses the default behavior (%AppData%/SpaceEngineers/Mods).
+    ///     Gets or sets the custom auto output path for mods.
+    ///     When null or "auto", uses the default behavior (%AppData%/SpaceEngineers/Mods).
     /// </summary>
     public string CustomAutoModOutputPath
     {
@@ -61,8 +61,8 @@ public class GlobalSettings
     }
 
     /// <summary>
-    /// Gets or sets the custom auto binary path.
-    /// When null or "auto", uses the default behavior (game bin folder).
+    ///     Gets or sets the custom auto binary path.
+    ///     When null or "auto", uses the default behavior (game bin folder).
     /// </summary>
     public string CustomAutoBinaryPath
     {

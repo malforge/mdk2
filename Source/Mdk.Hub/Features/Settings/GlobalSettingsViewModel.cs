@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
@@ -11,16 +14,16 @@ namespace Mdk.Hub.Features.Settings;
 [ViewModelFor<GlobalSettingsView>]
 public class GlobalSettingsViewModel : OverlayModel
 {
-    readonly GlobalSettings _globalSettings;
-    readonly IUpdateCheckService _updateCheckService;
-    readonly ICommonDialogs _commonDialogs;
-    readonly IShell _shell;
-    string _customAutoScriptOutputPath;
-    string _customAutoModOutputPath;
-    string _customAutoBinaryPath;
-    readonly RelayCommand _saveCommand;
     readonly RelayCommand _cancelCommand;
     readonly RelayCommand _checkPrerequisitesCommand;
+    readonly ICommonDialogs _commonDialogs;
+    readonly GlobalSettings _globalSettings;
+    readonly RelayCommand _saveCommand;
+    readonly IShell _shell;
+    readonly IUpdateCheckService _updateCheckService;
+    string _customAutoBinaryPath;
+    string _customAutoModOutputPath;
+    string _customAutoScriptOutputPath;
 
     public GlobalSettingsViewModel(GlobalSettings globalSettings, IUpdateCheckService updateCheckService, ICommonDialogs commonDialogs, IShell shell)
     {
@@ -66,43 +69,32 @@ public class GlobalSettingsViewModel : OverlayModel
         Dismiss();
     }
 
-    void Cancel()
-    {
-        Dismiss();
-    }
+    void Cancel() => Dismiss();
 
-    async System.Threading.Tasks.Task CheckPrerequisitesAsync()
+    async Task CheckPrerequisitesAsync()
     {
         var busyOverlay = new BusyOverlayViewModel("Checking prerequisites...");
         _shell.AddOverlay(busyOverlay);
 
         try
         {
-            var messages = new System.Collections.Generic.List<string>();
+            var messages = new List<string>();
 
             // Check .NET SDK
             busyOverlay.Message = "Checking .NET SDK...";
             var (sdkInstalled, sdkVersion) = await _updateCheckService.CheckDotNetSdkAsync();
             if (sdkInstalled)
-            {
                 messages.Add($"✓ .NET SDK {sdkVersion} is installed");
-            }
             else
-            {
                 messages.Add("✗ .NET SDK 9.0 or later is not installed");
-            }
 
             // Check template package
             busyOverlay.Message = "Checking template package...";
             var templateInstalled = await _updateCheckService.IsTemplateInstalledAsync();
             if (templateInstalled)
-            {
                 messages.Add("✓ MDK² template package is installed");
-            }
             else
-            {
                 messages.Add("✗ MDK² template package is not installed");
-            }
 
             busyOverlay.Dismiss();
 
@@ -112,7 +104,7 @@ public class GlobalSettingsViewModel : OverlayModel
                 Message = string.Join("\n", messages)
             });
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             busyOverlay.Dismiss();
             await _commonDialogs.ShowAsync(new InformationMessage

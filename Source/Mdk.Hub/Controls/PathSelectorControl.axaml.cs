@@ -1,21 +1,18 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Windows.Input;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Interactivity;
-using Avalonia.Media;
+using Avalonia.Data;
 using Avalonia.Platform.Storage;
-using Avalonia.VisualTree;
 
 namespace Mdk.Hub.Controls;
 
 public partial class PathSelectorControl : UserControl
 {
     public static readonly StyledProperty<string?> PathProperty =
-        AvaloniaProperty.Register<PathSelectorControl, string?>(nameof(Path), "auto", defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+        AvaloniaProperty.Register<PathSelectorControl, string?>(nameof(Path), "auto", defaultBindingMode: BindingMode.TwoWay);
 
     public static readonly StyledProperty<string?> DefaultPathProperty =
         AvaloniaProperty.Register<PathSelectorControl, string?>(nameof(DefaultPath));
@@ -27,7 +24,7 @@ public partial class PathSelectorControl : UserControl
         AvaloniaProperty.Register<PathSelectorControl, string>(nameof(DefaultText), "Default");
 
     public static readonly StyledProperty<int> SelectedIndexProperty =
-        AvaloniaProperty.Register<PathSelectorControl, int>(nameof(SelectedIndex), 0);
+        AvaloniaProperty.Register<PathSelectorControl, int>(nameof(SelectedIndex));
 
     private ComboBox? _comboBox;
     private bool _updatingSelection;
@@ -37,15 +34,43 @@ public partial class PathSelectorControl : UserControl
         InitializeComponent();
     }
 
+    public string? Path
+    {
+        get => GetValue(PathProperty);
+        set => SetValue(PathProperty, value);
+    }
+
+    public string? DefaultPath
+    {
+        get => GetValue(DefaultPathProperty);
+        set => SetValue(DefaultPathProperty, value);
+    }
+
+    public string? Watermark
+    {
+        get => GetValue(WatermarkProperty);
+        set => SetValue(WatermarkProperty, value);
+    }
+
+    public string DefaultText
+    {
+        get => GetValue(DefaultTextProperty);
+        set => SetValue(DefaultTextProperty, value);
+    }
+
+    public int SelectedIndex
+    {
+        get => GetValue(SelectedIndexProperty);
+        set => SetValue(SelectedIndexProperty, value);
+    }
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
 
         // Unwire old event if exists
         if (_comboBox != null)
-        {
             _comboBox.SelectionChanged -= OnComboBoxSelectionChanged;
-        }
 
         // Find and wire up the ComboBox
         _comboBox = this.FindControl<ComboBox>("PART_ComboBox");
@@ -55,7 +80,7 @@ public partial class PathSelectorControl : UserControl
             _comboBox.Items.Clear();
             _comboBox.Items.Add(new ComboBoxItem { Content = DefaultText });
             _comboBox.Items.Add(new ComboBoxItem { Content = "Find Folder..." });
-            
+
             _comboBox.SelectionChanged += OnComboBoxSelectionChanged;
             UpdateSelectionFromPath();
         }
@@ -66,16 +91,12 @@ public partial class PathSelectorControl : UserControl
         base.OnPropertyChanged(change);
 
         if (change.Property == PathProperty && !_updatingSelection)
-        {
             UpdateSelectionFromPath();
-        }
         else if (change.Property == DefaultTextProperty && _comboBox != null)
         {
             // Update the first item when DefaultText changes
             if (_comboBox.Items.Count > 0 && _comboBox.Items[0] is ComboBoxItem item)
-            {
                 item.Content = DefaultText;
-            }
         }
     }
 
@@ -89,9 +110,7 @@ public partial class PathSelectorControl : UserControl
         {
             // Remove old custom path if exists
             while (_comboBox.Items.Count > 2)
-            {
                 _comboBox.Items.RemoveAt(2);
-            }
 
             if (string.IsNullOrWhiteSpace(Path))
             {
@@ -99,14 +118,12 @@ public partial class PathSelectorControl : UserControl
                 SelectedIndex = -1; // No selection
             }
             else if (Path == "auto")
-            {
                 SelectedIndex = 0; // Auto
-            }
             else
             {
                 // Add the custom path item
-                var pathItem = new ComboBoxItem 
-                { 
+                var pathItem = new ComboBoxItem
+                {
                     Content = Path
                 };
                 ToolTip.SetTip(pathItem, Path);
@@ -152,7 +169,7 @@ public partial class PathSelectorControl : UserControl
         // selectedIndex == 2 means custom path already selected, nothing to do
     }
 
-    private async System.Threading.Tasks.Task BrowseFolderAsync()
+    private async Task BrowseFolderAsync()
     {
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel?.StorageProvider == null || _comboBox == null)
@@ -170,17 +187,13 @@ public partial class PathSelectorControl : UserControl
 
         // Determine suggested start location
         string? suggestedPath = null;
-        
+
         // 1. If current path is valid and not "auto", use it
         if (!string.IsNullOrWhiteSpace(Path) && Path != "auto" && Directory.Exists(Path))
-        {
             suggestedPath = Path;
-        }
         // 2. Otherwise, try the default path if it exists
         else if (!string.IsNullOrWhiteSpace(DefaultPath) && Directory.Exists(DefaultPath))
-        {
             suggestedPath = DefaultPath;
-        }
 
         if (suggestedPath != null)
         {
@@ -197,7 +210,7 @@ public partial class PathSelectorControl : UserControl
         }
 
         var result = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
-        
+
         if (result.Count > 0)
         {
             var selectedPath = result[0].Path.LocalPath;
@@ -209,35 +222,5 @@ public partial class PathSelectorControl : UserControl
             // User cancelled, revert to previous selection
             UpdateSelectionFromPath();
         }
-    }
-
-    public string? Path
-    {
-        get => GetValue(PathProperty);
-        set => SetValue(PathProperty, value);
-    }
-
-    public string? DefaultPath
-    {
-        get => GetValue(DefaultPathProperty);
-        set => SetValue(DefaultPathProperty, value);
-    }
-
-    public string? Watermark
-    {
-        get => GetValue(WatermarkProperty);
-        set => SetValue(WatermarkProperty, value);
-    }
-
-    public string DefaultText
-    {
-        get => GetValue(DefaultTextProperty);
-        set => SetValue(DefaultTextProperty, value);
-    }
-
-    public int SelectedIndex
-    {
-        get => GetValue(SelectedIndexProperty);
-        set => SetValue(SelectedIndexProperty, value);
     }
 }

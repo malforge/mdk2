@@ -26,7 +26,7 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
     // /// <param name="path"></param>
     // /// <returns></returns>
     // public static implicit operator string?(CanonicalPath path) => path.Value;
-    
+
     /// <summary>
     ///     Determines whether the current path is equal to another canonical path.
     /// </summary>
@@ -34,8 +34,8 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
     /// <returns><see langword="true" /> if the paths are equal; otherwise, <see langword="false" />.</returns>
     public bool Equals(CanonicalPath other)
     {
-        var comparison = OperatingSystem.IsWindows() 
-            ? StringComparison.OrdinalIgnoreCase 
+        var comparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
         return string.Equals(Value, other.Value, comparison);
     }
@@ -48,7 +48,7 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
     {
         if (Value == null)
             return 0;
-            
+
         return OperatingSystem.IsWindows()
             ? StringComparer.OrdinalIgnoreCase.GetHashCode(Value)
             : Value.GetHashCode();
@@ -148,7 +148,7 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
     public readonly string? Value;
 
     /// <summary>
-    ///    Returns the file name of the canonical path.
+    ///     Returns the file name of the canonical path.
     /// </summary>
     /// <returns></returns>
     public string GetFileName()
@@ -157,9 +157,9 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
             return string.Empty;
         return Path.GetFileName(Value);
     }
-    
+
     /// <summary>
-    ///    Returns the directory name of the canonical path.
+    ///     Returns the directory name of the canonical path.
     /// </summary>
     /// <returns></returns>
     public string GetDirectoryName()
@@ -168,7 +168,7 @@ public readonly struct CanonicalPath : IEquatable<CanonicalPath>
             return string.Empty;
         return Path.GetDirectoryName(Value) ?? string.Empty;
     }
-    
+
     /// <summary>
     ///     Returns the canonical path as a string.
     /// </summary>

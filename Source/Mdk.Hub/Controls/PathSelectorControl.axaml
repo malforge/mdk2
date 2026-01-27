@@ -6,12 +6,11 @@
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="35"
              x:Class="Mdk.Hub.Controls.PathSelectorControl"
              x:DataType="controls:PathSelectorControl">
-    
+
     <ComboBox x:Name="PART_ComboBox"
               HorizontalAlignment="Stretch"
               SelectedIndex="{Binding SelectedIndex, RelativeSource={RelativeSource AncestorType=controls:PathSelectorControl}}"
               PlaceholderText="{Binding Watermark, RelativeSource={RelativeSource AncestorType=controls:PathSelectorControl}}"
-              VerticalAlignment="Center">
-    </ComboBox>
-    
+              VerticalAlignment="Center" />
+
 </UserControl>

@@ -13,9 +13,9 @@ namespace Mdk.Hub.Features.CommonDialogs;
 [Dependency]
 public partial class DangerBoxView : UserControl
 {
+    InitialFocusBehavior? _focusBehavior;
     ShakingBehavior? _shakingBehavior;
     DangerBoxViewModel? _trackedDataContext;
-    InitialFocusBehavior? _focusBehavior;
 
     public DangerBoxView()
     {

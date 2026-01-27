@@ -183,11 +183,11 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
     }
 
     /// <summary>
-    /// Determines if the pointer is currently at the start of a line, which is either the beginning of the text string
-    /// or immediately following a newline character ('\n', '\r', or their combination).
+    ///     Determines if the pointer is currently at the start of a line, which is either the beginning of the text string
+    ///     or immediately following a newline character ('\n', '\r', or their combination).
     /// </summary>
     /// <returns>
-    /// A boolean value indicating whether the pointer is at the start of a line.
+    ///     A boolean value indicating whether the pointer is at the start of a line.
     /// </returns>
     public bool IsStartOfLine()
     {
@@ -196,14 +196,14 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
     }
 
     /// <summary>
-    /// Determines if the pointer is currently at an end-of-line position, which is either outside the bounds of the string
-    /// or at a newline character ('\n', '\r', or their combination).
+    ///     Determines if the pointer is currently at an end-of-line position, which is either outside the bounds of the string
+    ///     or at a newline character ('\n', '\r', or their combination).
     /// </summary>
     /// <returns>
-    /// A boolean value indicating whether the pointer is at an end-of-line position.
+    ///     A boolean value indicating whether the pointer is at an end-of-line position.
     /// </returns>
     public bool IsEndOfLine() => Index >= (Text?.Length ?? 0) || IsNewline();
-    
+
     /// <summary>
     ///     Determines if the pointer is currently at a newline character, whether it be '\n', '\r', or a combination of both.
     /// </summary>
@@ -265,8 +265,8 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
     }
 
     /// <summary>
-    /// Moves the pointer to the start of the current line by traversing backward until the preceding newline character
-    /// is found or the beginning of the text is reached. 
+    ///     Moves the pointer to the start of the current line by traversing backward until the preceding newline character
+    ///     is found or the beginning of the text is reached.
     /// </summary>
     /// <returns>The updated pointer positioned at the start of the current line.</returns>
     public TextPtr ToStartOfLine()
