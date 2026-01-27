@@ -1,8 +1,11 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Framework;
+using Velopack;
+using Velopack.Sources;
 
 namespace Mdk.Hub.Features.Updates;
 
@@ -19,7 +22,7 @@ public class UpdateNotificationBarViewModel : ViewModel
     bool _isReadyToInstall;
     double _downloadProgress;
     HubVersionInfo? _hubVersionInfo;
-    string? _downloadedMsiPath;
+    UpdateInfo? _pendingUpdate;
 
     public UpdateNotificationBarViewModel(ICommonDialogs commonDialogs)
     {
@@ -161,23 +164,6 @@ public class UpdateNotificationBarViewModel : ViewModel
 
     async void UpdateHub()
     {
-        if (HubVersionInfo == null) return;
-        
-        // Check platform
-        if (OperatingSystem.IsWindows())
-        {
-            await DownloadHubUpdateAsync();
-        }
-        else if (OperatingSystem.IsLinux())
-        {
-            OpenBrowserToReleases();
-        }
-    }
-    
-    async System.Threading.Tasks.Task DownloadHubUpdateAsync()
-    {
-        if (HubVersionInfo == null) return;
-        
         try
         {
             // Set downloading state
@@ -186,37 +172,26 @@ public class UpdateNotificationBarViewModel : ViewModel
             DownloadProgress = 0;
             UpdateMessage();
             
-            // Create temp path for MSI
-            var tempPath = System.IO.Path.GetTempPath();
-            var fileName = $"MdkHub-{HubVersionInfo.LatestVersion}.msi";
-            _downloadedMsiPath = System.IO.Path.Combine(tempPath, fileName);
+            // Use Velopack to download update (works on both Windows and Linux!)
+            var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
             
-            // Download with progress
-            using var client = new System.Net.Http.HttpClient();
-            using var response = await client.GetAsync(HubVersionInfo.DownloadUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            
-            var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            using var contentStream = await response.Content.ReadAsStreamAsync();
-            using var fileStream = new System.IO.FileStream(_downloadedMsiPath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None, 8192, true);
-            
-            var buffer = new byte[8192];
-            long totalRead = 0;
-            int bytesRead;
-            
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            var newVersion = await mgr.CheckForUpdatesAsync();
+            if (newVersion == null)
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead);
-                totalRead += bytesRead;
-                
-                if (totalBytes > 0)
-                {
-                    DownloadProgress = (double)totalRead / totalBytes;
-                    UpdateMessage();
-                }
+                IsDownloading = false;
+                Message = "No update available";
+                return;
             }
             
-            // Download complete
+            // Download with progress
+            await mgr.DownloadUpdatesAsync(newVersion, progress =>
+            {
+                DownloadProgress = progress / 100.0;
+                UpdateMessage();
+            });
+            
+            // Download complete - save for install
+            _pendingUpdate = newVersion;
             IsDownloading = false;
             IsReadyToInstall = true;
             UpdateMessage();
@@ -224,35 +199,15 @@ public class UpdateNotificationBarViewModel : ViewModel
         catch (Exception ex)
         {
             IsDownloading = false;
-            Message = $"Download failed: {ex.Message}";
-        }
-    }
-    
-    void OpenBrowserToReleases()
-    {
-        try
-        {
-            var url = "https://github.com/malware-dev/mdk2/releases";
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-            
-            // Dismiss the notification after opening browser
-            IsVisible = false;
-        }
-        catch (Exception ex)
-        {
-            Message = $"Failed to open browser: {ex.Message}";
+            Message = $"Update failed: {ex.Message}";
         }
     }
 
     async void InstallHubUpdate()
     {
-        if (string.IsNullOrEmpty(_downloadedMsiPath) || !System.IO.File.Exists(_downloadedMsiPath))
+        if (_pendingUpdate == null)
         {
-            Message = "Update file not found";
+            Message = "No update ready to install";
             return;
         }
         
@@ -262,7 +217,7 @@ public class UpdateNotificationBarViewModel : ViewModel
             var confirmed = await _commonDialogs.ShowAsync(new ConfirmationMessage
             {
                 Title = "Install Hub Update",
-                Message = "Installing the update will close MDK Hub. The installer will launch and you can reopen the Hub when installation completes.\n\nContinue?",
+                Message = "Installing the update will restart MDK Hub.\n\nContinue?",
                 OkText = "Install Now",
                 CancelText = "Cancel"
             });
@@ -270,20 +225,13 @@ public class UpdateNotificationBarViewModel : ViewModel
             if (!confirmed)
                 return;
             
-            // Launch MSI installer
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "msiexec.exe",
-                Arguments = $"/i \"{_downloadedMsiPath}\"",
-                UseShellExecute = false
-            });
-            
-            // Exit the application
-            System.Environment.Exit(0);
+            // Use Velopack to apply update and restart (works on both Windows and Linux!)
+            var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
+            mgr.ApplyUpdatesAndRestart(_pendingUpdate);
         }
         catch (Exception ex)
         {
-            Message = $"Failed to launch installer: {ex.Message}";
+            Message = $"Failed to install update: {ex.Message}";
         }
     }
 }

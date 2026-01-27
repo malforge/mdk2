@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Mdk.Hub.Features.Interop;
 using Projektanker.Icons.Avalonia;
 using Projektanker.Icons.Avalonia.FontAwesome;
+using Velopack;
 
 namespace Mdk.Hub;
 
@@ -17,6 +18,11 @@ sealed class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // Velopack bootstrap - MUST be first thing that runs
+        VelopackApp.Build()
+            .OnFirstRun(OnFirstRun)
+            .Run();
+        
         // Handle IPC before initializing Avalonia
         // Must stay synchronous with [STAThread] for COM/clipboard to work properly
         if (args.Length > 0)
@@ -37,6 +43,18 @@ sealed class Program
         // Start Avalonia UI
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         return 0;
+    }
+    
+    static void OnFirstRun(NuGet.Versioning.SemanticVersion version)
+    {
+        // This runs once after installation, before the UI starts
+        // Perfect place to check/install prerequisites
+        
+        // TODO: Check for .NET SDK
+        // TODO: Install template package if needed
+        
+        // For now, just log that we ran
+        Console.WriteLine($"MDK Hub {version} installed successfully!");
     }
 
 
