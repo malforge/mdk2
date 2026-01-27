@@ -96,6 +96,11 @@ class ProjectContext
         projectInfoAction.ShouldShowChanged += OnActionShouldShowChanged;
         _allActions.Add(projectInfoAction);
         
+        // API docs action (below project info)
+        var apiDocsAction = new ApiDocsAction(_project, _projectService, App.Container.Resolve<Diagnostics.ILogger>());
+        apiDocsAction.ShouldShowChanged += OnActionShouldShowChanged;
+        _allActions.Add(apiDocsAction);
+        
         var updatePackagesAction = new UpdatePackagesAction(_project, _shell, _projectService);
         updatePackagesAction.ShouldShowChanged += OnActionShouldShowChanged;
         _allActions.Add(updatePackagesAction);
