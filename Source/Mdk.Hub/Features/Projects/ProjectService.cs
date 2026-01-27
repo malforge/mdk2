@@ -145,7 +145,7 @@ public class ProjectService : IProjectService
             return true;
         }
 
-        errorMessage = "The selected project is not a valid MDK2 project. MDK2 projects must reference either Mal.Mdk2.PbPackager or Mal.Mdk2.ModPackager.";
+        errorMessage = "The selected project is not a valid MDK² project. MDK² projects must reference either Mal.Mdk2.PbPackager or Mal.Mdk2.ModPackager.";
         return false;
     }
 

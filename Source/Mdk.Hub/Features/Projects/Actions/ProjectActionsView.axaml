@@ -85,7 +85,7 @@
                                 HorizontalAlignment="Center" />
                         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
                             <TextBlock Text="Add Existing Project" FontSize="13" FontWeight="Medium" />
-                            <TextBlock Text="Open an existing MDK2 project" FontSize="11" Classes="very-muted" />
+                            <TextBlock Text="Open an existing MDK² project" FontSize="11" Classes="very-muted" />
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -241,9 +241,25 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <Grid>
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header bar with About button -->
+        <Border Grid.Row="0" 
+                Height="40"
+                Margin="8"
+                Padding="8,0"
+                HorizontalAlignment="Stretch">
+            <Button Classes="subtle"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Padding="8"
+                    ToolTip.Tip="About MDK Hub"
+                    Command="{Binding ShowAboutCommand}">
+                <i:Icon Value="fa-solid fa-circle-info" FontSize="16" />
+            </Button>
+        </Border>
+        
         <!-- Main content -->
-        <ScrollViewer>
+        <ScrollViewer Grid.Row="1">
             <ItemsControl ItemsSource="{Binding Actions}" Margin="0,16">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -255,6 +271,8 @@
         
         <!-- Options Drawer (slides in from right) -->
         <Border x:Name="OptionsDrawer"
+                Grid.Row="0"
+                Grid.RowSpan="2"
                 Classes="drawer-content"
                 BorderBrush="{StaticResource BorderPrimaryBrush}"
                 BorderThickness="1,0,0,0"

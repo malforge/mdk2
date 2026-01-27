@@ -49,7 +49,7 @@ public class AddExistingProjectAction : ActionItem
 
         var filePickerOptions = new FilePickerOpenOptions
         {
-            Title = "Select MDK2 Project",
+            Title = "Select MDK² Project",
             AllowMultiple = false,
             FileTypeFilter = new[]
             {
@@ -76,7 +76,7 @@ public class AddExistingProjectAction : ActionItem
             await _dialogs.ShowAsync(new ConfirmationMessage
             {
                 Title = "Invalid Project",
-                Message = errorMessage ?? "The selected file is not a valid MDK2 project.",
+                Message = errorMessage ?? "The selected file is not a valid MDK² project.",
                 OkText = "OK",
                 CancelText = "Cancel"
             });

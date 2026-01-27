@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Mal.DependencyInjection;
+using Mdk.Hub.Features.About;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
@@ -62,6 +64,8 @@ public partial class ProjectActionsViewModel : ViewModel
         _logger = logger;
         _projectService.StateChanged += OnProjectStateChanged;
         _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
+        
+        ShowAboutCommand = new RelayCommand(ShowAbout);
     }
 
     public void Initialize(Shell.ShellViewModel shell)
@@ -76,6 +80,14 @@ public partial class ProjectActionsViewModel : ViewModel
     {
         get => _actions;
         private set => SetProperty(ref _actions, value);
+    }
+    
+    public ICommand ShowAboutCommand { get; }
+    
+    void ShowAbout()
+    {
+        var aboutViewModel = new AboutViewModel();
+        _shell.AddOverlay(aboutViewModel);
     }
     
     public bool HasUnsavedChanges(string projectPath)
