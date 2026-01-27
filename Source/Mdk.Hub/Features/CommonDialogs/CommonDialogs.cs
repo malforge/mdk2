@@ -34,6 +34,26 @@ public class CommonDialogs(IShell shell) : ICommonDialogs
         return (bool)(model.SelectedValue ?? false);
     }
 
+    public async Task ShowAsync(InformationMessage message)
+    {
+        var model = new MessageBoxViewModel
+        {
+            Title = message.Title,
+            Message = message.Message,
+            Choices =
+            [
+                new MessageBoxChoice
+                {
+                    Text = message.OkText,
+                    Value = true,
+                    IsDefault = true
+                }
+            ]
+        };
+
+        await _shell.ShowOverlayAsync(model);
+    }
+
     public async Task<bool> ShowAsync(KeyPhraseValidationMessage message)
     {
         var model = new DangerBoxViewModel

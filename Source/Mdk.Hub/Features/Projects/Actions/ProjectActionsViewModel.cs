@@ -66,6 +66,7 @@ public partial class ProjectActionsViewModel : ViewModel
         _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
         
         ShowAboutCommand = new RelayCommand(ShowAbout);
+        OpenGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);
     }
 
     public void Initialize(Shell.ShellViewModel shell)
@@ -83,11 +84,18 @@ public partial class ProjectActionsViewModel : ViewModel
     }
     
     public ICommand ShowAboutCommand { get; }
+    public ICommand OpenGlobalSettingsCommand { get; }
     
     void ShowAbout()
     {
         var aboutViewModel = new AboutViewModel();
         _shell.AddOverlay(aboutViewModel);
+    }
+    
+    void OpenGlobalSettings()
+    {
+        var viewModel = App.Container.Resolve<Mdk.Hub.Features.Settings.GlobalSettingsViewModel>();
+        _shell.AddOverlay(viewModel);
     }
     
     public bool HasUnsavedChanges(string projectPath)

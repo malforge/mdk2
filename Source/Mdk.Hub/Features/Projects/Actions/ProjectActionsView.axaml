@@ -242,20 +242,30 @@
     </UserControl.DataTemplates>
 
     <Grid RowDefinitions="Auto,*">
-        <!-- Header bar with About button -->
+        <!-- Header bar with Global Settings and About buttons -->
         <Border Grid.Row="0" 
                 Height="40"
                 Margin="8"
                 Padding="8,0"
                 HorizontalAlignment="Stretch">
-            <Button Classes="subtle"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center"
-                    Padding="8"
-                    ToolTip.Tip="About MDK Hub"
-                    Command="{Binding ShowAboutCommand}">
-                <i:Icon Value="fa-solid fa-circle-info" FontSize="16" />
-            </Button>
+            <StackPanel Orientation="Horizontal" 
+                        HorizontalAlignment="Right"
+                        Spacing="4">
+                <Button Classes="subtle"
+                        VerticalAlignment="Center"
+                        Padding="8"
+                        ToolTip.Tip="Global Settings"
+                        Command="{Binding OpenGlobalSettingsCommand}">
+                    <i:Icon Value="fa-solid fa-gear" FontSize="16" />
+                </Button>
+                <Button Classes="subtle"
+                        VerticalAlignment="Center"
+                        Padding="8"
+                        ToolTip.Tip="About MDK² Hub"
+                        Command="{Binding ShowAboutCommand}">
+                    <i:Icon Value="fa-solid fa-circle-info" FontSize="16" />
+                </Button>
+            </StackPanel>
         </Border>
         
         <!-- Main content -->
@@ -291,7 +301,7 @@
                 <Border Grid.Row="0" 
                         Classes="drawer-header"
                         Margin="-16,-16,-16,16">
-                    <Grid ColumnDefinitions="*,Auto,Auto">
+                    <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
                                    Text="Project Options"
                                    FontSize="18"
@@ -299,14 +309,6 @@
                                    Classes="primary"
                                    VerticalAlignment="Center"/>
                         <Button Grid.Column="1"
-                                Classes="subtle"
-                                Content="⚙"
-                                FontSize="16"
-                                Padding="8,4"
-                                Margin="0,0,4,0"
-                                Command="{Binding OptionsViewModel.OpenGlobalSettingsCommand}"
-                                ToolTip.Tip="Global Settings"/>
-                        <Button Grid.Column="2"
                                 Classes="subtle"
                                 Content="✕"
                                 FontSize="16"

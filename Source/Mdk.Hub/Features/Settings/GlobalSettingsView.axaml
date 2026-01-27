@@ -78,6 +78,23 @@
                                                   HorizontalAlignment="Stretch"/>
                 </StackPanel>
 
+                <!-- Prerequisites Check -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Prerequisites"
+                               Classes="section-heading"/>
+                    
+                    <TextBlock TextWrapping="Wrap"
+                               Classes="help-text"
+                               Margin="0,0,0,4">
+                        Check if .NET SDK 9.0 and MDK² template package are installed.
+                    </TextBlock>
+                    
+                    <Button Content="Check Prerequisites"
+                            Command="{Binding CheckPrerequisitesCommand}"
+                            HorizontalAlignment="Left"
+                            MinWidth="150"/>
+                </StackPanel>
+
                 <!-- Buttons -->
                 <StackPanel Orientation="Horizontal" 
                             HorizontalAlignment="Right"

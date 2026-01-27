@@ -74,6 +74,12 @@ public class ShellViewModel : ViewModel
         projectOverviewViewModel.Initialize(this);
         projectActionsViewModel.Initialize(this);
         
+        // Check for first-run setup (fire and forget)
+        if (Program.IsFirstRun)
+        {
+            _ = CheckFirstRunSetupAsync(updateCheckService, commonDialogs);
+        }
+        
         // Start background update check on startup (fire and forget)
         _ = updateCheckService.CheckForUpdatesAsync();
         
@@ -234,5 +240,84 @@ public class ShellViewModel : ViewModel
         _projectModels[projectInfo.ProjectPath] = model;
 
         return model;
+    }
+    
+    async System.Threading.Tasks.Task CheckFirstRunSetupAsync(IUpdateCheckService updateCheckService, ICommonDialogs commonDialogs)
+    {
+        try
+        {
+            // Show busy overlay while checking/installing prerequisites
+            var busyOverlay = new BusyOverlayViewModel("Setting up MDK² for first use...");
+            _shell.AddOverlay(busyOverlay);
+            
+            try
+            {
+                var messages = new System.Collections.Generic.List<string>();
+                
+                // Check and install .NET SDK
+                busyOverlay.Message = "Checking .NET SDK...";
+                var (sdkInstalled, sdkVersion) = await updateCheckService.CheckDotNetSdkAsync();
+                if (!sdkInstalled)
+                {
+                    busyOverlay.Message = "Installing .NET SDK... (this may take a few minutes)";
+                    try
+                    {
+                        await updateCheckService.InstallDotNetSdkAsync();
+                        messages.Add("✓ .NET SDK installed successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        messages.Add($"✗ Failed to install .NET SDK: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    messages.Add($"✓ .NET SDK {sdkVersion} is already installed");
+                }
+                
+                // Check and install template package
+                busyOverlay.Message = "Checking template package...";
+                var templateInstalled = await updateCheckService.IsTemplateInstalledAsync();
+                if (!templateInstalled)
+                {
+                    busyOverlay.Message = "Installing MDK² template package...";
+                    try
+                    {
+                        await updateCheckService.InstallTemplateAsync();
+                        messages.Add("✓ MDK² template package installed successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        messages.Add($"✗ Failed to install template package: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    messages.Add("✓ MDK² template package is already installed");
+                }
+                
+                // Show results
+                busyOverlay.Dismiss();
+                
+                await commonDialogs.ShowAsync(new InformationMessage
+                {
+                    Title = "First-Run Setup Complete",
+                    Message = string.Join("\n", messages)
+                });
+            }
+            catch (Exception ex)
+            {
+                busyOverlay.Dismiss();
+                await commonDialogs.ShowAsync(new InformationMessage
+                {
+                    Title = "Setup Error",
+                    Message = $"An error occurred during first-run setup:\n\n{ex.Message}"
+                });
+            }
+        }
+        catch
+        {
+            // Silently fail if we can't check for first-run
+        }
     }
 }

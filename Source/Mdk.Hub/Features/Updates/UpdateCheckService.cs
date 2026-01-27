@@ -1,5 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
@@ -135,5 +140,261 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
         }
 
         return null;
+    }
+    
+    public async Task<bool> IsTemplateInstalledAsync()
+    {
+        try
+        {
+            _logger.Info("Checking if template package is installed");
+            
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "new list",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                _logger.Error("Failed to start dotnet process");
+                return false;
+            }
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            // Check if any of our templates appear in the output
+            var hasTemplates = output.Contains("pbscript", StringComparison.OrdinalIgnoreCase) ||
+                             output.Contains("modproject", StringComparison.OrdinalIgnoreCase);
+            
+            _logger.Info($"Template package installed: {hasTemplates}");
+            return hasTemplates;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to check template installation: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task InstallTemplateAsync()
+    {
+        try
+        {
+            _logger.Info("Installing MDK² template package");
+            
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "new install Mal.Mdk2.ScriptTemplates",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                _logger.Error("Failed to start dotnet process");
+                throw new InvalidOperationException("Failed to start dotnet process");
+            }
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                _logger.Error($"Template installation failed: {error}");
+                throw new InvalidOperationException($"Template installation failed: {error}");
+            }
+
+            _logger.Info("Template package installed successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to install template: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<(bool IsInstalled, string? Version)> CheckDotNetSdkAsync()
+    {
+        try
+        {
+            _logger.Info("Checking .NET SDK installation");
+            
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "--version",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                _logger.Info(".NET SDK not found");
+                return (false, null);
+            }
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode == 0)
+            {
+                var version = output.Trim();
+                _logger.Info($".NET SDK found: {version}");
+                return (true, version);
+            }
+
+            _logger.Info(".NET SDK not found");
+            return (false, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to check .NET SDK: {ex.Message}");
+            return (false, null);
+        }
+    }
+
+    public async Task InstallDotNetSdkAsync()
+    {
+        try
+        {
+            _logger.Info("Installing .NET SDK");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Windows: Download and run the installer
+                var installerUrl = "https://download.visualstudio.microsoft.com/download/pr/23e32323-5a2b-48c2-86fa-58f5e72c6e98/19e09b4411d771867c0c9c30a8d7062c/dotnet-sdk-9.0.101-win-x64.exe";
+                var installerPath = Path.Combine(Path.GetTempPath(), "dotnet-sdk-9-installer.exe");
+
+                _logger.Info($"Downloading .NET 9 SDK installer");
+
+                using var httpClient = new HttpClient();
+                var installerBytes = await httpClient.GetByteArrayAsync(installerUrl);
+                await File.WriteAllBytesAsync(installerPath, installerBytes);
+
+                _logger.Info($"Running installer at {installerPath}");
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = installerPath,
+                    Arguments = "/quiet /norestart",
+                    UseShellExecute = true,
+                    Verb = "runas" // Request elevation
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException("Failed to start installer");
+                }
+
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode != 0 && process.ExitCode != 3010) // 3010 = success but reboot required
+                {
+                    throw new InvalidOperationException($"Installer failed with exit code {process.ExitCode}");
+                }
+
+                _logger.Info(".NET SDK installed successfully");
+
+                // Clean up installer
+                try
+                {
+                    File.Delete(installerPath);
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                // Linux: Use the dotnet-install.sh script
+                var scriptUrl = "https://dot.net/v1/dotnet-install.sh";
+                var scriptPath = Path.Combine(Path.GetTempPath(), "dotnet-install.sh");
+
+                _logger.Info("Downloading .NET install script");
+
+                using var httpClient = new HttpClient();
+                var scriptBytes = await httpClient.GetByteArrayAsync(scriptUrl);
+                await File.WriteAllBytesAsync(scriptPath, scriptBytes);
+
+                _logger.Info("Making script executable");
+
+                var chmodInfo = new ProcessStartInfo
+                {
+                    FileName = "chmod",
+                    Arguments = $"+x {scriptPath}",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                using var chmodProcess = Process.Start(chmodInfo);
+                await chmodProcess!.WaitForExitAsync();
+
+                _logger.Info("Running install script");
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = scriptPath,
+                    Arguments = "--channel 9.0 --install-dir $HOME/.dotnet",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    throw new InvalidOperationException("Failed to start installer");
+                }
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                var error = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode != 0)
+                {
+                    _logger.Error($"Installer output: {output}");
+                    _logger.Error($"Installer error: {error}");
+                    throw new InvalidOperationException($"Installer failed with exit code {process.ExitCode}");
+                }
+
+                _logger.Info(".NET SDK installed successfully to $HOME/.dotnet");
+                _logger.Info("Note: User may need to add $HOME/.dotnet to PATH");
+
+                // Clean up script
+                try
+                {
+                    File.Delete(scriptPath);
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Automatic SDK installation not supported on this platform");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to install .NET SDK: {ex.Message}");
+            throw;
+        }
     }
 }
