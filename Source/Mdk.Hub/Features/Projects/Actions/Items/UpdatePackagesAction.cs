@@ -1,32 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Threading;
+using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
-namespace Mdk.Hub.Features.Projects.Actions;
+namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+[Dependency]
+[ViewModelFor<UpdatePackagesActionView>]
 public class UpdatePackagesAction : ActionItem, IDisposable
 {
     readonly IProjectService _projectService;
     readonly IShell _shell;
     readonly AsyncRelayCommand _updateAllProjectsCommand;
     readonly AsyncRelayCommand _updateThisProjectCommand;
-    ProjectModel? _project;
 
-    public UpdatePackagesAction(ProjectModel project, IShell shell, IProjectService projectService)
+    public UpdatePackagesAction(IShell shell, IProjectService projectService)
     {
-        _project = project;
         _shell = shell;
         _projectService = projectService;
-        _project.PropertyChanged += OnProjectPropertyChanged;
         _updateThisProjectCommand = new AsyncRelayCommand(UpdateThisProjectAsync);
         _updateAllProjectsCommand = new AsyncRelayCommand(UpdateAllProjectsAsync);
     }
@@ -38,16 +37,22 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
     public void Dispose()
     {
-        if (_project != null)
-        {
-            _project.PropertyChanged -= OnProjectPropertyChanged;
-            _project = null;
-        }
+        if (Project != null)
+            Project.PropertyChanged -= OnProjectPropertyChanged;
     }
 
-    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod) =>
-        // Only show if a project is selected and it needs updates
-        selectedProject is ProjectModel model && model.NeedsUpdate;
+    protected override void OnSelectedProjectChanged()
+    {
+        base.OnSelectedProjectChanged();
+
+        // Subscribe/unsubscribe to project property changes
+        if (Project != null)
+            Project.PropertyChanged += OnProjectPropertyChanged;
+    }
+
+    public override bool ShouldShow() =>
+        // Show when project is selected and it needs updates
+        Project != null && Project.NeedsUpdate;
 
     void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -57,7 +62,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
     async Task UpdateThisProjectAsync()
     {
-        if (_project == null)
+        if (Project == null)
             return;
 
         var busyOverlay = new BusyOverlayViewModel("Checking for updates...");
@@ -66,11 +71,11 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         try
         {
             // Try to use cached updates first (from background checker)
-            var updates = _projectService.GetCachedUpdates(_project.ProjectPath);
+            var updates = _projectService.GetCachedUpdates(Project.ProjectPath);
 
             // If not cached, query NuGet
             if (updates == null)
-                updates = await _projectService.CheckForPackageUpdatesAsync(_project.ProjectPath);
+                updates = await _projectService.CheckForPackageUpdatesAsync(Project.ProjectPath);
 
             if (updates.Count == 0)
             {
@@ -82,7 +87,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
             busyOverlay.Message = $"Updating {updates.Count} package(s)...";
 
             // Update packages
-            var success = await _projectService.UpdatePackagesAsync(_project.ProjectPath, updates);
+            var success = await _projectService.UpdatePackagesAsync(Project.ProjectPath, updates);
 
             if (success)
             {
@@ -279,59 +284,8 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         }
     }
 
-    void UpdateProgress(BusyOverlayViewModel overlay, int completed, int total)
-    {
-        overlay.Progress = (double)completed / total * 100;
-        overlay.Message = $"Updating {completed} of {total} project(s)...";
-    }
-
-    async Task<(bool success, string error)> RunDotNetCommandAsync(params string[] args)
-    {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        foreach (var arg in args)
-            startInfo.ArgumentList.Add(arg);
-
-        using var process = Process.Start(startInfo);
-        if (process == null)
-            return (false, "Failed to start dotnet process");
-
-        var errorOutput = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-
-        if (process.ExitCode != 0)
-        {
-            var output = await process.StandardOutput.ReadToEndAsync();
-            var fullError = string.IsNullOrWhiteSpace(errorOutput) ? output : errorOutput;
-
-            // "no versions available" means package doesn't exist or is already latest - not really an error
-            if (fullError.Contains("no versions available", StringComparison.OrdinalIgnoreCase))
-                return (true, string.Empty);
-
-            return (false, fullError);
-        }
-
-        return (true, string.Empty);
-    }
-
-    async Task ShowErrorAsync(string title, string message)
-    {
-        var model = new ErrorDetailsViewModel
-        {
-            Title = title,
-            Message = message,
-            Details = string.Empty
-        };
-
-        await _shell.ShowOverlayAsync(model);
-    }
+    async Task ShowErrorAsync(string title, string message) =>
+        await _shell.ShowErrorAsync(title, message);
 
     async Task ShowErrorWithDetailsAsync(string title, string message, string details)
     {

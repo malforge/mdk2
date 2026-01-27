@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
-using Mdk.Hub.Features.CommonDialogs;
+
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
 
@@ -16,7 +17,6 @@ public class GlobalSettingsViewModel : OverlayModel
 {
     readonly RelayCommand _cancelCommand;
     readonly RelayCommand _checkPrerequisitesCommand;
-    readonly ICommonDialogs _commonDialogs;
     readonly GlobalSettings _globalSettings;
     readonly RelayCommand _saveCommand;
     readonly IShell _shell;
@@ -25,11 +25,10 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoModOutputPath;
     string _customAutoScriptOutputPath;
 
-    public GlobalSettingsViewModel(GlobalSettings globalSettings, IUpdateCheckService updateCheckService, ICommonDialogs commonDialogs, IShell shell)
+    public GlobalSettingsViewModel(GlobalSettings globalSettings, IUpdateCheckService updateCheckService, IShell shell)
     {
         _globalSettings = globalSettings;
         _updateCheckService = updateCheckService;
-        _commonDialogs = commonDialogs;
         _shell = shell;
         _customAutoScriptOutputPath = _globalSettings.CustomAutoScriptOutputPath;
         _customAutoModOutputPath = _globalSettings.CustomAutoModOutputPath;
@@ -98,7 +97,7 @@ public class GlobalSettingsViewModel : OverlayModel
 
             busyOverlay.Dismiss();
 
-            await _commonDialogs.ShowAsync(new InformationMessage
+            await _shell.ShowAsync(new InformationMessage
             {
                 Title = "Prerequisites Check",
                 Message = string.Join("\n", messages)
@@ -107,7 +106,7 @@ public class GlobalSettingsViewModel : OverlayModel
         catch (Exception ex)
         {
             busyOverlay.Dismiss();
-            await _commonDialogs.ShowAsync(new InformationMessage
+            await _shell.ShowAsync(new InformationMessage
             {
                 Title = "Check Failed",
                 Message = $"An error occurred while checking prerequisites:\n\n{ex.Message}"

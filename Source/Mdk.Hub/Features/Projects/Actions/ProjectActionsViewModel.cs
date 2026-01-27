@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.About;
-using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Projects.Actions.Items;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
@@ -22,7 +22,6 @@ namespace Mdk.Hub.Features.Projects.Actions;
 [ViewModelFor<ProjectActionsView>]
 public partial class ProjectActionsViewModel : ViewModel
 {
-    readonly ICommonDialogs _dialogs;
     readonly Dictionary<string, ActionItem> _globalActionCache = new(); // Shared action instances
     readonly ILogger _logger;
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
@@ -41,10 +40,9 @@ public partial class ProjectActionsViewModel : ViewModel
     ShellViewModel? _shellViewModel;
     UnsavedChangesHandle? _unsavedChangesHandle;
 
-    public ProjectActionsViewModel(IShell shell, ICommonDialogs dialogs, IProjectService projectService, ILogger logger)
+    public ProjectActionsViewModel(IShell shell, IProjectService projectService, ILogger logger)
     {
         _shell = shell;
-        _dialogs = dialogs;
         _projectService = projectService;
         _logger = logger;
         _projectService.StateChanged += OnProjectStateChanged;
@@ -130,7 +128,7 @@ public partial class ProjectActionsViewModel : ViewModel
                 var projectModel = _shellViewModel.GetOrCreateProjectModel(projectInfo);
                 if (!_projectContexts.TryGetValue(canonicalPath, out context))
                 {
-                    context = new ProjectContext(projectModel, _shell, _dialogs, _projectService, this, _globalActionCache);
+                    context = new ProjectContext(projectModel, _shell, _projectService, this, _globalActionCache);
                     _projectContexts[canonicalPath] = context;
                 }
             }
@@ -140,7 +138,7 @@ public partial class ProjectActionsViewModel : ViewModel
         if (context != null)
         {
             if (context.OptionsViewModel == null)
-                context.OptionsViewModel = new ProjectOptionsViewModel(projectPath, _projectService, _dialogs, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
+                context.OptionsViewModel = new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
 
             OptionsViewModel = context.OptionsViewModel;
             IsOptionsDrawerOpen = true;
@@ -255,7 +253,7 @@ public partial class ProjectActionsViewModel : ViewModel
 
                 if (!_projectContexts.TryGetValue(selectedProjectPath, out var context))
                 {
-                    context = new ProjectContext(selectedProject, _shell, _dialogs, _projectService, this, _globalActionCache);
+                    context = new ProjectContext(selectedProject, _shell, _projectService, this, _globalActionCache);
                     _projectContexts[selectedProjectPath] = context;
                 }
                 _currentContext = context;
@@ -329,24 +327,6 @@ public partial class ProjectActionsViewModel : ViewModel
             _isUpdatingDisplayedActions = false;
         }
     }
-
-    public async Task<NewProjectDialogResult?> ShowNewProjectDialogAsync(NewProjectDialogMessage message)
-    {
-        var viewModel = new NewProjectDialogViewModel(message);
-        await _shell.ShowOverlayAsync(viewModel);
-        return viewModel.Result;
-    }
-
-    public async Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay) => await _shell.ShowOverlayAsync(busyOverlay);
-
-    public async Task ShowErrorAsync(string title, string message) =>
-        await _dialogs.ShowAsync(new ConfirmationMessage
-        {
-            Title = title,
-            Message = message,
-            OkText = "OK",
-            CancelText = "Cancel"
-        });
 
     public void OpenOptionsDrawer()
     {

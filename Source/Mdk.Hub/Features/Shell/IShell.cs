@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
@@ -63,6 +66,17 @@ public interface IShell
     /// <param name="info">Info containing description and navigation action. For multiple registrations, action is empty.</param>
     /// <returns>True if there are unsaved changes, false otherwise.</returns>
     bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info);
+
+    // Dialog methods
+    Task ShowOverlayAsync(OverlayModel model);
+    Task<bool> ShowAsync(ConfirmationMessage message);
+    Task ShowAsync(InformationMessage message);
+    Task<bool> ShowAsync(KeyPhraseValidationMessage message);
+    Task ShowErrorAsync(string title, string message);
+    Task<NewProjectDialogResult?> ShowNewProjectDialogAsync(NewProjectDialogMessage message);
+    Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay);
+    Task<bool> ConfirmAsync(string title, string message, string okText = "OK", string cancelText = "Cancel");
+    Task<bool> ConfirmDangerousOperationAsync(string title, string message, string keyPhraseWatermark, string requiredKeyPhrase, string okText = "OK", string cancelText = "Cancel");
 }
 
 public class ToastMessage : ViewModel

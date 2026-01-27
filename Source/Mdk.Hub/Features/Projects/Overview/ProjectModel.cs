@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
 
@@ -10,7 +11,7 @@ namespace Mdk.Hub.Features.Projects.Overview;
 
 public class ProjectModel : ViewModel
 {
-    readonly ICommonDialogs _commonDialogs;
+    readonly IShell _shell;
     readonly AsyncRelayCommand _deleteCommand;
     readonly IProjectService? _projectService;
     bool _hasUnsavedChanges;
@@ -23,11 +24,11 @@ public class ProjectModel : ViewModel
     ProjectType _type;
     int _updateCount;
 
-    public ProjectModel(ProjectType type, string name, CanonicalPath projectPath, DateTimeOffset lastReferenced, ICommonDialogs commonDialogs, IProjectService? projectService = null)
+    public ProjectModel(ProjectType type, string name, CanonicalPath projectPath, DateTimeOffset lastReferenced, IShell shell, IProjectService? projectService = null)
     {
         ProjectPath = projectPath;
         _lastReferenced = lastReferenced;
-        _commonDialogs = commonDialogs;
+        _shell = shell;
         _projectService = projectService;
         _name = name;
         _type = type;
@@ -98,7 +99,7 @@ public class ProjectModel : ViewModel
     {
         if (!CanDelete())
             return;
-        var result = await _commonDialogs.ShowAsync(
+        var result = await _shell.ShowAsync(
             new KeyPhraseValidationMessage
             {
                 Title = "Delete Project",
@@ -123,7 +124,7 @@ public class ProjectModel : ViewModel
         }
         catch (Exception ex)
         {
-            await _commonDialogs.ShowAsync(new ConfirmationMessage
+            await _shell.ShowAsync(new ConfirmationMessage
             {
                 Title = "Delete Failed",
                 Message = $"Failed to delete project: {ex.Message}",

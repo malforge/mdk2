@@ -5,11 +5,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
 using Mal.DependencyInjection;
-using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
-using Mdk.Hub.Features.Snackbars;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
 
@@ -25,12 +23,10 @@ public class ShowProjectEventArgs(ProjectModel project) : EventArgs
 public class ProjectOverviewViewModel : ViewModel
 {
     static readonly TimeSpan _selectionCooldown = TimeSpan.FromSeconds(30);
-    readonly ICommonDialogs _commonDialogs;
     readonly ILogger _logger;
     readonly ObservableCollection<ProjectModel> _projects = new();
     readonly IProjectService _projectService;
     readonly ISettings _settings;
-    readonly ISnackbarService _snackbarService;
     readonly ThrottledAction<string> _throttledSearch;
     ImmutableArray<ProjectModel> _allProjects;
     bool _filterModsOnly;
@@ -40,20 +36,18 @@ public class ProjectOverviewViewModel : ViewModel
     string? _pendingNavigationPath;
     string _searchTerm = string.Empty;
     string _searchText = string.Empty;
-    ShellViewModel? _shell;
+    ShellViewModel? _shellViewModel;
     bool _showAll = true;
 
-    public ProjectOverviewViewModel() : this(null!, null!, null!, null!, null!)
+    public ProjectOverviewViewModel() : this(null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
 
-    public ProjectOverviewViewModel(ICommonDialogs commonDialogs, IProjectService projectService, ISettings settings, ISnackbarService snackbarService, ILogger logger)
+    public ProjectOverviewViewModel(IShell shell, IProjectService projectService, ISettings settings, ILogger logger)
     {
-        _commonDialogs = commonDialogs;
         _projectService = projectService;
         _settings = settings;
-        _snackbarService = snackbarService;
         _logger = logger;
         FilteredProjects = new ReadOnlyObservableCollection<ProjectModel>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
@@ -66,9 +60,9 @@ public class ProjectOverviewViewModel : ViewModel
             AllProjects = ImmutableArray.Create(
                 new[]
                 {
-                    new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", new CanonicalPath(@"C:\Projects\MyScript\MyScript.csproj"), DateTimeOffset.Now, commonDialogs),
-                    new ProjectModel(ProjectType.Mod, "My Mod", new CanonicalPath(@"C:\Projects\MyMod\MyMod.csproj"), DateTimeOffset.Now.AddDays(-1), commonDialogs),
-                    new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", new CanonicalPath(@"C:\Projects\AnotherScript\AnotherScript.csproj"), DateTimeOffset.Now.AddDays(-2), commonDialogs)
+                    new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", new CanonicalPath(@"C:\Projects\MyScript\MyScript.csproj"), DateTimeOffset.Now, shell),
+                    new ProjectModel(ProjectType.Mod, "My Mod", new CanonicalPath(@"C:\Projects\MyMod\MyMod.csproj"), DateTimeOffset.Now.AddDays(-1), shell),
+                    new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", new CanonicalPath(@"C:\Projects\AnotherScript\AnotherScript.csproj"), DateTimeOffset.Now.AddDays(-2), shell)
                 });
         }
     }
@@ -84,6 +78,8 @@ public class ProjectOverviewViewModel : ViewModel
                 RefreshWithFilters();
         }
     }
+
+    private ShellViewModel ShellViewModel => _shellViewModel ?? throw new InvalidOperationException("ProjectOverviewViewModel is not initialized with ShellViewModel");
 
     public ReadOnlyObservableCollection<ProjectModel> FilteredProjects { get; }
 
@@ -152,7 +148,7 @@ public class ProjectOverviewViewModel : ViewModel
 
     public void Initialize(ShellViewModel shell)
     {
-        _shell = shell;
+        _shellViewModel = shell;
 
         if (!IsDesignMode)
         {
@@ -283,7 +279,7 @@ public class ProjectOverviewViewModel : ViewModel
         }
 
         // Re-sort in place (minimizes UI disruption compared to clear+add)
-        var sorted = _projects.OrderByDescending(p => p is ProjectModel m ? m.LastReferenced : DateTimeOffset.MinValue).ToList();
+        var sorted = _projects.OrderByDescending(p => p.LastReferenced).ToList();
         for (var i = 0; i < sorted.Count; i++)
         {
             var currentIndex = _projects.IndexOf(sorted[i]);
@@ -305,7 +301,7 @@ public class ProjectOverviewViewModel : ViewModel
         foreach (var project in projects)
         {
             // Get shared ProjectModel from ShellViewModel - this is the ONLY way to get instances
-            var model = _shell!.GetOrCreateProjectModel(project);
+            var model = ShellViewModel.GetOrCreateProjectModel(project);
             viewModels.Add(model);
         }
 
@@ -315,7 +311,7 @@ public class ProjectOverviewViewModel : ViewModel
         if (!string.IsNullOrEmpty(_pendingNavigationPath))
         {
             var canonicalPath = new CanonicalPath(_pendingNavigationPath);
-            var project = viewModels.OfType<ProjectModel>().FirstOrDefault(p =>
+            var project = viewModels.FirstOrDefault(p =>
                 p.ProjectPath == canonicalPath);
 
             if (project != null)
@@ -340,7 +336,7 @@ public class ProjectOverviewViewModel : ViewModel
             return;
 
         var canonicalPath = new CanonicalPath(lastSelectedPath);
-        var project = _projects.FirstOrDefault(p => p is ProjectModel model && model.ProjectPath == canonicalPath);
+        var project = _projects.FirstOrDefault(p => p.ProjectPath == canonicalPath);
         if (project != null)
         {
             project.IsSelected = true;
@@ -358,7 +354,7 @@ public class ProjectOverviewViewModel : ViewModel
         LoadProjects();
 
         // Find the newly added project
-        var newProject = _projects.OfType<ProjectModel>().FirstOrDefault(p =>
+        var newProject = _projects.FirstOrDefault(p =>
             p.ProjectPath == e.ProjectPath);
 
         if (newProject == null)
@@ -384,13 +380,13 @@ public class ProjectOverviewViewModel : ViewModel
     void OnProjectNavigationRequested(object? sender, ProjectNavigationRequestedEventArgs e)
     {
         // Find the project in the ALL projects list
-        var project = _projects.OfType<ProjectModel>().FirstOrDefault(p =>
+        var project = _projects.FirstOrDefault(p =>
             p.ProjectPath == e.ProjectPath);
 
         if (project != null)
         {
             // Check if project is visible in the current filtered list
-            var isVisibleInFilteredList = FilteredProjects.OfType<ProjectModel>().Any(p =>
+            var isVisibleInFilteredList = FilteredProjects.Any(p =>
                 p.ProjectPath == e.ProjectPath);
 
             // Only clear filters if the project is not visible with current filters

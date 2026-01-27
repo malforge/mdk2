@@ -7,17 +7,19 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
-namespace Mdk.Hub.Features.Projects.Actions;
+namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+[Dependency]
+[ViewModelFor<ProjectInfoActionView>]
 public class ProjectInfoAction : ActionItem
 {
     readonly ProjectActionsViewModel _actionsViewModel;
-    readonly ICommonDialogs _commonDialogs;
     readonly IProjectService _projectService;
     readonly IShell _shell;
     string? _configurationWarning;
@@ -30,11 +32,9 @@ public class ProjectInfoAction : ActionItem
     string? _outputPath;
     int? _scriptSizeCharacters;
 
-    public ProjectInfoAction(ProjectModel project, IProjectService projectService, ICommonDialogs commonDialogs, IShell shell, ProjectActionsViewModel actionsViewModel)
+    public ProjectInfoAction(IProjectService projectService, IShell shell, ProjectActionsViewModel actionsViewModel)
     {
-        Project = project;
         _projectService = projectService;
-        _commonDialogs = commonDialogs;
         _shell = shell;
         _actionsViewModel = actionsViewModel;
 
@@ -43,16 +43,11 @@ public class ProjectInfoAction : ActionItem
         OpenInIdeCommand = new RelayCommand(OpenInIde, CanOpenInIde);
         CopyScriptCommand = new AsyncRelayCommand(CopyScriptAsync, CanCopyScript);
         ShowOptionsCommand = new RelayCommand(ShowOptions, CanShowOptions);
-
-        // Load data asynchronously
-        _ = LoadProjectDataAsync(projectService);
     }
 
-    public ProjectModel Project { get; }
+    public bool IsScript => Project?.Type == ProjectType.IngameScript;
 
-    public bool IsScript => Project.Type == ProjectType.IngameScript;
-
-    public string ProjectTypeName => Project.Type == ProjectType.IngameScript
+    public string ProjectTypeName => Project?.Type == ProjectType.IngameScript
         ? "Programmable Block Script"
         : "Mod";
 
@@ -115,7 +110,7 @@ public class ProjectInfoAction : ActionItem
         private set => SetProperty(ref _configurationWarning, value);
     }
 
-    public bool IsScriptTooLarge => ScriptSizeCharacters.HasValue && ScriptSizeCharacters.Value > 100_000;
+    public bool IsScriptTooLarge => ScriptSizeCharacters is > 100_000;
 
     public ICommand OpenProjectFolderCommand { get; }
     public ICommand OpenOutputFolderCommand { get; }
@@ -123,18 +118,31 @@ public class ProjectInfoAction : ActionItem
     public ICommand CopyScriptCommand { get; }
     public ICommand ShowOptionsCommand { get; }
 
-    public override string? Category => "Project";
+    public override string Category => "Project";
 
-    public override bool ShouldShow(ProjectModel? selectedProject, bool canMakeScript, bool canMakeMod) => selectedProject is ProjectModel;
+    protected override void OnSelectedProjectChanged()
+    {
+        base.OnSelectedProjectChanged();
 
-    bool CanOpenProjectFolder() => File.Exists(Project.ProjectPath.Value);
+        // Update computed properties
+        OnPropertyChanged(nameof(IsScript));
+        OnPropertyChanged(nameof(ProjectTypeName));
+
+        // Reload project data for new project
+        if (Project != null)
+            _ = LoadProjectDataAsync(_projectService);
+    }
+
+    public override bool ShouldShow() => !_projectService.State.SelectedProject.IsEmpty();
+
+    bool CanOpenProjectFolder() => Project is not null && File.Exists(Project.ProjectPath.Value);
 
     void OpenProjectFolder()
     {
         if (!CanOpenProjectFolder())
             return;
 
-        _projectService.OpenProjectFolder(Project.ProjectPath);
+        _projectService.OpenProjectFolder(Project!.ProjectPath);
     }
 
     bool CanOpenOutputFolder() => IsDeployed && !string.IsNullOrEmpty(_outputPath) && Directory.Exists(_outputPath);
@@ -144,10 +152,10 @@ public class ProjectInfoAction : ActionItem
         if (!CanOpenOutputFolder())
             return;
 
-        _projectService.OpenOutputFolder(Project.ProjectPath);
+        _projectService.OpenOutputFolder(Project!.ProjectPath);
     }
 
-    bool CanOpenInIde() => File.Exists(Project.ProjectPath.Value);
+    bool CanOpenInIde() => Project is not null && File.Exists(Project.ProjectPath.Value);
 
     void OpenInIde()
     {
@@ -158,7 +166,7 @@ public class ProjectInfoAction : ActionItem
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = Project.ProjectPath.Value,
+                FileName = Project?.ProjectPath.Value,
                 UseShellExecute = true
             });
         }
@@ -202,7 +210,7 @@ public class ProjectInfoAction : ActionItem
                 {
                     await topLevel.Clipboard.SetTextAsync(content);
                     Debug.WriteLine("Clipboard set successfully");
-                    _commonDialogs.ShowToast($"Script copied ({content.Length:N0} characters)");
+                    _shell.ShowToast($"Script copied ({content.Length:N0} characters)");
                 }
             }
             else
@@ -211,7 +219,7 @@ public class ProjectInfoAction : ActionItem
         catch (Exception ex)
         {
             Debug.WriteLine($"Exception: {ex}");
-            await _commonDialogs.ShowAsync(new ConfirmationMessage
+            await _shell.ShowAsync(new ConfirmationMessage
             {
                 Title = "Copy Failed",
                 Message = $"Failed to copy script to clipboard: {ex.Message}",
@@ -221,14 +229,14 @@ public class ProjectInfoAction : ActionItem
         }
     }
 
-    bool CanShowOptions() => File.Exists(Project.ProjectPath.Value);
+    bool CanShowOptions() => Project is not null && File.Exists(Project.ProjectPath.Value);
 
     void ShowOptions()
     {
         if (!CanShowOptions())
             return;
 
-        if (Project.ProjectPath.IsEmpty())
+        if (Project!.ProjectPath.IsEmpty())
             return;
 
         _actionsViewModel.ShowOptionsDrawer(Project.ProjectPath.Value!);
@@ -248,12 +256,20 @@ public class ProjectInfoAction : ActionItem
                 DateTimeOffset? lastDeployed = null;
                 int? scriptSize = null;
                 string? outputPath = null;
+                string? configWarning = null;
+
+                var project = Project;
+                if (project == null)
+                    return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath, configWarning);
+                var projectPath = project.ProjectPath;
+                if (string.IsNullOrEmpty(projectPath.Value))
+                    return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath, configWarning);
 
                 // Load last changed time from project file
                 try
                 {
-                    if (File.Exists(Project.ProjectPath.Value))
-                        lastChanged = File.GetLastWriteTime(Project.ProjectPath.Value);
+                    if (File.Exists(projectPath.Value))
+                        lastChanged = File.GetLastWriteTime(projectPath.Value);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -265,8 +281,8 @@ public class ProjectInfoAction : ActionItem
                 }
 
                 // Load configuration and check deployment
-                var config = projectService.LoadConfiguration(Project.ProjectPath);
-                string? configWarning = null;
+                var config = projectService.LoadConfiguration(projectPath);
+                configWarning = null;
 
                 if (config != null)
                 {
@@ -286,7 +302,7 @@ public class ProjectInfoAction : ActionItem
                             var files = Directory.GetFiles(outputPath, "*", SearchOption.AllDirectories);
                             if (files.Length > 0)
                             {
-                                var mostRecent = files.Max(f => File.GetLastWriteTime(f));
+                                var mostRecent = files.Max(File.GetLastWriteTime);
                                 lastDeployed = mostRecent;
                             }
                         }

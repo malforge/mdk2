@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -16,7 +17,7 @@ namespace Mdk.Hub.Features.Snackbars;
 public class SnackbarService : ISnackbarService
 {
     readonly List<SnackbarWindow> _activeSnackbars = new();
-    readonly object _lock = new();
+    readonly Lock _lock = new();
 
     Window? _mainWindow;
 

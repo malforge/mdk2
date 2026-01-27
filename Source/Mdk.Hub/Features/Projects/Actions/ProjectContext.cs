@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Projects.Actions.Items;
 using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
@@ -14,8 +14,17 @@ namespace Mdk.Hub.Features.Projects.Actions;
 /// </summary>
 class ProjectContext
 {
+    // Registry of action types to resolve
+    static readonly Type[] ActionTypes =
+    [
+        typeof(ProjectManagementAction),
+        typeof(ProjectInfoAction),
+        typeof(ApiDocsAction),
+        typeof(UpdatePackagesAction),
+        typeof(EasterEggDismissAction)
+    ];
+
     readonly List<ActionItem> _allActions = new();
-    readonly ICommonDialogs _dialogs;
     readonly ObservableCollection<ActionItem> _filteredActions = new();
     readonly Dictionary<string, ActionItem> _globalActionCache;
     readonly ProjectActionsViewModel _owner;
@@ -23,11 +32,10 @@ class ProjectContext
     readonly IProjectService _projectService;
     readonly IShell _shell;
 
-    public ProjectContext(ProjectModel project, IShell shell, ICommonDialogs dialogs, IProjectService projectService, ProjectActionsViewModel owner, Dictionary<string, ActionItem> globalActionCache)
+    public ProjectContext(ProjectModel project, IShell shell, IProjectService projectService, ProjectActionsViewModel owner, Dictionary<string, ActionItem> globalActionCache)
     {
         _project = project;
         _shell = shell;
-        _dialogs = dialogs;
         _projectService = projectService;
         _owner = owner;
         _globalActionCache = globalActionCache;
@@ -67,58 +75,34 @@ class ProjectContext
 
         _allActions.Clear();
 
-        // Create Project action (if available)
-        var availableTypes = new List<ProjectType>();
-        if (_owner.CanMakeScript)
-            availableTypes.Add(ProjectType.IngameScript);
-        if (_owner.CanMakeMod)
-            availableTypes.Add(ProjectType.Mod);
-        if (availableTypes.Count > 0)
+        // Resolve all actions from the registry
+        foreach (var actionType in ActionTypes)
         {
-            var createActionKey = typeof(CreateProjectAction).FullName!;
-            if (!_globalActionCache.TryGetValue(createActionKey, out var createAction))
+            var actionKey = actionType.FullName!;
+
+            // Check if this is a global action that we already have cached
+            if (_globalActionCache.TryGetValue(actionKey, out var cachedAction))
             {
-                var addExistingAction = new AddExistingProjectAction(_shell, _dialogs, _projectService);
-                createAction = new CreateProjectAction(availableTypes, addExistingAction, _projectService, _owner);
-
-                // Cache if it's global and subscribe to it once
-                if (createAction.IsGlobal)
-                {
-                    createAction.ShouldShowChanged += OnActionShouldShowChanged;
-                    _globalActionCache[createActionKey] = createAction;
-                }
+                _allActions.Add(cachedAction);
+                continue;
             }
-            _allActions.Add(createAction);
+
+            // Resolve the action from DI
+            var action = (ActionItem)App.Container.Resolve(actionType);
+
+            // Set project for per-project actions
+            if (!action.IsGlobal)
+                action.Project = _project;
+
+            // Subscribe to should show changes
+            action.ShouldShowChanged += OnActionShouldShowChanged;
+
+            // Cache global actions for reuse
+            if (action.IsGlobal)
+                _globalActionCache[actionKey] = action;
+
+            _allActions.Add(action);
         }
-
-        // Project-specific actions (new instances per project)
-        var projectInfoAction = new ProjectInfoAction(_project, _projectService, _dialogs, _shell, _owner);
-        projectInfoAction.ShouldShowChanged += OnActionShouldShowChanged;
-        _allActions.Add(projectInfoAction);
-
-        // API docs action (below project info)
-        var apiDocsAction = new ApiDocsAction(_project, _projectService, App.Container.Resolve<ILogger>());
-        apiDocsAction.ShouldShowChanged += OnActionShouldShowChanged;
-        _allActions.Add(apiDocsAction);
-
-        var updatePackagesAction = new UpdatePackagesAction(_project, _shell, _projectService);
-        updatePackagesAction.ShouldShowChanged += OnActionShouldShowChanged;
-        _allActions.Add(updatePackagesAction);
-
-        // Easter egg action
-        var easterEggKey = typeof(EasterEggDismissAction).FullName!;
-        if (!_globalActionCache.TryGetValue(easterEggKey, out var easterEggAction))
-        {
-            easterEggAction = new EasterEggDismissAction(_shell, _dialogs);
-
-            // Cache if it's global and subscribe to it once
-            if (easterEggAction.IsGlobal)
-            {
-                easterEggAction.ShouldShowChanged += OnActionShouldShowChanged;
-                _globalActionCache[easterEggKey] = easterEggAction;
-            }
-        }
-        _allActions.Add(easterEggAction);
     }
 
     public void UpdateFilteredActions(bool canMakeScript, bool canMakeMod, bool easterEggActive)
@@ -128,7 +112,7 @@ class ProjectContext
         // Just add the actions that should show
         foreach (var action in _allActions)
         {
-            if (action.ShouldShow(_project, canMakeScript, canMakeMod))
+            if (action.ShouldShow())
                 _filteredActions.Add(action);
         }
     }

@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="20"
+             x:Class="Mdk.Hub.Features.Projects.Actions.Items.CategorySeparatorView"
+             x:DataType="items:CategorySeparator">
+
+    <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" Margin="0,12" />
+
+</UserControl>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -28,7 +28,6 @@ namespace Mdk.Hub.Features.Shell;
 [ViewModelFor<ShellWindow>]
 public class ShellViewModel : ViewModel
 {
-    readonly ICommonDialogs? _commonDialogs;
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
     readonly IProjectService? _projectService;
     readonly IShell _shell;
@@ -38,7 +37,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -48,16 +47,16 @@ public class ShellViewModel : ViewModel
     /// </summary>
     /// <param name="shell">Shell service for access to toast messages.</param>
     /// <param name="settings">Application settings service.</param>
-    /// <param name="commonDialogs">Common dialogs service.</param>
+    /// <param name="shell">Common dialogs service.</param>
     /// <param name="projectService">Project service for project management.</param>
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
     /// <param name="updateCheckService">Update check service for monitoring MDK versions.</param>
     /// <param name="updateNotificationBar">Update notification bar view model.</param>
-    public ShellViewModel(IShell shell, ISettings settings, ICommonDialogs commonDialogs, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService, UpdateNotificationBarViewModel updateNotificationBar)
+    public ShellViewModel(IShell shell, ISettings settings, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService, UpdateNotificationBarViewModel updateNotificationBar)
     {
         _shell = shell;
-        _commonDialogs = commonDialogs;
+        _shell = shell;
         _projectService = projectService;
         UpdateNotificationBar = updateNotificationBar;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
@@ -71,7 +70,7 @@ public class ShellViewModel : ViewModel
 
         // Check for first-run setup (fire and forget)
         if (Program.IsFirstRun)
-            _ = CheckFirstRunSetupAsync(updateCheckService, commonDialogs);
+            _ = CheckFirstRunSetupAsync(updateCheckService, shell);
 
         // Start background update check on startup (fire and forget)
         _ = updateCheckService.CheckForUpdatesAsync();
@@ -174,10 +173,10 @@ public class ShellViewModel : ViewModel
         if (!_shell.TryGetUnsavedChangesInfo(out var info))
             return true;
 
-        if (_commonDialogs == null)
+        if (_shell == null)
             return true;
 
-        var result = await _commonDialogs.ShowAsync(new ConfirmationMessage
+        var result = await _shell.ShowAsync(new ConfirmationMessage
         {
             Title = "Unsaved Changes",
             Message = info.Description,
@@ -217,7 +216,7 @@ public class ShellViewModel : ViewModel
         }
 
         // Create new model
-        if (_commonDialogs == null || _projectService == null)
+        if (_shell == null || _projectService == null)
             throw new InvalidOperationException("Cannot create ProjectModel in design mode");
 
         var model = new ProjectModel(
@@ -225,7 +224,7 @@ public class ShellViewModel : ViewModel
             projectInfo.Name,
             projectInfo.ProjectPath,
             projectInfo.LastReferenced,
-            _commonDialogs,
+            _shell,
             _projectService);
 
         model.UpdateFromProjectInfo(projectInfo);
@@ -234,7 +233,7 @@ public class ShellViewModel : ViewModel
         return model;
     }
 
-    async Task CheckFirstRunSetupAsync(IUpdateCheckService updateCheckService, ICommonDialogs commonDialogs)
+    async Task CheckFirstRunSetupAsync(IUpdateCheckService updateCheckService, IShell commonShell)
     {
         try
         {
@@ -287,7 +286,7 @@ public class ShellViewModel : ViewModel
                 // Show results
                 busyOverlay.Dismiss();
 
-                await commonDialogs.ShowAsync(new InformationMessage
+                await _shell.ShowAsync(new InformationMessage
                 {
                     Title = "First-Run Setup Complete",
                     Message = string.Join("\n", messages)
@@ -296,7 +295,7 @@ public class ShellViewModel : ViewModel
             catch (Exception ex)
             {
                 busyOverlay.Dismiss();
-                await commonDialogs.ShowAsync(new InformationMessage
+                await _shell.ShowAsync(new InformationMessage
                 {
                     Title = "Setup Error",
                     Message = $"An error occurred during first-run setup:\n\n{ex.Message}"

@@ -7,6 +7,7 @@ using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Framework;
 using Velopack;
 using Velopack.Sources;
+using Mdk.Hub.Features.Shell;
 
 namespace Mdk.Hub.Features.Updates;
 
@@ -14,7 +15,7 @@ namespace Mdk.Hub.Features.Updates;
 [ViewModelFor<UpdateNotificationBarView>]
 public class UpdateNotificationBarViewModel : ViewModel
 {
-    readonly ICommonDialogs _commonDialogs;
+    readonly IShell _shell;
     double _downloadProgress;
     HubVersionInfo? _hubVersionInfo;
     bool _isDownloading;
@@ -25,9 +26,9 @@ public class UpdateNotificationBarViewModel : ViewModel
     string _message = "";
     UpdateInfo? _pendingUpdate;
 
-    public UpdateNotificationBarViewModel(ICommonDialogs commonDialogs)
+    public UpdateNotificationBarViewModel(IShell dialogShell)
     {
-        _commonDialogs = commonDialogs;
+        _shell = dialogShell;
         DismissCommand = new RelayCommand(Dismiss);
         UpdateTemplatesCommand = new RelayCommand(UpdateTemplates);
         UpdateHubCommand = new RelayCommand(UpdateHub);
@@ -203,7 +204,7 @@ public class UpdateNotificationBarViewModel : ViewModel
         try
         {
             // Show confirmation dialog
-            var confirmed = await _commonDialogs.ShowAsync(new ConfirmationMessage
+            var confirmed = await _shell.ShowAsync(new ConfirmationMessage
             {
                 Title = "Install Hub Update",
                 Message = "Installing the update will restart MDK Hub.\n\nContinue?",

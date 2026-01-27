@@ -1,0 +1,136 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
+             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+             x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectInfoActionView"
+             x:DataType="items:ProjectInfoAction">
+
+    <UserControl.Resources>
+        <actions:BoolToDeploymentStatusConverter x:Key="BoolToDeploymentStatusConverter" />
+        <actions:BoolToWarningBackgroundConverter x:Key="BoolToWarningBackgroundConverter" />
+    </UserControl.Resources>
+
+    <StackPanel Spacing="12" Margin="16,0">
+        <!-- Project header -->
+        <StackPanel Spacing="12" Orientation="Horizontal">
+            <ContentControl Content="{Binding Project.Type}" Width="48" Height="48" />
+            <StackPanel Spacing="4" VerticalAlignment="Center">
+                <TextBlock Classes="section-title" Text="{Binding Project.Name}" />
+                <TextBlock Classes="info-label" Text="{Binding ProjectTypeName}" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Configuration Warning -->
+        <Border Background="{StaticResource AccentDangerBrush}"
+                Opacity="0.2"
+                CornerRadius="4"
+                Padding="12"
+                IsVisible="{Binding ConfigurationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <StackPanel Spacing="4">
+                <TextBlock Text="⚠ Configuration Issues"
+                           Classes="danger"
+                           FontWeight="SemiBold"
+                           FontSize="12" />
+                <TextBlock Text="{Binding ConfigurationWarning}"
+                           TextWrapping="Wrap"
+                           Classes="danger"
+                           FontSize="11" />
+            </StackPanel>
+        </Border>
+
+        <!-- Info grid -->
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+            <!-- Row 1: Deployment Status | Last Deployed -->
+            <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4"
+                        HorizontalAlignment="Left" VerticalAlignment="Top">
+                <TextBlock Classes="info-label" Text="Deployment Status:" />
+                <TextBlock Classes="info-value"
+                           Text="{Binding IsDeployed, Converter={StaticResource BoolToDeploymentStatusConverter}}"
+                           IsVisible="{Binding !DeploymentError}" />
+                <TextBlock Classes="info-value danger"
+                           Text="{Binding DeploymentError}"
+                           IsVisible="{Binding DeploymentError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Grid.Row="0" Spacing="4"
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        IsVisible="{Binding IsDeployed}">
+                <TextBlock Classes="info-label" Text="Last Deployed:" />
+                <controls:DateTimeDisplay Value="{Binding LastDeployed}" />
+            </StackPanel>
+
+            <!-- Row 2: Last Changed (full width) -->
+            <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Spacing="4"
+                        HorizontalAlignment="Left" VerticalAlignment="Top">
+                <TextBlock Classes="info-label" Text="Last Changed:" />
+                <controls:DateTimeDisplay Value="{Binding LastChanged}"
+                                          IsVisible="{Binding !LastChangedError}" />
+                <TextBlock Classes="info-value danger"
+                           Text="{Binding LastChangedError}"
+                           IsVisible="{Binding LastChangedError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+
+            <!-- Row 3: Script Size (full width, highlighted if over limit) -->
+            <Border Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2"
+                    IsVisible="{Binding IsScript}"
+                    Background="{Binding IsScriptTooLarge, Converter={StaticResource BoolToWarningBackgroundConverter}}"
+                    CornerRadius="4"
+                    Padding="8"
+                    ClipToBounds="True"
+                    HorizontalAlignment="Stretch">
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="info-label" Text="Script Size:" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Classes="info-value"
+                                   Text="{Binding ScriptSizeCharacters, StringFormat='{}{0:N0} characters'}" />
+                        <TextBlock Classes="info-value danger"
+                                   Text="⚠ Exceeds SE limit (100,000 characters)"
+                                   FontWeight="Bold"
+                                   IsVisible="{Binding IsScriptTooLarge}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Action toolbar -->
+        <Border Classes="action-toolbar" Padding="8" CornerRadius="4"
+                Background="{StaticResource BorderLightColor}" Opacity="0.67">
+            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                <Button Classes="toolbar-button subtle" ToolTip.Tip="Open in IDE"
+                        Command="{Binding OpenInIdeCommand}">
+                    <i:Icon Value="fa-solid fa-code" FontSize="16" />
+                </Button>
+                <Border Width="1" Height="24" Background="{StaticResource BorderMediumColor}" Margin="4,0" />
+                <Button Classes="toolbar-button subtle" ToolTip.Tip="Open Project Folder"
+                        Command="{Binding OpenProjectFolderCommand}">
+                    <i:Icon Value="fa-solid fa-folder" FontSize="16" />
+                </Button>
+                <Button Classes="toolbar-button subtle" ToolTip.Tip="Open Output Folder"
+                        Command="{Binding OpenOutputFolderCommand}">
+                    <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
+                </Button>
+                <Border Width="1" Height="24" Background="{StaticResource BorderMediumColor}" Margin="4,0" />
+                <Button Classes="toolbar-button subtle" ToolTip.Tip="Options"
+                        Command="{Binding ShowOptionsCommand}">
+                    <i:Icon Value="fa-solid fa-cog" FontSize="16" />
+                </Button>
+                <Button Classes="toolbar-button subtle" ToolTip.Tip="Copy Script to Clipboard"
+                        Command="{Binding CopyScriptCommand}"
+                        IsVisible="{Binding IsScript}">
+                    <i:Icon Value="fa-solid fa-copy" FontSize="16" />
+                </Button>
+                <Border Width="1" Height="24" Background="{StaticResource BorderMediumColor}" Margin="4,0" />
+                <Button Classes="toolbar-button subtle danger" ToolTip.Tip="Delete Project"
+                        Command="{Binding Project.DeleteCommand}">
+                    <i:Icon Value="fa-solid fa-trash" FontSize="16" />
+                </Button>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+
+</UserControl>

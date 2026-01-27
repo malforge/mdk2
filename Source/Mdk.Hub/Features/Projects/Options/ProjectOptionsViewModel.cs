@@ -24,7 +24,7 @@ public class ProjectOptionsViewModel : ViewModel
     readonly RelayCommand _clearLocalNamespacesCommand;
     readonly RelayCommand _clearLocalOutputPathCommand;
     readonly RelayCommand _clearLocalTraceCommand;
-    readonly ICommonDialogs _commonDialogs;
+    readonly IShell _dialogShell;
     readonly Action<bool> _onClose; // bool parameter: true if saved, false if cancelled
     readonly Action? _onDirtyStateChanged;
     readonly RelayCommand _openGlobalSettingsCommand;
@@ -55,11 +55,11 @@ public class ProjectOptionsViewModel : ViewModel
     string? _originalMainOutputPath;
     string? _originalMainTrace;
 
-    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, ICommonDialogs commonDialogs, IShell shell, Action<bool> onClose, Action? onDirtyStateChanged = null)
+    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, IShell dialogShell, IShell shell, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
         _projectPath = new CanonicalPath(projectPath);
         _projectService = projectService;
-        _commonDialogs = commonDialogs;
+        _dialogShell = dialogShell;
         _shell = shell;
         _onClose = onClose;
         _onDirtyStateChanged = onDirtyStateChanged;
@@ -293,7 +293,7 @@ public class ProjectOptionsViewModel : ViewModel
         }
         catch (UnauthorizedAccessException ex)
         {
-            await _commonDialogs.ShowAsync(new ConfirmationMessage
+            await _dialogShell.ShowAsync(new ConfirmationMessage
             {
                 Title = "Permission Denied",
                 Message = $"Cannot save configuration file. Access is denied.\n\nPlease check file permissions and try again.\n\nDetails: {ex.Message}",
@@ -303,7 +303,7 @@ public class ProjectOptionsViewModel : ViewModel
         }
         catch (IOException ex)
         {
-            await _commonDialogs.ShowAsync(new ConfirmationMessage
+            await _dialogShell.ShowAsync(new ConfirmationMessage
             {
                 Title = "Save Failed",
                 Message = $"Cannot save configuration file. The disk may be full or the file may be in use.\n\nDetails: {ex.Message}",

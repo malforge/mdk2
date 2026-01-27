@@ -1,14 +1,4 @@
-﻿using System.Threading.Tasks;
-
 namespace Mdk.Hub.Features.CommonDialogs;
-
-public interface ICommonDialogs
-{
-    Task<bool> ShowAsync(ConfirmationMessage message);
-    Task ShowAsync(InformationMessage message);
-    Task<bool> ShowAsync(KeyPhraseValidationMessage message);
-    void ShowToast(string message, int durationMs = 3000);
-}
 
 public readonly struct ConfirmationMessage()
 {

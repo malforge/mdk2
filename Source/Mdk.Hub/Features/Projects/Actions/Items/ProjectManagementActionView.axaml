@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+             x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectManagementActionView"
+             x:DataType="items:ProjectManagementAction">
+
+    <StackPanel Spacing="8" Margin="16,0">
+        <TextBlock Classes="section-title" Text="Projects" />
+
+        <!-- Create New Script -->
+        <Border Classes="create-hover-row"
+                Padding="10"
+                CornerRadius="4"
+                Cursor="Hand"
+                IsVisible="{Binding CanMakeScript}"
+                Tapped="OnCreateScriptTapped">
+            <Grid ColumnDefinitions="Auto,*">
+                <i:Icon Value="fa-solid fa-file-code"
+                        FontSize="18"
+                        Width="32"
+                        Height="32"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center" />
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="New Programmable Block Script" FontSize="13" FontWeight="Medium" />
+                    <TextBlock Text="Create a new Programmable Block Script project" FontSize="11" Classes="very-muted" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Create New Mod -->
+        <Border Classes="create-hover-row"
+                Padding="10"
+                CornerRadius="4"
+                Cursor="Hand"
+                IsVisible="{Binding CanMakeMod}"
+                Tapped="OnCreateModTapped">
+            <Grid ColumnDefinitions="Auto,*">
+                <i:Icon Value="fa-solid fa-puzzle-piece"
+                        FontSize="18"
+                        Width="32"
+                        Height="32"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center" />
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="New Mod" FontSize="13" FontWeight="Medium" />
+                    <TextBlock Text="Create a new Space Engineers mod project" FontSize="11" Classes="very-muted" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Add Existing Project -->
+        <Border Classes="create-hover-row"
+                Padding="10"
+                CornerRadius="4"
+                Cursor="Hand"
+                Tapped="OnAddExistingTapped">
+            <Grid ColumnDefinitions="Auto,*">
+                <i:Icon Value="fa-solid fa-folder-open"
+                        FontSize="18"
+                        Width="32"
+                        Height="32"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center" />
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="Add Existing Project" FontSize="13" FontWeight="Medium" />
+                    <TextBlock Text="Open an existing MDK² project" FontSize="11" Classes="very-muted" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </StackPanel>
+
+</UserControl>
