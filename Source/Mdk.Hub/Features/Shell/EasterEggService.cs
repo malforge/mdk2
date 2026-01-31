@@ -1,5 +1,3 @@
-#define DEBUG_EASTER_EGG
-
 using System;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Settings;

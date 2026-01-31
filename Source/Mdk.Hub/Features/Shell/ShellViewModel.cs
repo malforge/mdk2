@@ -58,14 +58,16 @@ public class ShellViewModel : ViewModel
     public ShellViewModel(IShell shell, ISettings settings, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService, Announcements.IAnnouncementService announcementService)
     {
         _shell = shell;
-        _shell = shell;
         _projectService = projectService;
         _projectOverviewViewModel = projectOverviewViewModel;
         _projectActionsViewModel = projectActionsViewModel;
-        OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
         CurrentView = projectActionsViewModel;
+        
+        // Subscribe to overlay collection changes for HasOverlays property
+        if (!IsDesignMode)
+            _shell.OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
 
         // Initialize child VMs when ready
         shell.WhenReady(_ =>
@@ -136,8 +138,9 @@ public class ShellViewModel : ViewModel
     ///     Overlay views are typically used to represent transient or context-sensitive
     ///     UI elements, such as dialogs, notifications, or pop-ups, that must appear
     ///     on top of the main application content.
+    ///     This collection is bound to the Shell service's OverlayViews.
     /// </remarks>
-    public ObservableCollection<ViewModel> OverlayViews { get; } = new();
+    public ObservableCollection<OverlayModel> OverlayViews => IsDesignMode ? new ObservableCollection<OverlayModel>() : _shell.OverlayViews;
 
     /// <summary>
     ///     Gets the collection of toast messages displayed non-blockingly.

@@ -12,7 +12,7 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Settings;
 
-[Singleton<GlobalSettingsViewModel>]
+[Instance<GlobalSettingsViewModel>]
 [ViewModelFor<GlobalSettingsView>]
 public class GlobalSettingsViewModel : OverlayModel
 {

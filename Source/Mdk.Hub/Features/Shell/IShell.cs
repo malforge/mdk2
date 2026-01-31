@@ -13,6 +13,11 @@ public interface IShell
     ///     Gets the collection of active toast messages.
     /// </summary>
     ObservableCollection<ToastMessage> ToastMessages { get; }
+    
+    /// <summary>
+    ///     Gets the collection of overlay view models (dialogs).
+    /// </summary>
+    ObservableCollection<OverlayModel> OverlayViews { get; }
 
     void Start(string[] args);
 

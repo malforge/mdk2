@@ -1,4 +1,10 @@
-﻿v.1.0.0-pre.4
+﻿v.1.0.0-pre.5
+   - Fixed circular dependency between Shell service and ShellViewModel.
+   - Shell service no longer references view models directly.
+   - Disabled debug mode for easter egg (now only activates on October 23rd).
+   - Settings dialog now creates fresh instance each time instead of reusing singleton.
+
+v.1.0.0-pre.4
    - Fixed release tag generation (removed BOM from version files).
 
 v.1.0.0-pre.3

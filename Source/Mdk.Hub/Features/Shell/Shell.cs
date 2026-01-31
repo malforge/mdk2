@@ -12,7 +12,7 @@ using Mdk.Hub.Features.Settings;
 namespace Mdk.Hub.Features.Shell;
 
 [Singleton<IShell>]
-public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyViewModel, GlobalSettings globalSettings, ILogger logger) : IShell
+public class Shell(IDependencyContainer container, GlobalSettings globalSettings, ILogger logger) : IShell
 {
     readonly IDependencyContainer _container = container;
     readonly GlobalSettings _globalSettings = globalSettings;
@@ -20,7 +20,6 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
-    readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
     bool _hasStarted;
     bool _isReady;
     string[]? _startupArgs;
@@ -29,6 +28,7 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     public event EventHandler? RefreshRequested;
 
     public ObservableCollection<ToastMessage> ToastMessages { get; } = new();
+    public ObservableCollection<OverlayModel> OverlayViews { get; } = new();
 
     public void Start(string[] args)
     {
@@ -38,13 +38,19 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         // Write Hub executable path for MDK CLI to discover
         WriteHubPath();
         
-        // On Linux, check if required paths are configured
-        CheckLinuxPathConfiguration();
-
         // Invoke queued callbacks
         foreach (var callback in _startupCallbacks)
             callback(args);
         _startupCallbacks.Clear();
+        
+        // On Linux, check if required paths are configured AFTER startup completes
+        if (App.IsLinux)
+        {
+            Task.Delay(500).ContinueWith(_ =>
+            {
+                CheckLinuxPathConfiguration();
+            });
+        }
         
         // If not on Linux or paths are valid, we're ready immediately
         if (!App.IsLinux || !RequiresLinuxPathConfiguration())
@@ -94,12 +100,12 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         void onDismissed(object? sender, EventArgs e)
         {
             model.Dismissed -= onDismissed;
-            _viewModel.Value.OverlayViews.Remove(model);
+            OverlayViews.Remove(model);
             if (model is IDisposable disposable) disposable.Dispose();
         }
 
         model.Dismissed += onDismissed;
-        _viewModel.Value.OverlayViews.Add(model);
+        OverlayViews.Add(model);
     }
     
     void ShowGlobalOptions(bool openedForLinuxValidation = false)
@@ -123,7 +129,7 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     public void Shutdown()
     {
         _logger.Info("Shutdown requested");
-        _viewModel.Value.RequestClose();
+        System.Environment.Exit(0);
     }
 
     public void ShowToast(string message, int durationMs = 3000)
@@ -235,11 +241,7 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         {
             _logger.Info($"Linux: Required paths not configured (bin={binPath}, script={scriptOutputPath}, mod={modOutputPath}), opening global options");
             
-            // Delay slightly to let the window finish loading
-            Task.Delay(500).ContinueWith(_ =>
-            {
-                ShowGlobalOptions(openedForLinuxValidation: true);
-            });
+            ShowGlobalOptions(openedForLinuxValidation: true);
         }
     }
 
