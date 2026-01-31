@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - main
+      - prerelease
     paths:
       - 'Source/**/PackageVersion.txt'
 
@@ -20,7 +21,58 @@ env:
   NuGetPublishEnabled: true
 
 jobs:
+  validate-versions:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate version suffixes match branch
+        shell: pwsh
+        run: |
+          $branch = "${{ github.ref }}"
+          $isMain = $branch -eq "refs/heads/main"
+          $isPrerelease = $branch -eq "refs/heads/prerelease"
+          
+          if (-not $isMain -and -not $isPrerelease) {
+            Write-Host "Skipping validation - not on main or prerelease branch"
+            exit 0
+          }
+          
+          # Find all PackageVersion.txt files
+          $versionFiles = Get-ChildItem -Path . -Recurse -Filter "PackageVersion.txt"
+          $errors = @()
+          
+          foreach ($file in $versionFiles) {
+            $version = (Get-Content $file.FullName).Trim()
+            $hasPrereleaseSuffix = $version -match '-'
+            
+            if ($isMain -and $hasPrereleaseSuffix) {
+              $errors += "ERROR: $($file.FullName) contains prerelease version '$version' but branch is 'main'"
+            }
+            elseif ($isPrerelease -and -not $hasPrereleaseSuffix) {
+              $errors += "ERROR: $($file.FullName) contains stable version '$version' but branch is 'prerelease'"
+            }
+            else {
+              Write-Host "✓ $($file.FullName): $version (valid for $branch)"
+            }
+          }
+          
+          if ($errors.Count -gt 0) {
+            Write-Host "`nValidation failed:"
+            $errors | ForEach-Object { Write-Host $_ }
+            Write-Host "`nBranch/version rules:"
+            Write-Host "  - 'main' branch must have stable versions (e.g., 1.5.0)"
+            Write-Host "  - 'prerelease' branch must have prerelease versions (e.g., 1.5.0-beta.1)"
+            exit 1
+          }
+          
+          Write-Host "`n✓ All versions valid for branch $branch"
+
   update-templates:
+    needs: validate-versions
+    if: always() && (needs.validate-versions.result == 'success' || needs.validate-versions.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -272,9 +324,9 @@ jobs:
   #         path: ./Source/Releases/*
 
   deploy:
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
     runs-on: ubuntu-latest
-    environment: Deploy
+    environment: ${{ github.ref == 'refs/heads/main' && 'Deploy' || 'Prerelease' }}
     needs: build-primary
 
     defaults:
@@ -294,9 +346,9 @@ jobs:
           }
 
   deploy-hub:
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
     runs-on: ubuntu-latest
-    environment: Deploy
+    environment: ${{ github.ref == 'refs/heads/main' && 'Deploy' || 'Prerelease' }}
     needs:
       - build-hub-windows
       # - build-hub-linux
