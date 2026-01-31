@@ -23,18 +23,18 @@
             HorizontalAlignment="Left">
         <StackPanel Orientation="Horizontal" Spacing="8">
             <TextBlock Text="Disable Easter Egg:"
-                       FontSize="11"
+                       
                        VerticalAlignment="Center"
                        Classes="muted" />
 
             <Button Content="For Today"
                     Command="{Binding DisableForTodayCommand}"
                     Padding="6,3"
-                    FontSize="11" />
+                     />
             <Button Content="Forever"
                     Command="{Binding DisableForeverCommand}"
                     Padding="6,3"
-                    FontSize="11" />
+                     />
         </StackPanel>
     </Border>
 

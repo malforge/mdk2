@@ -27,7 +27,7 @@
                              Height="4" />
 
                 <TextBlock Text="{Binding Message}"
-                           FontSize="14"
+                           Classes="body"
                            TextAlignment="Center"
                            HorizontalAlignment="Center" />
 

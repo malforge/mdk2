@@ -33,13 +33,10 @@
                 IsVisible="{Binding ConfigurationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
             <StackPanel Spacing="4">
                 <TextBlock Text="⚠ Configuration Issues"
-                           Classes="danger"
-                           FontWeight="SemiBold"
-                           FontSize="12" />
+                           Classes="danger semibold caption" />
                 <TextBlock Text="{Binding ConfigurationWarning}"
                            TextWrapping="Wrap"
-                           Classes="danger"
-                           FontSize="11" />
+                           Classes="danger caption" />
             </StackPanel>
         </Border>
 

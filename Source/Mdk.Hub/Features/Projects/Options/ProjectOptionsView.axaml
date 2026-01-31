@@ -24,8 +24,7 @@
                         IsVisible="{Binding HasUnsavedChanges}">
                 <Ellipse Width="8" Height="8" Classes="warning-indicator" />
                 <TextBlock Text="Unsaved changes"
-                           Classes="warning"
-                           FontSize="12"
+                           Classes="caption warning"
                            FontStyle="Italic" />
             </StackPanel>
         </Grid>
@@ -68,10 +67,9 @@
                                             Orientation="Horizontal"
                                             Spacing="4"
                                             IsVisible="{Binding IsInteractiveOverridden}">
-                                    <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center" />
+                                    <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
                                     <TextBlock Text="Overridden in Local"
-                                               Classes="warning"
-                                               FontSize="10"
+                                               Classes="label warning"
                                                FontStyle="Italic"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
@@ -123,10 +121,9 @@
                                                 Orientation="Horizontal"
                                                 Spacing="4"
                                                 IsVisible="{Binding IsMinifyOverridden}">
-                                        <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center" />
+                                        <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
                                         <TextBlock Text="Overridden in Local"
-                                                   Classes="warning"
-                                                   FontSize="10"
+                                                   Classes="label warning"
                                                    FontStyle="Italic"
                                                    VerticalAlignment="Center" />
                                     </StackPanel>
@@ -151,10 +148,9 @@
                                                 Orientation="Horizontal"
                                                 Spacing="4"
                                                 IsVisible="{Binding IsMinifyExtraOptionsOverridden}">
-                                        <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center" />
+                                        <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
                                         <TextBlock Text="Overridden in Local"
-                                                   Classes="warning"
-                                                   FontSize="10"
+                                                   Classes="label warning"
                                                    FontStyle="Italic"
                                                    VerticalAlignment="Center" />
                                     </StackPanel>
@@ -182,10 +178,9 @@
                                             Orientation="Horizontal"
                                             Spacing="4"
                                             IsVisible="{Binding IsTraceOverridden}">
-                                    <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center" />
+                                    <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
                                     <TextBlock Text="Overridden in Local"
-                                               Classes="warning"
-                                               FontSize="10"
+                                               Classes="label warning"
                                                FontStyle="Italic"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
@@ -211,10 +206,9 @@
                                             Orientation="Horizontal"
                                             Spacing="4"
                                             IsVisible="{Binding IsIgnoresOverridden}">
-                                    <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center" />
+                                    <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
                                     <TextBlock Text="Overridden in Local"
-                                               Classes="warning"
-                                               FontSize="10"
+                                               Classes="label warning"
                                                FontStyle="Italic"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
@@ -232,10 +226,9 @@
                                             Orientation="Horizontal"
                                             Spacing="4"
                                             IsVisible="{Binding IsNamespacesOverridden}">
-                                    <TextBlock Text="⚠️" FontSize="10" VerticalAlignment="Center" />
+                                    <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
                                     <TextBlock Text="Overridden in Local"
-                                               Classes="warning"
-                                               FontSize="10"
+                                               Classes="label warning"
                                                FontStyle="Italic"
                                                VerticalAlignment="Center" />
                                 </StackPanel>

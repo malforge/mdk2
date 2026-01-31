@@ -21,8 +21,7 @@
                            Classes="dialog-title"
                            Margin="0,0,0,8" />
                 <TextBlock Text="{Binding Message}"
-                           Classes="secondary"
-                           FontSize="14"
+                           Classes="body secondary"
                            TextWrapping="Wrap"
                            Margin="0,0,0,12" />
                 <TextBox Text="{Binding Details}"

@@ -9,9 +9,8 @@
 
     <Border Classes="action-item" Margin="16,0">
         <StackPanel Spacing="8">
-            <TextBlock Classes="action-title" Text="MDK Package Updates" FontSize="14" FontWeight="SemiBold" />
-            <TextBlock Classes="action-description" Text="Update MDK packages for this project or all projects"
-                       FontSize="12" />
+            <TextBlock Classes="body semibold" Text="MDK Package Updates" />
+            <TextBlock Classes="caption" Text="Update MDK packages for this project or all projects" />
 
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
                 <Button Content="Update This Project"

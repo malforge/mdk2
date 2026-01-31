@@ -23,8 +23,7 @@
                            Margin="0,0,0,8" />
 
                 <!-- Explanation -->
-                <TextBlock Classes="muted"
-                           FontSize="12"
+                <TextBlock Classes="caption muted"
                            TextWrapping="Wrap"
                            Margin="0,0,0,8">
                     These settings apply globally to all projects in MDK Hub.

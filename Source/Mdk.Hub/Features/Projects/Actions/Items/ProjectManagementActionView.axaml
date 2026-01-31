@@ -27,8 +27,8 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center" />
                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="New Programmable Block Script" FontSize="13" FontWeight="Medium" />
-                    <TextBlock Text="Create a new Programmable Block Script project" FontSize="11" Classes="very-muted" />
+                    <TextBlock Text="New Programmable Block Script" Classes="body medium" />
+                    <TextBlock Text="Create a new Programmable Block Script project" Classes="caption very-muted" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -49,8 +49,8 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center" />
                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="New Mod" FontSize="13" FontWeight="Medium" />
-                    <TextBlock Text="Create a new Space Engineers mod project" FontSize="11" Classes="very-muted" />
+                    <TextBlock Text="New Mod" Classes="body medium" />
+                    <TextBlock Text="Create a new Space Engineers mod project" Classes="caption very-muted" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -70,8 +70,8 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Center" />
                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="Add Existing Project" FontSize="13" FontWeight="Medium" />
-                    <TextBlock Text="Open an existing MDK² project" FontSize="11" Classes="very-muted" />
+                    <TextBlock Text="Add Existing Project" Classes="body medium" />
+                    <TextBlock Text="Open an existing MDK² project" Classes="caption very-muted" />
                 </StackPanel>
             </Grid>
         </Border>

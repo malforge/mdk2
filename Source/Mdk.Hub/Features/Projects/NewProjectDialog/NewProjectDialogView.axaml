@@ -54,15 +54,13 @@
                                Margin="0,0,0,8" />
 
                     <TextBlock Text="{Binding Message.Message}"
-                               Classes="secondary"
-                               FontSize="14"
+                               Classes="body secondary"
                                TextWrapping="Wrap"
                                Margin="0,0,0,16" />
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="Project Name"
-                                   Classes="secondary"
-                                   FontSize="13" />
+                                   Classes="body secondary" />
                         <TextBox Text="{Binding ProjectName}"
                                  Watermark="MyProject"
                                  Name="ProjectNameTextBox" />
@@ -70,8 +68,7 @@
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="Location"
-                                   Classes="secondary"
-                                   FontSize="13" />
+                                   Classes="body secondary" />
                         <controls:FolderBrowserControl Path="{Binding Location}"
                                                        Watermark="Select a folder..." />
                     </StackPanel>
@@ -79,8 +76,7 @@
                     <!-- Preview of final path -->
                     <StackPanel Spacing="2">
                         <TextBlock Text="Project will be created at:"
-                                   Classes="secondary"
-                                   FontSize="12" />
+                                   Classes="caption secondary" />
                         <TextBlock Text="{Binding FinalPath}"
                                    Classes="muted monospace"
                                    TextWrapping="NoWrap"

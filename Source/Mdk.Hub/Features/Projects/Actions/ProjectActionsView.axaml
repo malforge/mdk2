@@ -94,14 +94,11 @@
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
                                    Text="Project Options"
-                                   FontSize="18"
-                                   FontWeight="Bold"
-                                   Classes="primary"
+                                   Classes="h1"
                                    VerticalAlignment="Center" />
                         <Button Grid.Column="1"
                                 Classes="subtle"
                                 Content="✕"
-                                FontSize="16"
                                 Padding="8,4"
                                 Click="OnCloseDrawerClick"
                                 ToolTip.Tip="Close" />

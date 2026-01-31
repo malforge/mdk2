@@ -1,0 +1,70 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 
+    Typography System
+    
+    Minimal, justified type scale based on actual usage patterns.
+    Only 4 sizes needed - consolidates 9 hardcoded sizes down to 4 semantic styles.
+    
+    Usage:
+    - H1: Dialog/page titles (20px Bold)
+    - Body: Body text, action titles (14px Normal)
+    - Caption: Descriptions, help text (11px Normal)
+    - Label: Tiny labels, timestamps, warnings (10px SemiBold)
+    
+    Combine with color modifiers: .secondary, .muted, .very-muted, .accent, .warning, .danger
+    Combine with weight modifiers: .medium, .semibold, .bold
+    
+    Icon FontSize Standards (keep hardcoded):
+    - 16px: Standard toolbar/UI icons
+    - 18px: Larger action row icons  
+    - 32px: Hero/symbol icons (project types)
+    -->
+
+    <!-- H1 - Dialog/page titles -->
+    <!-- Consolidates: 24px (AboutView title) + 18px (panel titles) -->
+    <Style Selector="TextBlock.h1">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- Body - Standard readable text -->
+    <!-- Consolidates: 14px (body text) + 13px (action titles) -->
+    <!-- Used for: dialog content, body text, action item titles -->
+    <Style Selector="TextBlock.body">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- Caption - Descriptions, help text, metadata -->
+    <!-- Consolidates: 12px (labels) + 11px (descriptions) -->
+    <!-- Used for: action descriptions, field help text, secondary info -->
+    <Style Selector="TextBlock.caption">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    </Style>
+
+    <!-- Label - Tiny labels, timestamps, warnings -->
+    <!-- Used for: warning symbols (⚠️), timestamps, overline-style labels -->
+    <Style Selector="TextBlock.label">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
+    </Style>
+
+    <!-- Weight modifiers (combinable with above) -->
+    <Style Selector="TextBlock.medium">
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+
+    <Style Selector="TextBlock.semibold">
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="TextBlock.bold">
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+</Styles>

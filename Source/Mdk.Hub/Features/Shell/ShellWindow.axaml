@@ -132,9 +132,7 @@
                             </Style>
                         </Border.Styles>
                         <TextBlock Text="{Binding Message}"
-                                   Classes="primary"
-                                   FontSize="14"
-                                   FontWeight="Medium"
+                                   Classes="body primary medium"
                                    TextAlignment="Center"
                                    TextWrapping="Wrap"
                                    MaxWidth="400" />

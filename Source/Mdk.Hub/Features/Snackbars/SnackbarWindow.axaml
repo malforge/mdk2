@@ -31,7 +31,7 @@
                 <TextBlock Text="{Binding Message}"
                            TextWrapping="Wrap"
                            Classes="primary"
-                           FontSize="14" />
+                            />
 
                 <ItemsControl ItemsSource="{Binding Actions}"
                               IsVisible="{Binding Actions.Count}">

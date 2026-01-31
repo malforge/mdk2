@@ -28,12 +28,10 @@
                                    Height="64"
                                    HorizontalAlignment="Center" />
                             <TextBlock Text="MDK²"
-                                       Classes="dialog-title"
-                                       FontSize="24"
+                                       Classes="h1"
                                        HorizontalAlignment="Center" />
                             <TextBlock Text="{Binding Version, StringFormat='Hub Version: {0}'}"
-                                       Classes="secondary"
-                                       FontSize="14"
+                                       Classes="body secondary"
                                        HorizontalAlignment="Center" />
                         </StackPanel>
 
@@ -43,8 +41,7 @@
                         <!-- Description -->
                         <TextBlock
                             Text="MDK² is a comprehensive development toolkit for Space Engineers scripting and modding."
-                            Classes="secondary"
-                            FontSize="13"
+                            Classes="body secondary"
                             TextWrapping="Wrap"
                             HorizontalAlignment="Center"
                             TextAlignment="Center"
@@ -79,10 +76,8 @@
                         <!-- Third-party licenses -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="Third-Party Software"
-                                       Classes="secondary"
-                                       FontSize="12"
-                                       FontWeight="SemiBold" />
-                            <TextBlock Classes="very-muted" FontSize="11" TextWrapping="Wrap">
+                                       Classes="caption semibold secondary" />
+                            <TextBlock Classes="caption very-muted" TextWrapping="Wrap">
                                 <Run Text="MDK² uses the following third-party libraries:" />
                                 <LineBreak />
                                 <LineBreak />
@@ -111,8 +106,7 @@
 
                         <!-- Copyright -->
                         <TextBlock Text="© 2023-2026 Malforge. All rights reserved."
-                                   Classes="very-muted"
-                                   FontSize="11"
+                                   Classes="caption very-muted"
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </ScrollViewer>

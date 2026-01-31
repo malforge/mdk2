@@ -23,8 +23,8 @@
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center" />
             <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-                <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" />
-                <TextBlock Text="{Binding Description}" FontSize="11" Classes="very-muted" />
+                <TextBlock Text="{Binding Title}" Classes="body medium" />
+                <TextBlock Text="{Binding Description}" Classes="caption very-muted" />
             </StackPanel>
         </Grid>
     </Button>

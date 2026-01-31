@@ -16,7 +16,7 @@
             <!-- Message and progress -->
             <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Message}"
-                           FontSize="13"
+                           Classes="body"
                            FontWeight="Medium"
                            Foreground="{StaticResource TextPrimaryBrush}" />
 
