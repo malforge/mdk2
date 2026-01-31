@@ -12,9 +12,10 @@ using Mdk.Hub.Features.Diagnostics;
 namespace Mdk.Hub.Features.Updates;
 
 [Singleton<IUpdateCheckService>]
-public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService) : IUpdateCheckService
+public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, Settings.GlobalSettings globalSettings) : IUpdateCheckService
 {
     readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();
+    readonly Settings.GlobalSettings _globalSettings = globalSettings;
     readonly IGitHubService _gitHubService = gitHubService;
     readonly ILogger _logger = logger;
     readonly INuGetService _nuGetService = nuGetService;
@@ -375,13 +376,15 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
     {
         _logger.Info("Checking Hub version for updates");
 
-        var version = await _gitHubService.GetLatestReleaseAsync("malforge", "mdk2", cancellationToken);
+        var includePrerelease = _globalSettings.IncludePrereleaseUpdates;
+        var version = await _gitHubService.GetLatestReleaseAsync("malware-dev", "mdk2", includePrerelease, cancellationToken);
         if (version != null)
         {
             return new HubVersionInfo
             {
-                LatestVersion = version,
-                DownloadUrl = "https://github.com/malforge/mdk2/releases/latest"
+                LatestVersion = version.Value.Version,
+                IsPrerelease = version.Value.IsPrerelease,
+                DownloadUrl = "https://github.com/malware-dev/mdk2/releases/latest"
             };
         }
 

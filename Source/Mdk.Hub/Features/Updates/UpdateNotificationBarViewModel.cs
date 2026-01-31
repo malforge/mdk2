@@ -95,11 +95,17 @@ public class UpdateNotificationBarViewModel : ViewModel
         else if (IsReadyToInstall)
             Message = "Hub update ready to install";
         else if (IsTemplateUpdateAvailable && IsHubUpdateAvailable)
-            Message = "Script templates and Hub updates available";
+        {
+            var hubSuffix = HubVersionInfo?.IsPrerelease == true ? " (prerelease)" : "";
+            Message = $"Script templates and Hub{hubSuffix} updates available";
+        }
         else if (IsTemplateUpdateAvailable)
             Message = "Script templates update available";
         else if (IsHubUpdateAvailable)
-            Message = "Hub update available";
+        {
+            var suffix = HubVersionInfo?.IsPrerelease == true ? " (prerelease)" : "";
+            Message = $"Hub update{suffix} available";
+        }
     }
 
     void Dismiss() => IsVisible = false;

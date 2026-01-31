@@ -24,6 +24,7 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoBinaryPath;
     string _customAutoModOutputPath;
     string _customAutoScriptOutputPath;
+    bool _includePrereleaseUpdates;
 
     public GlobalSettingsViewModel(GlobalSettings globalSettings, IUpdateCheckService updateCheckService, IShell shell)
     {
@@ -33,6 +34,7 @@ public class GlobalSettingsViewModel : OverlayModel
         _customAutoScriptOutputPath = _globalSettings.CustomAutoScriptOutputPath;
         _customAutoModOutputPath = _globalSettings.CustomAutoModOutputPath;
         _customAutoBinaryPath = _globalSettings.CustomAutoBinaryPath;
+        _includePrereleaseUpdates = _globalSettings.IncludePrereleaseUpdates;
         _saveCommand = new RelayCommand(Save);
         _cancelCommand = new RelayCommand(Cancel);
         _checkPrerequisitesCommand = new RelayCommand(async () => await CheckPrerequisitesAsync());
@@ -60,11 +62,18 @@ public class GlobalSettingsViewModel : OverlayModel
         set => SetProperty(ref _customAutoBinaryPath, value);
     }
 
+    public bool IncludePrereleaseUpdates
+    {
+        get => _includePrereleaseUpdates;
+        set => SetProperty(ref _includePrereleaseUpdates, value);
+    }
+
     void Save()
     {
         _globalSettings.CustomAutoScriptOutputPath = _customAutoScriptOutputPath;
         _globalSettings.CustomAutoModOutputPath = _customAutoModOutputPath;
         _globalSettings.CustomAutoBinaryPath = _customAutoBinaryPath;
+        _globalSettings.IncludePrereleaseUpdates = _includePrereleaseUpdates;
         Dismiss();
     }
 

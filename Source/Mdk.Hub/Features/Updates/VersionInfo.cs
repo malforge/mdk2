@@ -29,6 +29,7 @@ public record HubVersionInfo
 {
     public required string LatestVersion { get; init; }
     public required string DownloadUrl { get; init; }
+    public bool IsPrerelease { get; init; }
     public string? ReleaseNotes { get; init; }
     public DateTime CheckedAt { get; init; } = DateTime.UtcNow;
 }

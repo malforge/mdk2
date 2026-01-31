@@ -80,4 +80,17 @@ public class GlobalSettings
             _logger.Info($"Custom auto binary path set to: {(normalizedValue == "auto" ? "(default)" : normalizedValue)}");
         }
     }
+
+    /// <summary>
+    ///     Gets or sets whether to include prerelease versions when checking for Hub updates.
+    /// </summary>
+    public bool IncludePrereleaseUpdates
+    {
+        get => _settings.GetValue("IncludePrereleaseUpdates", false);
+        set
+        {
+            _settings.SetValue("IncludePrereleaseUpdates", value);
+            _logger.Info($"Include prerelease updates set to: {value}");
+        }
+    }
 }

@@ -188,4 +188,40 @@
         </Style>
     </Style>
 
+    <!-- Vertical Tab Control -->
+    <Style Selector="TabControl.vertical-tabs">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <Style Selector="TabControl.vertical-tabs > TabStrip">
+        <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}" />
+        <Setter Property="Margin" Value="0,0,16,0" />
+        <Setter Property="MinWidth" Value="140" />
+    </Style>
+
+    <Style Selector="TabControl.vertical-tabs TabItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+    </Style>
+
+    <Style Selector="TabControl.vertical-tabs TabItem:pointerover">
+        <Setter Property="Background" Value="{StaticResource BackgroundDialogBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <Style Selector="TabControl.vertical-tabs TabItem:selected">
+        <Setter Property="Background" Value="{StaticResource BackgroundPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource AccentInteractiveBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource AccentInteractiveBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,3,0" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
 </Styles>

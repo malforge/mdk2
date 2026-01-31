@@ -59,10 +59,10 @@
                     <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="{StaticResource TextMutedColor}" />
 
                     <!-- Accent color -->
-                    <Color x:Key="SystemAccentColor">#FF007bff</Color>
-                    <StaticResource x:Key="SystemAccentColorLight1" ResourceKey="AccentPrimaryLightColor" />
-                    <Color x:Key="SystemAccentColorLight2">#FF80b3ff</Color>
-                    <StaticResource x:Key="SystemAccentColorDark1" ResourceKey="AccentPrimaryDarkColor" />
+                    <Color x:Key="SystemAccentColor">#FF4da6ff</Color>
+                    <Color x:Key="SystemAccentColorLight1">#FF80b3ff</Color>
+                    <Color x:Key="SystemAccentColorLight2">#FFa6ccff</Color>
+                    <Color x:Key="SystemAccentColorDark1">#FF3388cc</Color>
 
                     <!-- MessageBox danger resources -->
                     <SolidColorBrush x:Key="MessageBoxDangerBackgroundBrush" Color="#DD2a1a1a" />

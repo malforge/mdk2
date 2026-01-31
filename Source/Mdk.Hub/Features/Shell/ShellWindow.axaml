@@ -41,8 +41,6 @@
 
             <!-- Update notification bar (row 0) -->
             <ContentControl Grid.Row="0"
-                            Grid.Column="0"
-                            Grid.ColumnSpan="3"
                             Content="{Binding UpdateNotificationBar}" />
 
             <!-- Main content (row 1) -->
@@ -59,8 +57,7 @@
         </Grid>
 
         <!-- Overlay Layer (blocking dialogs) -->
-        <ItemsControl Classes="overlay-content"
-                      Grid.Column="0"
+        <ItemsControl Grid.Column="0"
                       Grid.Row="0"
                       IsVisible="{Binding HasOverlays}"
                       ItemsSource="{Binding OverlayViews}">
@@ -84,8 +81,9 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:ToastMessage">
-                    <Border Classes="toast easter-egg-banner"
-                            Classes.dismissing="{Binding IsDismissing}"
+                    <Border Classes.dismissing="{Binding IsDismissing}"
+                            Background="{StaticResource BackgroundPrimaryBrush}"
+                            BorderBrush="{StaticResource BorderDefaultBrush}"
                             BorderThickness="2"
                             CornerRadius="8"
                             Padding="16,12"
@@ -97,7 +95,7 @@
                         </Border.RenderTransform>
                         <Border.Styles>
                             <!-- Entry animation -->
-                            <Style Selector="Border.toast">
+                            <Style Selector="Border">
                                 <Style.Animations>
                                     <Animation Duration="0:0:0.2" FillMode="Forward">
                                         <KeyFrame Cue="0%">
@@ -114,7 +112,7 @@
                                 </Style.Animations>
                             </Style>
                             <!-- Exit animation -->
-                            <Style Selector="Border.toast.dismissing">
+                            <Style Selector="Border.dismissing">
                                 <Style.Animations>
                                     <Animation Duration="0:0:0.2" FillMode="Forward">
                                         <KeyFrame Cue="0%">

@@ -20,13 +20,24 @@ public class GitHubService(ILogger logger) : IGitHubService
     readonly ILogger _logger = logger;
 
     /// <inheritdoc />
-    public async Task<string?> GetLatestReleaseAsync(string owner, string repo, CancellationToken cancellationToken = default)
+    public async Task<(string Version, bool IsPrerelease)?> GetLatestReleaseAsync(string owner, string repo, bool includePrerelease = false, CancellationToken cancellationToken = default)
     {
-        _logger.Info($"Checking GitHub for latest release of {owner}/{repo}");
+        _logger.Info($"Checking GitHub for latest release of {owner}/{repo} (prerelease: {includePrerelease})");
 
         try
         {
-            var url = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
+            string url;
+            if (includePrerelease)
+            {
+                // Get all releases and find the latest (including prereleases)
+                url = $"https://api.github.com/repos/{owner}/{repo}/releases";
+            }
+            else
+            {
+                // Get latest stable release
+                url = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
+            }
+
             var response = await _httpClient.GetAsync(url, cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
@@ -39,15 +50,38 @@ public class GitHubService(ILogger logger) : IGitHubService
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             var doc = JsonDocument.Parse(content);
 
-            var tagName = doc.RootElement.GetProperty("tag_name").GetString();
-            if (tagName != null)
+            if (includePrerelease)
             {
-                _logger.Info($"Latest release of {owner}/{repo}: {tagName}");
-                return tagName;
-            }
+                // Parse array and get the first release (newest)
+                if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() > 0)
+                {
+                    var firstRelease = doc.RootElement[0];
+                    var tagName = firstRelease.GetProperty("tag_name").GetString();
+                    var isPrerelease = firstRelease.GetProperty("prerelease").GetBoolean();
 
-            _logger.Warning($"No tag_name found in release for {owner}/{repo}");
-            return null;
+                    if (tagName != null)
+                    {
+                        _logger.Info($"Latest release of {owner}/{repo}: {tagName} (prerelease: {isPrerelease})");
+                        return (tagName, isPrerelease);
+                    }
+                }
+
+                _logger.Warning($"No releases found in array for {owner}/{repo}");
+                return null;
+            }
+            else
+            {
+                // Parse single release object
+                var tagName = doc.RootElement.GetProperty("tag_name").GetString();
+                if (tagName != null)
+                {
+                    _logger.Info($"Latest stable release of {owner}/{repo}: {tagName}");
+                    return (tagName, false);
+                }
+
+                _logger.Warning($"No tag_name found in release for {owner}/{repo}");
+                return null;
+            }
         }
         catch (HttpRequestException ex)
         {
