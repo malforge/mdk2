@@ -9,15 +9,14 @@
              IsVisible="{Binding IsVisible}">
 
     <Border Background="{StaticResource BackgroundSecondaryBrush}"
-            BorderBrush="{StaticResource AccentPrimaryBrush}"
+            BorderBrush="{StaticResource AccentInteractiveBrush}"
             BorderThickness="0,0,0,2"
             Padding="16,8">
         <Grid ColumnDefinitions="*,Auto">
             <!-- Message and progress -->
             <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Message}"
-                           Classes="body"
-                           FontWeight="Medium"
+                           Classes="body medium"
                            Foreground="{StaticResource TextPrimaryBrush}" />
 
                 <!-- Download progress bar -->

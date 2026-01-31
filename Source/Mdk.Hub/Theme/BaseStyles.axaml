@@ -14,11 +14,11 @@
                                      Color="{StaticResource BackgroundCardHoverColor}" />
                     <SolidColorBrush x:Key="ButtonBackgroundPressed"
                                      Color="{StaticResource BackgroundCardSelectedColor}" />
-                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource BorderMediumColor}" />
-                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource AccentPrimaryColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource BorderDefaultColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource AccentInteractiveColor}" />
                     <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}" />
-                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource TextSecondaryColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource TextBodyColor}" />
                     <SolidColorBrush x:Key="ButtonForegroundDisabled" Color="{StaticResource TextMutedColor}" />
 
                     <!-- TextBox overrides -->
@@ -27,14 +27,14 @@
                                      Color="{StaticResource BackgroundCardHoverColor}" />
                     <SolidColorBrush x:Key="TextControlBackgroundFocused"
                                      Color="{StaticResource BackgroundCardHoverColor}" />
-                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource BorderMediumColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource BorderDefaultColor}" />
                     <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"
-                                     Color="{StaticResource BorderPrimaryColor}" />
-                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource AccentPrimaryColor}" />
+                                     Color="{StaticResource BorderDefaultColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource AccentInteractiveColor}" />
                     <SolidColorBrush x:Key="TextControlForeground" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="{StaticResource TextMutedColor}" />
                     <SolidColorBrush x:Key="TextControlSelectionHighlightColor"
-                                     Color="{StaticResource AccentPrimaryColor}" />
+                                     Color="{StaticResource AccentInteractiveColor}" />
 
                     <!-- ComboBox overrides -->
                     <SolidColorBrush x:Key="ComboBoxBackground" Color="{StaticResource BackgroundCardColor}" />
@@ -44,10 +44,10 @@
                                      Color="{StaticResource BackgroundCardHoverColor}" />
                     <SolidColorBrush x:Key="ComboBoxBackgroundFocused"
                                      Color="{StaticResource BackgroundCardHoverColor}" />
-                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{StaticResource BorderMediumColor}" />
-                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{StaticResource BorderPrimaryColor}" />
-                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{StaticResource AccentPrimaryColor}" />
-                    <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="{StaticResource AccentPrimaryColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{StaticResource BorderDefaultColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{StaticResource BorderDefaultColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{StaticResource AccentInteractiveColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="{StaticResource AccentInteractiveColor}" />
                     <SolidColorBrush x:Key="ComboBoxForeground" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="{StaticResource TextPrimaryColor}" />
@@ -55,8 +55,8 @@
 
                     <!-- Text fill colors -->
                     <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
-                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
-                    <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="{StaticResource TextTertiaryColor}" />
+                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="{StaticResource TextBodyColor}" />
+                    <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="{StaticResource TextMutedColor}" />
 
                     <!-- Accent color -->
                     <Color x:Key="SystemAccentColor">#FF007bff</Color>

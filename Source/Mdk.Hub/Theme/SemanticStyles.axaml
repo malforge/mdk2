@@ -1,52 +1,55 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Text Styles -->
+    <!-- 
+    Semantic Color Modifiers
+    
+    These classes set ONLY color (Foreground property).
+    Combine with Typography classes (.h1, .h2, .body, .caption, .label) for complete styling.
+    
+    Text Color Hierarchy:
+    - .primary = Pure white (#ffffff) for emphasis
+    - (default) = Body grey (#d0d0d0) for standard text  
+    - .muted = Dimmer grey (#b0b0d0) for de-emphasized
+    - .disabled = Most dim (#808080) for disabled state
+    
+    Semantic Colors:
+    - .heading = Bright blue (#4da6ff) for section headings (H2)
+    - .heading-light = Light blue (#80b3ff) for subsections (H3)
+    - .accent = Interactive blue (#007bff) for links in prose
+    - .success, .warning, .danger = State colors
+    -->
 
-    <!-- Dialog/Modal Headings -->
-    <Style Selector="TextBlock.dialog-title">
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="FontWeight" Value="Bold" />
+    <!-- Text Color Modifiers -->
+    
+    <!-- Primary - Pure white for emphasis (H1 titles) -->
+    <Style Selector="TextBlock.primary">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-        <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
-    <!-- Section Headings -->
-    <Style Selector="TextBlock.section-heading">
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-    </Style>
-
-    <!-- Field Labels -->
-    <Style Selector="TextBlock.field-label">
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
-    </Style>
-
-    <!-- Help/Description Text -->
-    <Style Selector="TextBlock.help-text">
-        <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-    </Style>
-
-    <!-- Small help text (even smaller) -->
-    <Style Selector="TextBlock.help-text-small">
-        <Setter Property="FontSize" Value="10" />
-        <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-    </Style>
-
-    <!-- Muted/Secondary Text -->
+    <!-- Muted - De-emphasized text -->
     <Style Selector="TextBlock.muted">
-        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
     </Style>
 
-    <!-- Very muted text (descriptions, etc) -->
-    <Style Selector="TextBlock.very-muted">
-        <Setter Property="Foreground" Value="{StaticResource TextVeryMutedBrush}" />
+    <!-- Disabled - Most de-emphasized -->
+    <Style Selector="TextBlock.disabled">
+        <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
+    </Style>
+
+    <!-- Heading - Colored headings (H2) -->
+    <Style Selector="TextBlock.heading">
+        <Setter Property="Foreground" Value="{StaticResource AccentHeadingBrush}" />
+    </Style>
+
+    <!-- Heading Light - Lighter colored headings (H3) -->
+    <Style Selector="TextBlock.heading-light">
+        <Setter Property="Foreground" Value="{StaticResource AccentHeadingLightBrush}" />
+    </Style>
+
+    <!-- Accent - Interactive elements (links in prose) -->
+    <Style Selector="TextBlock.accent">
+        <Setter Property="Foreground" Value="{StaticResource AccentInteractiveBrush}" />
     </Style>
 
     <!-- Warning Text -->
@@ -60,19 +63,9 @@
         <Setter Property="Foreground" Value="{StaticResource AccentDangerBrush}" />
     </Style>
 
-    <!-- Accent/Link Text -->
-    <Style Selector="TextBlock.accent">
-        <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}" />
-    </Style>
-
-    <!-- Primary Text (default readable) -->
-    <Style Selector="TextBlock.primary">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-    </Style>
-
-    <!-- Secondary Text (slightly dimmed) -->
-    <Style Selector="TextBlock.secondary">
-        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    <!-- Success Text -->
+    <Style Selector="TextBlock.success">
+        <Setter Property="Foreground" Value="{StaticResource AccentSuccessBrush}" />
     </Style>
 
     <!-- Monospace Text (code, paths, technical output) -->
@@ -93,7 +86,7 @@
     <Style Selector="Border.dialog-container">
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Background" Value="{StaticResource BackgroundDialogBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderDefaultBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="24" />
     </Style>
@@ -101,7 +94,7 @@
     <!-- Drawer Header -->
     <Style Selector="Border.drawer-header">
         <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderDefaultBrush}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
         <Setter Property="Padding" Value="16,12" />
     </Style>
@@ -129,16 +122,16 @@
 
     <!-- Subtle button for less prominent actions -->
     <Style Selector="Button.subtle">
-        <Setter Property="Background" Value="{StaticResource BorderLightColor}" />
+        <Setter Property="Background" Value="{StaticResource BorderSubtleColor}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
         <Setter Property="FontWeight" Value="Normal" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BorderMediumColor}" />
+            <Setter Property="Background" Value="{StaticResource BorderDefaultColor}" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BorderPrimaryColor}" />
+            <Setter Property="Background" Value="{StaticResource BorderDefaultColor}" />
         </Style>
     </Style>
 
@@ -157,41 +150,41 @@
 
     <!-- Success button for positive actions -->
     <Style Selector="Button.success">
-        <Setter Property="Background" Value="#FF4caf50" />
+        <Setter Property="Background" Value="{StaticResource AccentSuccessColor}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#FF66bb6a" />
+            <Setter Property="Background" Value="#FF34c759" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#FF388e3c" />
+            <Setter Property="Background" Value="#FF1e7e34" />
         </Style>
     </Style>
 
     <!-- Subtle danger - for subtle destructive actions -->
     <Style Selector="Button.subtle.danger">
-        <Setter Property="Background" Value="#22ff4444" />
+        <Setter Property="Background" Value="#22ff6666" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#33ff4444" />
+            <Setter Property="Background" Value="#33ff6666" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#44ff4444" />
+            <Setter Property="Background" Value="#44ff6666" />
         </Style>
     </Style>
 
     <!-- Subtle success - for subtle positive actions -->
     <Style Selector="Button.subtle.success">
-        <Setter Property="Background" Value="#224caf50" />
+        <Setter Property="Background" Value="#2228a745" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#334caf50" />
+            <Setter Property="Background" Value="#3328a745" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#444caf50" />
+            <Setter Property="Background" Value="#4428a745" />
         </Style>
     </Style>
 

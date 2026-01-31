@@ -6,7 +6,7 @@
     <Style Selector="controls|SelectableCard">
         <!-- Card-like appearance inspired by malforge.github.io -->
         <Setter Property="Background" Value="#CC1a1a2e" />
-        <Setter Property="BorderBrush" Value="#1affffff" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="10" />
         <Setter Property="Padding" Value="4" />
@@ -14,26 +14,16 @@
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="Cursor" Value="Hand" />
 
-        <!-- Hover state - blue glow -->
+        <!-- Hover state - brighter, default border -->
         <Style Selector="^:pointerover">
             <Setter Property="Background" Value="#DD1a1a2e" />
-            <Setter Property="BorderBrush" Value="#66007bff" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDefaultBrush}" />
         </Style>
 
-        <!-- Selected state -->
+        <!-- Selected state - brightest, full blue border -->
         <Style Selector="^:selected">
-            <Setter Property="Background" Value="#EE16213e" />
-            <Setter Property="BorderBrush" Value="#FF007bff" />
-        </Style>
-
-        <!-- Needs Attention state - add a visual indicator without changing border -->
-        <Style Selector="^:needs-attention">
-            <!-- Border styling removed - will use badge indicator instead -->
-        </Style>
-
-        <!-- Needs Attention + Selected - keep selected styling -->
-        <Style Selector="^:needs-attention:selected">
-            <!-- No special styling - selected state is clear enough -->
+            <Setter Property="Background" Value="#EE1a1a2e" />
+            <Setter Property="BorderBrush" Value="{StaticResource AccentInteractiveBrush}" />
         </Style>
 
         <!-- Disabled state -->

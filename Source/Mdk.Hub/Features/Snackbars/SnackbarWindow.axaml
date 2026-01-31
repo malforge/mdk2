@@ -16,7 +16,7 @@
         SizeToContent="WidthAndHeight">
 
 
-    <Border Background="{StaticResource BackgroundSuccessBrush}"
+    <Border Background="{StaticResource BackgroundDialogBrush}"
             BorderBrush="{StaticResource AccentSuccessBrush}"
             BorderThickness="2"
             CornerRadius="8"

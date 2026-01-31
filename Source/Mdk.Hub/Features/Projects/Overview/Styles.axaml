@@ -17,7 +17,7 @@
             <Setter Property="Width" Value="48" />
             <Setter Property="Height" Value="48" />
             <Setter Property="Background" Value="#CC1a1a2e" />
-            <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource AccentInteractiveBrush}" />
             <Setter Property="Margin" Value="4" />
         </Style>
 
@@ -41,16 +41,16 @@
             </Style>
 
             <Style Selector="^:pointerover TextBlock.title">
-                <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
             </Style>
 
             <Style Selector="^:selected TextBlock.title">
-                <Setter Property="Foreground" Value="{StaticResource AccentPrimaryBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
             </Style>
 
             <Style Selector="^ TextBlock.last-referenced">
                 <Setter Property="FontSize" Value="10" />
-                <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
                 <Setter Property="Margin" Value="16,2,0,0" />
                 <Setter Property="HorizontalAlignment" Value="Right" />
                 <Setter Property="VerticalAlignment" Value="Bottom" />

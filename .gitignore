@@ -402,3 +402,10 @@ appimage-build/
 
 # JetBrains Rider
 *.sln.iml
+
+# Test/development scripts
+test-*.ps1
+*.test.ps1
+
+# Local documentation/rules files
+.hub-*.md

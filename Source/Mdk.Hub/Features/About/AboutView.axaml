@@ -31,17 +31,17 @@
                                        Classes="h1"
                                        HorizontalAlignment="Center" />
                             <TextBlock Text="{Binding Version, StringFormat='Hub Version: {0}'}"
-                                       Classes="body secondary"
+                                       Classes="body"
                                        HorizontalAlignment="Center" />
                         </StackPanel>
 
                         <!-- Separator -->
-                        <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
+                        <Border Height="1" Background="{StaticResource BorderDefaultBrush}" />
 
                         <!-- Description -->
                         <TextBlock
                             Text="MDK² is a comprehensive development toolkit for Space Engineers scripting and modding."
-                            Classes="body secondary"
+                            Classes="body"
                             TextWrapping="Wrap"
                             HorizontalAlignment="Center"
                             TextAlignment="Center"
@@ -71,13 +71,13 @@
                         </StackPanel>
 
                         <!-- Separator -->
-                        <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
+                        <Border Height="1" Background="{StaticResource BorderDefaultBrush}" />
 
                         <!-- Third-party licenses -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="Third-Party Software"
-                                       Classes="caption semibold secondary" />
-                            <TextBlock Classes="caption very-muted" TextWrapping="Wrap">
+                                       Classes="caption semibold" />
+                            <TextBlock Classes="caption muted" TextWrapping="Wrap">
                                 <Run Text="MDK² uses the following third-party libraries:" />
                                 <LineBreak />
                                 <LineBreak />
@@ -102,11 +102,11 @@
                         </StackPanel>
 
                         <!-- Separator -->
-                        <Border Height="1" Background="{StaticResource BorderPrimaryBrush}" />
+                        <Border Height="1" Background="{StaticResource BorderDefaultBrush}" />
 
                         <!-- Copyright -->
                         <TextBlock Text="© 2023-2026 Malforge. All rights reserved."
-                                   Classes="caption very-muted"
+                                   Classes="caption muted"
                                    HorizontalAlignment="Center" />
                     </StackPanel>
                 </ScrollViewer>

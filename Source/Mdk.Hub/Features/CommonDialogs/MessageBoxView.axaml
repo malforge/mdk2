@@ -17,10 +17,10 @@
                 VerticalAlignment="Center">
             <StackPanel>
                 <TextBlock Text="{Binding Title}"
-                           Classes="dialog-title"
+                           Classes="h1"
                            Margin="0,0,0,8" />
                 <TextBlock Text="{Binding Message}"
-                           Classes="body secondary"
+                           Classes="body"
                            TextWrapping="Wrap"
                            Margin="0,0,0,16" />
                 <ItemsControl ItemsSource="{Binding Choices}"

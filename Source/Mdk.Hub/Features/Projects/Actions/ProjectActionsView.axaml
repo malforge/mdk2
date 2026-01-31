@@ -74,7 +74,7 @@
                 Grid.Row="0"
                 Grid.RowSpan="2"
                 Classes="drawer-content"
-                BorderBrush="{StaticResource BorderPrimaryBrush}"
+                BorderBrush="{StaticResource BorderDefaultBrush}"
                 BorderThickness="1,0,0,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"

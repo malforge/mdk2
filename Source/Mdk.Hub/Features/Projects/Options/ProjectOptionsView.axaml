@@ -52,7 +52,7 @@
                     <StackPanel Spacing="12" Margin="0,12,12,0">
                         <TextBlock
                             Text="Shared project configuration, committed to source control. Settings here apply to all developers."
-                            Classes="help-text-small"
+                            Classes="label muted"
                             TextWrapping="Wrap"
                             MinHeight="28"
                             Margin="0,0,0,8" />
@@ -62,7 +62,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="When Build Completes"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
                                             Spacing="4"
@@ -91,7 +91,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Output Path"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                             </Grid>
                             <controls:PathSelectorControl Path="{Binding MainConfig.OutputPath}"
                                                           DefaultPath="{Binding DefaultOutputPath}"
@@ -103,7 +103,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Binary Path"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                             </Grid>
                             <controls:PathSelectorControl Path="{Binding MainConfig.BinaryPath}"
                                                           DefaultPath="{Binding DefaultBinaryPath}"
@@ -116,7 +116,7 @@
                                 <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                     <TextBlock Grid.Column="0"
                                                Text="Minify"
-                                               Classes="field-label" />
+                                               Classes="label muted" />
                                     <StackPanel Grid.Column="1"
                                                 Orientation="Horizontal"
                                                 Spacing="4"
@@ -143,7 +143,7 @@
                                 <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                     <TextBlock Grid.Column="0"
                                                Text="Minify Extra Options"
-                                               Classes="field-label" />
+                                               Classes="label muted" />
                                     <StackPanel Grid.Column="1"
                                                 Orientation="Horizontal"
                                                 Spacing="4"
@@ -173,7 +173,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Trace"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
                                             Spacing="4"
@@ -201,7 +201,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Ignores"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
                                             Spacing="4"
@@ -221,7 +221,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Namespaces"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
                                             Spacing="4"
@@ -245,7 +245,7 @@
                     <StackPanel Spacing="12" Margin="0,12,12,0">
                         <TextBlock
                             Text="Local overrides, gitignored and not committed. Settings here override Main settings and are specific to your machine."
-                            Classes="help-text-small"
+                            Classes="label muted"
                             TextWrapping="Wrap"
                             MinHeight="28"
                             Margin="0,0,0,8" />
@@ -253,7 +253,7 @@
                         <!-- Build Notifications -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="When Build Completes"
-                                       Classes="field-label" />
+                                       Classes="label muted" />
                             <Grid ColumnDefinitions="*,Auto">
                                 <ComboBox Grid.Column="0"
                                           ItemsSource="{x:Static options:ConfigurationSectionViewModel.InteractiveOptionsList}"
@@ -281,7 +281,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Output Path"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                             </Grid>
                             <Grid ColumnDefinitions="*,Auto">
                                 <controls:PathSelectorControl Grid.Column="0"
@@ -304,7 +304,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Binary Path"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                             </Grid>
                             <Grid ColumnDefinitions="*,Auto">
                                 <controls:PathSelectorControl Grid.Column="0"
@@ -328,7 +328,7 @@
                                 <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                     <TextBlock Grid.Column="0"
                                                Text="Minify"
-                                               Classes="field-label" />
+                                               Classes="label muted" />
                                 </Grid>
                                 <Grid ColumnDefinitions="*,Auto">
                                     <ComboBox Grid.Column="0"
@@ -355,7 +355,7 @@
                                 <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                     <TextBlock Grid.Column="0"
                                                Text="Minify Extra Options"
-                                               Classes="field-label" />
+                                               Classes="label muted" />
                                 </Grid>
                                 <Grid ColumnDefinitions="*,Auto">
                                     <ComboBox Grid.Column="0"
@@ -385,7 +385,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Trace"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                             </Grid>
                             <Grid ColumnDefinitions="*,Auto">
                                 <ComboBox Grid.Column="0"
@@ -414,7 +414,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Ignores"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                             </Grid>
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBox Grid.Column="0"
@@ -435,7 +435,7 @@
                             <Grid ColumnDefinitions="*,Auto" MinHeight="20">
                                 <TextBlock Grid.Column="0"
                                            Text="Namespaces"
-                                           Classes="field-label" />
+                                           Classes="label muted" />
                             </Grid>
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBox Grid.Column="0"

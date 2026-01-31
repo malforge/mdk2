@@ -50,17 +50,17 @@
                             Grid.Row="0"
                             Spacing="12">
                     <TextBlock Text="{Binding Message.Title}"
-                               Classes="dialog-title"
+                               Classes="h1"
                                Margin="0,0,0,8" />
 
                     <TextBlock Text="{Binding Message.Message}"
-                               Classes="body secondary"
+                               Classes="body"
                                TextWrapping="Wrap"
                                Margin="0,0,0,16" />
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="Project Name"
-                                   Classes="body secondary" />
+                                   Classes="body" />
                         <TextBox Text="{Binding ProjectName}"
                                  Watermark="MyProject"
                                  Name="ProjectNameTextBox" />
@@ -68,7 +68,7 @@
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="Location"
-                                   Classes="body secondary" />
+                                   Classes="body" />
                         <controls:FolderBrowserControl Path="{Binding Location}"
                                                        Watermark="Select a folder..." />
                     </StackPanel>
@@ -76,7 +76,7 @@
                     <!-- Preview of final path -->
                     <StackPanel Spacing="2">
                         <TextBlock Text="Project will be created at:"
-                                   Classes="caption secondary" />
+                                   Classes="caption" />
                         <TextBlock Text="{Binding FinalPath}"
                                    Classes="muted monospace"
                                    TextWrapping="NoWrap"
@@ -89,14 +89,14 @@
                         <!-- Error takes precedence over warning -->
                         <TextBlock Text="{Binding ValidationError}"
                                    Foreground="{DynamicResource MessageBoxDangerAccentBrush}"
-                                   FontWeight="Medium"
+                                   Classes="medium"
                                    TextWrapping="Wrap"
                                    VerticalAlignment="Top"
                                    IsVisible="{Binding ValidationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                         <TextBlock Text="{Binding ValidationWarning}"
                                    Foreground="{DynamicResource AccentWarningBrush}"
-                                   FontWeight="Medium"
+                                   Classes="medium"
                                    TextWrapping="Wrap"
                                    VerticalAlignment="Top"
                                    IsVisible="{Binding ValidationWarning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

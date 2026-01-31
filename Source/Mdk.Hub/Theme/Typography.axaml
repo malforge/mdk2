@@ -2,19 +2,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- 
-    Typography System
+    Typography System - Size and Weight Only
     
-    Minimal, justified type scale based on actual usage patterns.
-    Only 4 sizes needed - consolidates 9 hardcoded sizes down to 4 semantic styles.
+    Design principle: Typography defines SIZE and WEIGHT, color comes from separate modifiers.
+    This separates concerns and allows flexible combinations.
     
-    Usage:
+    Minimal type scale based on actual usage patterns:
     - H1: Dialog/page titles (20px Bold)
+    - H2: Section headings (16px SemiBold) 
+    - H3: Subsection headings (14px SemiBold)
     - Body: Body text, action titles (14px Normal)
     - Caption: Descriptions, help text (11px Normal)
-    - Label: Tiny labels, timestamps, warnings (10px SemiBold)
+    - Label: Tiny labels, timestamps (10px SemiBold)
     
-    Combine with color modifiers: .secondary, .muted, .very-muted, .accent, .warning, .danger
-    Combine with weight modifiers: .medium, .semibold, .bold
+    Color modifiers (from SemanticStyles.axaml):
+    - .primary (white), .body (grey), .muted, .disabled
+    - .heading (blue), .accent (interactive blue)
+    - .success, .warning, .danger
+    
+    Weight modifiers: .medium, .semibold, .bold
     
     Icon FontSize Standards (keep hardcoded):
     - 16px: Standard toolbar/UI icons
@@ -22,36 +28,38 @@
     - 32px: Hero/symbol icons (project types)
     -->
 
-    <!-- H1 - Dialog/page titles -->
-    <!-- Consolidates: 24px (AboutView title) + 18px (panel titles) -->
+    <!-- H1 - Dialog/page main titles -->
     <Style Selector="TextBlock.h1">
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- H2 - Section headings -->
+    <Style Selector="TextBlock.h2">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- H3 - Subsection headings -->
+    <Style Selector="TextBlock.h3">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
     <!-- Body - Standard readable text -->
-    <!-- Consolidates: 14px (body text) + 13px (action titles) -->
-    <!-- Used for: dialog content, body text, action item titles -->
     <Style Selector="TextBlock.body">
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
     </Style>
 
     <!-- Caption - Descriptions, help text, metadata -->
-    <!-- Consolidates: 12px (labels) + 11px (descriptions) -->
-    <!-- Used for: action descriptions, field help text, secondary info -->
     <Style Selector="TextBlock.caption">
         <Setter Property="FontSize" Value="11" />
-        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
     </Style>
 
     <!-- Label - Tiny labels, timestamps, warnings -->
-    <!-- Used for: warning symbols (⚠️), timestamps, overline-style labels -->
     <Style Selector="TextBlock.label">
         <Setter Property="FontSize" Value="10" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}" />
     </Style>
 
     <!-- Weight modifiers (combinable with above) -->

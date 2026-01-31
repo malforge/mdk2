@@ -32,10 +32,10 @@
                 <!-- Custom Auto Script Output Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
-                               Classes="section-heading" />
+                               Classes="h3 heading" />
 
                     <TextBlock TextWrapping="Wrap"
-                               Classes="help-text"
+                               Classes="caption muted"
                                Margin="0,0,0,4">
                         When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
                     </TextBlock>
@@ -48,10 +48,10 @@
                 <!-- Custom Auto Mod Output Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Output Path (Mods)"
-                               Classes="section-heading" />
+                               Classes="h3 heading" />
 
                     <TextBlock TextWrapping="Wrap"
-                               Classes="help-text"
+                               Classes="caption muted"
                                Margin="0,0,0,4">
                         When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
                     </TextBlock>
@@ -64,10 +64,10 @@
                 <!-- Custom Auto Binary Path -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Custom Auto Binary Path"
-                               Classes="section-heading" />
+                               Classes="h3 heading" />
 
                     <TextBlock TextWrapping="Wrap"
-                               Classes="help-text"
+                               Classes="caption muted"
                                Margin="0,0,0,4">
                         When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
                     </TextBlock>
@@ -80,10 +80,10 @@
                 <!-- Prerequisites Check -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="Prerequisites"
-                               Classes="section-heading" />
+                               Classes="h3 heading" />
 
                     <TextBlock TextWrapping="Wrap"
-                               Classes="help-text"
+                               Classes="caption muted"
                                Margin="0,0,0,4">
                         Check if .NET SDK 9.0 and MDK² template package are installed.
                     </TextBlock>

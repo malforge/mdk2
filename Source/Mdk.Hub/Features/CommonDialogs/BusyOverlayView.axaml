@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Mdk.Hub.Features.CommonDialogs.BusyOverlayView"
              x:DataType="local:BusyOverlayViewModel"
-             Background="#80000000"
+             Background="{StaticResource BackgroundOverlayBrush}"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
 
