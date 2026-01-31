@@ -361,6 +361,23 @@ jobs:
         run: |
           VERSION=$(cat Source/Mdk.Hub/PackageVersion.txt | tr -d '\r' | tr -d '\n' | xargs)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Version: $VERSION"
+      
+      - name: Extract release notes
+        id: release-notes
+        run: |
+          # Read release notes and extract the section for this version
+          NOTES=$(awk '/^v\.'$VERSION'/,/^v\./ {if (/^v\.'$VERSION'/) found=1; else if (/^v\./ && found) exit; if (found) print}' Source/Mdk.Hub/ReleaseNotes.txt)
+          
+          # If notes found, use them; otherwise use a default message
+          if [ -z "$NOTES" ]; then
+            NOTES="See [release notes](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/Source/Mdk.Hub/ReleaseNotes.txt) for details."
+          fi
+          
+          # Save to output (GitHub Actions multiline output)
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       
       - name: Download Windows installer
         uses: actions/download-artifact@v4
@@ -379,6 +396,7 @@ jobs:
         with:
           tag_name: hub-v${{ env.VERSION }}
           name: MDK Hub v${{ env.VERSION }}
+          body: ${{ steps.release-notes.outputs.NOTES }}
           draft: false
           prerelease: ${{ contains(env.VERSION, '-') }}
           files: |

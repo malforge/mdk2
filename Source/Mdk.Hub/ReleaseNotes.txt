@@ -1,4 +1,7 @@
-﻿v.1.0.0-pre.3
+﻿v.1.0.0-pre.4
+   - Fixed release tag generation (removed BOM from version files).
+
+v.1.0.0-pre.3
    - Removed standalone Mdk.Notification.Windows - fully replaced by integrated snackbar system.
 
 v.1.0.0-pre.2
