@@ -27,6 +27,9 @@
     <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}" />
     <SolidColorBrush x:Key="BackgroundDialogBrush" Color="{StaticResource BackgroundDialogColor}" />
     <SolidColorBrush x:Key="BackgroundOverlayBrush" Color="{StaticResource BackgroundOverlayColor}" />
+    <SolidColorBrush x:Key="BackgroundCardBrush" Color="{StaticResource BackgroundCardColor}" />
+    <SolidColorBrush x:Key="BackgroundCardHoverBrush" Color="{StaticResource BackgroundCardHoverColor}" />
+    <SolidColorBrush x:Key="BackgroundCardSelectedBrush" Color="{StaticResource BackgroundCardSelectedColor}" />
 
     <!-- Border Brushes - Neutral -->
     <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />

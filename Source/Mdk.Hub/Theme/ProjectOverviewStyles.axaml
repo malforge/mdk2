@@ -16,7 +16,7 @@
         <Style Selector="^ .project-icon icons|Symbol">
             <Setter Property="Width" Value="48" />
             <Setter Property="Height" Value="48" />
-            <Setter Property="Background" Value="{StaticResource BackgroundCardColor}" />
+            <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}" />
             <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
             <Setter Property="Margin" Value="4" />
         </Style>
