@@ -9,7 +9,7 @@
              IsVisible="{Binding IsVisible}">
 
     <Border Background="{StaticResource BackgroundSecondaryBrush}"
-            BorderBrush="{StaticResource AccentInteractiveBrush}"
+            BorderBrush="{StaticResource BorderAccentBrush}"
             BorderThickness="0,0,0,2"
             Padding="16,8">
         <Grid ColumnDefinitions="*,Auto">
@@ -17,7 +17,7 @@
             <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Message}"
                            Classes="body medium"
-                           Foreground="{StaticResource TextPrimaryBrush}" />
+                           Foreground="{StaticResource ForegroundPrimaryBrush}" />
 
                 <!-- Download progress bar -->
                 <ProgressBar IsVisible="{Binding IsDownloading}"
@@ -55,7 +55,7 @@
                         Padding="0"
                         ToolTip.Tip="Dismiss"
                         Background="Transparent"
-                        Foreground="{StaticResource TextPrimaryBrush}" />
+                        Foreground="{StaticResource ForegroundPrimaryBrush}" />
             </StackPanel>
         </Grid>
     </Border>

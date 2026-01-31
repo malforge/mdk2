@@ -95,7 +95,7 @@
                                    IsVisible="{Binding ValidationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                         <TextBlock Text="{Binding ValidationWarning}"
-                                   Foreground="{DynamicResource AccentWarningBrush}"
+                                   Foreground="{DynamicResource ForegroundWarningBrush}"
                                    Classes="medium"
                                    TextWrapping="Wrap"
                                    VerticalAlignment="Top"

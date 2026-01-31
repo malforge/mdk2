@@ -5,7 +5,7 @@
     <!-- SelectableCard - Reusable card control with selection state -->
     <Style Selector="controls|SelectableCard">
         <!-- Card-like appearance inspired by malforge.github.io -->
-        <Setter Property="Background" Value="#CC1a1a2e" />
+        <Setter Property="Background" Value="{StaticResource BackgroundCardColor}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="10" />
@@ -16,14 +16,14 @@
 
         <!-- Hover state - brighter, default border -->
         <Style Selector="^:pointerover">
-            <Setter Property="Background" Value="#DD1a1a2e" />
+            <Setter Property="Background" Value="{StaticResource BackgroundCardHoverColor}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderDefaultBrush}" />
         </Style>
 
         <!-- Selected state - brightest, full blue border -->
         <Style Selector="^:selected">
-            <Setter Property="Background" Value="#EE1a1a2e" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentInteractiveBrush}" />
+            <Setter Property="Background" Value="{StaticResource BackgroundCardSelectedColor}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}" />
         </Style>
 
         <!-- Disabled state -->

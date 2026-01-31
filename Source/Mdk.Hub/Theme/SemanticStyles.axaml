@@ -24,48 +24,48 @@
     
     <!-- Primary - Pure white for emphasis (H1 titles) -->
     <Style Selector="TextBlock.primary">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
     </Style>
 
     <!-- Muted - De-emphasized text -->
     <Style Selector="TextBlock.muted">
-        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}" />
     </Style>
 
     <!-- Disabled - Most de-emphasized -->
     <Style Selector="TextBlock.disabled">
-        <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundDisabledBrush}" />
     </Style>
 
     <!-- Heading - Colored headings (H2) -->
     <Style Selector="TextBlock.heading">
-        <Setter Property="Foreground" Value="{StaticResource AccentHeadingBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
     </Style>
 
     <!-- Heading Light - Lighter colored headings (H3) -->
     <Style Selector="TextBlock.heading-light">
-        <Setter Property="Foreground" Value="{StaticResource AccentHeadingLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
     </Style>
 
     <!-- Accent - Interactive elements (links in prose) -->
     <Style Selector="TextBlock.accent">
-        <Setter Property="Foreground" Value="{StaticResource AccentInteractiveBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
     </Style>
 
     <!-- Warning Text -->
     <Style Selector="TextBlock.warning">
-        <Setter Property="Foreground" Value="{StaticResource AccentWarningBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundWarningBrush}" />
         <Setter Property="FontStyle" Value="Italic" />
     </Style>
 
     <!-- Danger Text -->
     <Style Selector="TextBlock.danger">
-        <Setter Property="Foreground" Value="{StaticResource AccentDangerBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundDangerBrush}" />
     </Style>
 
     <!-- Success Text -->
     <Style Selector="TextBlock.success">
-        <Setter Property="Foreground" Value="{StaticResource AccentSuccessBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundSuccessBrush}" />
     </Style>
 
     <!-- Monospace Text (code, paths, technical output) -->
@@ -106,7 +106,7 @@
 
     <!-- Warning Indicator (dot/ellipse) -->
     <Style Selector="Ellipse.warning-indicator">
-        <Setter Property="Fill" Value="{StaticResource AccentWarningBrush}" />
+        <Setter Property="Fill" Value="{StaticResource ForegroundWarningBrush}" />
         <Setter Property="Width" Value="8" />
         <Setter Property="Height" Value="8" />
     </Style>
@@ -115,76 +115,76 @@
     <Style Selector="TextBlock.page-title">
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
     </Style>
 
     <!-- Button Variants -->
 
     <!-- Subtle button for less prominent actions -->
     <Style Selector="Button.subtle">
-        <Setter Property="Background" Value="{StaticResource BorderSubtleColor}" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
+        <Setter Property="Background" Value="{StaticResource BorderSubtleBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
         <Setter Property="FontWeight" Value="Normal" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BorderDefaultColor}" />
+            <Setter Property="Background" Value="{StaticResource BorderDefaultBrush}" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource BorderDefaultColor}" />
+            <Setter Property="Background" Value="{StaticResource BorderDefaultBrush}" />
         </Style>
     </Style>
 
     <!-- Danger button for destructive actions -->
     <Style Selector="Button.danger">
-        <Setter Property="Background" Value="{StaticResource ButtonDangerColor}" />
+        <Setter Property="Background" Value="{StaticResource BackgroundDangerBrush}" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource ButtonDangerHoverColor}" />
+            <Setter Property="Background" Value="{StaticResource BackgroundDangerHoverBrush}" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource ButtonDangerPressedColor}" />
+            <Setter Property="Background" Value="{StaticResource BackgroundDangerPressedBrush}" />
         </Style>
     </Style>
 
     <!-- Success button for positive actions -->
     <Style Selector="Button.success">
-        <Setter Property="Background" Value="{StaticResource AccentSuccessColor}" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource BackgroundSuccessBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#FF34c759" />
+            <Setter Property="Background" Value="{StaticResource BackgroundSuccessHoverBrush}" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#FF1e7e34" />
+            <Setter Property="Background" Value="{StaticResource BackgroundSuccessPressedBrush}" />
         </Style>
     </Style>
 
     <!-- Subtle danger - for subtle destructive actions -->
     <Style Selector="Button.subtle.danger">
-        <Setter Property="Background" Value="#22ff6666" />
+        <Setter Property="Background" Value="{StaticResource BackgroundSubtleDangerBrush}" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#33ff6666" />
+            <Setter Property="Background" Value="{StaticResource BackgroundSubtleDangerHoverBrush}" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#44ff6666" />
+            <Setter Property="Background" Value="{StaticResource BackgroundSubtleDangerPressedBrush}" />
         </Style>
     </Style>
 
     <!-- Subtle success - for subtle positive actions -->
     <Style Selector="Button.subtle.success">
-        <Setter Property="Background" Value="#2228a745" />
+        <Setter Property="Background" Value="{StaticResource BackgroundSubtleSuccessBrush}" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#3328a745" />
+            <Setter Property="Background" Value="{StaticResource BackgroundSubtleSuccessHoverBrush}" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="#4428a745" />
+            <Setter Property="Background" Value="{StaticResource BackgroundSubtleSuccessPressedBrush}" />
         </Style>
     </Style>
 
@@ -201,7 +201,7 @@
 
     <Style Selector="TabControl.vertical-tabs TabItem">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="Padding" Value="16,10" />
@@ -213,13 +213,13 @@
 
     <Style Selector="TabControl.vertical-tabs TabItem:pointerover">
         <Setter Property="Background" Value="{StaticResource BackgroundDialogBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
     </Style>
 
     <Style Selector="TabControl.vertical-tabs TabItem:selected">
         <Setter Property="Background" Value="{StaticResource BackgroundPrimaryBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource AccentInteractiveBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource AccentInteractiveBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}" />
         <Setter Property="BorderThickness" Value="0,0,3,0" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>

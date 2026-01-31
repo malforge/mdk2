@@ -1,20 +1,26 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Brushes created from Color resources -->
+    <!-- 
+    Brush Naming Convention:
+    - Foreground*Brush = Text, icons, paths (any foreground element)
+    - Background*Brush = Fills, backgrounds
+    - Border*Brush = Borders, strokes
+    
+    Each brush has ONE purpose indicated by its prefix.
+    -->
 
-    <!-- Text Brushes (4 levels - simplified) -->
-    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />     <!-- White -->
-    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />         <!-- De-emphasized -->
-    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}" />   <!-- Disabled -->
+    <!-- Foreground Brushes - Neutral (text hierarchy) -->
+    <SolidColorBrush x:Key="ForegroundPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="ForegroundBodyBrush" Color="{StaticResource TextBodyColor}" />
+    <SolidColorBrush x:Key="ForegroundMutedBrush" Color="{StaticResource TextMutedColor}" />
+    <SolidColorBrush x:Key="ForegroundDisabledBrush" Color="{StaticResource TextDisabledColor}" />
 
-    <!-- Semantic Accent Brushes -->
-    <SolidColorBrush x:Key="AccentInteractiveBrush" Color="{StaticResource AccentInteractiveColor}" />
-    <SolidColorBrush x:Key="AccentHeadingBrush" Color="{StaticResource AccentHeadingColor}" />
-    <SolidColorBrush x:Key="AccentHeadingLightBrush" Color="{StaticResource AccentHeadingLightColor}" />
-    <SolidColorBrush x:Key="AccentSuccessBrush" Color="{StaticResource AccentSuccessColor}" />
-    <SolidColorBrush x:Key="AccentWarningBrush" Color="{StaticResource AccentWarningColor}" />
-    <SolidColorBrush x:Key="AccentDangerBrush" Color="{StaticResource AccentDangerColor}" />
+    <!-- Foreground Brushes - Semantic (colored foreground) -->
+    <SolidColorBrush x:Key="ForegroundAccentBrush" Color="{StaticResource AccentInteractiveColor}" />
+    <SolidColorBrush x:Key="ForegroundSuccessBrush" Color="{StaticResource AccentSuccessColor}" />
+    <SolidColorBrush x:Key="ForegroundWarningBrush" Color="{StaticResource AccentWarningColor}" />
+    <SolidColorBrush x:Key="ForegroundDangerBrush" Color="{StaticResource AccentDangerColor}" />
 
     <!-- Background Brushes -->
     <SolidColorBrush x:Key="BackgroundPrimaryBrush" Color="{StaticResource BackgroundPrimaryColor}" />
@@ -22,12 +28,42 @@
     <SolidColorBrush x:Key="BackgroundDialogBrush" Color="{StaticResource BackgroundDialogColor}" />
     <SolidColorBrush x:Key="BackgroundOverlayBrush" Color="{StaticResource BackgroundOverlayColor}" />
 
-    <!-- Border Brushes -->
+    <!-- Border Brushes - Neutral -->
     <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />
     <SolidColorBrush x:Key="BorderDefaultBrush" Color="{StaticResource BorderDefaultColor}" />
 
-    <!-- Button Brushes -->
-    <SolidColorBrush x:Key="DangerButtonBackgroundBrush" Color="{StaticResource ButtonDangerColor}" />
-    <SolidColorBrush x:Key="DangerButtonHoverBrush" Color="{StaticResource ButtonDangerHoverColor}" />
+    <!-- Border Brushes - Semantic (colored borders) -->
+    <SolidColorBrush x:Key="BorderAccentBrush" Color="{StaticResource AccentInteractiveColor}" />
+    <SolidColorBrush x:Key="BorderSuccessBrush" Color="{StaticResource AccentSuccessColor}" />
+    <SolidColorBrush x:Key="BorderWarningBrush" Color="{StaticResource AccentWarningColor}" />
+    <SolidColorBrush x:Key="BorderDangerBrush" Color="{StaticResource AccentDangerColor}" />
+
+    <!-- Overlay Brushes (for hover effects and modal layers) -->
+    <SolidColorBrush x:Key="OverlayHoverBrush" Color="{StaticResource OverlayHoverColor}" />
+    <SolidColorBrush x:Key="OverlayDarkBrush" Color="{StaticResource OverlayDarkColor}" />
+    <SolidColorBrush x:Key="OverlayLightSubtleBrush" Color="{StaticResource OverlayLightSubtleColor}" />
+    <SolidColorBrush x:Key="OverlayLightBrush" Color="{StaticResource OverlayLightColor}" />
+    <SolidColorBrush x:Key="OverlayLightStrongBrush" Color="{StaticResource OverlayLightStrongColor}" />
+
+    <!-- Background Brushes - Buttons -->
+    <SolidColorBrush x:Key="BackgroundAccentBrush" Color="{StaticResource AccentPrimaryColor}" />
+    <SolidColorBrush x:Key="BackgroundAccentHoverBrush" Color="{StaticResource AccentPrimaryHoverColor}" />
+    <SolidColorBrush x:Key="BackgroundAccentPressedBrush" Color="{StaticResource AccentPrimaryPressedColor}" />
+    <SolidColorBrush x:Key="BackgroundSuccessBrush" Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="BackgroundSuccessHoverBrush" Color="{StaticResource SuccessHoverColor}" />
+    <SolidColorBrush x:Key="BackgroundSuccessPressedBrush" Color="{StaticResource SuccessPressedColor}" />
+    <SolidColorBrush x:Key="BackgroundDangerBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="BackgroundDangerHoverBrush" Color="{StaticResource DangerHoverColor}" />
+    <SolidColorBrush x:Key="BackgroundDangerPressedBrush" Color="{StaticResource DangerPressedColor}" />
+    <SolidColorBrush x:Key="BackgroundSubtleDangerBrush" Color="{StaticResource SubtleDangerColor}" />
+    <SolidColorBrush x:Key="BackgroundSubtleDangerHoverBrush" Color="{StaticResource SubtleDangerHoverColor}" />
+    <SolidColorBrush x:Key="BackgroundSubtleDangerPressedBrush" Color="{StaticResource SubtleDangerPressedColor}" />
+    <SolidColorBrush x:Key="BackgroundSubtleSuccessBrush" Color="{StaticResource SubtleSuccessColor}" />
+    <SolidColorBrush x:Key="BackgroundSubtleSuccessHoverBrush" Color="{StaticResource SubtleSuccessHoverColor}" />
+    <SolidColorBrush x:Key="BackgroundSubtleSuccessPressedBrush" Color="{StaticResource SubtleSuccessPressedColor}" />
+
+    <!-- Legacy aliases (backwards compatibility - will be removed) -->
+    <SolidColorBrush x:Key="DangerButtonBackgroundBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="DangerButtonHoverBrush" Color="{StaticResource DangerHoverColor}" />
 
 </ResourceDictionary>

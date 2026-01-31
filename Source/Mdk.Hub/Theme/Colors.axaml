@@ -40,12 +40,28 @@
     <Color x:Key="BorderSubtleColor">#1affffff</Color>           <!-- Very light border (10% opacity) -->
     <Color x:Key="BorderDefaultColor">#33ffffff</Color>          <!-- Default border (20% opacity) -->
 
-    <!-- Button Colors (reference accent colors to avoid duplication) -->
-    <Color x:Key="ButtonPrimaryColor">#FF4da6ff</Color>              <!-- Primary button (same as AccentInteractiveColor) -->
-    <Color x:Key="ButtonPrimaryHoverColor">#FF3388cc</Color>         <!-- Primary hover (darker) -->
-    <Color x:Key="ButtonPrimaryPressedColor">#FF2277bb</Color>       <!-- Primary pressed (even darker) -->
-    <Color x:Key="ButtonDangerColor">#FFdc3545</Color>               <!-- Danger button -->
-    <Color x:Key="ButtonDangerHoverColor">#FFc82333</Color>          <!-- Danger hover -->
-    <Color x:Key="ButtonDangerPressedColor">#FFbd2130</Color>        <!-- Danger pressed -->
+    <!-- Overlay Colors (for hover effects and modal overlays) -->
+    <Color x:Key="OverlayHoverColor">#18ffffff</Color>           <!-- Subtle hover overlay (10% white) -->
+    <Color x:Key="OverlayDarkColor">#33000000</Color>            <!-- Dark overlay (20% black) -->
+    <Color x:Key="OverlayLightSubtleColor">#44ffffff</Color>     <!-- Light overlay subtle (27% white) -->
+    <Color x:Key="OverlayLightColor">#55ffffff</Color>           <!-- Light overlay medium (33% white) -->
+    <Color x:Key="OverlayLightStrongColor">#66ffffff</Color>     <!-- Light overlay strong (40% white) -->
+
+    <!-- Button State Colors (semantic names - what they ARE, not where they GO) -->
+    <Color x:Key="AccentPrimaryColor">#FF0056b3</Color>               <!-- Primary action color (darker) -->
+    <Color x:Key="AccentPrimaryHoverColor">#FF007bff</Color>          <!-- Primary hover (lighter) -->
+    <Color x:Key="AccentPrimaryPressedColor">#FF004494</Color>        <!-- Primary pressed (darkest) -->
+    <Color x:Key="SuccessColor">#FF28a745</Color>                     <!-- Success/positive -->
+    <Color x:Key="SuccessHoverColor">#FF34c759</Color>                <!-- Success hover -->
+    <Color x:Key="SuccessPressedColor">#FF1e7e34</Color>              <!-- Success pressed -->
+    <Color x:Key="DangerColor">#FFdc3545</Color>                      <!-- Danger/destructive -->
+    <Color x:Key="DangerHoverColor">#FFc82333</Color>                 <!-- Danger hover -->
+    <Color x:Key="DangerPressedColor">#FFbd2130</Color>               <!-- Danger pressed -->
+    <Color x:Key="SubtleDangerColor">#22ff6666</Color>                <!-- Subtle danger (transparent) -->
+    <Color x:Key="SubtleDangerHoverColor">#33ff6666</Color>           <!-- Subtle danger hover -->
+    <Color x:Key="SubtleDangerPressedColor">#44ff6666</Color>         <!-- Subtle danger pressed -->
+    <Color x:Key="SubtleSuccessColor">#2228a745</Color>               <!-- Subtle success (transparent) -->
+    <Color x:Key="SubtleSuccessHoverColor">#3328a745</Color>          <!-- Subtle success hover -->
+    <Color x:Key="SubtleSuccessPressedColor">#4428a745</Color>        <!-- Subtle success pressed -->
 
 </ResourceDictionary>

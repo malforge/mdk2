@@ -17,7 +17,7 @@
 
 
     <Border Background="{StaticResource BackgroundDialogBrush}"
-            BorderBrush="{StaticResource AccentSuccessBrush}"
+            BorderBrush="{StaticResource BorderSuccessBrush}"
             BorderThickness="2"
             CornerRadius="8"
             Padding="16,12"

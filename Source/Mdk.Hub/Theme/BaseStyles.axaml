@@ -58,15 +58,15 @@
                     <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="{StaticResource TextBodyColor}" />
                     <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="{StaticResource TextMutedColor}" />
 
-                    <!-- Accent color -->
-                    <Color x:Key="SystemAccentColor">#FF4da6ff</Color>
-                    <Color x:Key="SystemAccentColorLight1">#FF80b3ff</Color>
-                    <Color x:Key="SystemAccentColorLight2">#FFa6ccff</Color>
-                    <Color x:Key="SystemAccentColorDark1">#FF3388cc</Color>
+                    <!-- Accent color for Fluent theme controls (RadioButton, CheckBox, etc.) -->
+                    <Color x:Key="SystemAccentColor">#FF0056b3</Color>
+                    <Color x:Key="SystemAccentColorLight1">#FF007bff</Color>
+                    <Color x:Key="SystemAccentColorLight2">#FF4da6ff</Color>
+                    <Color x:Key="SystemAccentColorDark1">#FF004494</Color>
 
                     <!-- MessageBox danger resources -->
                     <SolidColorBrush x:Key="MessageBoxDangerBackgroundBrush" Color="#DD2a1a1a" />
-                    <SolidColorBrush x:Key="MessageBoxDangerBorderBrush" Color="{StaticResource ButtonDangerColor}" />
+                    <SolidColorBrush x:Key="MessageBoxDangerBorderBrush" Color="{StaticResource DangerColor}" />
                     <SolidColorBrush x:Key="MessageBoxDangerForegroundBrush" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="MessageBoxDangerAccentBrush" Color="#FFff6b6b" />
                     <SolidColorBrush x:Key="MessageBoxDangerIconBrush" Color="#FFD13438" />
@@ -90,7 +90,7 @@
     <Style Selector="Button">
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Background" Value="{StaticResource ButtonPrimaryColor}" />
+        <Setter Property="Background" Value="{StaticResource BackgroundAccentBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="White" />
@@ -99,22 +99,22 @@
         <Setter Property="Cursor" Value="Hand" />
 
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource ButtonPrimaryHoverColor}" />
+            <Setter Property="Background" Value="{StaticResource BackgroundAccentHoverBrush}" />
         </Style>
 
         <Style Selector="^:pressed /template/ ContentPresenter">
-            <Setter Property="Background" Value="{StaticResource ButtonPrimaryPressedColor}" />
+            <Setter Property="Background" Value="{StaticResource BackgroundAccentPressedBrush}" />
         </Style>
     </Style>
 
     <!-- TextBlock default foreground -->
     <Style Selector="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
     </Style>
 
     <!-- RadioButton default foreground -->
     <Style Selector="RadioButton">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryColor}" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
     </Style>
 
     <!-- ScrollViewer transparent background -->
