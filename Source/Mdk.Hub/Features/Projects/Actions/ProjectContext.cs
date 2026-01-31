@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Actions.Items;
 using Mdk.Hub.Features.Projects.Options;
@@ -47,6 +48,17 @@ class ProjectContext
     public ProjectOptionsViewModel? OptionsViewModel { get; set; }
 
     public ProjectModel? CachedModel { get; set; }
+
+    public void OnContextBecameActive()
+    {
+        // Notify all per-project actions that they should refresh
+        // Actions are shared singletons - reassign Project to trigger OnSelectedProjectChanged()
+        foreach (var action in _allActions)
+        {
+            if (!action.IsGlobal)
+                action.Project = _project;
+        }
+    }
 
     void OnActionShouldShowChanged(object? sender, EventArgs e)
     {

@@ -260,6 +260,9 @@ public partial class ProjectActionsViewModel : ViewModel
                 }
                 _currentContext = context;
 
+                // Notify context that it's now active (for cached contexts)
+                context.OnContextBecameActive();
+
                 // Handle drawer logic
                 if (IsOptionsDrawerOpen)
                 {
@@ -317,12 +320,9 @@ public partial class ProjectActionsViewModel : ViewModel
         _isUpdatingDisplayedActions = true;
         try
         {
-            Debug.WriteLine("=== UpdateDisplayedActions START ===");
-            
             // If we don't have a context, clear list
             if (_currentContext == null)
             {
-                Debug.WriteLine("No context, clearing actions");
                 Actions.Clear();
                 return;
             }
@@ -331,9 +331,8 @@ public partial class ProjectActionsViewModel : ViewModel
             if (refreshFilters)
                 _currentContext.UpdateFilteredActions();
 
-            // Build desired list - ONLY actions, no separators (no allocation needed)
+            // Build desired list - ONLY actions, no separators
             var desiredActions = _currentContext.FilteredActions;
-            Debug.WriteLine($"Desired actions: {desiredActions.Count}, Current list (with separators): {Actions.Count} items");
 
             // Sync Actions collection by walking through desired actions and handling category transitions
             int currentIndex = 0;
@@ -349,17 +348,15 @@ public partial class ProjectActionsViewModel : ViewModel
                 if (needsSeparatorBefore)
                 {
                     // Check if current item is a separator
-                    if (currentIndex < Actions.Count && Actions[currentIndex] is CategorySeparator existingSeparator)
+                    if (currentIndex < Actions.Count && Actions[currentIndex] is CategorySeparator)
                     {
                         // Keep existing separator
-                        Debug.WriteLine($"[{currentIndex}] KEEP: {GetItemDebugName(existingSeparator)} (before {desiredAction.Category})");
                         currentIndex++;
                     }
                     else
                     {
                         // Insert new separator
                         var newSeparator = new CategorySeparator();
-                        Debug.WriteLine($"[{currentIndex}] INSERT: [Separator] (before {desiredAction.Category})");
                         Actions.Insert(currentIndex, newSeparator);
                         currentIndex++;
                     }
@@ -367,9 +364,8 @@ public partial class ProjectActionsViewModel : ViewModel
                 else
                 {
                     // No separator needed - remove one if it exists here
-                    if (currentIndex < Actions.Count && Actions[currentIndex] is CategorySeparator unwantedSeparator)
+                    if (currentIndex < Actions.Count && Actions[currentIndex] is CategorySeparator)
                     {
-                        Debug.WriteLine($"[{currentIndex}] REMOVE: {GetItemDebugName(unwantedSeparator)} (no longer needed)");
                         Actions.RemoveAt(currentIndex);
                         // Don't increment currentIndex
                     }
@@ -379,7 +375,6 @@ public partial class ProjectActionsViewModel : ViewModel
                 if (currentIndex < Actions.Count && ReferenceEquals(Actions[currentIndex], desiredAction))
                 {
                     // Action matches - keep it
-                    Debug.WriteLine($"[{currentIndex}] KEEP: {GetItemDebugName(desiredAction)}");
                     currentIndex++;
                 }
                 else if (currentIndex < Actions.Count && Actions[currentIndex] is not CategorySeparator)
@@ -391,7 +386,6 @@ public partial class ProjectActionsViewModel : ViewModel
                     if (currentActionIndexInDesired == -1)
                     {
                         // Current action not in desired list - remove it
-                        Debug.WriteLine($"[{currentIndex}] REMOVE: {GetItemDebugName(currentAction)} (not in desired list)");
                         Actions.RemoveAt(currentIndex);
                         // Don't increment currentIndex, don't increment desiredIndex (retry this desired action)
                         continue;
@@ -399,7 +393,6 @@ public partial class ProjectActionsViewModel : ViewModel
                     else
                     {
                         // Current action appears later - insert desired action here
-                        Debug.WriteLine($"[{currentIndex}] INSERT: {GetItemDebugName(desiredAction)} (current action appears later)");
                         Actions.Insert(currentIndex, desiredAction);
                         currentIndex++;
                     }
@@ -407,7 +400,6 @@ public partial class ProjectActionsViewModel : ViewModel
                 else
                 {
                     // Need to insert the desired action
-                    Debug.WriteLine($"[{currentIndex}] INSERT: {GetItemDebugName(desiredAction)}");
                     Actions.Insert(currentIndex, desiredAction);
                     currentIndex++;
                 }
@@ -416,29 +408,16 @@ public partial class ProjectActionsViewModel : ViewModel
                 desiredIndex++;
             }
 
-            // Remove any remaining items (actions or separators)
+            // Remove any remaining items
             while (currentIndex < Actions.Count)
             {
-                var itemToRemove = Actions[currentIndex];
-                Debug.WriteLine($"[{currentIndex}] REMOVE: {GetItemDebugName(itemToRemove)} (beyond desired list)");
                 Actions.RemoveAt(currentIndex);
             }
-
-            Debug.WriteLine($"=== UpdateDisplayedActions END (Final count: {Actions.Count}) ===");
         }
         finally
         {
             _isUpdatingDisplayedActions = false;
         }
-    }
-
-    static string GetItemDebugName(ActionItem item)
-    {
-        return item switch
-        {
-            CategorySeparator => $"[Separator#{item.GetHashCode():X}]",
-            _ => $"{item.GetType().Name}#{item.GetHashCode():X}"
-        };
     }
 
     public void OpenOptionsDrawer()
