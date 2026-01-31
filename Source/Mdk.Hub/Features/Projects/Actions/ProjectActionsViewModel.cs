@@ -34,6 +34,8 @@ public partial class ProjectActionsViewModel : ViewModel
     bool _isOptionsDrawerOpen;
 
     bool _isUpdatingDisplayedActions;
+    bool _updateScheduled;
+    bool _pendingRefreshFilters;
 
     CanonicalPath? _optionsProjectPath;
 
@@ -285,6 +287,29 @@ public partial class ProjectActionsViewModel : ViewModel
     }
 
     void UpdateDisplayedActions(bool refreshFilters = true)
+    {
+        if (_isUpdatingDisplayedActions)
+            return;
+
+        // Debounce: Schedule update for next dispatcher tick
+        if (_updateScheduled)
+        {
+            // Already scheduled - just accumulate the refresh flag
+            _pendingRefreshFilters = _pendingRefreshFilters || refreshFilters;
+            return;
+        }
+
+        _updateScheduled = true;
+        _pendingRefreshFilters = refreshFilters;
+
+        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            _updateScheduled = false;
+            PerformDisplayedActionsUpdate(_pendingRefreshFilters);
+        });
+    }
+
+    void PerformDisplayedActionsUpdate(bool refreshFilters)
     {
         if (_isUpdatingDisplayedActions)
             return;
