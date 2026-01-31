@@ -1,4 +1,7 @@
-﻿v.1.0.0-pre.2
+﻿v.1.0.0-pre.3
+   - Removed standalone Mdk.Notification.Windows - fully replaced by integrated snackbar system.
+
+v.1.0.0-pre.2
    - Linux support: Hub now enforces required path configuration on Linux with validation and startup gating.
    - Path configuration: Added validation UI for Space Engineers binary, script output, and mod output paths.
    - Simulation mode: Added --simulate-linux flag for testing Linux behavior on Windows.
