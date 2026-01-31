@@ -24,7 +24,8 @@
     <Color x:Key="AccentHeadingColor">#FF4da6ff</Color>              <!-- Section headings (H2) - from website -->
     <Color x:Key="AccentHeadingLightColor">#FF80b3ff</Color>         <!-- Subsection headings (H3) - from website -->
     <Color x:Key="AccentSuccessColor">#FF28a745</Color>              <!-- Success states - match website -->
-    <Color x:Key="AccentWarningColor">#FFffc107</Color>              <!-- Warnings - yellow instead of orange -->
+    <Color x:Key="AccentWarningColor">#FFffc107</Color>              <!-- Warnings - bright yellow -->
+    <Color x:Key="AccentInfoColor">#FFe6b84d</Color>                 <!-- Info - subtle amber/gold for dark backgrounds -->
     <Color x:Key="AccentDangerColor">#FFff6666</Color>               <!-- Danger/destructive -->
 
     <!-- Background Colors -->
@@ -34,6 +35,7 @@
     <Color x:Key="BackgroundCardColor">#CC1a1a2e</Color>         <!-- Cards (80% opacity) -->
     <Color x:Key="BackgroundCardHoverColor">#DD1a1a2e</Color>    <!-- Card hover (same hue, more opaque) -->
     <Color x:Key="BackgroundCardSelectedColor">#EE1a1a2e</Color> <!-- Card selected (same hue, most opaque) -->
+    <Color x:Key="BackgroundInfoCardColor">#FF3d4a66</Color>     <!-- Info/toast cards (lighter blue-gray for contrast) -->
     <Color x:Key="BackgroundOverlayColor">#80000000</Color>      <!-- Modal overlay (50% black) -->
 
     <!-- Border Colors (simplified to 2 levels) -->

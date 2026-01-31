@@ -30,6 +30,7 @@
     <SolidColorBrush x:Key="BackgroundCardBrush" Color="{StaticResource BackgroundCardColor}" />
     <SolidColorBrush x:Key="BackgroundCardHoverBrush" Color="{StaticResource BackgroundCardHoverColor}" />
     <SolidColorBrush x:Key="BackgroundCardSelectedBrush" Color="{StaticResource BackgroundCardSelectedColor}" />
+    <SolidColorBrush x:Key="BackgroundInfoCardBrush" Color="{StaticResource BackgroundInfoCardColor}" />
 
     <!-- Border Brushes - Neutral -->
     <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />

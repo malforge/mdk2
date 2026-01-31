@@ -82,9 +82,8 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:ToastMessage">
                     <Border Classes.dismissing="{Binding IsDismissing}"
-                            Background="{StaticResource BackgroundPrimaryBrush}"
-                            BorderBrush="{StaticResource BorderDefaultBrush}"
-                            BorderThickness="2"
+                            Background="{StaticResource BackgroundInfoCardBrush}"
+                            BorderThickness="0"
                             CornerRadius="8"
                             Padding="16,12"
                             BoxShadow="0 4 20 0 #AA000000"
