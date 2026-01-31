@@ -1,2 +1,2 @@
-﻿v.1.0.0-alpha.1
-   - First alpha of the MDK2 Hub application.
+﻿v.1.0.0-pre.1
+   - First prerelease of the MDK2 Hub application.

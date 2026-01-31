@@ -4,8 +4,8 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      publishToNuGet:
-        description: 'Publish to NuGet (y/n)'
+      deployRelease:
+        description: 'Deploy release (publish NuGet packages and create GitHub release) (y/n)'
         required: true
         default: 'n'
   
@@ -272,7 +272,7 @@ jobs:
   #         path: ./Source/Releases/*
 
   deploy:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
     runs-on: ubuntu-latest
     environment: Deploy
     needs: build-primary
@@ -294,7 +294,7 @@ jobs:
           }
 
   deploy-hub:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
     runs-on: ubuntu-latest
     environment: Deploy
     needs:
@@ -328,7 +328,7 @@ jobs:
           tag_name: hub-v${{ env.VERSION }}
           name: MDK Hub v${{ env.VERSION }}
           draft: false
-          prerelease: true
+          prerelease: ${{ contains(env.VERSION, '-') }}
           files: |
             ./releases/*
         env:
