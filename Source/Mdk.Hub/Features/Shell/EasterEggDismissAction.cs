@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
@@ -13,11 +14,13 @@ public class EasterEggDismissAction : ActionItem
 {
     readonly AsyncRelayCommand _disableForeverCommand;
     readonly AsyncRelayCommand _disableForTodayCommand;
+    readonly IEasterEggService _easterEggService;
     readonly IShell _shell;
 
-    public EasterEggDismissAction(IShell shell)
+    public EasterEggDismissAction(IShell shell, IEasterEggService easterEggService)
     {
         _shell = shell;
+        _easterEggService = easterEggService;
         _disableForTodayCommand = new AsyncRelayCommand(DisableForToday);
         _disableForeverCommand = new AsyncRelayCommand(DisableForever);
     }
@@ -27,7 +30,7 @@ public class EasterEggDismissAction : ActionItem
 
     public override string Category => "EasterEgg";
 
-    public override bool ShouldShow() => _shell.IsEasterEggActive;
+    public override bool ShouldShow() => _easterEggService.IsActive;
 
     async Task DisableForToday()
     {
@@ -40,7 +43,7 @@ public class EasterEggDismissAction : ActionItem
         });
 
         if (result)
-            _shell.DisableEasterEggForToday();
+            _easterEggService.DisableFor(TimeSpan.FromDays(1));
     }
 
     async Task DisableForever()
@@ -54,6 +57,6 @@ public class EasterEggDismissAction : ActionItem
         });
 
         if (result)
-            _shell.DisableEasterEggForever();
+            _easterEggService.DisableForever();
     }
 }

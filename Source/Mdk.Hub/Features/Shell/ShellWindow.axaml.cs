@@ -32,11 +32,6 @@ public partial class ShellWindow : Window
 
         if (DataContext is ShellViewModel viewModel)
         {
-            // Initialize easter egg
-            var easterEgg = this.FindControl<EasterEgg>("EasterEggControl");
-            if (easterEgg != null)
-                viewModel.InitializeEasterEgg(easterEgg);
-
             // Subscribe to close requests
             viewModel.CloseRequested += OnCloseRequested;
 

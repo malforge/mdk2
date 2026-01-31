@@ -144,11 +144,6 @@ public class ShellViewModel : ViewModel
     public event EventHandler? CloseRequested;
 
     /// <summary>
-    ///     Initializes easter egg. Should be called from view once easter egg control is available.
-    /// </summary>
-    public void InitializeEasterEgg(EasterEgg easterEggControl) => easterEggControl.Initialize(_shell);
-
-    /// <summary>
     ///     Notifies the ViewModel that the window focus was gained.
     /// </summary>
     public void WindowFocusWasGained()

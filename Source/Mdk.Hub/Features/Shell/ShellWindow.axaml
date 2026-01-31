@@ -31,9 +31,7 @@
         </Style>
     </Window.Styles>
 
-    <Grid>
-        <!-- Easter Egg Layer -->
-        <vm:EasterEgg x:Name="EasterEggControl" />
+    <Grid vm:EasterEggBehavior.IsEnabled="True">
 
         <Grid x:Name="MainContentGrid"
               Classes="main-content"

@@ -17,43 +17,18 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
     readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
-    bool _easterEggDisabledForever;
-    DateTime? _easterEggDisabledUntil;
     bool _hasStarted;
     string[]? _startupArgs;
 
     public event EventHandler? WindowFocusGained;
-    public event EventHandler? EasterEggActiveChanged;
     public event EventHandler? RefreshRequested;
 
     public ObservableCollection<ToastMessage> ToastMessages { get; } = new();
-
-    public bool IsEasterEggActive
-    {
-        get
-        {
-#if DEBUG_EASTER_EGG
-            var isEasterEggDay = true;
-#else
-            var today = DateTime.Now;
-            var isEasterEggDay = today is { Month: 11, Day: 23 };
-#endif
-            var isDisabled = _easterEggDisabledForever || (_easterEggDisabledUntil.HasValue && DateTime.Now < _easterEggDisabledUntil.Value);
-
-            return isEasterEggDay && !isDisabled;
-        }
-    }
 
     public void Start(string[] args)
     {
         _startupArgs = args;
         _hasStarted = true;
-
-        // Load easter egg settings
-        _easterEggDisabledForever = _settings.GetValue("EasterEggDisabledForever", false);
-        var disabledUntilTicks = _settings.GetValue("EasterEggDisabledUntilTicks", 0L);
-        if (disabledUntilTicks > 0)
-            _easterEggDisabledUntil = new DateTime(disabledUntilTicks);
 
         // Invoke queued callbacks
         foreach (var callback in _startupCallbacks)
@@ -92,20 +67,6 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
 
         // Remove after fade-out animation completes
         Task.Delay(durationMs).ContinueWith(_ => { ToastMessages.Remove(toast); }, TaskScheduler.FromCurrentSynchronizationContext());
-    }
-
-    public void DisableEasterEggForToday()
-    {
-        _easterEggDisabledUntil = DateTime.Now.Date.AddDays(1);
-        _settings.SetValue("EasterEggDisabledUntilTicks", _easterEggDisabledUntil.Value.Ticks);
-        EasterEggActiveChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    public void DisableEasterEggForever()
-    {
-        _easterEggDisabledForever = true;
-        _settings.SetValue("EasterEggDisabledForever", true);
-        EasterEggActiveChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public UnsavedChangesHandle RegisterUnsavedChanges(string description, Action navigateToChanges)

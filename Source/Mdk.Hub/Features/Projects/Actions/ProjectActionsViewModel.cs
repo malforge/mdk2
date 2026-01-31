@@ -43,13 +43,13 @@ public partial class ProjectActionsViewModel : ViewModel
     ShellViewModel? _shellViewModel;
     UnsavedChangesHandle? _unsavedChangesHandle;
 
-    public ProjectActionsViewModel(IShell shell, IProjectService projectService, ILogger logger)
+    public ProjectActionsViewModel(IShell shell, IProjectService projectService, IEasterEggService easterEggService, ILogger logger)
     {
         _shell = shell;
         _projectService = projectService;
         _logger = logger;
         _projectService.StateChanged += OnProjectStateChanged;
-        _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
+        easterEggService.ActiveChanged += OnEasterEggActiveChanged;
 
         ShowAboutCommand = new RelayCommand(ShowAbout);
         OpenGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);

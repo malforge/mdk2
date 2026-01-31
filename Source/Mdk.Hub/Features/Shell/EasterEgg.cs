@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -11,17 +12,18 @@ namespace Mdk.Hub.Features.Shell;
 
 public class EasterEgg : Control
 {
-    const int AvatarSize = 200;
+    const int AvatarHeight = 200;
     const int AvatarMargin = 20;
     readonly Random _random = new(42); // Fixed seed for consistent pattern
     readonly List<Star> _stars = new();
     readonly DispatcherTimer _timer;
     Bitmap? _avatar;
     Size _lastSize;
-    IShell? _shell;
 
     public EasterEgg()
     {
+        HorizontalAlignment = HorizontalAlignment.Stretch;
+        VerticalAlignment = VerticalAlignment.Stretch;
         _timer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(66) // ~15fps
@@ -31,24 +33,13 @@ public class EasterEgg : Control
         IsHitTestVisible = false;
     }
 
-    public void Initialize(IShell shell)
-    {
-        _shell = shell;
-        _shell.EasterEggActiveChanged += OnEasterEggActiveChanged;
-        UpdateVisibility();
-    }
-
-    void OnEasterEggActiveChanged(object? sender, EventArgs e) => UpdateVisibility();
-
-    void UpdateVisibility() => IsVisible = _shell?.IsEasterEggActive ?? false;
-
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
 
         try
         {
-            var assets = AssetLoader.Open(new Uri("avares://Mdk.Hub/Assets/malware256.png"));
+            var assets = AssetLoader.Open(new Uri("avares://Mdk.Hub/Assets/space_engineers_black_256.png"));
             _avatar = new Bitmap(assets);
         }
         catch
@@ -86,11 +77,21 @@ public class EasterEgg : Control
 
         var starCount = (int)(size.Width * size.Height / 8000);
 
-        // Calculate avatar exclusion zone
-        var avatarLeft = size.Width - AvatarSize - AvatarMargin;
-        var avatarTop = size.Height - AvatarSize - AvatarMargin;
-        var avatarRight = size.Width - AvatarMargin;
-        var avatarBottom = size.Height - AvatarMargin;
+        // Calculate avatar exclusion zone (will be calculated based on actual avatar size if loaded)
+        double avatarLeft = size.Width;
+        double avatarTop = size.Height;
+        double avatarRight = size.Width;
+        double avatarBottom = size.Height;
+        
+        if (_avatar != null)
+        {
+            var aspectRatio = (double)_avatar.PixelSize.Width / _avatar.PixelSize.Height;
+            var avatarWidth = AvatarHeight * aspectRatio;
+            avatarLeft = size.Width - avatarWidth - AvatarMargin;
+            avatarTop = size.Height - AvatarHeight - AvatarMargin;
+            avatarRight = size.Width - AvatarMargin;
+            avatarBottom = size.Height - AvatarMargin;
+        }
 
         for (var i = 0; i < starCount; i++)
         {
@@ -137,14 +138,17 @@ public class EasterEgg : Control
         // Draw avatar in lower right corner
         if (_avatar != null)
         {
+            var aspectRatio = (double)_avatar.PixelSize.Width / _avatar.PixelSize.Height;
+            var avatarWidth = AvatarHeight * aspectRatio;
+            
             var destRect = new Rect(
-                Bounds.Width - AvatarSize - AvatarMargin,
-                Bounds.Height - AvatarSize - AvatarMargin,
-                AvatarSize,
-                AvatarSize
+                Bounds.Width - avatarWidth - AvatarMargin,
+                Bounds.Height - AvatarHeight - AvatarMargin,
+                avatarWidth,
+                AvatarHeight
             );
 
-            using (context.PushOpacity(0.08))
+            using (context.PushOpacity(0.20))
                 context.DrawImage(_avatar, destRect);
         }
     }
