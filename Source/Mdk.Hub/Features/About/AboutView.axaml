@@ -93,21 +93,13 @@
                                 <LineBreak />
                                 <Run Text="• Avalonia UI (MIT License)" />
                                 <LineBreak />
-                                <Run Text="• Velopack (MIT License)" />
-                                <LineBreak />
                                 <Run Text="• Microsoft Roslyn (MIT License)" />
                                 <LineBreak />
                                 <Run Text="• Microsoft.Build (MIT License)" />
                                 <LineBreak />
-                                <Run Text="• NUnit (MIT License)" />
-                                <LineBreak />
                                 <Run Text="• Projektanker.Icons.Avalonia (MIT License)" />
                                 <LineBreak />
-                                <Run Text="• JetBrains.Annotations (MIT License)" />
-                                <LineBreak />
-                                <Run Text="• FakeItEasy (MIT License)" />
-                                <LineBreak />
-                                <Run Text="• MdXaml (MIT License)" />
+                                <Run Text="• Velopack (MIT License)" />
                             </TextBlock>
                         </StackPanel>
 
@@ -115,7 +107,7 @@
                         <Border Height="1" Background="{StaticResource BorderDefaultBrush}" />
 
                         <!-- Copyright -->
-                        <TextBlock Text="© 2023-2026 Malforge. All rights reserved."
+                        <TextBlock Text="© 2023-2026 The MDK² Authors. All rights reserved."
                                    Classes="caption muted"
                                    HorizontalAlignment="Center" />
                     </StackPanel>

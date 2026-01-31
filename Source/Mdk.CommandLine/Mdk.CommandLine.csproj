@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -11,7 +11,7 @@
         <Title>MDK2 CLI</Title>
         <Authors>Morten "Malware" Aune Lyrstad</Authors>
         <Description>This is part of the MDK2 project.</Description>
-        <Copyright>2024 Morten "Malware" Aune Lyrstad</Copyright>
+        <Copyright>2023-2026 The MDK2 Authors</Copyright>
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
         <PublishSingleFile>false</PublishSingleFile>

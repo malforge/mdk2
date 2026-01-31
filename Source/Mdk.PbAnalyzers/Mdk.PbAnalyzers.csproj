@@ -7,7 +7,7 @@
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
         <Title>MDK2 Pb Analyzers</Title>
         <Description>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/description.txt"))</Description>
-        <Copyright>2023 Morten "Malware" Aune Lyrstad</Copyright>
+        <Copyright>2023-2026 The MDK2 Authors</Copyright>
         <PackageIcon>malware256.png</PackageIcon>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

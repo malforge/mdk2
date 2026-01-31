@@ -1,6 +1,6 @@
-﻿// Mdk.Extractor
+// Mdk.Extractor
 // 
-// Copyright 2023 Morten A. Lyrstad
+// Copyright 2023-2026 The MDK² Authors
 
 using System;
 using System.Collections.Generic;
