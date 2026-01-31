@@ -1,2 +1,9 @@
-﻿v.1.0.0-pre.1
+﻿v.1.0.0-pre.2
+   - Linux support: Hub now enforces required path configuration on Linux with validation and startup gating.
+   - Path configuration: Added validation UI for Space Engineers binary, script output, and mod output paths.
+   - Simulation mode: Added --simulate-linux flag for testing Linux behavior on Windows.
+   - Service initialization: All services now wait for configuration to be complete before starting.
+   - Auto-focus: Invalid fields automatically receive focus when configuration dialog opens on Linux.
+
+v.1.0.0-pre.1
    - First prerelease of the MDK2 Hub application.

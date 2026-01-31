@@ -1,4 +1,9 @@
-﻿v.2.2.0-pre.1
+﻿v.2.2.0-pre.2
+   - Linux compatibility: CLI now reads Hub's global path settings for auto-detection on Linux.
+   - Interactive mode fully integrated with Hub for cross-platform build notifications.
+   - Improved path handling for cross-platform reliability.
+
+v.2.2.0-pre.1
    - Introducing MDK Hub: A visual application for managing projects, checking for updates, and configuring settings.
    - Interactive mode now integrates with the Hub for build notifications and updates.
    - Cross-platform support for Windows and Linux.

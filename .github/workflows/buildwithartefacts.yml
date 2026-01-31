@@ -40,22 +40,33 @@ jobs:
             exit 0
           }
           
-          # Find all PackageVersion.txt files
-          $versionFiles = Get-ChildItem -Path . -Recurse -Filter "PackageVersion.txt"
+          # Get list of changed PackageVersion.txt files in this push
+          $changedFiles = git diff --name-only ${{ github.event.before }} ${{ github.sha }} | Where-Object { $_ -like "*/PackageVersion.txt" }
+          
+          if ($changedFiles.Count -eq 0) {
+            Write-Host "No PackageVersion.txt files changed in this push"
+            exit 0
+          }
+          
           $errors = @()
           
-          foreach ($file in $versionFiles) {
-            $version = (Get-Content $file.FullName).Trim()
+          foreach ($file in $changedFiles) {
+            if (-not (Test-Path $file)) {
+              Write-Host "Skipping deleted file: $file"
+              continue
+            }
+            
+            $version = (Get-Content $file).Trim()
             $hasPrereleaseSuffix = $version -match '-'
             
             if ($isMain -and $hasPrereleaseSuffix) {
-              $errors += "ERROR: $($file.FullName) contains prerelease version '$version' but branch is 'main'"
+              $errors += "ERROR: $file contains prerelease version '$version' but branch is 'main'"
             }
             elseif ($isPrerelease -and -not $hasPrereleaseSuffix) {
-              $errors += "ERROR: $($file.FullName) contains stable version '$version' but branch is 'prerelease'"
+              $errors += "ERROR: $file contains stable version '$version' but branch is 'prerelease'"
             }
             else {
-              Write-Host "✓ $($file.FullName): $version (valid for $branch)"
+              Write-Host "✓ $file : $version (valid for $branch)"
             }
           }
           
@@ -68,7 +79,7 @@ jobs:
             exit 1
           }
           
-          Write-Host "`n✓ All versions valid for branch $branch"
+          Write-Host "`n✓ All changed versions valid for branch $branch"
 
   update-templates:
     needs: validate-versions
