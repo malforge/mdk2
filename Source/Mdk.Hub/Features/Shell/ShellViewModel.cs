@@ -29,6 +29,8 @@ namespace Mdk.Hub.Features.Shell;
 public class ShellViewModel : ViewModel
 {
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
+    readonly ProjectActionsViewModel? _projectActionsViewModel;
+    readonly ProjectOverviewViewModel? _projectOverviewViewModel;
     readonly IProjectService? _projectService;
     readonly IShell _shell;
     ViewModel? _currentView;
@@ -58,6 +60,8 @@ public class ShellViewModel : ViewModel
         _shell = shell;
         _shell = shell;
         _projectService = projectService;
+        _projectOverviewViewModel = projectOverviewViewModel;
+        _projectActionsViewModel = projectActionsViewModel;
         UpdateNotificationBar = updateNotificationBar;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
@@ -67,6 +71,9 @@ public class ShellViewModel : ViewModel
         // Initialize child VMs with reference to this shell
         projectOverviewViewModel.Initialize(this);
         projectActionsViewModel.Initialize(this);
+
+        // Listen for navigation requests to coordinate OpenOptions flag
+        projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
 
         // Check for first-run setup (fire and forget)
         if (Program.IsFirstRun)
@@ -306,5 +313,13 @@ public class ShellViewModel : ViewModel
         {
             // Silently fail if we can't check for first-run
         }
+    }
+
+    void OnProjectNavigationRequested(object? sender, ProjectNavigationRequestedEventArgs e)
+    {
+        // ProjectService has already updated State.SelectedProject
+        // This event is only for post-selection actions like opening options drawer
+        if (e.OpenOptions)
+            _projectActionsViewModel?.OpenOptionsDrawer();
     }
 }

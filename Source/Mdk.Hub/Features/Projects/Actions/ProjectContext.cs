@@ -29,14 +29,10 @@ class ProjectContext
     readonly Dictionary<string, ActionItem> _globalActionCache;
     readonly ProjectActionsViewModel _owner;
     readonly ProjectModel _project;
-    readonly IProjectService _projectService;
-    readonly IShell _shell;
 
-    public ProjectContext(ProjectModel project, IShell shell, IProjectService projectService, ProjectActionsViewModel owner, Dictionary<string, ActionItem> globalActionCache)
+    public ProjectContext(ProjectModel project, ProjectActionsViewModel owner, Dictionary<string, ActionItem> globalActionCache)
     {
         _project = project;
-        _shell = shell;
-        _projectService = projectService;
         _owner = owner;
         _globalActionCache = globalActionCache;
 
@@ -105,7 +101,7 @@ class ProjectContext
         }
     }
 
-    public void UpdateFilteredActions(bool canMakeScript, bool canMakeMod, bool easterEggActive)
+    public void UpdateFilteredActions()
     {
         _filteredActions.Clear();
 
@@ -116,8 +112,4 @@ class ProjectContext
                 _filteredActions.Add(action);
         }
     }
-
-    void UpdateFilteredActions() =>
-        // This overload is called from property changes
-        UpdateFilteredActions(_owner.CanMakeScript, _owner.CanMakeMod, _shell.IsEasterEggActive);
 }

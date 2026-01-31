@@ -121,7 +121,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         busyOverlay.EnableCancellation();
         _shell.AddOverlay(busyOverlay);
 
-        var failures = new List<(string projectName, string error)>();
+        var failures = new List<(string projectName, string? error)>();
         var wasCancelled = false;
 
         try
@@ -138,7 +138,8 @@ public class UpdatePackagesAction : ActionItem, IDisposable
                     if (updates == null)
                         updates = await _projectService.CheckForPackageUpdatesAsync(projectInfo.ProjectPath, busyOverlay.CancellationToken);
 
-                    return (projectInfo, updates, error: null);
+                    // updates is guaranteed non-null here (CheckForPackageUpdatesAsync always returns a list)
+                    return (projectInfo, updates: updates!, error: (string?)null);
                 }
                 catch (OperationCanceledException)
                 {
@@ -285,7 +286,11 @@ public class UpdatePackagesAction : ActionItem, IDisposable
     }
 
     async Task ShowErrorAsync(string title, string message) =>
-        await _shell.ShowErrorAsync(title, message);
+        await _shell.ShowAsync(new InformationMessage
+        {
+            Title = title,
+            Message = message
+        });
 
     async Task ShowErrorWithDetailsAsync(string title, string message, string details)
     {

@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.Notification", "Mdk.Not
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mdk.CheckDotNet", "Mdk.CheckDotNet\Mdk.CheckDotNet.csproj", "{EF63B627-A293-4870-BDD0-1D197EFE55FE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mdk.Hub", "Mdk.Hub\Mdk.Hub.csproj", "{B8C9D5E1-4A7F-4B3C-8D2E-9F1A2B3C4D5E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -85,6 +87,10 @@ Global
 		{EF63B627-A293-4870-BDD0-1D197EFE55FE}.Debug|x64.Build.0 = Debug|x64
 		{EF63B627-A293-4870-BDD0-1D197EFE55FE}.Release|x64.ActiveCfg = Release|x64
 		{EF63B627-A293-4870-BDD0-1D197EFE55FE}.Release|x64.Build.0 = Release|x64
+		{B8C9D5E1-4A7F-4B3C-8D2E-9F1A2B3C4D5E}.Debug|x64.ActiveCfg = Debug|x64
+		{B8C9D5E1-4A7F-4B3C-8D2E-9F1A2B3C4D5E}.Debug|x64.Build.0 = Debug|x64
+		{B8C9D5E1-4A7F-4B3C-8D2E-9F1A2B3C4D5E}.Release|x64.ActiveCfg = Release|x64
+		{B8C9D5E1-4A7F-4B3C-8D2E-9F1A2B3C4D5E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -243,82 +243,8 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         return (bool)(model.SelectedValue ?? false);
     }
 
-    public async Task ShowErrorAsync(string title, string message) =>
-        await ShowAsync(new InformationMessage
-        {
-            Title = title,
-            Message = message,
-            OkText = "OK"
-        });
-
-    public async Task<NewProjectDialogResult?> ShowNewProjectDialogAsync(NewProjectDialogMessage message)
-    {
-        var viewModel = new NewProjectDialogViewModel(message);
-        await ShowOverlayAsync(viewModel);
-        return viewModel.Result;
-    }
-
     public async Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay) =>
         await ShowOverlayAsync(busyOverlay);
-
-    public async Task<bool> ConfirmAsync(string title, string message, string okText = "OK", string cancelText = "Cancel")
-    {
-        var model = new MessageBoxViewModel
-        {
-            Title = title,
-            Message = message,
-            Choices =
-            [
-                new MessageBoxChoice
-                {
-                    Text = okText,
-                    Value = true
-                },
-                new MessageBoxChoice
-                {
-                    Text = cancelText,
-                    Value = false
-                }
-            ]
-        };
-
-        await ShowOverlayAsync(model);
-        return (bool)(model.SelectedValue ?? false);
-    }
-
-    public async Task<bool> ConfirmDangerousOperationAsync(string title, string message, string keyPhraseWatermark, string requiredKeyPhrase, string okText = "OK", string cancelText = "Cancel")
-    {
-        if (string.IsNullOrEmpty(title)) throw new ArgumentException("Value cannot be null or empty.", nameof(title));
-        if (string.IsNullOrEmpty(message)) throw new ArgumentException("Value cannot be null or empty.", nameof(message));
-        if (string.IsNullOrEmpty(keyPhraseWatermark)) throw new ArgumentException("Value cannot be null or empty.", nameof(keyPhraseWatermark));
-        if (string.IsNullOrEmpty(requiredKeyPhrase)) throw new ArgumentException("Value cannot be null or empty.", nameof(requiredKeyPhrase));
-
-        var model = new DangerBoxViewModel
-        {
-            Title = title,
-            Message = message,
-            RequiredKeyPhrase = requiredKeyPhrase,
-            KeyPhraseWatermark = keyPhraseWatermark,
-            Choices =
-            [
-                new DangerousMessageBoxChoice
-                {
-                    Text = okText,
-                    Value = true,
-                    IsDefault = true
-                },
-                new MessageBoxChoice
-                {
-                    Text = cancelText,
-                    Value = false,
-                    IsCancel = true
-                }
-            ]
-        };
-
-        await ShowOverlayAsync(model);
-        return (bool)(model.SelectedValue ?? false);
-    }
 
     class UnsavedChangesRegistration
     {

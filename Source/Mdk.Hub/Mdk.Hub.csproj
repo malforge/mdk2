@@ -4,6 +4,7 @@
         <OutputType>WinExe</OutputType>
         <TargetFrameworks>net9.0;net9.0-windows</TargetFrameworks>
         <Nullable>enable</Nullable>
+        <WarningsAsErrors>nullable</WarningsAsErrors>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Assets\malware.ico</ApplicationIcon>

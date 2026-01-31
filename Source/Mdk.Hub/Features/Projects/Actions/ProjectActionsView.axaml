@@ -3,7 +3,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
-             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
              xmlns:options="clr-namespace:Mdk.Hub.Features.Projects.Options"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
@@ -11,13 +10,7 @@
              x:Class="Mdk.Hub.Features.Projects.Actions.ProjectActionsView"
              x:DataType="actions:ProjectActionsViewModel">
     <UserControl.Resources>
-        <actions:BoolToDeploymentStatusConverter x:Key="BoolToDeploymentStatusConverter" />
-        <actions:BoolToWarningBackgroundConverter x:Key="BoolToWarningBackgroundConverter" />
     </UserControl.Resources>
-
-    <Design.DataContext>
-        <actions:ProjectActionsViewModel />
-    </Design.DataContext>
 
     <UserControl.Styles>
         <StyleInclude Source="avares://Mdk.Hub/Features/Projects/Actions/Styles.axaml" />

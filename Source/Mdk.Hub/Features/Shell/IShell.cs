@@ -72,11 +72,7 @@ public interface IShell
     Task<bool> ShowAsync(ConfirmationMessage message);
     Task ShowAsync(InformationMessage message);
     Task<bool> ShowAsync(KeyPhraseValidationMessage message);
-    Task ShowErrorAsync(string title, string message);
-    Task<NewProjectDialogResult?> ShowNewProjectDialogAsync(NewProjectDialogMessage message);
     Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay);
-    Task<bool> ConfirmAsync(string title, string message, string okText = "OK", string cancelText = "Cancel");
-    Task<bool> ConfirmDangerousOperationAsync(string title, string message, string keyPhraseWatermark, string requiredKeyPhrase, string okText = "OK", string cancelText = "Cancel");
 }
 
 public class ToastMessage : ViewModel

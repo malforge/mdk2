@@ -44,6 +44,7 @@ public class ProjectAddedEventArgs : EventArgs
 public class ProjectNavigationRequestedEventArgs : EventArgs
 {
     public required CanonicalPath ProjectPath { get; init; }
+    public bool OpenOptions { get; init; }
 }
 
 /// <summary>
@@ -157,7 +158,8 @@ public interface IProjectService
     ///     Navigates to and selects the specified project in the Hub UI.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
-    bool NavigateToProject(CanonicalPath projectPath);
+    /// <param name="openOptions">Whether to open the options drawer after navigation.</param>
+    bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false);
 
     /// <summary>
     ///     Clears the update state for a project after packages have been successfully updated.

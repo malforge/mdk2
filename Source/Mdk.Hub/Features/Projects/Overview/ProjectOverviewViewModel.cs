@@ -175,7 +175,19 @@ public class ProjectOverviewViewModel : ViewModel
         SearchText = string.Empty;
     }
 
-    public void SelectProject(ProjectModel? project, bool scrollToItem = false)
+    void SelectProject(ProjectModel? project, bool scrollToItem = false)
+    {
+        if (project == null)
+            return;
+
+        // Update UI selection
+        SelectProjectInList(project, scrollToItem);
+
+        // Update service state (this will trigger StateChanged, but our handler ignores if already selected)
+        UpdateState();
+    }
+
+    void SelectProjectInList(ProjectModel? project, bool scrollToItem = false)
     {
         if (project == null)
             return;
@@ -187,27 +199,19 @@ public class ProjectOverviewViewModel : ViewModel
                 item.IsSelected = false;
         }
 
-        // Toggle selection on clicked item
-        project.IsSelected = !project.IsSelected;
+        // Select the project (don't toggle when called from state sync)
+        project.IsSelected = true;
 
         // Clear needs attention flag when selected
-        if (project.IsSelected)
-        {
-            project.NeedsAttention = false;
-            _lastProjectSelectionTime = DateTimeOffset.Now; // Track selection time
+        project.NeedsAttention = false;
+        _lastProjectSelectionTime = DateTimeOffset.Now; // Track selection time
 
-            // Only trigger scroll for programmatic navigation, not user clicks
-            if (scrollToItem)
-                ShowProjectRequested?.Invoke(this, new ShowProjectEventArgs(project));
-        }
+        // Only trigger scroll for programmatic navigation, not user clicks
+        if (scrollToItem)
+            ShowProjectRequested?.Invoke(this, new ShowProjectEventArgs(project));
 
         // Save selected project path
-        if (project.IsSelected)
-            _settings.SetValue("LastSelectedProject", project.ProjectPath);
-        else
-            _settings.SetValue("LastSelectedProject", string.Empty);
-
-        UpdateState();
+        _settings.SetValue("LastSelectedProject", project.ProjectPath);
     }
 
     void UpdateState()
@@ -377,17 +381,17 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
-    void OnProjectNavigationRequested(object? sender, ProjectNavigationRequestedEventArgs e)
+    public void NavigateToProject(CanonicalPath projectPath)
     {
         // Find the project in the ALL projects list
         var project = _projects.FirstOrDefault(p =>
-            p.ProjectPath == e.ProjectPath);
+            p.ProjectPath == projectPath);
 
         if (project != null)
         {
             // Check if project is visible in the current filtered list
             var isVisibleInFilteredList = FilteredProjects.Any(p =>
-                p.ProjectPath == e.ProjectPath);
+                p.ProjectPath == projectPath);
 
             // Only clear filters if the project is not visible with current filters
             if (!isVisibleInFilteredList)
@@ -405,13 +409,46 @@ public class ProjectOverviewViewModel : ViewModel
         {
             // Project not found yet - might be in process of being added
             // Store path for delayed selection after next LoadProjects()
-            _pendingNavigationPath = e.ProjectPath.Value;
+            _pendingNavigationPath = projectPath.Value;
         }
     }
 
     void OnProjectRemoved(object? sender, CanonicalPath projectPath) =>
         // Refresh the project list to remove the deleted project
         LoadProjects();
+
+    void OnProjectNavigationRequested(object? sender, ProjectNavigationRequestedEventArgs e)
+    {
+        // Handle explicit navigation request - can adjust filters if needed
+        var projectPath = e.ProjectPath;
+
+        // Find the project in the ALL projects list
+        var project = _projects.FirstOrDefault(p => p.ProjectPath == projectPath);
+
+        if (project != null)
+        {
+            // Check if project is visible in the current filtered list
+            var isVisibleInFilteredList = FilteredProjects.Any(p => p.ProjectPath == projectPath);
+
+            // Only clear filters if the project is not visible with current filters
+            if (!isVisibleInFilteredList)
+            {
+                ShowAll = true;
+                FilterScriptsOnly = false;
+                FilterModsOnly = false;
+                SearchText = string.Empty;
+            }
+
+            // Update UI selection (don't update state - ProjectService already did)
+            SelectProjectInList(project, true);
+        }
+        else
+        {
+            // Project not found yet - might be in process of being added
+            // Store path for delayed selection after next LoadProjects()
+            _pendingNavigationPath = projectPath.Value;
+        }
+    }
 
     void OnProjectUpdateAvailable(object? sender, ProjectUpdateAvailableEventArgs e)
     {

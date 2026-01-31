@@ -128,7 +128,7 @@ public partial class ProjectActionsViewModel : ViewModel
                 var projectModel = _shellViewModel.GetOrCreateProjectModel(projectInfo);
                 if (!_projectContexts.TryGetValue(canonicalPath, out context))
                 {
-                    context = new ProjectContext(projectModel, _shell, _projectService, this, _globalActionCache);
+                    context = new ProjectContext(projectModel, this, _globalActionCache);
                     _projectContexts[canonicalPath] = context;
                 }
             }
@@ -137,8 +137,7 @@ public partial class ProjectActionsViewModel : ViewModel
         // Reuse cached ViewModel if it exists, otherwise create new
         if (context != null)
         {
-            if (context.OptionsViewModel == null)
-                context.OptionsViewModel = new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
+            context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
 
             OptionsViewModel = context.OptionsViewModel;
             IsOptionsDrawerOpen = true;
@@ -253,7 +252,7 @@ public partial class ProjectActionsViewModel : ViewModel
 
                 if (!_projectContexts.TryGetValue(selectedProjectPath, out var context))
                 {
-                    context = new ProjectContext(selectedProject, _shell, _projectService, this, _globalActionCache);
+                    context = new ProjectContext(selectedProject, this, _globalActionCache);
                     _projectContexts[selectedProjectPath] = context;
                 }
                 _currentContext = context;
@@ -301,7 +300,7 @@ public partial class ProjectActionsViewModel : ViewModel
 
             // Optionally refresh the filtered actions first
             if (refreshFilters)
-                _currentContext.UpdateFilteredActions(_projectService.State.CanMakeScript, _projectService.State.CanMakeMod, _shell.IsEasterEggActive);
+                _currentContext.UpdateFilteredActions();
 
             // Build new list with separators
             var builder = ImmutableArray.CreateBuilder<ActionItem>();

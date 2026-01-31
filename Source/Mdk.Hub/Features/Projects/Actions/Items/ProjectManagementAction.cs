@@ -83,7 +83,7 @@ public class ProjectManagementAction : ActionItem
             : "NewProject.LastLocation.Mod";
         var lastLocation = _projectService.Settings.GetValue(settingsKey, defaultLocation);
 
-        var result = await _shell.ShowNewProjectDialogAsync(new NewProjectDialogMessage
+        var dialogViewModel = new NewProjectDialogViewModel(new NewProjectDialogMessage
         {
             Title = title,
             Message = description,
@@ -92,6 +92,9 @@ public class ProjectManagementAction : ActionItem
             OkText = "Create",
             CancelText = "Cancel"
         });
+
+        await _shell.ShowOverlayAsync(dialogViewModel);
+        var result = dialogViewModel.Result;
 
         if (result == null)
             return; // User cancelled
@@ -120,7 +123,11 @@ public class ProjectManagementAction : ActionItem
                 await busyTask;
 
                 // Show error
-                await _shell.ShowErrorAsync("Project Creation Failed", errorMessage ?? "Unknown error occurred");
+                await _shell.ShowAsync(new InformationMessage
+                {
+                    Title = "Project Creation Failed",
+                    Message = errorMessage ?? "Unknown error occurred"
+                });
                 return;
             }
 
@@ -132,7 +139,11 @@ public class ProjectManagementAction : ActionItem
                 busyOverlay.Dismiss();
                 await busyTask;
 
-                await _shell.ShowErrorAsync("Failed to Add Project", addError ?? "Unknown error occurred");
+                await _shell.ShowAsync(new InformationMessage
+                {
+                    Title = "Failed to Add Project",
+                    Message = addError ?? "Unknown error occurred"
+                });
                 return;
             }
 
@@ -140,11 +151,8 @@ public class ProjectManagementAction : ActionItem
             busyOverlay.Dismiss();
             await busyTask;
 
-            // Navigate to the new project (selects it)
-            _projectService.NavigateToProject(projectPath.Value);
-
-            // TODO: Open the options drawer - needs refactoring
-            // _viewModel.OpenOptionsDrawer();
+            // Navigate to the new project and open options drawer
+            _projectService.NavigateToProject(projectPath.Value, openOptions: true);
         }
         catch (Exception ex)
         {
@@ -152,7 +160,11 @@ public class ProjectManagementAction : ActionItem
             busyOverlay.Dismiss();
             await busyTask;
 
-            await _shell.ShowErrorAsync("Unexpected Error", $"An error occurred while creating the project: {ex.Message}");
+            await _shell.ShowAsync(new InformationMessage
+            {
+                Title = "Unexpected Error",
+                Message = $"An error occurred while creating the project: {ex.Message}"
+            });
         }
     }
 

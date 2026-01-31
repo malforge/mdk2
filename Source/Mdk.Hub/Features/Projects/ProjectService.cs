@@ -351,7 +351,7 @@ public class ProjectService : IProjectService
         }
     }
 
-    public bool NavigateToProject(CanonicalPath projectPath)
+    public bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false)
     {
         if (projectPath.IsEmpty())
             return false;
@@ -363,13 +363,20 @@ public class ProjectService : IProjectService
             return false;
         }
 
-        // Raise event for view models to handle navigation
+        // Update state directly - this raises StateChanged event
+        State = new ProjectStateData(projectPath, _state.CanMakeScript, _state.CanMakeMod);
+        
+        _logger.Info($"Navigated to project: {projectPath}{(openOptions ? " (with options)" : "")}");
+
+        // Raise event for additional navigation actions (e.g., opening options drawer)
+        // Note: ProjectNavigationRequested is for actions AFTER selection, not FOR selection
         ProjectNavigationRequested?.Invoke(this,
             new ProjectNavigationRequestedEventArgs
             {
-                ProjectPath = projectPath
+                ProjectPath = projectPath,
+                OpenOptions = openOptions
             });
-        _logger.Info($"Navigation requested for project: {projectPath}");
+
         return true;
     }
 
