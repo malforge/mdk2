@@ -15,9 +15,6 @@
              to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <overview:ProjectOverviewViewModel />
     </Design.DataContext>
-    <UserControl.Styles>
-        <StyleInclude Source="avares://Mdk.Hub/Features/Projects/Overview/Styles.axaml" />
-    </UserControl.Styles>
 
     <UserControl.DataTemplates>
         <icons:SymbolSelector>

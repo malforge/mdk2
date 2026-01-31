@@ -12,10 +12,6 @@
     <UserControl.Resources>
     </UserControl.Resources>
 
-    <UserControl.Styles>
-        <StyleInclude Source="avares://Mdk.Hub/Features/Projects/Actions/Styles.axaml" />
-    </UserControl.Styles>
-
     <UserControl.DataTemplates>
         <icons:SymbolSelector>
             <icons:ProjectTypeDefinition Type="IngameScript">
