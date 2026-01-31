@@ -10,19 +10,7 @@ namespace Mdk.CommandLine;
 public class Interaction : IInteraction
 {
     readonly IConsole _console;
-    readonly string? _notifyPath;
-
-    static IEnumerable<string> PotentialLocations()
-    {
-        yield return Path.GetFullPath("mdknotify-win.exe");
-        yield return Path.Combine(AppContext.BaseDirectory, "mdknotify-win.exe");
-        var path = Environment.GetEnvironmentVariable("Path");
-        if (path is not null)
-        {
-            foreach (var dir in path.Split(';'))
-                yield return Path.Combine(dir, "mdknotify-win.exe");
-        }
-    }
+    readonly string? _hubPath;
     
     public Interaction(IConsole console, bool interactive)
     {
@@ -32,19 +20,13 @@ public class Interaction : IInteraction
             console.Trace("Interaction disabled.");
             return;
         }
-        if (!OperatingSystem.IsWindows())
-        {
-            console.Trace("Interaction is only supported on Windows.");
-            return;
-        }
 
-        _notifyPath = PotentialLocations().FirstOrDefault(File.Exists);
-        if (_notifyPath is null)
+        _hubPath = HubLocator.FindHub(console);
+        if (_hubPath is null)
         {
-            console.Trace("mdknotify-win.exe not found.");
+            console.Trace("Hub not found - showing notification to user.");
+            HubLocator.ShowHubNotFoundMessage();
         }
-        else
-            console.Trace($"mdknotify-win.exe found at: {_notifyPath}");
     }
 
     public void Custom(string message, params object?[] args)
@@ -53,10 +35,10 @@ public class Interaction : IInteraction
             return;
         message = string.Format(message, args);
         _console.Print(message);
-        if (_notifyPath is null)
+        if (_hubPath is null)
             return;
         var arguments = $"custom {Escape(message)}";
-        _console.Trace($"Running: mdknotify-win.exe {arguments}");  
+        _console.Trace($"Running Hub: {arguments}");  
         Run(arguments);
     }
 
@@ -67,10 +49,10 @@ public class Interaction : IInteraction
         else
             message = string.Format(message, args);
         _console.Print(message);
-        if (_notifyPath is null)
+        if (_hubPath is null)
             return;
         var arguments = $"script {Escape(scriptName)} {Escape(folder)} {Escape(message)}";
-        _console.Trace($"Running: mdknotify-win.exe {arguments}");
+        _console.Trace($"Running Hub: {arguments}");
         Run(arguments);
     }
 
@@ -81,10 +63,10 @@ public class Interaction : IInteraction
         else
             message = string.Format(message, args);
         _console.Print(message);
-        if (_notifyPath is null)
+        if (_hubPath is null)
             return;
         var arguments = $"nuget {Escape(packageName)} {Escape(currentVersion)} {Escape(newVersion)} {Escape(message)}";
-        _console.Trace($"Running: mdknotify-win.exe {arguments}");
+        _console.Trace($"Running Hub: {arguments}");
         Run(arguments);
     }
 
@@ -100,48 +82,25 @@ public class Interaction : IInteraction
 
     void Run(string arguments)
     {
-        if (_notifyPath is null)
+        if (_hubPath is null)
             return;
-        var notify = new Process
+        var hub = new Process
         {
             StartInfo =
             {
-                FileName = _notifyPath,
+                FileName = _hubPath,
                 Arguments = arguments,
                 UseShellExecute = true
             }
         };
         try
         {
-            notify.Start();
+            hub.Start();
         }
         catch (Exception e)
         {
-            _console.Print("Failed to run mdknotify-win.exe");
+            _console.Print("Failed to run Hub");
             _console.Trace(e.ToString());
         }
     }
 }
-/*
- *             try
-            {
-                var notify = new Process
-                {
-                    StartInfo =
-                    {
-                        FileName = notifierExe,
-                        Arguments = $"script \"{project.Name}\" \"{outputDirectory.FullName}\"",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-                notify.Start();
-            }
-            catch (Exception e)
-            {
-                console.Print("Failed to run mdknotify-win.");
-                console.Print(e.ToString());
-                return false;
-            }
-
- */

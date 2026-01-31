@@ -1,19 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Settings;
 
 namespace Mdk.Hub.Features.Shell;
 
 [Singleton<IShell>]
-public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyViewModel, ISettings settings) : IShell
+public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyViewModel, ISettings settings, ILogger logger) : IShell
 {
     readonly IDependencyContainer _container = container;
     readonly ISettings _settings = settings;
+    readonly ILogger _logger = logger;
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
     readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
@@ -29,6 +32,9 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     {
         _startupArgs = args;
         _hasStarted = true;
+
+        // Write Hub executable path for MDK CLI to discover
+        WriteHubPath();
 
         // Invoke queued callbacks
         foreach (var callback in _startupCallbacks)
@@ -119,6 +125,56 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     {
         RefreshRequested?.Invoke(this, EventArgs.Empty);
         ShowToast("Refreshing...", 1500);
+    }
+
+    void WriteHubPath()
+    {
+        try
+        {
+            var exePath = Environment.ProcessPath;
+            if (exePath == null)
+            {
+                _logger.Warning("Could not determine Hub executable path");
+                return;
+            }
+
+            // Resolve to actual path if it's a symlink (Velopack 'current' directory)
+            var resolvedPath = ResolveSymlink(exePath);
+
+            // Write to %AppData%/MDK2/Hub/hub.path or ~/.config/MDK2/Hub/hub.path
+            var appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var hubFolder = Path.Combine(appDataFolder, "MDK2", "Hub");
+            Directory.CreateDirectory(hubFolder);
+
+            var pathFile = Path.Combine(hubFolder, "hub.path");
+            File.WriteAllText(pathFile, resolvedPath);
+
+            _logger.Info($"Hub path written to: {pathFile}");
+            _logger.Debug($"Hub executable: {resolvedPath}");
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning($"Failed to write Hub path file: {ex.Message}");
+        }
+    }
+
+    static string ResolveSymlink(string path)
+    {
+        try
+        {
+            var fileInfo = new FileInfo(path);
+            if (fileInfo.LinkTarget != null)
+            {
+                var targetPath = Path.GetFullPath(fileInfo.LinkTarget, Path.GetDirectoryName(path) ?? string.Empty);
+                return File.Exists(targetPath) ? targetPath : path;
+            }
+
+            return path;
+        }
+        catch
+        {
+            return path;
+        }
     }
 
     // Dialog methods
