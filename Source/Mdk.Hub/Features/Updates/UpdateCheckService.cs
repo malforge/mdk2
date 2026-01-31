@@ -377,14 +377,14 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
         _logger.Info("Checking Hub version for updates");
 
         var includePrerelease = _globalSettings.IncludePrereleaseUpdates;
-        var version = await _gitHubService.GetLatestReleaseAsync("malware-dev", "mdk2", includePrerelease, cancellationToken);
+        var version = await _gitHubService.GetLatestReleaseAsync("malforge", "mdk2", includePrerelease, cancellationToken);
         if (version != null)
         {
             return new HubVersionInfo
             {
                 LatestVersion = version.Value.Version,
                 IsPrerelease = version.Value.IsPrerelease,
-                DownloadUrl = "https://github.com/malware-dev/mdk2/releases/latest"
+                DownloadUrl = "https://github.com/malforge/mdk2/releases/latest"
             };
         }
 
