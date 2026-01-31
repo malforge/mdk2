@@ -19,9 +19,9 @@ public class NuGetService(ILogger logger) : INuGetService
     readonly ILogger _logger = logger;
 
     /// <inheritdoc />
-    public async Task<string?> GetLatestVersionAsync(string packageId, CancellationToken cancellationToken = default)
+    public async Task<string?> GetLatestVersionAsync(string packageId, bool includePrerelease, CancellationToken cancellationToken = default)
     {
-        _logger.Info($"Checking NuGet for latest version of {packageId}");
+        _logger.Info($"Checking NuGet for latest version of {packageId} (includePrerelease: {includePrerelease})");
 
         try
         {
@@ -38,6 +38,17 @@ public class NuGetService(ILogger logger) : INuGetService
             {
                 _logger.Warning($"No versions found for {packageId}");
                 return null;
+            }
+
+            // Filter out prerelease versions if not wanted (versions with '-' are prereleases)
+            if (!includePrerelease)
+            {
+                versions = versions.Where(v => !v!.Contains('-')).ToList();
+                if (versions.Count == 0)
+                {
+                    _logger.Warning($"No stable versions found for {packageId}");
+                    return null;
+                }
             }
 
             var latestVersion = versions[^1]; // Last version in the array

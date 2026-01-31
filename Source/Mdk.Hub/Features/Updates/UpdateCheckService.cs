@@ -123,10 +123,15 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
         {
             _logger.Info("Installing MDK² template package");
 
+            // Build arguments - include --prerelease if user wants prerelease updates
+            var args = _globalSettings.IncludePrereleaseUpdates 
+                ? "new install Mal.Mdk2.ScriptTemplates --prerelease" 
+                : "new install Mal.Mdk2.ScriptTemplates";
+
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = "new install Mal.Mdk2.ScriptTemplates",
+                Arguments = args,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -150,7 +155,7 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
                 throw new InvalidOperationException($"Template installation failed: {error}");
             }
 
-            _logger.Info("Template package installed successfully");
+            _logger.Info($"Template package installed successfully (prerelease: {_globalSettings.IncludePrereleaseUpdates})");
         }
         catch (Exception ex)
         {
@@ -338,11 +343,12 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
             "Mal.Mdk2.References"
         };
 
+        var includePrerelease = _globalSettings.IncludePrereleaseUpdates;
         var results = new List<PackageVersionInfo>();
 
         foreach (var packageId in packages)
         {
-            var version = await _nuGetService.GetLatestVersionAsync(packageId, cancellationToken);
+            var version = await _nuGetService.GetLatestVersionAsync(packageId, includePrerelease, cancellationToken);
             if (version != null)
             {
                 results.Add(new PackageVersionInfo
@@ -360,7 +366,8 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
     {
         _logger.Info("Checking template package for updates");
 
-        var version = await _nuGetService.GetLatestVersionAsync("Mal.Mdk2.ScriptTemplates", cancellationToken);
+        var includePrerelease = _globalSettings.IncludePrereleaseUpdates;
+        var version = await _nuGetService.GetLatestVersionAsync("Mal.Mdk2.ScriptTemplates", includePrerelease, cancellationToken);
         if (version != null)
         {
             return new TemplateVersionInfo

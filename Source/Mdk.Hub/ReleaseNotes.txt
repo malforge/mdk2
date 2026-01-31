@@ -1,4 +1,9 @@
-﻿v.1.0.0-pre.6
+﻿v.1.0.0-pre.7
+   - Fixed update system to properly respect prerelease setting for all components.
+   - NuGet package checks now filter out prereleases when disabled.
+   - Template installation now uses --prerelease flag only when enabled.
+
+v.1.0.0-pre.6
    - Fixed Hub update detection checking wrong GitHub repository.
 
 v.1.0.0-pre.5

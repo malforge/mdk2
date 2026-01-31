@@ -12,7 +12,8 @@ public interface INuGetService
     ///     Gets the latest version of a NuGet package.
     /// </summary>
     /// <param name="packageId">The package ID (e.g., "Mal.Mdk2.PbAnalyzers").</param>
+    /// <param name="includePrerelease">Whether to include prerelease versions.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The latest version string, or null if not found.</returns>
-    Task<string?> GetLatestVersionAsync(string packageId, CancellationToken cancellationToken = default);
+    Task<string?> GetLatestVersionAsync(string packageId, bool includePrerelease, CancellationToken cancellationToken = default);
 }

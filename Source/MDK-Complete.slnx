@@ -56,9 +56,6 @@
   <Project Path="Mdk.Hub\Mdk.Hub.csproj" Type="Classic C#">
       <Platform Project="x64" />
   </Project>
-  <Project Path="Mdk.Notification.Windows\Mdk.Notification.Windows.csproj">
-    <Platform Project="x64" />
-  </Project>
   <Project Path="Mdk.Notification\Mdk.Notification.csproj">
     <Platform Project="x64" />
   </Project>

@@ -17,8 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mdk.CommandLine", "Mdk.Comm
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mdk.CommandLine.Tests", "Mdk.CommandLine.Tests\Mdk.CommandLine.Tests.csproj", "{3F474DD6-5338-436C-8D7E-B981738B5A9A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mdk.Notification.Windows", "Mdk.Notification.Windows\Mdk.Notification.Windows.csproj", "{773839C9-AF61-4A22-A41C-9493E1D25C7E}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{8EAA4661-9512-40CE-AA5D-E0CEFB85AE64}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScriptTemplates", "ScriptTemplates\ScriptTemplates.csproj", "{4FE6DB07-8C36-46FB-ADC2-EE29EB0448B7}"
@@ -63,10 +61,6 @@ Global
 		{3F474DD6-5338-436C-8D7E-B981738B5A9A}.Debug|x64.Build.0 = Debug|x64
 		{3F474DD6-5338-436C-8D7E-B981738B5A9A}.Release|x64.ActiveCfg = Release|x64
 		{3F474DD6-5338-436C-8D7E-B981738B5A9A}.Release|x64.Build.0 = Release|x64
-		{773839C9-AF61-4A22-A41C-9493E1D25C7E}.Debug|x64.ActiveCfg = Debug|x64
-		{773839C9-AF61-4A22-A41C-9493E1D25C7E}.Debug|x64.Build.0 = Debug|x64
-		{773839C9-AF61-4A22-A41C-9493E1D25C7E}.Release|x64.ActiveCfg = Release|x64
-		{773839C9-AF61-4A22-A41C-9493E1D25C7E}.Release|x64.Build.0 = Release|x64
 		{4FE6DB07-8C36-46FB-ADC2-EE29EB0448B7}.Debug|x64.ActiveCfg = Debug|x64
 		{4FE6DB07-8C36-46FB-ADC2-EE29EB0448B7}.Debug|x64.Build.0 = Debug|x64
 		{4FE6DB07-8C36-46FB-ADC2-EE29EB0448B7}.Release|x64.ActiveCfg = Release|x64
