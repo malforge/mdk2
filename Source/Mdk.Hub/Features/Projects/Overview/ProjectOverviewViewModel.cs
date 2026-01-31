@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
@@ -18,7 +18,7 @@ public class ShowProjectEventArgs(ProjectModel project) : EventArgs
     public ProjectModel Project { get; } = project;
 }
 
-[Dependency]
+[Singleton]
 [ViewModelFor<ProjectOverviewView>]
 public class ProjectOverviewViewModel : ViewModel
 {

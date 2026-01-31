@@ -15,7 +15,7 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
-[Dependency]
+[Singleton]
 [ViewModelFor<ProjectInfoActionView>]
 public class ProjectInfoAction : ActionItem
 {

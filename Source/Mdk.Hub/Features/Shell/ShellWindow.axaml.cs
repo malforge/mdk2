@@ -9,7 +9,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Shell;
 
-[Dependency]
+[Singleton]
 [UsedImplicitly]
 public partial class ShellWindow : Window
 {

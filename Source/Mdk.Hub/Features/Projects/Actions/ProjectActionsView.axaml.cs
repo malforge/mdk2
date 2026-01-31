@@ -9,7 +9,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
-[Dependency]
+[Singleton]
 public partial class ProjectActionsView : UserControl
 {
     ProjectActionsViewModel? _currentViewModel;

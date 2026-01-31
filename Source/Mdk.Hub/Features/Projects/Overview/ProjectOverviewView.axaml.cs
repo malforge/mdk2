@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -10,7 +10,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
-[Dependency]
+[Singleton]
 [UsedImplicitly]
 public partial class ProjectOverviewView : UserControl
 {

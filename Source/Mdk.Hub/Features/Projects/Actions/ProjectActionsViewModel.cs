@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -18,7 +19,7 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
-[Dependency]
+[Singleton]
 [ViewModelFor<ProjectActionsView>]
 public partial class ProjectActionsViewModel : ViewModel
 {
@@ -27,7 +28,7 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
     readonly IProjectService _projectService;
     readonly IShell _shell;
-    ImmutableArray<ActionItem> _actions = ImmutableArray<ActionItem>.Empty;
+    ObservableCollection<ActionItem> _actions = new();
     ProjectContext? _currentContext;
 
     bool _isOptionsDrawerOpen;
@@ -73,7 +74,7 @@ public partial class ProjectActionsViewModel : ViewModel
         set => SetProperty(ref _optionsViewModel, value);
     }
 
-    public ImmutableArray<ActionItem> Actions
+    public ObservableCollection<ActionItem> Actions
     {
         get => _actions;
         private set => SetProperty(ref _actions, value);
@@ -291,10 +292,13 @@ public partial class ProjectActionsViewModel : ViewModel
         _isUpdatingDisplayedActions = true;
         try
         {
-            // If we don't have a context, set empty list
+            Debug.WriteLine("=== UpdateDisplayedActions START ===");
+            
+            // If we don't have a context, clear list
             if (_currentContext == null)
             {
-                Actions = ImmutableArray<ActionItem>.Empty;
+                Debug.WriteLine("No context, clearing actions");
+                Actions.Clear();
                 return;
             }
 
@@ -302,29 +306,114 @@ public partial class ProjectActionsViewModel : ViewModel
             if (refreshFilters)
                 _currentContext.UpdateFilteredActions();
 
-            // Build new list with separators
-            var builder = ImmutableArray.CreateBuilder<ActionItem>();
-            string? lastCategory = null;
-            var isFirstAction = true;
+            // Build desired list - ONLY actions, no separators (no allocation needed)
+            var desiredActions = _currentContext.FilteredActions;
+            Debug.WriteLine($"Desired actions: {desiredActions.Count}, Current list (with separators): {Actions.Count} items");
 
-            foreach (var action in _currentContext.FilteredActions)
+            // Sync Actions collection by walking through desired actions and handling category transitions
+            int currentIndex = 0;
+            int desiredIndex = 0;
+            string? previousCategory = null;
+
+            while (desiredIndex < desiredActions.Count)
             {
-                // Add separator if category changed
-                if (!isFirstAction && lastCategory != action.Category)
-                    builder.Add(new CategorySeparator());
+                var desiredAction = desiredActions[desiredIndex];
+                var needsSeparatorBefore = desiredIndex > 0 && previousCategory != desiredAction.Category && desiredAction.Category != null;
 
-                builder.Add(action);
-                lastCategory = action.Category;
-                isFirstAction = false;
+                // Handle separator before this action if needed
+                if (needsSeparatorBefore)
+                {
+                    // Check if current item is a separator
+                    if (currentIndex < Actions.Count && Actions[currentIndex] is CategorySeparator existingSeparator)
+                    {
+                        // Keep existing separator
+                        Debug.WriteLine($"[{currentIndex}] KEEP: {GetItemDebugName(existingSeparator)} (before {desiredAction.Category})");
+                        currentIndex++;
+                    }
+                    else
+                    {
+                        // Insert new separator
+                        var newSeparator = new CategorySeparator();
+                        Debug.WriteLine($"[{currentIndex}] INSERT: [Separator] (before {desiredAction.Category})");
+                        Actions.Insert(currentIndex, newSeparator);
+                        currentIndex++;
+                    }
+                }
+                else
+                {
+                    // No separator needed - remove one if it exists here
+                    if (currentIndex < Actions.Count && Actions[currentIndex] is CategorySeparator unwantedSeparator)
+                    {
+                        Debug.WriteLine($"[{currentIndex}] REMOVE: {GetItemDebugName(unwantedSeparator)} (no longer needed)");
+                        Actions.RemoveAt(currentIndex);
+                        // Don't increment currentIndex
+                    }
+                }
+
+                // Now handle the action itself
+                if (currentIndex < Actions.Count && ReferenceEquals(Actions[currentIndex], desiredAction))
+                {
+                    // Action matches - keep it
+                    Debug.WriteLine($"[{currentIndex}] KEEP: {GetItemDebugName(desiredAction)}");
+                    currentIndex++;
+                }
+                else if (currentIndex < Actions.Count && Actions[currentIndex] is not CategorySeparator)
+                {
+                    // Current item is a different action - need to check if we should remove or insert
+                    var currentAction = Actions[currentIndex];
+                    var currentActionIndexInDesired = desiredActions.FindIndex(desiredIndex + 1, a => ReferenceEquals(a, currentAction));
+
+                    if (currentActionIndexInDesired == -1)
+                    {
+                        // Current action not in desired list - remove it
+                        Debug.WriteLine($"[{currentIndex}] REMOVE: {GetItemDebugName(currentAction)} (not in desired list)");
+                        Actions.RemoveAt(currentIndex);
+                        // Don't increment currentIndex, don't increment desiredIndex (retry this desired action)
+                        continue;
+                    }
+                    else
+                    {
+                        // Current action appears later - insert desired action here
+                        Debug.WriteLine($"[{currentIndex}] INSERT: {GetItemDebugName(desiredAction)} (current action appears later)");
+                        Actions.Insert(currentIndex, desiredAction);
+                        currentIndex++;
+                    }
+                }
+                else
+                {
+                    // Need to insert the desired action
+                    Debug.WriteLine($"[{currentIndex}] INSERT: {GetItemDebugName(desiredAction)}");
+                    Actions.Insert(currentIndex, desiredAction);
+                    currentIndex++;
+                }
+
+                previousCategory = desiredAction.Category;
+                desiredIndex++;
             }
 
-            // Replace entire list
-            Actions = builder.ToImmutable();
+            // Remove any remaining items (actions or separators)
+            while (currentIndex < Actions.Count)
+            {
+                var itemToRemove = Actions[currentIndex];
+                Debug.WriteLine($"[{currentIndex}] REMOVE: {GetItemDebugName(itemToRemove)} (beyond desired list)");
+                Actions.RemoveAt(currentIndex);
+            }
+
+            Debug.WriteLine($"=== UpdateDisplayedActions END (Final count: {Actions.Count}) ===");
         }
         finally
         {
             _isUpdatingDisplayedActions = false;
         }
+    }
+
+    static string GetItemDebugName(ActionItem item)
+    {
+        return item switch
+        {
+            CategorySeparator => $"[Separator#{item.GetHashCode():X}]",
+            _ => $"{item.GetType().Name}#{item.GetHashCode():X}"
+        };
     }
 
     public void OpenOptionsDrawer()

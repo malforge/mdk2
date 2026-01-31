@@ -14,18 +14,32 @@
             namespace Mal.DependencyInjection;
             
             /// <summary>
-            /// Marks a class as a dependency that can be resolved by the <see cref="IDependencyContainer"/>.
+            /// Marks a class as a singleton - one shared instance will be created and cached.
             /// </summary>
             /// <typeparam name="T">The service type to register the class as. If not specified, the class type itself is used.</typeparam>
             [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-            sealed class DependencyAttribute<T> : Attribute where T: class;
+            sealed class SingletonAttribute<T> : Attribute where T: class;
 
             /// <summary>
-            /// Marks a class as a dependency that can be resolved by the <see cref="IDependencyContainer"/>.
+            /// Marks a class as a singleton - one shared instance will be created and cached.
             /// The class will be registered as its own type.
             /// </summary>
             [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-            sealed class DependencyAttribute : Attribute;
+            sealed class SingletonAttribute : Attribute;
+            
+            /// <summary>
+            /// Marks a class to be created as a new instance on each resolve.
+            /// </summary>
+            /// <typeparam name="T">The service type to register the class as. If not specified, the class type itself is used.</typeparam>
+            [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+            sealed class InstanceAttribute<T> : Attribute where T: class;
+
+            /// <summary>
+            /// Marks a class to be created as a new instance on each resolve.
+            /// The class will be registered as its own type.
+            /// </summary>
+            [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+            sealed class InstanceAttribute : Attribute;
             
             /// <summary>
             /// Represents a simple dependency injection container that can resolve registered services.

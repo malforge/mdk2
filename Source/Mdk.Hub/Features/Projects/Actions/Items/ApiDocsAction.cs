@@ -13,7 +13,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 /// <summary>
 ///     Action to open API documentation for the selected project.
 /// </summary>
-[Dependency]
+[Singleton]
 [ViewModelFor<ApiDocsActionView>]
 public class ApiDocsAction : ActionItem
 {

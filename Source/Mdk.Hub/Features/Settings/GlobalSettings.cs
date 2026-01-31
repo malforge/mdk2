@@ -6,7 +6,7 @@ namespace Mdk.Hub.Features.Settings;
 /// <summary>
 ///     Provides typed access to global MDK Hub settings
 /// </summary>
-[Dependency<GlobalSettings>]
+[Singleton<GlobalSettings>]
 public class GlobalSettings
 {
     readonly ILogger _logger;

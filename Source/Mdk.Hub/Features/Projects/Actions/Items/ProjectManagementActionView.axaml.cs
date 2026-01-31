@@ -4,7 +4,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
-[Dependency]
+[Instance]
 public partial class ProjectManagementActionView : UserControl
 {
     public ProjectManagementActionView()

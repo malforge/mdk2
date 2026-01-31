@@ -24,7 +24,7 @@ namespace Mdk.Hub.Features.Shell;
 ///     via attributes. However for the most part you should rely on the <c>IShell</c> service to
 ///     manage the shell and its content rather than interacting with this view model directly.
 /// </remarks>
-[Dependency]
+[Singleton]
 [ViewModelFor<ShellWindow>]
 public class ShellViewModel : ViewModel
 {

@@ -3,7 +3,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Updates;
 
-[Dependency]
+[Singleton]
 public partial class UpdateNotificationBarView : UserControl
 {
     public UpdateNotificationBarView()

@@ -7,7 +7,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Diagnostics;
 
-[Dependency<ILogger>]
+[Singleton<ILogger>]
 public class FileLogger : ILogger
 {
     readonly Lock _lock = new();

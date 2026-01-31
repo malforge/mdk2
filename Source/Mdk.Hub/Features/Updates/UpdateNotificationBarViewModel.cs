@@ -11,7 +11,7 @@ using Mdk.Hub.Features.Shell;
 
 namespace Mdk.Hub.Features.Updates;
 
-[Dependency]
+[Singleton]
 [ViewModelFor<UpdateNotificationBarView>]
 public class UpdateNotificationBarViewModel : ViewModel
 {

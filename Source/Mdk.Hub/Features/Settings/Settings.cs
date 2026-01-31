@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -7,7 +7,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Settings;
 
-[Dependency<ISettings>]
+[Singleton<ISettings>]
 public class Settings : ISettings
 {
     readonly JsonObject _settings = new();

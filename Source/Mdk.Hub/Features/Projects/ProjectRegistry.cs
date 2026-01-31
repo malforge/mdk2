@@ -35,7 +35,7 @@ public interface IProjectRegistry
 ///     Stores and manages the registry of known MDK projects.
 ///     Projects are persisted to %appdata%\MDK2\Hub\projects.json
 /// </summary>
-[Dependency<IProjectRegistry>]
+[Singleton<IProjectRegistry>]
 public class ProjectRegistry : IProjectRegistry
 {
     readonly ILogger _logger;

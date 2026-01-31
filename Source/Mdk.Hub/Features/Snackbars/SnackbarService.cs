@@ -13,7 +13,7 @@ namespace Mdk.Hub.Features.Snackbars;
 /// <summary>
 ///     Service for displaying snackbar notifications.
 /// </summary>
-[Dependency<ISnackbarService>]
+[Singleton<ISnackbarService>]
 public class SnackbarService : ISnackbarService
 {
     readonly List<SnackbarWindow> _activeSnackbars = new();

@@ -3,7 +3,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.CommonDialogs;
 
-[Dependency]
+[Instance]
 public partial class ErrorDetailsView : UserControl
 {
     public ErrorDetailsView()

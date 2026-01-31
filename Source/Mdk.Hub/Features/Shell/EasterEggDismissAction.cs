@@ -7,7 +7,7 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
 
-[Dependency]
+[Singleton]
 [ViewModelFor<EasterEggDismissActionView>]
 public class EasterEggDismissAction : ActionItem
 {

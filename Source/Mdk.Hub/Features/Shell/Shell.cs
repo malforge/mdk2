@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -9,7 +9,7 @@ using Mdk.Hub.Features.Settings;
 
 namespace Mdk.Hub.Features.Shell;
 
-[Dependency<IShell>]
+[Singleton<IShell>]
 public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyViewModel, ISettings settings) : IShell
 {
     readonly IDependencyContainer _container = container;

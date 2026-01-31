@@ -12,7 +12,7 @@ namespace Mdk.Hub.Features.Updates;
 /// <summary>
 ///     Service for querying NuGet package information.
 /// </summary>
-[Dependency<INuGetService>]
+[Singleton<INuGetService>]
 public class NuGetService(ILogger logger) : INuGetService
 {
     readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(10) };

@@ -5,7 +5,7 @@ using Mdk.Hub.Features.Projects.Overview;
 
 namespace Mdk.Hub.Features.Projects.NewProjectDialog;
 
-[Dependency]
+[Instance]
 public partial class NewProjectDialogView : UserControl
 {
     public NewProjectDialogView()

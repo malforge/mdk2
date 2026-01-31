@@ -37,16 +37,17 @@ public class DependencyRegistryGenerator : IIncrementalGenerator
 
         foreach (var attr in impl.GetAttributes())
         {
-            if (attr.AttributeClass is { Name: "DependencyAttribute" or "Dependency" } ac)
+            if (attr.AttributeClass is { Name: "SingletonAttribute" or "Singleton" or "InstanceAttribute" or "Instance" } ac)
             {
+                var isInstance = ac.Name is "InstanceAttribute" or "Instance";
                 switch (ac.Arity)
                 {
                     case 0:
-                        return new Item(impl, impl);
+                        return new Item(impl, impl, isInstance);
 
                     case 1:
                         var t = ac.TypeArguments[0];
-                        return new Item(impl, t);
+                        return new Item(impl, t, isInstance);
 
                     case > 1:
                         return null;
@@ -60,11 +61,13 @@ public class DependencyRegistryGenerator : IIncrementalGenerator
     {
         public readonly INamedTypeSymbol Implementation;
         public readonly ITypeSymbol Service;
+        public readonly bool IsInstance;
 
-        public Item(INamedTypeSymbol implementation, ITypeSymbol service)
+        public Item(INamedTypeSymbol implementation, ITypeSymbol service, bool isInstance)
         {
             Implementation = implementation;
             Service = service;
+            IsInstance = isInstance;
         }
     }
 }

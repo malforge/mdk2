@@ -13,7 +13,7 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
-[Dependency]
+[Singleton]
 [ViewModelFor<UpdatePackagesActionView>]
 public class UpdatePackagesAction : ActionItem, IDisposable
 {

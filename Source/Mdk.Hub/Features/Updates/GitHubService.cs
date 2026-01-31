@@ -13,7 +13,7 @@ namespace Mdk.Hub.Features.Updates;
 /// <summary>
 ///     Service for querying GitHub repository information.
 /// </summary>
-[Dependency<IGitHubService>]
+[Singleton<IGitHubService>]
 public class GitHubService(ILogger logger) : IGitHubService
 {
     readonly HttpClient _httpClient = CreateHttpClient();

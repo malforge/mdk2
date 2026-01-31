@@ -22,7 +22,7 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
 
-[Dependency<IProjectService>]
+[Singleton<IProjectService>]
 public class ProjectService : IProjectService
 {
     readonly ILogger _logger;

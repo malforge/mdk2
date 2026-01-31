@@ -3,7 +3,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Projects.Options;
 
-[Dependency]
+[Singleton]
 public partial class ProjectOptionsView : UserControl
 {
     public ProjectOptionsView()

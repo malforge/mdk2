@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -10,7 +10,7 @@ namespace Mdk.Hub.Features.CommonDialogs;
 /// <summary>
 ///     A specialized message box for dangerous operations, requiring the user to type a given key phrase to confirm.
 /// </summary>
-[Dependency]
+[Instance]
 public partial class DangerBoxView : UserControl
 {
     InitialFocusBehavior? _focusBehavior;

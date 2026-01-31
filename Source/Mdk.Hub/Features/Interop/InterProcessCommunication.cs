@@ -15,7 +15,7 @@ namespace Mdk.Hub.Features.Interop;
 ///     Handles inter-process communication between CommandLine and Hub using TCP sockets.
 ///     Implements single-instance pattern with mutex.
 /// </summary>
-[Dependency<IInterProcessCommunication>]
+[Singleton<IInterProcessCommunication>]
 public class InterProcessCommunication : IInterProcessCommunication
 {
     const string MutexName = "MDK2_Hub_SingleInstance_Mutex";

@@ -27,6 +27,11 @@ public class RegistryProducer
                 {0}
             }};
             
+            readonly HashSet<Type> _instances = new HashSet<Type>
+            {{
+                {1}
+            }};
+            
             readonly Dictionary<Type, object> _singletons = new();
             
             /// <summary>
@@ -68,7 +73,8 @@ public class RegistryProducer
             /// <inheritdoc/>
             public bool TryResolve(Type serviceType, [MaybeNullWhen(false)] out object instance)
             {{
-                if (_singletons.TryGetValue(serviceType, out instance))
+                // Check singleton cache first (unless it's instance-per-resolve)
+                if (!_instances.Contains(serviceType) && _singletons.TryGetValue(serviceType, out instance))
                     return true;
                 
                 if (!_registrations.TryGetValue(serviceType, out var factory))
@@ -90,7 +96,11 @@ public class RegistryProducer
                 {{
                     _resolving.Remove(serviceType);
                 }}
-                _singletons[serviceType] = instance;
+                
+                // Only cache if not instance-per-resolve
+                if (!_instances.Contains(serviceType))
+                    _singletons[serviceType] = instance;
+                    
                 return true;
             }}
 
@@ -122,6 +132,7 @@ public class RegistryProducer
 
     const string ItemTemplate = "[typeof({0})] = dr => new {1}({2})";
     const string ItemSeparator= ",\n        ";
+    const string InstanceItemTemplate = "typeof({0})";
 
     const string ParameterTemplate = "dr.Resolve<{0}>()";
     const string LazyParameterTemplate = "new Lazy<{0}>(() => dr.Resolve<{0}>())";
@@ -135,6 +146,8 @@ public class RegistryProducer
     public string Produce()
     {
         var items = new List<string>();
+        var instances = new List<string>();
+        
         foreach (var item in _items)
         {
             var ctor = item.Implementation.Constructors.Length > 0
@@ -155,7 +168,11 @@ public class RegistryProducer
                 }
             }
             items.Add(string.Format(ItemTemplate, item.Service.ToDisplayString(), item.Implementation.ToDisplayString(), string.Join(", ", parameters)));
+            
+            if (item.IsInstance)
+                instances.Add(string.Format(InstanceItemTemplate, item.Service.ToDisplayString()));
         }
-        return string.Format(RegistryTemplate, string.Join(ItemSeparator, items));
+        
+        return string.Format(RegistryTemplate, string.Join(ItemSeparator, items), string.Join(ItemSeparator, instances));
     }
 }

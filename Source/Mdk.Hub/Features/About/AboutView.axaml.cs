@@ -3,7 +3,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.About;
 
-[Dependency]
+[Instance]
 public partial class AboutView : UserControl
 {
     public AboutView()

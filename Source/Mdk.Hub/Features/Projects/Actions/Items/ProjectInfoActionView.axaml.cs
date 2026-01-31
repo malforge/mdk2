@@ -3,7 +3,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
-[Dependency]
+[Instance]
 public partial class ProjectInfoActionView : UserControl
 {
     public ProjectInfoActionView()

@@ -11,7 +11,7 @@ using Mdk.Hub.Features.Diagnostics;
 
 namespace Mdk.Hub.Features.Updates;
 
-[Dependency<IUpdateCheckService>]
+[Singleton<IUpdateCheckService>]
 public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService) : IUpdateCheckService
 {
     readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();

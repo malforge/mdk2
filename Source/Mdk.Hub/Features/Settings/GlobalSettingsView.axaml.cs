@@ -3,7 +3,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Settings;
 
-[Dependency<GlobalSettingsView>]
+[Singleton<GlobalSettingsView>]
 public partial class GlobalSettingsView : UserControl
 {
     public GlobalSettingsView()
