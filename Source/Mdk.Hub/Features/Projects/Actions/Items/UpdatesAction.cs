@@ -4,71 +4,112 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
 using Velopack;
 using Velopack.Sources;
-using Mdk.Hub.Features.Shell;
 
-namespace Mdk.Hub.Features.Updates;
+namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+/// <summary>
+///     Global action for checking and installing updates to Hub and templates.
+/// </summary>
 [Singleton]
-[ViewModelFor<UpdateNotificationBarView>]
-public class UpdateNotificationBarViewModel : ViewModel
+[ViewModelFor<UpdatesActionView>]
+public class UpdatesAction : ActionItem
 {
     readonly IShell _shell;
+    readonly IUpdateCheckService _updateCheckService;
     double _downloadProgress;
     HubVersionInfo? _hubVersionInfo;
     bool _isDownloading;
     bool _isHubUpdateAvailable;
     bool _isReadyToInstall;
     bool _isTemplateUpdateAvailable;
-    bool _isVisible;
-    string _message = "";
     UpdateInfo? _pendingUpdate;
 
-    public UpdateNotificationBarViewModel(IShell dialogShell)
+    public UpdatesAction(IShell shell, IUpdateCheckService updateCheckService)
     {
-        _shell = dialogShell;
-        DismissCommand = new RelayCommand(Dismiss);
+        _shell = shell;
+        _updateCheckService = updateCheckService;
+        
         UpdateTemplatesCommand = new RelayCommand(UpdateTemplates);
         UpdateHubCommand = new RelayCommand(UpdateHub);
         InstallHubUpdateCommand = new RelayCommand(InstallHubUpdate);
+
+        // Subscribe to update check results
+        _updateCheckService.WhenVersionCheckCompleted(OnVersionCheckCompleted);
     }
 
-    public string Message
-    {
-        get => _message;
-        set => SetProperty(ref _message, value);
-    }
+    public override string? Category => null; // No category - appears at top
+    public override bool IsGlobal => true; // This is a global action, not project-specific
 
-    public bool IsVisible
+    public override bool ShouldShow() => IsTemplateUpdateAvailable || IsHubUpdateAvailable || IsDownloading || IsReadyToInstall;
+
+    void OnVersionCheckCompleted(VersionCheckCompletedEventArgs args)
     {
-        get => _isVisible;
-        set => SetProperty(ref _isVisible, value);
+        // Check if template update is available
+        IsTemplateUpdateAvailable = args.TemplatePackage != null;
+
+        // Check if Hub update is available
+        if (args.HubVersion != null)
+        {
+            IsHubUpdateAvailable = true;
+            HubVersionInfo = args.HubVersion;
+        }
+
+        // Update status message
+        UpdateStatusMessage();
     }
 
     public bool IsTemplateUpdateAvailable
     {
         get => _isTemplateUpdateAvailable;
-        set => SetProperty(ref _isTemplateUpdateAvailable, value);
+        set
+        {
+            if (SetProperty(ref _isTemplateUpdateAvailable, value))
+            {
+                UpdateStatusMessage();
+                RaiseShouldShowChanged();
+            }
+        }
     }
 
     public bool IsHubUpdateAvailable
     {
         get => _isHubUpdateAvailable;
-        set => SetProperty(ref _isHubUpdateAvailable, value);
+        set
+        {
+            if (SetProperty(ref _isHubUpdateAvailable, value))
+            {
+                UpdateStatusMessage();
+                RaiseShouldShowChanged();
+            }
+        }
     }
 
     public bool IsDownloading
     {
         get => _isDownloading;
-        set => SetProperty(ref _isDownloading, value);
+        set
+        {
+            if (SetProperty(ref _isDownloading, value))
+                UpdateStatusMessage();
+        }
     }
 
     public bool IsReadyToInstall
     {
         get => _isReadyToInstall;
-        set => SetProperty(ref _isReadyToInstall, value);
+        set
+        {
+            if (SetProperty(ref _isReadyToInstall, value))
+            {
+                UpdateStatusMessage();
+                RaiseShouldShowChanged();
+            }
+        }
     }
 
     public double DownloadProgress
@@ -80,46 +121,58 @@ public class UpdateNotificationBarViewModel : ViewModel
     public HubVersionInfo? HubVersionInfo
     {
         get => _hubVersionInfo;
-        set => SetProperty(ref _hubVersionInfo, value);
+        set
+        {
+            if (SetProperty(ref _hubVersionInfo, value))
+            {
+                UpdateStatusMessage();
+                OnPropertyChanged(nameof(UpdateHubButtonText));
+            }
+        }
     }
 
-    public ICommand DismissCommand { get; }
+    string _statusMessage = "Checking for updates...";
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        set => SetProperty(ref _statusMessage, value);
+    }
+
+    public string UpdateHubButtonText => HubVersionInfo?.IsPrerelease == true ? "Update Hub (prerelease)" : "Update Hub";
+
     public ICommand UpdateTemplatesCommand { get; }
     public ICommand UpdateHubCommand { get; }
     public ICommand InstallHubUpdateCommand { get; }
 
-    public void UpdateMessage()
+    void UpdateStatusMessage()
     {
         if (IsDownloading)
-            Message = $"Downloading Hub update... {DownloadProgress:P0}";
+            StatusMessage = $"Downloading Hub update... {DownloadProgress:P0}";
         else if (IsReadyToInstall)
-            Message = "Hub update ready to install";
+            StatusMessage = "Hub update ready to install";
         else if (IsTemplateUpdateAvailable && IsHubUpdateAvailable)
         {
             var hubSuffix = HubVersionInfo?.IsPrerelease == true ? " (prerelease)" : "";
-            Message = $"Script templates and Hub{hubSuffix} updates available";
+            StatusMessage = $"Templates and Hub{hubSuffix} updates available";
         }
         else if (IsTemplateUpdateAvailable)
-            Message = "Script templates update available";
+            StatusMessage = "Templates update available";
         else if (IsHubUpdateAvailable)
         {
             var suffix = HubVersionInfo?.IsPrerelease == true ? " (prerelease)" : "";
-            Message = $"Hub update{suffix} available";
+            StatusMessage = $"Hub update{suffix} available";
         }
+        else
+            StatusMessage = "All up to date";
     }
-
-    void Dismiss() => IsVisible = false;
 
     async void UpdateTemplates()
     {
         try
         {
-            // Show progress
-            Message = "Updating script templates...";
+            StatusMessage = "Updating templates...";
             IsTemplateUpdateAvailable = false;
-            OnPropertyChanged(nameof(IsTemplateUpdateAvailable));
 
-            // Run dotnet new install
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
@@ -133,7 +186,7 @@ public class UpdateNotificationBarViewModel : ViewModel
             using var process = Process.Start(startInfo);
             if (process == null)
             {
-                Message = "Failed to start template update";
+                StatusMessage = "Failed to start template update";
                 return;
             }
 
@@ -141,19 +194,18 @@ public class UpdateNotificationBarViewModel : ViewModel
 
             if (process.ExitCode == 0)
             {
-                Message = "Script templates updated successfully";
-                await Task.Delay(3000);
-                IsVisible = false;
+                _shell.ShowToast("Templates updated successfully");
+                UpdateStatusMessage();
             }
             else
             {
                 var error = await process.StandardError.ReadToEndAsync();
-                Message = $"Template update failed: {error}";
+                StatusMessage = $"Update failed: {error}";
             }
         }
         catch (Exception ex)
         {
-            Message = $"Template update error: {ex.Message}";
+            StatusMessage = $"Update error: {ex.Message}";
         }
     }
 
@@ -161,41 +213,33 @@ public class UpdateNotificationBarViewModel : ViewModel
     {
         try
         {
-            // Set downloading state
             IsHubUpdateAvailable = false;
             IsDownloading = true;
             DownloadProgress = 0;
-            UpdateMessage();
 
-            // Use Velopack to download update (works on both Windows and Linux!)
             var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
-
             var newVersion = await mgr.CheckForUpdatesAsync();
+            
             if (newVersion == null)
             {
                 IsDownloading = false;
-                Message = "No update available";
+                StatusMessage = "No update available";
                 return;
             }
 
-            // Download with progress
-            await mgr.DownloadUpdatesAsync(newVersion,
-                progress =>
-                {
-                    DownloadProgress = progress / 100.0;
-                    UpdateMessage();
-                });
+            await mgr.DownloadUpdatesAsync(newVersion, progress =>
+            {
+                DownloadProgress = progress / 100.0;
+            });
 
-            // Download complete - save for install
             _pendingUpdate = newVersion;
             IsDownloading = false;
             IsReadyToInstall = true;
-            UpdateMessage();
         }
         catch (Exception ex)
         {
             IsDownloading = false;
-            Message = $"Update failed: {ex.Message}";
+            StatusMessage = $"Update failed: {ex.Message}";
         }
     }
 
@@ -203,13 +247,12 @@ public class UpdateNotificationBarViewModel : ViewModel
     {
         if (_pendingUpdate == null)
         {
-            Message = "No update ready to install";
+            StatusMessage = "No update ready to install";
             return;
         }
 
         try
         {
-            // Show confirmation dialog
             var confirmed = await _shell.ShowAsync(new ConfirmationMessage
             {
                 Title = "Install Hub Update",
@@ -221,13 +264,12 @@ public class UpdateNotificationBarViewModel : ViewModel
             if (!confirmed)
                 return;
 
-            // Use Velopack to apply update and restart (works on both Windows and Linux!)
             var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
             mgr.ApplyUpdatesAndRestart(_pendingUpdate);
         }
         catch (Exception ex)
         {
-            Message = $"Failed to install update: {ex.Message}";
+            StatusMessage = $"Failed to install: {ex.Message}";
         }
     }
 }

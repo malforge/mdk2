@@ -39,7 +39,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -54,15 +54,13 @@ public class ShellViewModel : ViewModel
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
     /// <param name="updateCheckService">Update check service for monitoring MDK versions.</param>
-    /// <param name="updateNotificationBar">Update notification bar view model.</param>
-    public ShellViewModel(IShell shell, ISettings settings, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService, UpdateNotificationBarViewModel updateNotificationBar)
+    public ShellViewModel(IShell shell, ISettings settings, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService)
     {
         _shell = shell;
         _shell = shell;
         _projectService = projectService;
         _projectOverviewViewModel = projectOverviewViewModel;
         _projectActionsViewModel = projectActionsViewModel;
-        UpdateNotificationBar = updateNotificationBar;
         OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
         Settings = settings;
         NavigationView = projectOverviewViewModel;
@@ -81,16 +79,6 @@ public class ShellViewModel : ViewModel
 
         // Start background update check on startup (fire and forget)
         _ = updateCheckService.CheckForUpdatesAsync();
-
-        // Wire up update notification bar
-        updateCheckService.WhenVersionCheckCompleted(versionData =>
-        {
-            updateNotificationBar.IsTemplateUpdateAvailable = versionData.TemplatePackage != null;
-            updateNotificationBar.IsHubUpdateAvailable = versionData.HubVersion != null;
-            updateNotificationBar.HubVersionInfo = versionData.HubVersion;
-            updateNotificationBar.UpdateMessage();
-            updateNotificationBar.IsVisible = updateNotificationBar.IsTemplateUpdateAvailable || updateNotificationBar.IsHubUpdateAvailable;
-        });
     }
 
     /// <summary>
@@ -102,11 +90,6 @@ public class ShellViewModel : ViewModel
     ///     Gets the application settings service accessible to shell-level views.
     /// </summary>
     public ISettings Settings { get; }
-
-    /// <summary>
-    ///     Gets the update notification bar view model.
-    /// </summary>
-    public UpdateNotificationBarViewModel? UpdateNotificationBar { get; }
 
     /// <summary>
     ///     Gets the view model currently displayed in the main content area of the shell.

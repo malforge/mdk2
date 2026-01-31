@@ -18,6 +18,7 @@ class ProjectContext
     // Registry of action types to resolve
     static readonly Type[] ActionTypes =
     [
+        typeof(UpdatesAction),
         typeof(ProjectManagementAction),
         typeof(ProjectInfoAction),
         typeof(ApiDocsAction),

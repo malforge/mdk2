@@ -5,8 +5,8 @@
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
-             x:Class="Mdk.Hub.Features.Projects.Actions.Items.UpdatePackagesActionView"
-             x:DataType="items:UpdatePackagesAction">
+             x:Class="Mdk.Hub.Features.Projects.Actions.Items.UpdatesActionView"
+             x:DataType="items:UpdatesAction">
 
     <Border Background="{StaticResource BackgroundInfoCardBrush}"
             BorderBrush="{StaticResource BorderAccentBrush}"
@@ -17,26 +17,44 @@
         <StackPanel Spacing="12">
             <!-- Header -->
             <Grid ColumnDefinitions="Auto,*">
-                <i:Icon Value="fa-solid fa-box-open"
+                <i:Icon Value="fa-solid fa-download"
                         FontSize="20"
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         Foreground="{StaticResource ForegroundAccentBrush}" />
                 
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="4">
-                    <TextBlock Text="MDK Package Updates" Classes="body medium" />
-                    <TextBlock Text="Update MDK packages for this project or all projects" Classes="caption" TextWrapping="Wrap" />
+                    <TextBlock Text="Updates Available" Classes="body medium" />
+                    <TextBlock Text="{Binding StatusMessage}" Classes="caption" TextWrapping="Wrap" />
                 </StackPanel>
             </Grid>
 
+            <!-- Progress bar (when downloading) -->
+            <ProgressBar IsVisible="{Binding IsDownloading}"
+                         Value="{Binding DownloadProgress}"
+                         Maximum="1"
+                         Height="4" />
+
             <!-- Action buttons -->
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="Update This Project"
-                        Command="{Binding UpdateThisProjectCommand}"
+                <!-- Update Templates button -->
+                <Button Content="Update Templates"
+                        Command="{Binding UpdateTemplatesCommand}"
+                        IsVisible="{Binding IsTemplateUpdateAvailable}"
                         Classes="success"
                         Padding="12,6" />
-                <Button Content="Update All Projects"
-                        Command="{Binding UpdateAllProjectsCommand}"
+
+                <!-- Update Hub button -->
+                <Button Content="{Binding UpdateHubButtonText}"
+                        Command="{Binding UpdateHubCommand}"
+                        IsVisible="{Binding IsHubUpdateAvailable}"
+                        Classes="success"
+                        Padding="12,6" />
+
+                <!-- Install Now button -->
+                <Button Content="Install Now"
+                        Command="{Binding InstallHubUpdateCommand}"
+                        IsVisible="{Binding IsReadyToInstall}"
                         Classes="success"
                         Padding="12,6" />
             </StackPanel>
