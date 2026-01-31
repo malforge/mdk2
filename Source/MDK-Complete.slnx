@@ -44,9 +44,6 @@
       <Platform Project="x64" />
     </Project>
   </Folder>
-  <Project Path="Mdk.CheckDotNet\Mdk.CheckDotNet.csproj">
-    <Platform Project="x64" />
-  </Project>
   <Project Path="Mdk.CommandLine.Tests\Mdk.CommandLine.Tests.csproj">
     <Platform Project="x64" />
   </Project>

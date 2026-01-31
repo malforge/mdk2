@@ -73,7 +73,6 @@ jobs:
     strategy:
       matrix:
         project:
-          - "Mdk.CheckDotNet/Mdk.CheckDotNet.csproj"
           - "Mdk.CommandLine/Mdk.CommandLine.csproj"
           - "Mdk.Notification.Windows/Mdk.Notification.Windows.csproj"
     steps:
@@ -154,12 +153,6 @@ jobs:
       - name: Download tool artifacts
         uses: actions/download-artifact@v4
         with:
-          name: checkdotnet-artifact
-          path: ./Source/Mdk.PbPackager/tools
-
-      - name: Download tool artifacts
-        uses: actions/download-artifact@v4
-        with:
           name: mdk-artifact
           path: ./Source/Mdk.ModPackager/tools
 
@@ -167,12 +160,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: mdknotify-win-artifact
-          path: ./Source/Mdk.ModPackager/tools
-
-      - name: Download tool artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: checkdotnet-artifact
           path: ./Source/Mdk.ModPackager/tools
 
       - name: Restore dependencies
