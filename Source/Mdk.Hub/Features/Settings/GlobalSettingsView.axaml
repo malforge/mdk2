@@ -15,127 +15,15 @@
                 Grid.Column="1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Width="700"
-                Height="550">
-            <StackPanel Spacing="16">
-                <!-- Header -->
-                <TextBlock Text="Global Settings"
-                           Classes="page-title"
-                           Margin="0,0,0,8" />
-
-                <!-- Explanation -->
-                <TextBlock Classes="caption muted"
-                           TextWrapping="Wrap"
-                           Margin="0,0,0,8">
-                    These settings apply globally to all projects in MDK Hub.
-                </TextBlock>
-
-                <!-- Vertical Tabs -->
-                <TabControl Classes="vertical-tabs"
-                            TabStripPlacement="Left"
-                            MinHeight="400">
-
-                    <!-- Projects Tab -->
-                    <TabItem Header="Projects">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Spacing="16" Margin="16">
-                                <!-- Custom Auto Script Output Path -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
-                                               Classes="h3 heading" />
-
-                                    <TextBlock TextWrapping="Wrap"
-                                               Classes="caption muted"
-                                               Margin="0,0,0,4">
-                                        When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
-                                    </TextBlock>
-
-                                    <controls:PathSelectorControl Path="{Binding CustomAutoScriptOutputPath}"
-                                                                  DefaultText="Default"
-                                                                  HorizontalAlignment="Stretch" />
-                                </StackPanel>
-
-                                <!-- Custom Auto Mod Output Path -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="Custom Auto Output Path (Mods)"
-                                               Classes="h3 heading" />
-
-                                    <TextBlock TextWrapping="Wrap"
-                                               Classes="caption muted"
-                                               Margin="0,0,0,4">
-                                        When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
-                                    </TextBlock>
-
-                                    <controls:PathSelectorControl Path="{Binding CustomAutoModOutputPath}"
-                                                                  DefaultText="Default"
-                                                                  HorizontalAlignment="Stretch" />
-                                </StackPanel>
-
-                                <!-- Custom Auto Binary Path -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="Custom Auto Binary Path"
-                                               Classes="h3 heading" />
-
-                                    <TextBlock TextWrapping="Wrap"
-                                               Classes="caption muted"
-                                               Margin="0,0,0,4">
-                                        When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
-                                    </TextBlock>
-
-                                    <controls:PathSelectorControl Path="{Binding CustomAutoBinaryPath}"
-                                                                  DefaultText="Default"
-                                                                  HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
-
-                    <!-- Updates Tab -->
-                    <TabItem Header="Updates">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel Spacing="16" Margin="16">
-                                <!-- Prerelease Updates -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="Hub Updates"
-                                               Classes="h3 heading" />
-
-                                    <CheckBox IsChecked="{Binding IncludePrereleaseUpdates}"
-                                              Content="Include prerelease versions"
-                                              Margin="0,4,0,0" />
-
-                                    <TextBlock TextWrapping="Wrap"
-                                               Classes="caption muted"
-                                               Margin="0,4,0,0">
-                                        When enabled, MDK Hub will check for and notify you about prerelease (beta) versions. Prereleases may contain experimental features and bugs. Notifications will clearly indicate when an update is a prerelease.
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <!-- Prerequisites Check -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="Prerequisites"
-                                               Classes="h3 heading" />
-
-                                    <TextBlock TextWrapping="Wrap"
-                                               Classes="caption muted"
-                                               Margin="0,0,0,4">
-                                        Check if .NET SDK 9.0 and MDK² template package are installed.
-                                    </TextBlock>
-
-                                    <Button Content="Check Prerequisites"
-                                            Command="{Binding CheckPrerequisitesCommand}"
-                                            HorizontalAlignment="Left"
-                                            MinWidth="150" />
-                                </StackPanel>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
-                </TabControl>
-
-                <!-- Buttons -->
-                <StackPanel Orientation="Horizontal"
+                Width="650"
+                Height="400">
+            <DockPanel LastChildFill="True">
+                <!-- Buttons at bottom -->
+                <StackPanel DockPanel.Dock="Bottom"
+                            Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="8"
-                            Margin="0,8,0,0">
+                            Margin="0,16,0,0">
                     <Button Content="Save"
                             Command="{Binding SaveCommand}"
                             MinWidth="75" />
@@ -144,7 +32,118 @@
                             Classes="subtle"
                             MinWidth="75" />
                 </StackPanel>
-            </StackPanel>
+
+                <!-- Header at top -->
+                <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,16">
+                    <TextBlock Text="Global Settings"
+                               Classes="page-title" />
+
+                    <TextBlock Classes="caption muted"
+                               TextWrapping="Wrap">
+                        These settings apply globally to all projects in MDK Hub.
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Tabs fill remaining space -->
+                <TabControl Classes="vertical-tabs"
+                            TabStripPlacement="Left">
+
+                        <!-- Projects Tab -->
+                        <TabItem Header="Projects">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="16" Margin="16">
+                                    <!-- Custom Auto Script Output Path -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
+                                                   Classes="h3 heading" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,0,0,4">
+                                            When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
+                                        </TextBlock>
+
+                                        <controls:PathSelectorControl Path="{Binding CustomAutoScriptOutputPath}"
+                                                                      DefaultText="Default"
+                                                                      HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+
+                                    <!-- Custom Auto Mod Output Path -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Custom Auto Output Path (Mods)"
+                                                   Classes="h3 heading" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,0,0,4">
+                                            When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
+                                        </TextBlock>
+
+                                        <controls:PathSelectorControl Path="{Binding CustomAutoModOutputPath}"
+                                                                      DefaultText="Default"
+                                                                      HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+
+                                    <!-- Custom Auto Binary Path -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Custom Auto Binary Path"
+                                                   Classes="h3 heading" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,0,0,4">
+                                            When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
+                                        </TextBlock>
+
+                                        <controls:PathSelectorControl Path="{Binding CustomAutoBinaryPath}"
+                                                                      DefaultText="Default"
+                                                                      HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- Updates Tab -->
+                        <TabItem Header="Updates">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="16" Margin="16">
+                                    <!-- Prerelease Updates -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Hub Updates"
+                                                   Classes="h3 heading" />
+
+                                        <CheckBox IsChecked="{Binding IncludePrereleaseUpdates}"
+                                                  Content="Include prerelease versions"
+                                                  Margin="0,4,0,0" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,4,0,0">
+                                            When enabled, MDK Hub will check for and notify you about prerelease (beta) versions. Prereleases may contain experimental features and bugs. Notifications will clearly indicate when an update is a prerelease.
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Prerequisites Check -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Prerequisites"
+                                                   Classes="h3 heading" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,0,0,4">
+                                            Check if .NET SDK 9.0 and MDK² template package are installed.
+                                        </TextBlock>
+
+                                        <Button Content="Check Prerequisites"
+                                                Command="{Binding CheckPrerequisitesCommand}"
+                                                HorizontalAlignment="Left"
+                                                MinWidth="150" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
+            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

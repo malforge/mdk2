@@ -47,7 +47,13 @@
         <!-- Tabs fill remaining space -->
         <TabControl SelectedIndex="1">
             <!-- Main INI Tab -->
-            <TabItem Header="Main (mdk.ini)">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Main" />
+                        <TextBlock Text="mdk.ini" Classes="caption muted" />
+                    </StackPanel>
+                </TabItem.Header>
                 <ScrollViewer>
                     <StackPanel Spacing="12" Margin="0,12,12,0">
                         <TextBlock
@@ -240,7 +246,13 @@
             </TabItem>
 
             <!-- Local INI Tab -->
-            <TabItem Header="Local (mdk.local.ini)">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Local" />
+                        <TextBlock Text="mdk.local.ini" Classes="caption muted" />
+                    </StackPanel>
+                </TabItem.Header>
                 <ScrollViewer>
                     <StackPanel Spacing="12" Margin="0,12,12,0">
                         <TextBlock
