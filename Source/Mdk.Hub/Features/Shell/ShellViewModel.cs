@@ -67,9 +67,12 @@ public class ShellViewModel : ViewModel
         NavigationView = projectOverviewViewModel;
         CurrentView = projectActionsViewModel;
 
-        // Initialize child VMs with reference to this shell
-        projectOverviewViewModel.Initialize(this);
-        projectActionsViewModel.Initialize(this);
+        // Initialize child VMs when ready
+        shell.WhenReady(_ =>
+        {
+            projectOverviewViewModel.Initialize(this);
+            projectActionsViewModel.Initialize(this);
+        });
 
         // Listen for navigation requests to coordinate OpenOptions flag
         projectService.ProjectNavigationRequested += OnProjectNavigationRequested;
@@ -78,9 +81,12 @@ public class ShellViewModel : ViewModel
         if (Program.IsFirstRun)
             _ = CheckFirstRunSetupAsync(updateCheckService, shell);
 
-        // Start background checks on startup (fire and forget)
-        _ = updateCheckService.CheckForUpdatesAsync();
-        _ = announcementService.CheckForAnnouncementsAsync();
+        // Start background checks when ready (fire and forget)
+        shell.WhenReady(args =>
+        {
+            _ = updateCheckService.CheckForUpdatesAsync();
+            _ = announcementService.CheckForAnnouncementsAsync();
+        });
     }
 
     /// <summary>

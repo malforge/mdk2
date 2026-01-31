@@ -32,7 +32,7 @@ public class ProjectService : IProjectService
     readonly ISnackbarService _snackbarService;
     readonly ProjectUpdateChecker _updateChecker;
     readonly Dictionary<CanonicalPath, (bool needsUpdate, int updateCount, IReadOnlyList<PackageUpdateInfo> updates)> _updateStates = new();
-    readonly object _updateStatesLock = new();
+    readonly Lock _updateStatesLock = new();
 
     ProjectStateData _state;
 
@@ -63,7 +63,7 @@ public class ProjectService : IProjectService
         ipc.MessageReceived += async (_, e) => await HandleBuildNotificationAsync(e.Message);
 
         // Handle startup arguments when shell is ready
-        shell.WhenStarted(args => HandleStartupArguments(args));
+        shell.WhenReady(args => HandleStartupArguments(args));
     }
 
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;

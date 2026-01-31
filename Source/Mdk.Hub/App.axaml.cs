@@ -17,6 +17,16 @@ namespace Mdk.Hub;
 public class App : Application
 {
     public static IDependencyContainer Container { get; } = new DependencyContainer();
+    
+    /// <summary>
+    /// When true, simulates Linux behavior on Windows for testing purposes.
+    /// </summary>
+    public static bool SimulateLinux { get; private set; }
+    
+    /// <summary>
+    /// Returns true if running on Linux or simulating Linux mode.
+    /// </summary>
+    public static bool IsLinux => SimulateLinux || OperatingSystem.IsLinux();
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -58,7 +68,15 @@ public class App : Application
                 ss.SetMainWindow(shellWindow);
 
             var shell = Container.Resolve<IShell>();
-            shell.Start(desktop.Args ?? Array.Empty<string>());
+            
+            // Parse command line arguments
+            var args = desktop.Args ?? Array.Empty<string>();
+            SimulateLinux = args.Contains("--simulate-linux", StringComparer.OrdinalIgnoreCase);
+            
+            if (SimulateLinux)
+                logger.Info("Running in Linux simulation mode");
+            
+            shell.Start(args);
 
             logger.Info("MDK Hub application started successfully");
         }

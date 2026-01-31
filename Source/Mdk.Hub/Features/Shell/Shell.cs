@@ -12,15 +12,17 @@ using Mdk.Hub.Features.Settings;
 namespace Mdk.Hub.Features.Shell;
 
 [Singleton<IShell>]
-public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyViewModel, ISettings settings, ILogger logger) : IShell
+public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyViewModel, GlobalSettings globalSettings, ILogger logger) : IShell
 {
     readonly IDependencyContainer _container = container;
-    readonly ISettings _settings = settings;
+    readonly GlobalSettings _globalSettings = globalSettings;
     readonly ILogger _logger = logger;
     readonly List<Action<string[]>> _startupCallbacks = new();
+    readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
     readonly Lazy<ShellViewModel> _viewModel = lazyViewModel;
     bool _hasStarted;
+    bool _isReady;
     string[]? _startupArgs;
 
     public event EventHandler? WindowFocusGained;
@@ -35,11 +37,18 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
 
         // Write Hub executable path for MDK CLI to discover
         WriteHubPath();
+        
+        // On Linux, check if required paths are configured
+        CheckLinuxPathConfiguration();
 
         // Invoke queued callbacks
         foreach (var callback in _startupCallbacks)
             callback(args);
         _startupCallbacks.Clear();
+        
+        // If not on Linux or paths are valid, we're ready immediately
+        if (!App.IsLinux || !RequiresLinuxPathConfiguration())
+            SetReady();
     }
 
     public void WhenStarted(Action<string[]> callback)
@@ -48,6 +57,36 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
             callback(_startupArgs!);
         else
             _startupCallbacks.Add(callback);
+    }
+    
+    public void WhenReady(Action<string[]> callback)
+    {
+        if (_isReady)
+            callback(_startupArgs!);
+        else
+            _readyCallbacks.Add(callback);
+    }
+    
+    void SetReady()
+    {
+        if (_isReady)
+            return;
+            
+        _isReady = true;
+        _logger.Info("Shell is ready for operation");
+        
+        foreach (var callback in _readyCallbacks)
+            callback(_startupArgs!);
+        _readyCallbacks.Clear();
+    }
+    
+    bool RequiresLinuxPathConfiguration()
+    {
+        var binPath = _globalSettings.CustomAutoBinaryPath;
+        var scriptOutputPath = _globalSettings.CustomAutoScriptOutputPath;
+        var modOutputPath = _globalSettings.CustomAutoModOutputPath;
+        
+        return binPath == "auto" || scriptOutputPath == "auto" || modOutputPath == "auto";
     }
 
     public void AddOverlay(OverlayModel model)
@@ -61,6 +100,30 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
 
         model.Dismissed += onDismissed;
         _viewModel.Value.OverlayViews.Add(model);
+    }
+    
+    void ShowGlobalOptions(bool openedForLinuxValidation = false)
+    {
+        var viewModel = App.Container.Resolve<GlobalSettingsViewModel>();
+        if (openedForLinuxValidation)
+        {
+            viewModel.MarkAsOpenedForLinuxValidation();
+            
+            // When dismissed, check if we can now set ready
+            viewModel.Dismissed += (_, _) =>
+            {
+                // If paths are now valid, we're ready
+                if (!RequiresLinuxPathConfiguration())
+                    SetReady();
+            };
+        }
+        AddOverlay(viewModel);
+    }
+
+    public void Shutdown()
+    {
+        _logger.Info("Shutdown requested");
+        _viewModel.Value.RequestClose();
     }
 
     public void ShowToast(string message, int durationMs = 3000)
@@ -155,6 +218,28 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
         catch (Exception ex)
         {
             _logger.Warning($"Failed to write Hub path file: {ex.Message}");
+        }
+    }
+    
+    void CheckLinuxPathConfiguration()
+    {
+        if (!App.IsLinux)
+            return;
+            
+        var binPath = _globalSettings.CustomAutoBinaryPath;
+        var scriptOutputPath = _globalSettings.CustomAutoScriptOutputPath;
+        var modOutputPath = _globalSettings.CustomAutoModOutputPath;
+        
+        // On Linux, "auto" is not acceptable - paths must be explicitly set
+        if (binPath == "auto" || scriptOutputPath == "auto" || modOutputPath == "auto")
+        {
+            _logger.Info($"Linux: Required paths not configured (bin={binPath}, script={scriptOutputPath}, mod={modOutputPath}), opening global options");
+            
+            // Delay slightly to let the window finish loading
+            Task.Delay(500).ContinueWith(_ =>
+            {
+                ShowGlobalOptions(openedForLinuxValidation: true);
+            });
         }
     }
 

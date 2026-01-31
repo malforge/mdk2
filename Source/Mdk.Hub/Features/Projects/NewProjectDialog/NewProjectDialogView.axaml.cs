@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Mal.DependencyInjection;
@@ -20,7 +22,7 @@ public partial class NewProjectDialogView : UserControl
         Title = "Create New Project",
         Message = "Enter a name and location for your new project.",
         ProjectType = ProjectType.IngameScript,
-        DefaultLocation = @"C:\Users\Example\Documents\Projects",
+        DefaultLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Projects"),
         OkText = "Create",
         CancelText = "Cancel"
     };

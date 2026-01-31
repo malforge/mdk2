@@ -17,6 +17,9 @@ public partial class FolderBrowserControl : UserControl
     public static readonly StyledProperty<string> WatermarkProperty =
         AvaloniaProperty.Register<FolderBrowserControl, string>(nameof(Watermark), "Select a folder...");
 
+    public static readonly StyledProperty<bool> HasErrorProperty =
+        AvaloniaProperty.Register<FolderBrowserControl, bool>(nameof(HasError), false);
+
     public FolderBrowserControl()
     {
         InitializeComponent();
@@ -32,6 +35,12 @@ public partial class FolderBrowserControl : UserControl
     {
         get => GetValue(WatermarkProperty);
         set => SetValue(WatermarkProperty, value);
+    }
+
+    public bool HasError
+    {
+        get => GetValue(HasErrorProperty);
+        set => SetValue(HasErrorProperty, value);
     }
 
     async void OnBrowseClick(object? sender, RoutedEventArgs e)

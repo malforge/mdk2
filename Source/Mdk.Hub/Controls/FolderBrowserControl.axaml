@@ -10,9 +10,35 @@
 
     <Grid ColumnDefinitions="*,Auto">
         <TextBox Grid.Column="0"
+                 Name="PathTextBox"
                  Text="{Binding Path, RelativeSource={RelativeSource AncestorType=controls:FolderBrowserControl}, Mode=TwoWay}"
                  Watermark="{Binding Watermark, RelativeSource={RelativeSource AncestorType=controls:FolderBrowserControl}}"
-                 VerticalAlignment="Stretch" />
+                 VerticalAlignment="Stretch">
+            <TextBox.Styles>
+                <Style Selector="TextBox">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+                    <Setter Property="BorderThickness" Value="1" />
+                </Style>
+                <!-- Error state with higher priority -->
+                <Style Selector="controls|FolderBrowserControl[HasError=True] TextBox" x:DataType="TextBox">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </Style>
+                <!-- Error state overrides ALL interaction states -->
+                <Style Selector="controls|FolderBrowserControl[HasError=True] TextBox:focus /template/ Border#PART_BorderElement">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </Style>
+                <Style Selector="controls|FolderBrowserControl[HasError=True] TextBox:pointerover /template/ Border#PART_BorderElement">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </Style>
+                <Style Selector="controls|FolderBrowserControl[HasError=True] TextBox:focus:pointerover /template/ Border#PART_BorderElement">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </Style>
+            </TextBox.Styles>
+        </TextBox>
 
         <Button Grid.Column="1"
                 Margin="4,0,0,0"

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
@@ -25,15 +26,22 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoModOutputPath;
     string _customAutoScriptOutputPath;
     bool _includePrereleaseUpdates;
+    bool _openedForLinuxValidation;
 
     public GlobalSettingsViewModel(GlobalSettings globalSettings, IUpdateCheckService updateCheckService, IShell shell)
     {
         _globalSettings = globalSettings;
         _updateCheckService = updateCheckService;
         _shell = shell;
-        _customAutoScriptOutputPath = _globalSettings.CustomAutoScriptOutputPath;
-        _customAutoModOutputPath = _globalSettings.CustomAutoModOutputPath;
-        _customAutoBinaryPath = _globalSettings.CustomAutoBinaryPath;
+        
+        // On Linux, "auto" is not valid - convert to empty string for editing
+        var scriptPath = _globalSettings.CustomAutoScriptOutputPath;
+        var modPath = _globalSettings.CustomAutoModOutputPath;
+        var binPath = _globalSettings.CustomAutoBinaryPath;
+        
+        _customAutoScriptOutputPath = (App.IsLinux && scriptPath == "auto") ? "" : scriptPath;
+        _customAutoModOutputPath = (App.IsLinux && modPath == "auto") ? "" : modPath;
+        _customAutoBinaryPath = (App.IsLinux && binPath == "auto") ? "" : binPath;
         _includePrereleaseUpdates = _globalSettings.IncludePrereleaseUpdates;
         _saveCommand = new RelayCommand(Save);
         _cancelCommand = new RelayCommand(Cancel);
@@ -43,23 +51,60 @@ public class GlobalSettingsViewModel : OverlayModel
     public ICommand SaveCommand => _saveCommand;
     public ICommand CancelCommand => _cancelCommand;
     public ICommand CheckPrerequisitesCommand => _checkPrerequisitesCommand;
+    
+    public event EventHandler? FocusFirstInvalidField;
+    
+    public void MarkAsOpenedForLinuxValidation()
+    {
+        _openedForLinuxValidation = true;
+        
+        // Delay to let the UI render, then focus the first invalid field
+        Task.Delay(600).ContinueWith(_ =>
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                FocusFirstInvalidField?.Invoke(this, EventArgs.Empty);
+            });
+        });
+    }
 
     public string CustomAutoScriptOutputPath
     {
         get => _customAutoScriptOutputPath;
-        set => SetProperty(ref _customAutoScriptOutputPath, value);
+        set
+        {
+            if (SetProperty(ref _customAutoScriptOutputPath, value))
+            {
+                OnPropertyChanged(nameof(ScriptPathValidationError));
+                OnPropertyChanged(nameof(HasScriptPathError));
+            }
+        }
     }
 
     public string CustomAutoModOutputPath
     {
         get => _customAutoModOutputPath;
-        set => SetProperty(ref _customAutoModOutputPath, value);
+        set
+        {
+            if (SetProperty(ref _customAutoModOutputPath, value))
+            {
+                OnPropertyChanged(nameof(ModPathValidationError));
+                OnPropertyChanged(nameof(HasModPathError));
+            }
+        }
     }
 
     public string CustomAutoBinaryPath
     {
         get => _customAutoBinaryPath;
-        set => SetProperty(ref _customAutoBinaryPath, value);
+        set
+        {
+            if (SetProperty(ref _customAutoBinaryPath, value))
+            {
+                OnPropertyChanged(nameof(BinaryPathValidationError));
+                OnPropertyChanged(nameof(HasBinaryPathError));
+            }
+        }
     }
 
     public bool IncludePrereleaseUpdates
@@ -67,9 +112,80 @@ public class GlobalSettingsViewModel : OverlayModel
         get => _includePrereleaseUpdates;
         set => SetProperty(ref _includePrereleaseUpdates, value);
     }
+    
+    public bool IsLinux => App.IsLinux;
+    
+    public bool HasScriptPathError => !string.IsNullOrWhiteSpace(ScriptPathValidationError);
+    public bool HasModPathError => !string.IsNullOrWhiteSpace(ModPathValidationError);
+    public bool HasBinaryPathError => !string.IsNullOrWhiteSpace(BinaryPathValidationError);
+    
+    public string? ScriptPathValidationError =>
+        App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoScriptOutputPath) || _customAutoScriptOutputPath == "auto")
+            ? "⚠ Please set a valid path" 
+            : null;
+    
+    public string? ModPathValidationError => 
+        App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoModOutputPath) || _customAutoModOutputPath == "auto")
+            ? "⚠ Please set a valid path" 
+            : null;
+    
+    public string? BinaryPathValidationError => 
+        App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoBinaryPath) || _customAutoBinaryPath == "auto")
+            ? "⚠ Please set a valid path" 
+            : App.IsLinux && !string.IsNullOrWhiteSpace(_customAutoBinaryPath) && !IsValidBinaryPath(_customAutoBinaryPath)
+            ? "⚠ Path does not contain Space Engineers binaries"
+            : null;
+    
+    static bool IsValidBinaryPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path == "auto")
+            return false;
+            
+        if (!Directory.Exists(path))
+            return false;
+        
+        // Check for key SE binaries that MDK projects reference
+        var requiredBinaries = new[]
+        {
+            "Sandbox.Common.dll",
+            "Sandbox.Game.dll",
+            "SpaceEngineers.Game.dll",
+            "VRage.dll"
+        };
+        
+        // At least one must exist
+        foreach (var binary in requiredBinaries)
+        {
+            if (File.Exists(Path.Combine(path, binary)))
+                return true;
+        }
+        
+        return false;
+    }
 
     void Save()
     {
+        // On Linux, paths are required
+        if (App.IsLinux)
+        {
+            var errors = new List<string>();
+            
+            if (string.IsNullOrWhiteSpace(_customAutoBinaryPath) || _customAutoBinaryPath == "auto")
+                errors.Add("Space Engineers binary path is required on Linux");
+                
+            if (string.IsNullOrWhiteSpace(_customAutoScriptOutputPath) || _customAutoScriptOutputPath == "auto")
+                errors.Add("Script output path is required on Linux");
+                
+            if (string.IsNullOrWhiteSpace(_customAutoModOutputPath) || _customAutoModOutputPath == "auto")
+                errors.Add("Mod output path is required on Linux");
+            
+            if (errors.Count > 0)
+            {
+                _shell.ShowToast("Please set all required paths for Linux", 3000);
+                return;
+            }
+        }
+        
         _globalSettings.CustomAutoScriptOutputPath = _customAutoScriptOutputPath;
         _globalSettings.CustomAutoModOutputPath = _customAutoModOutputPath;
         _globalSettings.CustomAutoBinaryPath = _customAutoBinaryPath;
@@ -77,7 +193,41 @@ public class GlobalSettingsViewModel : OverlayModel
         Dismiss();
     }
 
-    void Cancel() => Dismiss();
+    async void Cancel()
+    {
+        // On Linux, if dialog was auto-opened for validation and SAVED paths are still invalid, confirm shutdown
+        if (App.IsLinux && _openedForLinuxValidation)
+        {
+            // Check the ACTUAL saved settings, not the ViewModel fields
+            var savedBinPath = _globalSettings.CustomAutoBinaryPath;
+            var savedScriptPath = _globalSettings.CustomAutoScriptOutputPath;
+            var savedModPath = _globalSettings.CustomAutoModOutputPath;
+            
+            var hasErrors = 
+                savedBinPath == "auto" || savedScriptPath == "auto" || savedModPath == "auto";
+            
+            if (hasErrors)
+            {
+                var result = await _shell.ShowAsync(new ConfirmationMessage
+                {
+                    Title = "Invalid Configuration",
+                    Message = "The Hub requires valid paths to function. Do you want to shut down the Hub?",
+                    OkText = "Shut Down",
+                    CancelText = "Go Back"
+                });
+                
+                if (result)
+                {
+                    // User chose to shut down
+                    _shell.Shutdown();
+                }
+                // User chose "Go Back" - don't dismiss, stay in dialog
+                return;
+            }
+        }
+        
+        Dismiss();
+    }
 
     async Task CheckPrerequisitesAsync()
     {

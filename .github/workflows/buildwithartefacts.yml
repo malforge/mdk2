@@ -228,48 +228,48 @@ jobs:
           retention-days: 7
           path: ./Source/Releases/*
 
-  build-hub-linux:
-    runs-on: ubuntu-latest
-    needs: update-templates
-    
-    defaults:
-      run:
-        working-directory: ./Source
-        shell: bash
-    
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.x
-
-      - name: Install Velopack
-        run: dotnet tool install -g vpk
-
-      - name: Get version from PackageVersion.txt
-        id: get-version
-        run: |
-          VERSION=$(cat Mdk.Hub/PackageVersion.txt | tr -d '\r' | tr -d '\n' | xargs)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Version: $VERSION"
-
-      - name: Publish Mdk.Hub for Linux
-        run: |
-          dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net9.0 -r linux-x64 --self-contained -o publish/linux
-
-      - name: Build Velopack AppImage
-        run: |
-          vpk pack --packId Malforge.MdkHub --packVersion $VERSION --packDir publish/linux --mainExe Mdk.Hub --packTitle "MDK Hub" --icon Mdk.Hub/Assets/malware256.png
-
-      - name: Upload Linux installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mdk-hub-linux-installer
-          if-no-files-found: error
-          retention-days: 7
-          path: ./Source/Releases/*
+  # build-hub-linux:
+  #   runs-on: ubuntu-latest
+  #   needs: update-templates
+  #   
+  #   defaults:
+  #     run:
+  #       working-directory: ./Source
+  #       shell: bash
+  #   
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Setup .NET
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: 9.x
+  #
+  #     - name: Install Velopack
+  #       run: dotnet tool install -g vpk
+  #
+  #     - name: Get version from PackageVersion.txt
+  #       id: get-version
+  #       run: |
+  #         VERSION=$(cat Mdk.Hub/PackageVersion.txt | tr -d '\r' | tr -d '\n' | xargs)
+  #         echo "VERSION=$VERSION" >> $GITHUB_ENV
+  #         echo "Version: $VERSION"
+  #
+  #     - name: Publish Mdk.Hub for Linux
+  #       run: |
+  #         dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net9.0 -r linux-x64 --self-contained -o publish/linux
+  #
+  #     - name: Build Velopack AppImage
+  #       run: |
+  #         vpk pack --packId Malforge.MdkHub --packVersion $VERSION --packDir publish/linux --mainExe Mdk.Hub --packTitle "MDK Hub" --icon Mdk.Hub/Assets/malware256.png
+  #
+  #     - name: Upload Linux installer artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: mdk-hub-linux-installer
+  #         if-no-files-found: error
+  #         retention-days: 7
+  #         path: ./Source/Releases/*
 
   deploy:
     if: github.ref == 'refs/heads/main'
@@ -293,44 +293,43 @@ jobs:
             dotnet nuget push $file --api-key "${{ secrets.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
           }
 
-  # TODO: Uncomment when ready to publish Hub installers to GitHub Releases (main branch only)
-  # deploy-hub:
-  #   if: github.ref == 'refs/heads/main'
-  #   runs-on: ubuntu-latest
-  #   environment: Deploy
-  #   needs:
-  #     - build-hub-windows
-  #     - build-hub-linux
-  #   
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     
-  #     - name: Get version from PackageVersion.txt
-  #       id: get-version
-  #       run: |
-  #         VERSION=$(cat Source/Mdk.Hub/PackageVersion.txt | tr -d '\r' | tr -d '\n' | xargs)
-  #         echo "VERSION=$VERSION" >> $GITHUB_ENV
-  #     
-  #     - name: Download Windows installer
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: mdk-hub-windows-installer
-  #         path: ./releases
-  #     
-  #     - name: Download Linux installer
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: mdk-hub-linux-installer
-  #         path: ./releases
-  #     
-  #     - name: Create GitHub Release
-  #       uses: softprops/action-gh-release@v1
-  #       with:
-  #         tag_name: hub-v${{ env.VERSION }}
-  #         name: MDK Hub v${{ env.VERSION }}
-  #         draft: false
-  #         prerelease: false
-  #         files: |
-  #           ./releases/*
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  deploy-hub:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: Deploy
+    needs:
+      - build-hub-windows
+      # - build-hub-linux
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get version from PackageVersion.txt
+        id: get-version
+        run: |
+          VERSION=$(cat Source/Mdk.Hub/PackageVersion.txt | tr -d '\r' | tr -d '\n' | xargs)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: mdk-hub-windows-installer
+          path: ./releases
+      
+      # - name: Download Linux installer
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: mdk-hub-linux-installer
+      #     path: ./releases
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: hub-v${{ env.VERSION }}
+          name: MDK Hub v${{ env.VERSION }}
+          draft: false
+          prerelease: true
+          files: |
+            ./releases/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

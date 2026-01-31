@@ -21,6 +21,13 @@ public interface IShell
     ///     If already started, invokes immediately. Otherwise queues until Start() is called.
     /// </summary>
     void WhenStarted(Action<string[]> callback);
+    
+    /// <summary>
+    ///     Registers a callback to be invoked when Shell is ready for operation.
+    ///     On Linux, this means required paths are configured. Otherwise, ready immediately after start.
+    ///     If already ready, invokes immediately. Otherwise queues until ready.
+    /// </summary>
+    void WhenReady(Action<string[]> callback);
 
     void AddOverlay(OverlayModel model);
 
@@ -56,6 +63,11 @@ public interface IShell
     /// <param name="info">Info containing description and navigation action. For multiple registrations, action is empty.</param>
     /// <returns>True if there are unsaved changes, false otherwise.</returns>
     bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info);
+
+    /// <summary>
+    ///     Requests the application to shut down gracefully.
+    /// </summary>
+    void Shutdown();
 
     // Dialog methods
     Task ShowOverlayAsync(OverlayModel model);

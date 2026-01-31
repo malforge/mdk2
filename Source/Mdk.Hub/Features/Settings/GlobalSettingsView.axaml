@@ -63,9 +63,24 @@
                                             When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
                                         </TextBlock>
 
+                                        <!-- Windows: PathSelectorControl with auto support -->
                                         <controls:PathSelectorControl Path="{Binding CustomAutoScriptOutputPath}"
                                                                       DefaultText="Default"
-                                                                      HorizontalAlignment="Stretch" />
+                                                                      HorizontalAlignment="Stretch"
+                                                                      IsVisible="{Binding !IsLinux}" />
+                                        
+                                        <!-- Linux: FolderBrowserControl (required path) -->
+                                        <controls:FolderBrowserControl Path="{Binding CustomAutoScriptOutputPath}"
+                                                                       Watermark="Select script output folder (required)"
+                                                                       HorizontalAlignment="Stretch"
+                                                                       HasError="{Binding HasScriptPathError}"
+                                                                       IsVisible="{Binding IsLinux}" />
+                                        
+                                        <TextBlock Text="{Binding ScriptPathValidationError}"
+                                                   IsVisible="{Binding ScriptPathValidationError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                   Foreground="{DynamicResource DangerBrush}"
+                                                   Classes="caption"
+                                                   Margin="0,4,0,0" />
                                     </StackPanel>
 
                                     <!-- Custom Auto Mod Output Path -->
@@ -81,7 +96,20 @@
 
                                         <controls:PathSelectorControl Path="{Binding CustomAutoModOutputPath}"
                                                                       DefaultText="Default"
-                                                                      HorizontalAlignment="Stretch" />
+                                                                      HorizontalAlignment="Stretch"
+                                                                      IsVisible="{Binding !IsLinux}" />
+                                        
+                                        <controls:FolderBrowserControl Path="{Binding CustomAutoModOutputPath}"
+                                                                       Watermark="Select mod output folder (required)"
+                                                                       HorizontalAlignment="Stretch"
+                                                                       HasError="{Binding HasModPathError}"
+                                                                       IsVisible="{Binding IsLinux}" />
+                                        
+                                        <TextBlock Text="{Binding ModPathValidationError}"
+                                                   IsVisible="{Binding ModPathValidationError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                   Foreground="{DynamicResource DangerBrush}"
+                                                   Classes="caption"
+                                                   Margin="0,4,0,0" />
                                     </StackPanel>
 
                                     <!-- Custom Auto Binary Path -->
@@ -97,7 +125,20 @@
 
                                         <controls:PathSelectorControl Path="{Binding CustomAutoBinaryPath}"
                                                                       DefaultText="Default"
-                                                                      HorizontalAlignment="Stretch" />
+                                                                      HorizontalAlignment="Stretch"
+                                                                      IsVisible="{Binding !IsLinux}" />
+                                        
+                                        <controls:FolderBrowserControl Path="{Binding CustomAutoBinaryPath}"
+                                                                       Watermark="Select Space Engineers binary folder (required)"
+                                                                       HorizontalAlignment="Stretch"
+                                                                       HasError="{Binding HasBinaryPathError}"
+                                                                       IsVisible="{Binding IsLinux}" />
+                                        
+                                        <TextBlock Text="{Binding BinaryPathValidationError}"
+                                                   IsVisible="{Binding BinaryPathValidationError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                   Foreground="{DynamicResource DangerBrush}"
+                                                   Classes="caption"
+                                                   Margin="0,4,0,0" />
                                     </StackPanel>
                                 </StackPanel>
                             </ScrollViewer>
