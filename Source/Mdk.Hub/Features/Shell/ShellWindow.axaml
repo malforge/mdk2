@@ -9,7 +9,8 @@
         x:Class="Mdk.Hub.Features.Shell.ShellWindow"
         x:DataType="vm:ShellViewModel"
         Icon="/Assets/malware.ico"
-        Title="MDK² Hub">
+        Title="MDK² Hub"
+        KeyDown="OnKeyDown">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,

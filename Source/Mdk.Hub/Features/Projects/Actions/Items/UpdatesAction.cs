@@ -40,6 +40,15 @@ public class UpdatesAction : ActionItem
 
         // Subscribe to update check results
         _updateCheckService.WhenVersionCheckCompleted(OnVersionCheckCompleted);
+
+        // Subscribe to refresh requests
+        _shell.RefreshRequested += OnRefreshRequested;
+    }
+
+    void OnRefreshRequested(object? sender, EventArgs e)
+    {
+        // Force a fresh update check
+        _ = _updateCheckService.CheckForUpdatesAsync();
     }
 
     public override string? Category => null; // No category - appears at top

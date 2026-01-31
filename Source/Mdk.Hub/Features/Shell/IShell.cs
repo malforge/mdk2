@@ -55,6 +55,16 @@ public interface IShell
     event EventHandler? EasterEggActiveChanged;
 
     /// <summary>
+    ///     Raised when a refresh is explicitly requested (e.g., Ctrl+R).
+    /// </summary>
+    event EventHandler? RefreshRequested;
+
+    /// <summary>
+    ///     Requests a refresh of all UI components that support it.
+    /// </summary>
+    void RequestRefresh();
+
+    /// <summary>
     ///     Registers unsaved changes with a description and navigation action.
     ///     Returns a handle that must be disposed when changes are saved.
     /// </summary>

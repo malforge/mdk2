@@ -39,7 +39,7 @@ public class ShellViewModel : ViewModel
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -54,7 +54,8 @@ public class ShellViewModel : ViewModel
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
     /// <param name="updateCheckService">Update check service for monitoring MDK versions.</param>
-    public ShellViewModel(IShell shell, ISettings settings, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService)
+    /// <param name="announcementService">Announcement service for user notifications.</param>
+    public ShellViewModel(IShell shell, ISettings settings, IProjectService projectService, ProjectOverviewViewModel projectOverviewViewModel, ProjectActionsViewModel projectActionsViewModel, IUpdateCheckService updateCheckService, Announcements.IAnnouncementService announcementService)
     {
         _shell = shell;
         _shell = shell;
@@ -77,8 +78,9 @@ public class ShellViewModel : ViewModel
         if (Program.IsFirstRun)
             _ = CheckFirstRunSetupAsync(updateCheckService, shell);
 
-        // Start background update check on startup (fire and forget)
+        // Start background checks on startup (fire and forget)
         _ = updateCheckService.CheckForUpdatesAsync();
+        _ = announcementService.CheckForAnnouncementsAsync();
     }
 
     /// <summary>
@@ -189,6 +191,11 @@ public class ShellViewModel : ViewModel
     ///     Requests the window to close programmatically (bypasses CanClose check).
     /// </summary>
     public void RequestClose() => CloseRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
+    ///     Requests a refresh of all UI components.
+    /// </summary>
+    public void RequestRefresh() => _shell?.RequestRefresh();
 
     void OnOverlayViewsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => OnPropertyChanged(nameof(HasOverlays));
 

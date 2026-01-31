@@ -64,8 +64,18 @@
                                     HorizontalContentAlignment="Left"
                                     Classes="subtle">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
+                                    <i:Icon Value="fa-solid fa-file-lines" FontSize="16" />
                                     <TextBlock Text="Open Logs Folder" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding OpenDataCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Classes="subtle">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <i:Icon Value="fa-solid fa-folder-open" FontSize="16" />
+                                    <TextBlock Text="Open Data Folder" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>

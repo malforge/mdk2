@@ -17,7 +17,7 @@ public class FileLogger : ILogger
 
     public FileLogger()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         _logDirectory = Path.Combine(appData, "MDK2", "Hub", "Logs");
 
         // Create directory if it doesn't exist

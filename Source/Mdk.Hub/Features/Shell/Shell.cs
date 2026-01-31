@@ -24,6 +24,7 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
 
     public event EventHandler? WindowFocusGained;
     public event EventHandler? EasterEggActiveChanged;
+    public event EventHandler? RefreshRequested;
 
     public ObservableCollection<ToastMessage> ToastMessages { get; } = new();
 
@@ -152,6 +153,12 @@ public class Shell(IDependencyContainer container, Lazy<ShellViewModel> lazyView
     }
 
     public void RaiseWindowFocusGained() => WindowFocusGained?.Invoke(this, EventArgs.Empty);
+
+    public void RequestRefresh()
+    {
+        RefreshRequested?.Invoke(this, EventArgs.Empty);
+        ShowToast("Refreshing...", 1500);
+    }
 
     // Dialog methods
     public Task ShowOverlayAsync(OverlayModel model)

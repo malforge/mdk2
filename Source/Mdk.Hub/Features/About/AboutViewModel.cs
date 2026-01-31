@@ -15,6 +15,7 @@ public class AboutViewModel : OverlayModel
     {
         CloseCommand = new RelayCommand(Close);
         OpenLogsCommand = new RelayCommand(OpenLogs);
+        OpenDataCommand = new RelayCommand(OpenData);
         OpenGitHubCommand = new RelayCommand(OpenGitHub);
     }
 
@@ -22,6 +23,7 @@ public class AboutViewModel : OverlayModel
 
     public ICommand CloseCommand { get; }
     public ICommand OpenLogsCommand { get; }
+    public ICommand OpenDataCommand { get; }
     public ICommand OpenGitHubCommand { get; }
 
     static string GetVersion()
@@ -39,13 +41,26 @@ public class AboutViewModel : OverlayModel
 
     void OpenLogs()
     {
-        var logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Malforge.MdkHub", "logs");
+        var logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MDK2", "Hub", "Logs");
         if (!Directory.Exists(logsPath))
             Directory.CreateDirectory(logsPath);
 
         Process.Start(new ProcessStartInfo
         {
             FileName = logsPath,
+            UseShellExecute = true
+        });
+    }
+
+    void OpenData()
+    {
+        var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2", "Hub");
+        if (!Directory.Exists(dataPath))
+            Directory.CreateDirectory(dataPath);
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = dataPath,
             UseShellExecute = true
         });
     }

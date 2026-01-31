@@ -19,6 +19,7 @@ class ProjectContext
     static readonly Type[] ActionTypes =
     [
         typeof(UpdatesAction),
+        typeof(AnnouncementsAction),
         typeof(ProjectManagementAction),
         typeof(ProjectInfoAction),
         typeof(ApiDocsAction),

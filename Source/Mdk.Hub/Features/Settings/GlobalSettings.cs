@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
 
@@ -92,5 +93,14 @@ public class GlobalSettings
             _settings.SetValue("IncludePrereleaseUpdates", value);
             _logger.Info($"Include prerelease updates set to: {value}");
         }
+    }
+
+    /// <summary>
+    ///     Gets the list of dismissed announcement IDs.
+    /// </summary>
+    public List<string> DismissedAnnouncementIds
+    {
+        get => _settings.GetValue("DismissedAnnouncementIds", new List<string>());
+        set => _settings.SetValue("DismissedAnnouncementIds", value);
     }
 }

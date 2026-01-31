@@ -54,6 +54,9 @@ public class ProjectOverviewViewModel : ViewModel
         ClearSearchCommand = new RelayCommand(ClearSearch);
         SelectProjectCommand = new RelayCommand<ProjectModel>(p => SelectProject(p));
 
+        // Subscribe to refresh requests
+        shell.RefreshRequested += (_, _) => Refresh();
+
         if (IsDesignMode)
         {
             // Sample data for design-time
@@ -145,6 +148,15 @@ public class ProjectOverviewViewModel : ViewModel
     public ICommand ClearSearchCommand { get; }
 
     public ICommand SelectProjectCommand { get; }
+
+    /// <summary>
+    ///     Refreshes the project list from disk.
+    /// </summary>
+    public void Refresh()
+    {
+        if (!IsDesignMode)
+            LoadProjects();
+    }
 
     public void Initialize(ShellViewModel shell)
     {

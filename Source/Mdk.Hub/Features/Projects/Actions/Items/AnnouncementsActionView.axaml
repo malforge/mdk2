@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+             xmlns:announcements="clr-namespace:Mdk.Hub.Features.Announcements"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
+             x:Class="Mdk.Hub.Features.Projects.Actions.Items.AnnouncementsActionView"
+             x:DataType="items:AnnouncementsAction">
+
+    <UserControl.Styles>
+        <!-- Info style -->
+        <Style Selector="Border.announcement-card[Tag=Info]">
+            <Setter Property="Background" Value="{StaticResource BackgroundInfoCardBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}" />
+        </Style>
+        
+        <!-- Success style -->
+        <Style Selector="Border.announcement-card[Tag=Success]">
+            <Setter Property="Background" Value="{StaticResource BackgroundInfoCardBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSuccessBrush}" />
+        </Style>
+        
+        <!-- Danger style -->
+        <Style Selector="Border.announcement-card[Tag=Danger]">
+            <Setter Property="Background" Value="{StaticResource BackgroundInfoCardBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="announcement-card"
+            Tag="{Binding CurrentAnnouncement.Style}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="16"
+            Margin="16,8">
+        <StackPanel Spacing="12">
+            <!-- Header -->
+            <Grid ColumnDefinitions="Auto,*">
+                <i:Icon Value="fa-solid fa-info-circle"
+                        FontSize="20"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Foreground="{StaticResource ForegroundAccentBrush}" />
+                
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="4">
+                    <TextBlock Text="Announcement" Classes="body medium" />
+                    <TextBlock Text="{Binding CurrentAnnouncement.Message}" Classes="caption" TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Action buttons -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <!-- Link button (if provided) -->
+                <Button Content="{Binding CurrentAnnouncement.LinkText, FallbackValue='Learn More'}"
+                        Command="{Binding OpenLinkCommand}"
+                        IsVisible="{Binding CurrentAnnouncement.Link, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        Classes="success"
+                        Padding="12,6" />
+
+                <!-- Dismiss button -->
+                <Button Content="Dismiss"
+                        Command="{Binding DismissCommand}"
+                        Padding="12,6" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+
+</UserControl>

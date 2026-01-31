@@ -56,6 +56,17 @@ public partial class ShellWindow : Window
 
     void OnCloseRequested(object? sender, EventArgs e) => Close();
 
+    void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        // Ctrl+R to refresh
+        if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
+        {
+            if (DataContext is ShellViewModel viewModel)
+                viewModel.RequestRefresh();
+            e.Handled = true;
+        }
+    }
+
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         if (DataContext is ShellViewModel viewModel && !e.IsProgrammatic)

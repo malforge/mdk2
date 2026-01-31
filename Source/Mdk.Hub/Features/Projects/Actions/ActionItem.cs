@@ -49,5 +49,14 @@ public abstract class ActionItem : ViewModel
         RaiseShouldShowChanged();
     }
 
+    /// <summary>
+    ///     Called when user explicitly requests a refresh (e.g., Ctrl+R).
+    ///     Override to implement refresh behavior for this action.
+    /// </summary>
+    public virtual void Refresh()
+    {
+        // Default: no-op
+    }
+
     protected void RaiseShouldShowChanged() => ShouldShowChanged?.Invoke(this, EventArgs.Empty);
 }
