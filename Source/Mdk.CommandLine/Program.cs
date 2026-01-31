@@ -5,9 +5,7 @@ using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.LegacyConversion;
 using Mdk.CommandLine.IngameScript.Pack;
-using Mdk.CommandLine.IngameScript.Restore;
 using Mdk.CommandLine.Mod.Pack;
-using Mdk.CommandLine.Mod.Restore;
 using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine;
@@ -153,44 +151,9 @@ public static class Program
 
     static async Task RestoreAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
     {
-        if (parameters.RestoreVerb.ProjectFile is null) throw new CommandLineException(-1, "No project file specified.");
-        if (!File.Exists(parameters.RestoreVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.RestoreVerb.ProjectFile}' does not exist.");
-
-        if (parameters.RestoreVerb.DryRun)
-            console.Print("Currently performing a dry run. No changes will be made.");
-
-        await foreach (var project in MdkProject.LoadAsync(parameters.RestoreVerb.ProjectFile, console))
-        {
-            switch (project.Type)
-            {
-                case MdkProjectType.Mod:
-                {
-                    console.Print("Warning: Mod projects are currently in beta. Please report any issues you encounter.");
-                    console.Print($"MDK is restoring mod project: {project.Project.Name}");
-                    var restorer = new ModRestorer();
-                    await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
-                    break;
-                }
-
-                case MdkProjectType.ProgrammableBlock:
-                {
-                    console.Print($"MDK is restoring ingame script project: {project.Project.Name}");
-                    var restorer = new ScriptRestorer();
-                    await restorer.RestoreAsync(parameters, project, console, httpClient, interaction);
-                    break;
-                }
-
-                case MdkProjectType.LegacyProgrammableBlock:
-                    console.Print($"MDK is converting legacy ingame script project: {project.Project.Name}");
-                    var converter = new LegacyConverter();
-                    await converter.ConvertAsync(parameters, project, console, httpClient);
-                    goto case MdkProjectType.ProgrammableBlock;
-
-                case MdkProjectType.Unknown:
-                    console.Print($"The project file {project.Project.Name} does not seem to be an MDK project.");
-                    break;
-            }
-        }
+        console.Print("The 'restore' command is no longer necessary.");
+        console.Print("MDK package updates are now handled by the MDK Hub.");
+        console.Print("Please use the Hub's update notifications to keep your packages current.");
     }
 
     /// <summary>

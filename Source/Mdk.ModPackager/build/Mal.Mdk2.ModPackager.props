@@ -10,13 +10,6 @@
         <AdditionalFiles Include="**\*.ini"/>
     </ItemGroup>
 
-    <Target Name="MdkRestore" BeforeTargets="PreBuildEvent">
-        <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; restore &quot;$(MSBuildProjectFullPath)&quot; $(MdkInteractive)" ContinueOnError="true">
-            <Output TaskParameter="ExitCode" PropertyName="MdkExitCode"/>
-        </Exec>
-        <Error Condition="'$(MdkExitCode)' != '0'" Text="MDK could not restore the project. Please check the build output."/>
-    </Target>
-
     <Target Name="MdkPack" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
         <Exec Command="&quot;$(MSBuildThisFileDirectory)..\tools\mdk.exe&quot; pack &quot;$(MSBuildProjectFullPath)&quot; $(MdkArguments) -configuration $(Configuration) $(MdkInteractive)" ContinueOnError="true">
             <Output TaskParameter="ExitCode" PropertyName="MdkExitCode"/>
