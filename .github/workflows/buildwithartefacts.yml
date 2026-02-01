@@ -374,9 +374,32 @@ jobs:
             NOTES="See [release notes](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/Source/Mdk.Hub/ReleaseNotes.txt) for details."
           fi
           
+          # Add installation guidance
+          INSTALL_GUIDE="## 📥 First Time Installing?
+
+          MDK Hub is an open-source development tool for Space Engineers. Windows SmartScreen will show a warning because MDK Hub is not commercially code-signed. **This is normal for open-source software** - code signing certificates cost hundreds of dollars annually, which isn't practical for free community tools. The software is safe and all source code is publicly visible on GitHub.
+
+          **Quick Steps:**
+          1. Download \`Malforge.MdkHub-win-Setup.exe\` below
+          2. Run the installer - Windows will show a warning
+          3. Click \"More info\" → \"Run anyway\"
+          4. Complete the installation wizard
+
+          **Alternative:** Download the portable ZIP if you prefer not to run an installer.
+
+          📖 **Need more details?** See the [full installation guide](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/INSTALLATION.md) for a detailed explanation, troubleshooting, and verification instructions.
+
+          ---
+
+          ## 🆕 What's New"
+          
+          # Combine installation guide with release notes
+          FULL_NOTES="${INSTALL_GUIDE}
+          ${NOTES}"
+          
           # Save to output (GitHub Actions multiline output)
           echo "NOTES<<EOF" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "$FULL_NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       
       - name: Download Windows installer

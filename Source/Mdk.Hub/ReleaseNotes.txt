@@ -1,4 +1,10 @@
-﻿v.1.0.0-pre.7
+﻿v.1.0.0-pre.8
+   - Enhanced installation experience with comprehensive guidance for first-time users.
+   - Added detailed installation documentation addressing Windows SmartScreen warnings.
+   - Improved GitHub release notes to include reassuring installation instructions.
+   - Added project deletion dropdown with "Remove from Hub" and "Delete Project" options.
+
+v.1.0.0-pre.7
    - Fixed update system to properly respect prerelease setting for all components.
    - NuGet package checks now filter out prereleases when disabled.
    - Template installation now uses --prerelease flag only when enabled.
