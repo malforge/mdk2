@@ -15,11 +15,32 @@ public class EasterEggService : IEasterEggService
     {
         _settings = settings;
 
-        // Load settings
-        _disabledForever = _settings.GetValue("EasterEggDisabledForever", false);
-        var disabledUntilTicks = _settings.GetValue("EasterEggDisabledUntilTicks", 0L);
+        // Load initial settings
+        LoadSettings();
+        
+        // Subscribe to settings changes
+        _settings.SettingsChanged += OnSettingsChanged;
+    }
+    
+    void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
+    {
+        // Reload easter egg state if HubSettings changed
+        if (e.Key == SettingsKeys.HubSettings)
+        {
+            LoadSettings();
+            ActiveChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+    
+    void LoadSettings()
+    {
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        _disabledForever = hubSettings.EasterEggDisabledForever;
+        var disabledUntilTicks = hubSettings.EasterEggDisabledUntilTicks;
         if (disabledUntilTicks > 0)
             _disabledUntil = new DateTime(disabledUntilTicks);
+        else
+            _disabledUntil = null;
     }
 
     public event EventHandler? ActiveChanged;
@@ -43,14 +64,18 @@ public class EasterEggService : IEasterEggService
     public void DisableFor(TimeSpan duration)
     {
         _disabledUntil = DateTime.Now + duration;
-        _settings.SetValue("EasterEggDisabledUntilTicks", _disabledUntil.Value.Ticks);
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        hubSettings.EasterEggDisabledUntilTicks = _disabledUntil.Value.Ticks;
+        _settings.SetValue(SettingsKeys.HubSettings, hubSettings);
         ActiveChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void DisableForever()
     {
         _disabledForever = true;
-        _settings.SetValue("EasterEggDisabledForever", true);
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        hubSettings.EasterEggDisabledForever = true;
+        _settings.SetValue(SettingsKeys.HubSettings, hubSettings);
         ActiveChanged?.Invoke(this, EventArgs.Empty);
     }
 }

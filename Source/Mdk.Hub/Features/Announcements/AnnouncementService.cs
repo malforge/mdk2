@@ -21,14 +21,14 @@ public class AnnouncementService : IAnnouncementService
     static readonly TimeSpan AutoCheckInterval = TimeSpan.FromHours(1);
     readonly Timer _autoCheckTimer;
     readonly List<Action<Announcement>> _callbacks = new();
-    readonly GlobalSettings _globalSettings;
+    readonly ISettings _settings;
     readonly ILogger _logger;
     int _isChecking; // 0 = not checking, 1 = checking
 
-    public AnnouncementService(ILogger logger, GlobalSettings globalSettings)
+    public AnnouncementService(ILogger logger, ISettings settings)
     {
         _logger = logger;
-        _globalSettings = globalSettings;
+        _settings = settings;
 
         // Start auto-check timer (runs every hour)
         _autoCheckTimer = new Timer(
@@ -80,16 +80,16 @@ public class AnnouncementService : IAnnouncementService
         if (string.IsNullOrEmpty(announcementId))
             return;
 
-        var dismissed = _globalSettings.DismissedAnnouncementIds;
-        if (!dismissed.Contains(announcementId))
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        if (!hubSettings.DismissedAnnouncementIds.Contains(announcementId))
         {
-            dismissed.Add(announcementId);
-            _globalSettings.DismissedAnnouncementIds = dismissed; // Save back
+            hubSettings.DismissedAnnouncementIds = hubSettings.DismissedAnnouncementIds.Add(announcementId);
+            _settings.SetValue(SettingsKeys.HubSettings, hubSettings);
             _logger.Info($"Dismissed announcement: {announcementId}");
         }
     }
 
-    public bool IsAnnouncementDismissed(string announcementId) => _globalSettings.DismissedAnnouncementIds.Contains(announcementId);
+    public bool IsAnnouncementDismissed(string announcementId) => _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).DismissedAnnouncementIds.Contains(announcementId);
 
     async Task<bool> PerformCheckAsync()
     {

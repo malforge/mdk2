@@ -12,10 +12,10 @@ using Mdk.Hub.Features.Settings;
 namespace Mdk.Hub.Features.Shell;
 
 [Singleton<IShell>]
-public class Shell(IDependencyContainer container, GlobalSettings globalSettings, ILogger logger) : IShell
+public class Shell(IDependencyContainer container, ISettings settings, ILogger logger) : IShell
 {
     readonly IDependencyContainer _container = container;
-    readonly GlobalSettings _globalSettings = globalSettings;
+    readonly ISettings _settings = settings;
     readonly ILogger _logger = logger;
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<Action<string[]>> _readyCallbacks = new();
@@ -88,9 +88,10 @@ public class Shell(IDependencyContainer container, GlobalSettings globalSettings
     
     bool RequiresLinuxPathConfiguration()
     {
-        var binPath = _globalSettings.CustomAutoBinaryPath;
-        var scriptOutputPath = _globalSettings.CustomAutoScriptOutputPath;
-        var modOutputPath = _globalSettings.CustomAutoModOutputPath;
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        var binPath = hubSettings.CustomAutoBinaryPath;
+        var scriptOutputPath = hubSettings.CustomAutoScriptOutputPath;
+        var modOutputPath = hubSettings.CustomAutoModOutputPath;
         
         return binPath == "auto" || scriptOutputPath == "auto" || modOutputPath == "auto";
     }
@@ -232,9 +233,10 @@ public class Shell(IDependencyContainer container, GlobalSettings globalSettings
         if (!App.IsLinux)
             return;
             
-        var binPath = _globalSettings.CustomAutoBinaryPath;
-        var scriptOutputPath = _globalSettings.CustomAutoScriptOutputPath;
-        var modOutputPath = _globalSettings.CustomAutoModOutputPath;
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        var binPath = hubSettings.CustomAutoBinaryPath;
+        var scriptOutputPath = hubSettings.CustomAutoScriptOutputPath;
+        var modOutputPath = hubSettings.CustomAutoModOutputPath;
         
         // On Linux, "auto" is not acceptable - paths must be explicitly set
         if (binPath == "auto" || scriptOutputPath == "auto" || modOutputPath == "auto")

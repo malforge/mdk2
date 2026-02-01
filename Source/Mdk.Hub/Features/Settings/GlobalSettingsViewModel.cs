@@ -17,35 +17,58 @@ namespace Mdk.Hub.Features.Settings;
 public class GlobalSettingsViewModel : OverlayModel
 {
     readonly RelayCommand _cancelCommand;
-    readonly RelayCommand _checkPrerequisitesCommand;
-    readonly GlobalSettings _globalSettings;
+    readonly AsyncRelayCommand _checkPrerequisitesCommand;
+    readonly ISettings _settings;
     readonly RelayCommand _saveCommand;
     readonly IShell _shell;
     readonly IUpdateCheckService _updateCheckService;
-    string _customAutoBinaryPath;
-    string _customAutoModOutputPath;
-    string _customAutoScriptOutputPath;
+    readonly HubSettings _hubSettings;
+    string _customAutoBinaryPath = "";
+    string _customAutoModOutputPath = "";
+    string _customAutoScriptOutputPath = "";
     bool _includePrereleaseUpdates;
     bool _openedForLinuxValidation;
 
-    public GlobalSettingsViewModel(GlobalSettings globalSettings, IUpdateCheckService updateCheckService, IShell shell)
+    public GlobalSettingsViewModel(ISettings settings, IUpdateCheckService updateCheckService, IShell shell)
     {
-        _globalSettings = globalSettings;
+        _settings = settings;
         _updateCheckService = updateCheckService;
         _shell = shell;
+        _hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
         
-        // On Linux, "auto" is not valid - convert to empty string for editing
-        var scriptPath = _globalSettings.CustomAutoScriptOutputPath;
-        var modPath = _globalSettings.CustomAutoModOutputPath;
-        var binPath = _globalSettings.CustomAutoBinaryPath;
+        // Load initial values
+        LoadFromSettings();
         
-        _customAutoScriptOutputPath = (App.IsLinux && scriptPath == "auto") ? "" : scriptPath;
-        _customAutoModOutputPath = (App.IsLinux && modPath == "auto") ? "" : modPath;
-        _customAutoBinaryPath = (App.IsLinux && binPath == "auto") ? "" : binPath;
-        _includePrereleaseUpdates = _globalSettings.IncludePrereleaseUpdates;
+        // Subscribe to external settings changes
+        _settings.SettingsChanged += OnSettingsChanged;
+        
         _saveCommand = new RelayCommand(Save);
         _cancelCommand = new RelayCommand(Cancel);
-        _checkPrerequisitesCommand = new RelayCommand(async () => await CheckPrerequisitesAsync());
+        _checkPrerequisitesCommand = new AsyncRelayCommand(CheckPrerequisitesAsync);
+    }
+    
+    void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
+    {
+        // Reload if HubSettings changed externally (not by us during Save)
+        if (e.Key == SettingsKeys.HubSettings)
+        {
+            LoadFromSettings();
+        }
+    }
+    
+    void LoadFromSettings()
+    {
+        var settings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        
+        // On Linux, "auto" is not valid - convert to empty string for editing
+        var scriptPath = settings.CustomAutoScriptOutputPath;
+        var modPath = settings.CustomAutoModOutputPath;
+        var binPath = settings.CustomAutoBinaryPath;
+        
+        CustomAutoScriptOutputPath = (App.IsLinux && scriptPath == "auto") ? "" : scriptPath;
+        CustomAutoModOutputPath = (App.IsLinux && modPath == "auto") ? "" : modPath;
+        CustomAutoBinaryPath = (App.IsLinux && binPath == "auto") ? "" : binPath;
+        IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
     }
 
     public ICommand SaveCommand => _saveCommand;
@@ -186,10 +209,14 @@ public class GlobalSettingsViewModel : OverlayModel
             }
         }
         
-        _globalSettings.CustomAutoScriptOutputPath = _customAutoScriptOutputPath;
-        _globalSettings.CustomAutoModOutputPath = _customAutoModOutputPath;
-        _globalSettings.CustomAutoBinaryPath = _customAutoBinaryPath;
-        _globalSettings.IncludePrereleaseUpdates = _includePrereleaseUpdates;
+        var updatedSettings = _hubSettings with
+        {
+            CustomAutoScriptOutputPath = _customAutoScriptOutputPath,
+            CustomAutoModOutputPath = _customAutoModOutputPath,
+            CustomAutoBinaryPath = _customAutoBinaryPath,
+            IncludePrereleaseUpdates = _includePrereleaseUpdates
+        };
+        _settings.SetValue(SettingsKeys.HubSettings, updatedSettings);
         Dismiss();
     }
 
@@ -199,9 +226,10 @@ public class GlobalSettingsViewModel : OverlayModel
         if (App.IsLinux && _openedForLinuxValidation)
         {
             // Check the ACTUAL saved settings, not the ViewModel fields
-            var savedBinPath = _globalSettings.CustomAutoBinaryPath;
-            var savedScriptPath = _globalSettings.CustomAutoScriptOutputPath;
-            var savedModPath = _globalSettings.CustomAutoModOutputPath;
+            var savedSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+            var savedBinPath = savedSettings.CustomAutoBinaryPath;
+            var savedScriptPath = savedSettings.CustomAutoScriptOutputPath;
+            var savedModPath = savedSettings.CustomAutoModOutputPath;
             
             var hasErrors = 
                 savedBinPath == "auto" || savedScriptPath == "auto" || savedModPath == "auto";

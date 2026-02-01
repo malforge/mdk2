@@ -223,7 +223,9 @@ public class ProjectOverviewViewModel : ViewModel
             ShowProjectRequested?.Invoke(this, new ShowProjectEventArgs(project));
 
         // Save selected project path
-        _settings.SetValue("LastSelectedProject", project.ProjectPath);
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        hubSettings.LastSelectedProject = project.ProjectPath.ToString();
+        _settings.SetValue(SettingsKeys.HubSettings, hubSettings);
     }
 
     void UpdateState()
@@ -347,7 +349,7 @@ public class ProjectOverviewViewModel : ViewModel
 
     void RestoreSelectedProject()
     {
-        var lastSelectedPath = _settings.GetValue("LastSelectedProject", string.Empty);
+        var lastSelectedPath = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).LastSelectedProject;
         if (string.IsNullOrEmpty(lastSelectedPath))
             return;
 

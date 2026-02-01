@@ -9,6 +9,7 @@ using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
@@ -77,11 +78,11 @@ public class ProjectManagementAction : ActionItem
     {
         var defaultLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-        // Try to get the last used location for this project type
-        var settingsKey = projectType == ProjectType.IngameScript
-            ? "NewProject.LastLocation.IngameScript"
-            : "NewProject.LastLocation.Mod";
-        var lastLocation = _projectService.Settings.GetValue(settingsKey, defaultLocation);
+        // Get the last used location for this project type
+        var hubSettings = _projectService.Settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        var lastLocation = projectType == ProjectType.IngameScript
+            ? hubSettings.LastIngameScriptLocation ?? defaultLocation
+            : hubSettings.LastModLocation ?? defaultLocation;
 
         var dialogViewModel = new NewProjectDialogViewModel(new NewProjectDialogMessage
         {
@@ -100,7 +101,11 @@ public class ProjectManagementAction : ActionItem
             return; // User cancelled
 
         // Save the location for next time
-        _projectService.Settings.SetValue(settingsKey, result.Value.Location);
+        if (projectType == ProjectType.IngameScript)
+            hubSettings.LastIngameScriptLocation = result.Value.Location;
+        else
+            hubSettings.LastModLocation = result.Value.Location;
+        _projectService.Settings.SetValue(SettingsKeys.HubSettings, hubSettings);
 
         // Show busy indicator
         var busyOverlay = new BusyOverlayViewModel("Creating project...");

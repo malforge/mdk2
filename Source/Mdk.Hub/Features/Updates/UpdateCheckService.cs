@@ -8,18 +8,42 @@ using System.Threading;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Settings;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Updates;
 
 [Singleton<IUpdateCheckService>]
-public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, Settings.GlobalSettings globalSettings) : IUpdateCheckService
+public class UpdateCheckService : IUpdateCheckService
 {
     readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();
-    readonly Settings.GlobalSettings _globalSettings = globalSettings;
-    readonly IGitHubService _gitHubService = gitHubService;
-    readonly ILogger _logger = logger;
-    readonly INuGetService _nuGetService = nuGetService;
+    readonly ISettings _settings;
+    readonly IGitHubService _gitHubService;
+    readonly ILogger _logger;
+    readonly INuGetService _nuGetService;
     int _isChecking; // 0 = not checking, 1 = checking
+
+    public UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings)
+    {
+        _logger = logger;
+        _nuGetService = nuGetService;
+        _gitHubService = gitHubService;
+        _settings = settings;
+        
+        // Subscribe to settings changes to invalidate cache when prerelease preference changes
+        _settings.SettingsChanged += OnSettingsChanged;
+    }
+    
+    void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
+    {
+        // Invalidate cached version check results when HubSettings change
+        // (specifically when IncludePrereleaseUpdates changes)
+        if (e.Key == SettingsKeys.HubSettings)
+        {
+            _logger.Info("Settings changed, invalidating cached version check results");
+            LastKnownVersions = null;
+        }
+    }
 
     public VersionCheckCompletedEventArgs? LastKnownVersions { get; private set; }
 
@@ -124,7 +148,7 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
             _logger.Info("Installing MDK² template package");
 
             // Build arguments - include --prerelease if user wants prerelease updates
-            var args = _globalSettings.IncludePrereleaseUpdates 
+            var args = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates 
                 ? "new install Mal.Mdk2.ScriptTemplates --prerelease" 
                 : "new install Mal.Mdk2.ScriptTemplates";
 
@@ -155,7 +179,7 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
                 throw new InvalidOperationException($"Template installation failed: {error}");
             }
 
-            _logger.Info($"Template package installed successfully (prerelease: {_globalSettings.IncludePrereleaseUpdates})");
+            _logger.Info($"Template package installed successfully (prerelease: {_settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates})");
         }
         catch (Exception ex)
         {
@@ -343,7 +367,7 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
             "Mal.Mdk2.References"
         };
 
-        var includePrerelease = _globalSettings.IncludePrereleaseUpdates;
+        var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
         var results = new List<PackageVersionInfo>();
 
         foreach (var packageId in packages)
@@ -366,7 +390,7 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
     {
         _logger.Info("Checking template package for updates");
 
-        var includePrerelease = _globalSettings.IncludePrereleaseUpdates;
+        var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
         var version = await _nuGetService.GetLatestVersionAsync("Mal.Mdk2.ScriptTemplates", includePrerelease, cancellationToken);
         if (version != null)
         {
@@ -383,7 +407,7 @@ public class UpdateCheckService(ILogger logger, INuGetService nuGetService, IGit
     {
         _logger.Info("Checking Hub version for updates");
 
-        var includePrerelease = _globalSettings.IncludePrereleaseUpdates;
+        var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
         var version = await _gitHubService.GetLatestReleaseAsync("malforge", "mdk2", includePrerelease, cancellationToken);
         if (version != null)
         {

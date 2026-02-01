@@ -30,6 +30,7 @@ public class ProjectService : IProjectService
     readonly IProjectRegistry _registry;
     readonly IShell _shell;
     readonly ISnackbarService _snackbarService;
+    readonly ISettings _settings;
     readonly ProjectUpdateChecker _updateChecker;
     readonly Dictionary<CanonicalPath, (bool needsUpdate, int updateCount, IReadOnlyList<PackageUpdateInfo> updates)> _updateStates = new();
     readonly Lock _updateStatesLock = new();
@@ -42,6 +43,7 @@ public class ProjectService : IProjectService
         _logger = logger;
         _shell = shell;
         _snackbarService = snackbarService;
+        _settings = settings;
         Settings = settings;
         _nugetService = nugetService;
         _updateChecker = new ProjectUpdateChecker(logger, this);
@@ -465,7 +467,7 @@ public class ProjectService : IProjectService
                 var (packageId, currentVersion) = kvp;
                 try
                 {
-                    var latestVersion = await _nugetService.GetLatestVersionAsync(packageId, cancellationToken);
+                    var latestVersion = await _nugetService.GetLatestVersionAsync(packageId, _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates, cancellationToken);
 
                     if (latestVersion == null)
                     {

@@ -48,11 +48,16 @@ public static class GlobalSettings
             var json = File.ReadAllText(SettingsFilePath);
             var settings = JsonNode.Parse(json)?.AsObject();
             
-            if (settings?.TryGetPropertyValue(key, out var value) == true)
+            // Settings are stored in a HubSettings object
+            if (settings?.TryGetPropertyValue("HubSettings", out var hubSettingsNode) == true)
             {
-                var customPath = value?.GetValue<string>();
-                if (!string.IsNullOrWhiteSpace(customPath) && customPath != "auto")
-                    return customPath;
+                var hubSettings = hubSettingsNode?.AsObject();
+                if (hubSettings?.TryGetPropertyValue(key, out var value) == true)
+                {
+                    var customPath = value?.GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(customPath) && customPath != "auto")
+                        return customPath;
+                }
             }
         }
         catch

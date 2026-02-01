@@ -100,7 +100,7 @@ public partial class ShellWindow : Window
         }
     }
 
-    class WindowSettings
+    struct WindowSettings
     {
         readonly bool _isNew;
 
