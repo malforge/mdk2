@@ -40,7 +40,7 @@ if ($currentBranch -eq "prerelease") {
 
 # Fetch latest prerelease
 Write-Host "Fetching latest prerelease..." -ForegroundColor Cyan
-git fetch origin prerelease:prerelease 2>$null
+$null = git fetch origin prerelease:prerelease 2>&1
 $fetchExitCode = $LASTEXITCODE
 
 if ($fetchExitCode -ne 0) {
