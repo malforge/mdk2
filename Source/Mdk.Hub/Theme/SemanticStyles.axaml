@@ -224,4 +224,13 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
+    <!-- Danger MenuItem -->
+    <Style Selector="MenuItem.danger">
+        <Setter Property="Foreground" Value="{StaticResource ForegroundDangerBrush}" />
+        
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BackgroundSubtleDangerBrush}" />
+        </Style>
+    </Style>
+
 </Styles>

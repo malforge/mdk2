@@ -13,6 +13,7 @@ public class ProjectModel : ViewModel
 {
     readonly IShell _shell;
     readonly AsyncRelayCommand _deleteCommand;
+    readonly AsyncRelayCommand _removeFromHubCommand;
     readonly IProjectService? _projectService;
     bool _hasUnsavedChanges;
     bool _isSelected;
@@ -33,6 +34,7 @@ public class ProjectModel : ViewModel
         _name = name;
         _type = type;
         _deleteCommand = new AsyncRelayCommand(DeleteAsync, CanDelete);
+        _removeFromHubCommand = new AsyncRelayCommand(RemoveFromHubAsync, CanDelete);
     }
 
     public CanonicalPath ProjectPath { get; }
@@ -92,8 +94,43 @@ public class ProjectModel : ViewModel
     }
 
     public ICommand DeleteCommand => _deleteCommand;
+    
+    public ICommand RemoveFromHubCommand => _removeFromHubCommand;
 
     public bool CanDelete() => true;
+
+    public async Task RemoveFromHubAsync()
+    {
+        if (!CanDelete())
+            return;
+        var result = await _shell.ShowAsync(
+            new ConfirmationMessage
+            {
+                Title = "Remove Project",
+                Message = $"Remove \"{Name}\" from MDK Hub?\n\nThe project files will remain on disk. You can re-add it later by opening the project.",
+                OkText = "Remove from Hub",
+                CancelText = "Cancel"
+            });
+        if (!result)
+            return;
+
+        try
+        {
+            // Remove from registry only
+            if (!ProjectPath.IsEmpty())
+                _projectService?.RemoveProject(ProjectPath);
+        }
+        catch (Exception ex)
+        {
+            await _shell.ShowAsync(new ConfirmationMessage
+            {
+                Title = "Remove Failed",
+                Message = $"Failed to remove project from Hub: {ex.Message}",
+                OkText = "OK",
+                CancelText = "Close"
+            });
+        }
+    }
 
     public async Task DeleteAsync()
     {
