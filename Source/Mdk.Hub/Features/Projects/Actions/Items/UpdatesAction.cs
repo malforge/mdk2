@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
@@ -19,6 +20,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 [ViewModelFor<UpdatesActionView>]
 public class UpdatesAction : ActionItem
 {
+    readonly ISettings _settings;
     readonly IShell _shell;
     readonly IUpdateCheckService _updateCheckService;
     double _downloadProgress;
@@ -29,8 +31,9 @@ public class UpdatesAction : ActionItem
     bool _isTemplateUpdateAvailable;
     UpdateInfo? _pendingUpdate;
 
-    public UpdatesAction(IShell shell, IUpdateCheckService updateCheckService)
+    public UpdatesAction(ISettings settings, IShell shell, IUpdateCheckService updateCheckService)
     {
+        _settings = settings;
         _shell = shell;
         _updateCheckService = updateCheckService;
         
@@ -228,7 +231,8 @@ public class UpdatesAction : ActionItem
             IsDownloading = true;
             DownloadProgress = 0;
 
-            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, false));
+            var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
+            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
             var newVersion = await mgr.CheckForUpdatesAsync();
             
             if (newVersion == null)
@@ -275,7 +279,8 @@ public class UpdatesAction : ActionItem
             if (!confirmed)
                 return;
 
-            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, false));
+            var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
+            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
             mgr.ApplyUpdatesAndRestart(_pendingUpdate);
         }
         catch (Exception ex)
