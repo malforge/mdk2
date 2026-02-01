@@ -349,10 +349,7 @@ public class ProjectOverviewViewModel : ViewModel
 
     void RestoreSelectedProject()
     {
-        System.Diagnostics.Debug.WriteLine($"[ProjectOverview] RestoreSelectedProject called. AllProjects count: {AllProjects.Length}");
-        
         var lastSelectedPath = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).LastSelectedProject;
-        System.Diagnostics.Debug.WriteLine($"[ProjectOverview] LastSelectedPath: {lastSelectedPath}");
         
         ProjectModel? project = null;
         
@@ -365,8 +362,6 @@ public class ProjectOverviewViewModel : ViewModel
         // If no saved selection or saved project not found, select first project
         if (project == null && AllProjects.Length > 0)
             project = AllProjects[0];
-        
-        System.Diagnostics.Debug.WriteLine($"[ProjectOverview] Found project: {(project != null ? project.Name : "NULL")}");
         
         if (project != null)
         {

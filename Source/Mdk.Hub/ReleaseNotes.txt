@@ -1,5 +1,10 @@
-v.1.0.0-pre.012
+v.1.0.0-pre.13
+   - Fixed false positive update detection by comparing current version against latest.
+   - Added version number to update status message for clarity.
+
+v.1.0.0-pre.12
    - Test release to verify update mechanism.
+   - Added version number to update status message.
 
 v.1.0.0-pre.11
    - Fixed Hub update installation by correcting repository URL.

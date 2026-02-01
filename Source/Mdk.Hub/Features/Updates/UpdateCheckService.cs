@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -417,14 +418,48 @@ public class UpdateCheckService : IUpdateCheckService
         var version = await _gitHubService.GetLatestReleaseAsync(EnvironmentMetadata.GitHubOwner, EnvironmentMetadata.GitHubRepo, includePrerelease, cancellationToken);
         if (version != null)
         {
-            return new HubVersionInfo
+            // Get current version and compare
+            var currentVersion = GetCurrentHubVersion();
+            var latestVersion = version.Value.Version;
+            
+            // Strip "hub-v" prefix if present
+            if (latestVersion.StartsWith("hub-v", StringComparison.OrdinalIgnoreCase))
+                latestVersion = latestVersion.Substring(6);
+            
+            _logger.Info($"Current version: {currentVersion}, Latest version: {latestVersion}");
+            
+            // Only return update info if the latest version is different from current
+            if (latestVersion != currentVersion)
             {
-                LatestVersion = version.Value.Version,
-                IsPrerelease = version.Value.IsPrerelease,
-                DownloadUrl = $"{EnvironmentMetadata.GitHubRepoUrl}/releases/latest"
-            };
+                return new HubVersionInfo
+                {
+                    LatestVersion = latestVersion,
+                    IsPrerelease = version.Value.IsPrerelease,
+                    DownloadUrl = $"{EnvironmentMetadata.GitHubRepoUrl}/releases/latest"
+                };
+            }
+            else
+            {
+                _logger.Info("Already running the latest version");
+            }
         }
 
         return null;
+    }
+    
+    string GetCurrentHubVersion()
+    {
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        var version = assembly.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        
+        if (version != null)
+        {
+            // Strip git metadata (everything after +)
+            var plusIndex = version.IndexOf('+');
+            if (plusIndex >= 0)
+                version = version.Substring(0, plusIndex);
+        }
+        
+        return version ?? "unknown";
     }
 }

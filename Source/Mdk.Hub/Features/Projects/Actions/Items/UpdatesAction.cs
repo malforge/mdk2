@@ -161,15 +161,17 @@ public class UpdatesAction : ActionItem
             StatusMessage = "Hub update ready to install";
         else if (IsTemplateUpdateAvailable && IsHubUpdateAvailable)
         {
+            var hubVersion = HubVersionInfo?.LatestVersion ?? "unknown";
             var hubSuffix = HubVersionInfo?.IsPrerelease == true ? " (prerelease)" : "";
-            StatusMessage = $"Templates and Hub{hubSuffix} updates available";
+            StatusMessage = $"Templates and Hub {hubVersion}{hubSuffix} updates available";
         }
         else if (IsTemplateUpdateAvailable)
             StatusMessage = "Templates update available";
         else if (IsHubUpdateAvailable)
         {
+            var version = HubVersionInfo?.LatestVersion ?? "unknown";
             var suffix = HubVersionInfo?.IsPrerelease == true ? " (prerelease)" : "";
-            StatusMessage = $"Hub update{suffix} available";
+            StatusMessage = $"Hub {version}{suffix} update available";
         }
         else
             StatusMessage = "All up to date";
