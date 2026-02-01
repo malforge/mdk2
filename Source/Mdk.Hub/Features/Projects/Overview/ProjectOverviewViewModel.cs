@@ -349,16 +349,29 @@ public class ProjectOverviewViewModel : ViewModel
 
     void RestoreSelectedProject()
     {
+        System.Diagnostics.Debug.WriteLine($"[ProjectOverview] RestoreSelectedProject called. AllProjects count: {AllProjects.Length}");
+        
         var lastSelectedPath = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).LastSelectedProject;
-        if (string.IsNullOrEmpty(lastSelectedPath))
-            return;
-
-        var canonicalPath = new CanonicalPath(lastSelectedPath);
-        var project = _projects.FirstOrDefault(p => p.ProjectPath == canonicalPath);
+        System.Diagnostics.Debug.WriteLine($"[ProjectOverview] LastSelectedPath: {lastSelectedPath}");
+        
+        ProjectModel? project = null;
+        
+        if (!string.IsNullOrEmpty(lastSelectedPath))
+        {
+            var canonicalPath = new CanonicalPath(lastSelectedPath);
+            project = AllProjects.FirstOrDefault(p => p.ProjectPath == canonicalPath);
+        }
+        
+        // If no saved selection or saved project not found, select first project
+        if (project == null && AllProjects.Length > 0)
+            project = AllProjects[0];
+        
+        System.Diagnostics.Debug.WriteLine($"[ProjectOverview] Found project: {(project != null ? project.Name : "NULL")}");
+        
         if (project != null)
         {
-            project.IsSelected = true;
-            UpdateState();
+            // Select the project - filter update will ensure it's visible
+            SelectProject(project, scrollToItem: true);
         }
     }
 

@@ -28,13 +28,18 @@ public class AboutViewModel : OverlayModel
 
     static string GetVersion()
     {
-        var versionFilePath = Path.Combine(AppContext.BaseDirectory, "PackageVersion.txt");
-        if (File.Exists(versionFilePath))
-            return File.ReadAllText(versionFilePath).Trim();
-
         var assembly = Assembly.GetExecutingAssembly();
-        var version = assembly.GetName().Version;
-        return version?.ToString() ?? "Unknown";
+        var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        
+        if (version != null)
+        {
+            // Strip git metadata (everything after +)
+            var plusIndex = version.IndexOf('+');
+            if (plusIndex >= 0)
+                version = version.Substring(0, plusIndex);
+        }
+        
+        return version ?? assembly.GetName().Version?.ToString() ?? "Unknown";
     }
 
     void Close() => Dismiss();

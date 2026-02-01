@@ -1,4 +1,9 @@
-﻿v.1.0.0-pre.8
+﻿v.1.0.0-pre.9
+   - Fixed actions panel not appearing when Hub starts with no previously selected project.
+   - Fixed About screen version number not displaying correctly.
+   - Improved project selection to automatically select first project when none is saved.
+
+v.1.0.0-pre.8
    - Enhanced installation experience with comprehensive guidance for first-time users.
    - Added detailed installation documentation addressing Windows SmartScreen warnings.
    - Improved GitHub release notes to include reassuring installation instructions.

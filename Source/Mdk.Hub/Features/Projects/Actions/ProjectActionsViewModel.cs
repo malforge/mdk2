@@ -243,6 +243,8 @@ public partial class ProjectActionsViewModel : ViewModel
 
     void OnProjectStateChanged(object? sender, EventArgs e)
     {
+        System.Diagnostics.Debug.WriteLine($"[ProjectActions] OnProjectStateChanged called. Selected: {_projectService.State.SelectedProject}");
+        
         // Get or create context for the selected project
         var selectedProjectPath = _projectService.State.SelectedProject;
         if (!selectedProjectPath.IsEmpty() && _shellViewModel != null)
@@ -251,13 +253,20 @@ public partial class ProjectActionsViewModel : ViewModel
             var projectInfo = _projectService.GetProjects().FirstOrDefault(p => p.ProjectPath == selectedProjectPath);
             if (projectInfo != null)
             {
+                System.Diagnostics.Debug.WriteLine($"[ProjectActions] Creating/getting context for project: {projectInfo.Name}");
                 var selectedProject = _shellViewModel.GetOrCreateProjectModel(projectInfo);
 
                 if (!_projectContexts.TryGetValue(selectedProjectPath, out var context))
                 {
+                    System.Diagnostics.Debug.WriteLine("[ProjectActions] Creating new ProjectContext");
                     context = new ProjectContext(selectedProject, this, _globalActionCache);
                     _projectContexts[selectedProjectPath] = context;
                 }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[ProjectActions] Reusing existing ProjectContext");
+                }
+                
                 _currentContext = context;
 
                 // Notify context that it's now active (for cached contexts)
@@ -272,10 +281,18 @@ public partial class ProjectActionsViewModel : ViewModel
                 else if (HasUnsavedChanges(selectedProject.ProjectPath.Value!))
                     ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
             }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ProjectActions] WARNING: Project info not found for selected path");
+            }
         }
         else
+        {
+            System.Diagnostics.Debug.WriteLine("[ProjectActions] No project selected or ShellViewModel is null");
             _currentContext = null;
+        }
 
+        System.Diagnostics.Debug.WriteLine($"[ProjectActions] Calling UpdateDisplayedActions. Current context: {(_currentContext != null ? "exists" : "null")}");
         UpdateDisplayedActions();
     }
 
