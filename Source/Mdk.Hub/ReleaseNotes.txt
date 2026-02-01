@@ -1,5 +1,10 @@
 v.1.0.0-pre.14
    - Automated prerelease stability warning in GitHub release notes.
+   - Fixed version comparison to use semantic versioning instead of string comparison.
+   - Hub now correctly detects when running a newer version than available on GitHub.
+
+v.1.0.0-pre.13
+   - Automated prerelease stability warning in GitHub release notes.
 
 v.1.0.0-pre.13
    - Fixed false positive update detection by comparing current version against latest.

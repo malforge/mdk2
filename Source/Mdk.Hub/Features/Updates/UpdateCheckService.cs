@@ -12,6 +12,7 @@ using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
+using NuGet.Versioning;
 
 namespace Mdk.Hub.Features.Updates;
 
@@ -398,16 +399,98 @@ public class UpdateCheckService : IUpdateCheckService
         _logger.Info("Checking template package for updates");
 
         var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
-        var version = await _nuGetService.GetLatestVersionAsync(EnvironmentMetadata.TemplatePackageId, includePrerelease, cancellationToken);
-        if (version != null)
+        var latestVersion = await _nuGetService.GetLatestVersionAsync(EnvironmentMetadata.TemplatePackageId, includePrerelease, cancellationToken);
+        if (latestVersion == null)
         {
+            _logger.Warning("Could not determine latest template version");
+            return null;
+        }
+
+        // Get installed template version
+        var installedVersion = await GetInstalledTemplateVersionAsync();
+        if (installedVersion == null)
+        {
+            _logger.Info("Template package not installed");
             return new TemplateVersionInfo
             {
-                LatestVersion = version
+                LatestVersion = latestVersion
             };
         }
 
+        _logger.Info($"Template package installed version: {installedVersion}, latest: {latestVersion}");
+
+        // Use semantic version comparison
+        if (NuGetVersion.TryParse(installedVersion, out var installedVer) &&
+            NuGetVersion.TryParse(latestVersion, out var latestVer) &&
+            latestVer > installedVer)
+        {
+            _logger.Info($"Template update available: {installedVersion} -> {latestVersion}");
+            return new TemplateVersionInfo
+            {
+                LatestVersion = latestVersion
+            };
+        }
+
+        _logger.Info("Template package is up to date");
         return null;
+    }
+
+    async Task<string?> GetInstalledTemplateVersionAsync()
+    {
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "new uninstall",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            
+            // Force English output to avoid localization issues
+            startInfo.Environment["DOTNET_CLI_UI_LANGUAGE"] = "en-US";
+
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                _logger.Error("Failed to start dotnet process");
+                return null;
+            }
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            // Parse output to find our template package and its version
+            // Format: "   Mal.Mdk2.ScriptTemplates\n      Version: 2.2.50"
+            var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(EnvironmentMetadata.TemplatePackageId, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Version is on the next line or two after package name
+                    for (int j = i + 1; j < Math.Min(i + 5, lines.Length); j++)
+                    {
+                        var line = lines[j].Trim();
+                        if (line.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var version = line.Substring("Version:".Length).Trim();
+                            _logger.Debug($"Found installed template version: {version}");
+                            return version;
+                        }
+                    }
+                }
+            }
+
+            _logger.Debug("Template package not found in installed templates");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to get installed template version: {ex.Message}");
+            return null;
+        }
     }
 
     async Task<HubVersionInfo?> CheckHubVersionAsync(CancellationToken cancellationToken)
@@ -419,28 +502,40 @@ public class UpdateCheckService : IUpdateCheckService
         if (version != null)
         {
             // Get current version and compare
-            var currentVersion = GetCurrentHubVersion();
-            var latestVersion = version.Value.Version;
+            var currentVersionString = GetCurrentHubVersion();
+            var latestVersionString = version.Value.Version;
             
             // Strip "hub-v" prefix if present
-            if (latestVersion.StartsWith("hub-v", StringComparison.OrdinalIgnoreCase))
-                latestVersion = latestVersion.Substring(6);
+            if (latestVersionString.StartsWith("hub-v", StringComparison.OrdinalIgnoreCase))
+                latestVersionString = latestVersionString.Substring(6);
             
-            _logger.Info($"Current version: {currentVersion}, Latest version: {latestVersion}");
+            _logger.Info($"Current version: {currentVersionString}, Latest version: {latestVersionString}");
             
-            // Only return update info if the latest version is different from current
-            if (latestVersion != currentVersion)
+            // Parse semantic versions for proper comparison
+            try
             {
-                return new HubVersionInfo
+                var currentVersion = NuGetVersion.Parse(currentVersionString);
+                var latestVersion = NuGetVersion.Parse(latestVersionString);
+                
+                // Only return update info if the latest version is newer than current
+                if (latestVersion > currentVersion)
                 {
-                    LatestVersion = latestVersion,
-                    IsPrerelease = version.Value.IsPrerelease,
-                    DownloadUrl = $"{EnvironmentMetadata.GitHubRepoUrl}/releases/latest"
-                };
+                    _logger.Info($"Update available: {latestVersionString} is newer than {currentVersionString}");
+                    return new HubVersionInfo
+                    {
+                        LatestVersion = latestVersionString,
+                        IsPrerelease = version.Value.IsPrerelease,
+                        DownloadUrl = $"{EnvironmentMetadata.GitHubRepoUrl}/releases/latest"
+                    };
+                }
+                else
+                {
+                    _logger.Info($"Already running the latest version (current: {currentVersion}, latest: {latestVersion})");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                _logger.Info("Already running the latest version");
+                _logger.Warning($"Failed to parse versions for comparison: {ex.Message}. Current: {currentVersionString}, Latest: {latestVersionString}");
             }
         }
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Utility;
+using NuGet.Versioning;
 
 namespace Mdk.Hub.Features.Projects;
 
@@ -223,7 +224,10 @@ class ProjectUpdateChecker
             {
                 if (_latestVersions.TryGetValue(packageId, out var latestVersion))
                 {
-                    if (latestVersion != currentVersion)
+                    // Use semantic version comparison
+                    if (NuGetVersion.TryParse(currentVersion, out var currentVer) &&
+                        NuGetVersion.TryParse(latestVersion, out var latestVer) &&
+                        latestVer > currentVer)
                     {
                         updates.Add(new PackageUpdateInfo
                         {

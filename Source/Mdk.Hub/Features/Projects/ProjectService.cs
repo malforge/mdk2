@@ -19,6 +19,7 @@ using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Snackbars;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Utility;
+using NuGet.Versioning;
 
 namespace Mdk.Hub.Features.Projects;
 
@@ -475,8 +476,10 @@ public class ProjectService : IProjectService
                         return null;
                     }
 
-                    // Compare versions
-                    if (latestVersion != currentVersion)
+                    // Use semantic version comparison
+                    if (NuGetVersion.TryParse(currentVersion, out var currentVer) &&
+                        NuGetVersion.TryParse(latestVersion, out var latestVer) &&
+                        latestVer > currentVer)
                     {
                         _logger.Info($"Update available for {packageId}: {currentVersion} -> {latestVersion}");
                         return new PackageUpdateInfo
