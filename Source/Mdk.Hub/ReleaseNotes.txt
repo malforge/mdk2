@@ -1,3 +1,6 @@
+v.1.0.0-pre.16
+   - Test version bump.
+
 v.1.0.0-pre.15
    - Fixed Velopack GithubSource to respect prerelease update setting.
 
