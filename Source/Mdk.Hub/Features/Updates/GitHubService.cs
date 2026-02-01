@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -7,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
+using NuGet.Versioning;
 
 namespace Mdk.Hub.Features.Updates;
 
@@ -52,17 +54,40 @@ public class GitHubService(ILogger logger) : IGitHubService
 
             if (includePrerelease)
             {
-                // Parse array and get the first release (newest)
+                // Parse array and find the actual latest release by semantic version
                 if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() > 0)
                 {
-                    var firstRelease = doc.RootElement[0];
-                    var tagName = firstRelease.GetProperty("tag_name").GetString();
-                    var isPrerelease = firstRelease.GetProperty("prerelease").GetBoolean();
-
-                    if (tagName != null)
+                    // Collect all releases with parsed versions
+                    var releases = doc.RootElement.EnumerateArray()
+                        .Select(release =>
+                        {
+                            var tagName = release.GetProperty("tag_name").GetString();
+                            var isPrerelease = release.GetProperty("prerelease").GetBoolean();
+                            
+                            // Strip common prefixes to get version string
+                            var versionString = tagName;
+                            if (versionString?.StartsWith("hub-v", StringComparison.OrdinalIgnoreCase) == true)
+                                versionString = versionString.Substring(6);
+                            else if (versionString?.StartsWith("v", StringComparison.OrdinalIgnoreCase) == true)
+                                versionString = versionString.Substring(1);
+                            
+                            // Try to parse as semantic version
+                            if (versionString != null && NuGetVersion.TryParse(versionString, out var version))
+                            {
+                                return (TagName: tagName, IsPrerelease: isPrerelease, Version: version);
+                            }
+                            
+                            return (TagName: tagName, IsPrerelease: isPrerelease, Version: (NuGetVersion?)null);
+                        })
+                        .Where(r => r.Version != null && r.TagName != null)
+                        .OrderByDescending(r => r.Version)
+                        .ToList();
+                    
+                    if (releases.Count > 0)
                     {
-                        _logger.Info($"Latest release of {owner}/{repo}: {tagName} (prerelease: {isPrerelease})");
-                        return (tagName, isPrerelease);
+                        var latest = releases[0];
+                        _logger.Info($"Latest release of {owner}/{repo}: {latest.TagName} (prerelease: {latest.IsPrerelease})");
+                        return (latest.TagName!, latest.IsPrerelease);
                     }
                 }
 

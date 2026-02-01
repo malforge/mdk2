@@ -430,6 +430,7 @@ jobs:
           body: ${{ steps.release-notes.outputs.NOTES }}
           draft: false
           prerelease: ${{ contains(env.VERSION, '-') }}
+          target_commitish: ${{ github.sha }}
           files: |
             ./releases/*
         env:
