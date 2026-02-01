@@ -1,7 +1,8 @@
-v.1.0.0-pre.17
-   - Fixed GitHub release detection to sort by semantic version instead of relying on API order.
+v.1.0.0-pre.18
+   - Fixed workflow to create tags at correct commits instead of defaulting to main branch.
+   - Fixed GitHub release detection to sort by semantic version.
 
-v.1.0.0-pre.16
+v.1.0.0-pre.17
    - Test version bump.
 
 v.1.0.0-pre.15
