@@ -185,7 +185,7 @@ public class UpdatesAction : ActionItem
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = "new install Mal.Mdk2.ScriptTemplates --force",
+                Arguments = $"new install {EnvironmentMetadata.TemplatePackageId} --force",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -226,7 +226,7 @@ public class UpdatesAction : ActionItem
             IsDownloading = true;
             DownloadProgress = 0;
 
-            var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
+            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, false));
             var newVersion = await mgr.CheckForUpdatesAsync();
             
             if (newVersion == null)
@@ -273,7 +273,7 @@ public class UpdatesAction : ActionItem
             if (!confirmed)
                 return;
 
-            var mgr = new UpdateManager(new GithubSource("https://github.com/malware-dev/mdk2", null, false));
+            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, false));
             mgr.ApplyUpdatesAndRestart(_pendingUpdate);
         }
         catch (Exception ex)

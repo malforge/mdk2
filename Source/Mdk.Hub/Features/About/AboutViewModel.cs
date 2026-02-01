@@ -73,7 +73,7 @@ public class AboutViewModel : OverlayModel
     void OpenGitHub() =>
         Process.Start(new ProcessStartInfo
         {
-            FileName = "https://github.com/malforge/mdk2",
+            FileName = EnvironmentMetadata.GitHubRepoUrl,
             UseShellExecute = true
         });
 }

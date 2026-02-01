@@ -25,7 +25,7 @@ public class NuGetService(ILogger logger) : INuGetService
 
         try
         {
-            var url = $"https://api.nuget.org/v3-flatcontainer/{packageId.ToLowerInvariant()}/index.json";
+            var url = $"{EnvironmentMetadata.NuGetApiBaseUrl}/{packageId.ToLowerInvariant()}/index.json";
             var response = await _httpClient.GetStringAsync(url, cancellationToken);
 
             var doc = JsonDocument.Parse(response);

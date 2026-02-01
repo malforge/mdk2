@@ -40,8 +40,8 @@ public static class ProjectDetector
                 .ToList();
 
             // Check for MDK2 packages
-            var hasPbPackager = packageReferences.Any(p => p == "Mal.Mdk2.PbPackager");
-            var hasModPackager = packageReferences.Any(p => p == "Mal.Mdk2.ModPackager");
+            var hasPbPackager = packageReferences.Any(p => p == EnvironmentMetadata.PbPackagerPackageId);
+            var hasModPackager = packageReferences.Any(p => p == EnvironmentMetadata.ModPackagerPackageId);
 
             if (!hasPbPackager && !hasModPackager)
                 return false;

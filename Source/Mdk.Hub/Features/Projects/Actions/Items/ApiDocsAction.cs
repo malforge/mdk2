@@ -106,8 +106,8 @@ public class ApiDocsAction : ActionItem
             return;
 
         var url = projectInfo.Type == ProjectType.Mod
-            ? "https://malforge.github.io/spaceengineers/modapi/"
-            : "https://malforge.github.io/spaceengineers/pbapi/";
+            ? EnvironmentMetadata.ModApiDocsUrl
+            : EnvironmentMetadata.PbApiDocsUrl;
 
         try
         {

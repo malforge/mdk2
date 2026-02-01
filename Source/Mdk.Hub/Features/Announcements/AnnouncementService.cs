@@ -16,7 +16,7 @@ namespace Mdk.Hub.Features.Announcements;
 [Singleton<IAnnouncementService>]
 public class AnnouncementService : IAnnouncementService
 {
-    const string RemoteUrl = "https://raw.githubusercontent.com/malforge/mdk2/main/announcements.json";
+    const string RemoteUrl = $"{EnvironmentMetadata.GitHubRawContentBaseUrl}/announcements.json";
     static readonly TimeSpan CacheExpiry = TimeSpan.FromHours(6);
     static readonly TimeSpan AutoCheckInterval = TimeSpan.FromHours(1);
     readonly Timer _autoCheckTimer;

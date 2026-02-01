@@ -1,3 +1,7 @@
+v.1.0.0-pre.11
+   - Fixed Hub update installation by correcting repository URL.
+   - Centralized all environment metadata (URLs, package names) in EnvironmentMetadata class.
+
 v.1.0.0-pre.10
    - Added automatic prompt to enable prerelease updates when running a prerelease version.
    - Fixed actions panel to show global actions (announcements, updates) when no projects exist.

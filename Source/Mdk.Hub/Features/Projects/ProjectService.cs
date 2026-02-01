@@ -409,9 +409,9 @@ public class ProjectService : IProjectService
             var doc = XDocument.Load(projectPath.Value!);
             var ns = doc.Root?.Name.Namespace ?? XNamespace.None;
 
-            // Find all PackageReference elements with Mal.Mdk2.* package IDs
+            // Find all PackageReference elements with MDK package IDs
             var packageReferences = doc.Descendants(ns + "PackageReference")
-                .Where(e => e.Attribute("Include")?.Value?.StartsWith("Mal.Mdk2.", StringComparison.OrdinalIgnoreCase) == true);
+                .Where(e => e.Attribute("Include")?.Value?.StartsWith(EnvironmentMetadata.PackagePrefix, StringComparison.OrdinalIgnoreCase) == true);
 
             foreach (var pkgRef in packageReferences)
             {
@@ -625,7 +625,7 @@ public class ProjectService : IProjectService
             return true;
         }
 
-        errorMessage = "The selected project is not a valid MDK² project. MDK² projects must reference either Mal.Mdk2.PbPackager or Mal.Mdk2.ModPackager.";
+        errorMessage = $"The selected project is not a valid MDK² project. MDK² projects must reference either {EnvironmentMetadata.PbPackagerPackageId} or {EnvironmentMetadata.ModPackagerPackageId}.";
         return false;
     }
 

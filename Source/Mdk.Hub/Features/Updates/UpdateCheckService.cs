@@ -162,8 +162,8 @@ public class UpdateCheckService : IUpdateCheckService
 
             // Build arguments - include --prerelease if user wants prerelease updates
             var args = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates 
-                ? "new install Mal.Mdk2.ScriptTemplates --prerelease" 
-                : "new install Mal.Mdk2.ScriptTemplates";
+                ? $"new install {EnvironmentMetadata.TemplatePackageId} --prerelease" 
+                : $"new install {EnvironmentMetadata.TemplatePackageId}";
 
             var startInfo = new ProcessStartInfo
             {
@@ -371,14 +371,7 @@ public class UpdateCheckService : IUpdateCheckService
     {
         _logger.Info("Checking NuGet packages for updates");
 
-        var packages = new[]
-        {
-            "Mal.Mdk2.PbAnalyzers",
-            "Mal.Mdk2.PbPackager",
-            "Mal.Mdk2.ModAnalyzers",
-            "Mal.Mdk2.ModPackager",
-            "Mal.Mdk2.References"
-        };
+        var packages = EnvironmentMetadata.AllPackageIds;
 
         var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
         var results = new List<PackageVersionInfo>();
@@ -404,7 +397,7 @@ public class UpdateCheckService : IUpdateCheckService
         _logger.Info("Checking template package for updates");
 
         var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
-        var version = await _nuGetService.GetLatestVersionAsync("Mal.Mdk2.ScriptTemplates", includePrerelease, cancellationToken);
+        var version = await _nuGetService.GetLatestVersionAsync(EnvironmentMetadata.TemplatePackageId, includePrerelease, cancellationToken);
         if (version != null)
         {
             return new TemplateVersionInfo
@@ -421,14 +414,14 @@ public class UpdateCheckService : IUpdateCheckService
         _logger.Info("Checking Hub version for updates");
 
         var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
-        var version = await _gitHubService.GetLatestReleaseAsync("malforge", "mdk2", includePrerelease, cancellationToken);
+        var version = await _gitHubService.GetLatestReleaseAsync(EnvironmentMetadata.GitHubOwner, EnvironmentMetadata.GitHubRepo, includePrerelease, cancellationToken);
         if (version != null)
         {
             return new HubVersionInfo
             {
                 LatestVersion = version.Value.Version,
                 IsPrerelease = version.Value.IsPrerelease,
-                DownloadUrl = "https://github.com/malforge/mdk2/releases/latest"
+                DownloadUrl = $"{EnvironmentMetadata.GitHubRepoUrl}/releases/latest"
             };
         }
 
