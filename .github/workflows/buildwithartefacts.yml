@@ -374,6 +374,14 @@ jobs:
             NOTES="See [release notes](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/Source/Mdk.Hub/ReleaseNotes.txt) for details."
           fi
           
+          # Add prerelease warning if version contains a dash (prerelease indicator)
+          PRERELEASE_WARNING=""
+          if [[ "$VERSION" == *"-"* ]]; then
+            PRERELEASE_WARNING="⚠️ **Prerelease Notice:** This is a prerelease version intended for testing and feedback. It may contain bugs, incomplete features, or breaking changes. Please report any issues encountered.
+
+          "
+          fi
+          
           # Add installation guidance
           INSTALL_GUIDE="## 📥 First Time Installing?
 
@@ -393,9 +401,9 @@ jobs:
 
           ## 🆕 What's New"
           
-          # Combine installation guide with release notes
+          # Combine installation guide with prerelease warning and release notes
           FULL_NOTES="${INSTALL_GUIDE}
-          ${NOTES}"
+          ${PRERELEASE_WARNING}${NOTES}"
           
           # Save to output (GitHub Actions multiline output)
           echo "NOTES<<EOF" >> $GITHUB_OUTPUT

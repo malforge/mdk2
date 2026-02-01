@@ -1,3 +1,6 @@
+v.1.0.0-pre.14
+   - Automated prerelease stability warning in GitHub release notes.
+
 v.1.0.0-pre.13
    - Fixed false positive update detection by comparing current version against latest.
    - Added version number to update status message for clarity.
