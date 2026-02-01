@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
@@ -84,6 +85,9 @@ public class Shell(IDependencyContainer container, ISettings settings, ILogger l
         foreach (var callback in _readyCallbacks)
             callback(_startupArgs!);
         _readyCallbacks.Clear();
+        
+        // Check if we should prompt about prerelease updates
+        Task.Delay(1000).ContinueWith(_ => CheckPrereleasePrompt());
     }
     
     bool RequiresLinuxPathConfiguration()
@@ -358,6 +362,60 @@ public class Shell(IDependencyContainer container, ISettings settings, ILogger l
 
     public async Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay) =>
         await ShowOverlayAsync(busyOverlay);
+
+    async void CheckPrereleasePrompt()
+    {
+        try
+        {
+            // Get current version
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var version = assembly.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            
+            // Strip git metadata
+            if (version != null)
+            {
+                var plusIndex = version.IndexOf('+');
+                if (plusIndex >= 0)
+                    version = version.Substring(0, plusIndex);
+            }
+            
+            if (string.IsNullOrEmpty(version))
+                return;
+            
+            // Check if current version is a prerelease (contains -)
+            bool isPrerelease = version.Contains('-');
+            if (!isPrerelease)
+                return;
+            
+            var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+            
+            // If already prompted or prereleases already enabled, skip
+            if (hubSettings.HasPromptedForPrereleaseUpdates || hubSettings.IncludePrereleaseUpdates)
+                return;
+            
+            _logger.Info($"Running prerelease version {version} with prerelease updates disabled - prompting user");
+            
+            // Prompt user
+            var result = await ShowAsync(new ConfirmationMessage
+            {
+                Title = "Enable Prerelease Updates?",
+                Message = $"You're running a prerelease version of MDK Hub ({version}).\n\nWould you like to enable prerelease updates? This will allow the Hub to check for and install newer prerelease versions automatically.\n\nYou can change this setting later in the Settings screen.",
+                OkText = "Enable Prerelease Updates",
+                CancelText = "No Thanks"
+            });
+            
+            // Save the choice and mark as prompted
+            hubSettings.IncludePrereleaseUpdates = result;
+            hubSettings.HasPromptedForPrereleaseUpdates = true;
+            _settings.SetValue(SettingsKeys.HubSettings, hubSettings);
+            
+            _logger.Info($"User {(result ? "enabled" : "declined")} prerelease updates");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Error checking prerelease prompt: {ex.Message}");
+        }
+    }
 
     class UnsavedChangesRegistration
     {

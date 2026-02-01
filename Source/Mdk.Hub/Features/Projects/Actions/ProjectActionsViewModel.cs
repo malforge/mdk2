@@ -28,6 +28,7 @@ public partial class ProjectActionsViewModel : ViewModel
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
     readonly IProjectService _projectService;
     readonly IShell _shell;
+    ProjectContext? _globalContext; // Context for when no project is selected (created lazily)
     ObservableCollection<ActionItem> _actions = new();
     ProjectContext? _currentContext;
 
@@ -337,19 +338,18 @@ public partial class ProjectActionsViewModel : ViewModel
         _isUpdatingDisplayedActions = true;
         try
         {
-            // If we don't have a context, clear list
-            if (_currentContext == null)
-            {
-                Actions.Clear();
-                return;
-            }
-
+            // Use global context when no project selected, otherwise use project context
+            // Create global context lazily to avoid circular dependency during DI initialization
+            if (_currentContext == null && _globalContext == null)
+                _globalContext = new ProjectContext(null, this, _globalActionCache);
+            
+            var context = _currentContext ?? _globalContext!;
+            
             // Optionally refresh the filtered actions first
             if (refreshFilters)
-                _currentContext.UpdateFilteredActions();
-
-            // Build desired list - ONLY actions, no separators
-            var desiredActions = _currentContext.FilteredActions;
+                context.UpdateFilteredActions();
+            
+            var desiredActions = context.FilteredActions.ToList();
 
             // Sync Actions collection by walking through desired actions and handling category transitions
             int currentIndex = 0;

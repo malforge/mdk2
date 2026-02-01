@@ -31,9 +31,9 @@ class ProjectContext
     readonly ObservableCollection<ActionItem> _filteredActions = new();
     readonly Dictionary<string, ActionItem> _globalActionCache;
     readonly ProjectActionsViewModel _owner;
-    readonly ProjectModel _project;
+    readonly ProjectModel? _project;
 
-    public ProjectContext(ProjectModel project, ProjectActionsViewModel owner, Dictionary<string, ActionItem> globalActionCache)
+    public ProjectContext(ProjectModel? project, ProjectActionsViewModel owner, Dictionary<string, ActionItem> globalActionCache)
     {
         _project = project;
         _owner = owner;
@@ -57,7 +57,7 @@ class ProjectContext
         // Actions are shared singletons - reassign Project to trigger OnSelectedProjectChanged()
         foreach (var action in _allActions)
         {
-            if (!action.IsGlobal)
+            if (!action.IsGlobal && _project != null)
                 action.Project = _project;
         }
     }
@@ -100,8 +100,8 @@ class ProjectContext
             // Resolve the action from DI
             var action = (ActionItem)App.Container.Resolve(actionType);
 
-            // Set project for per-project actions
-            if (!action.IsGlobal)
+            // Set project for per-project actions (only if we have a project)
+            if (!action.IsGlobal && _project != null)
                 action.Project = _project;
 
             // Subscribe to should show changes
@@ -122,6 +122,10 @@ class ProjectContext
         // Just add the actions that should show
         foreach (var action in _allActions)
         {
+            // If no project, only show global actions
+            if (_project == null && !action.IsGlobal)
+                continue;
+                
             if (action.ShouldShow())
                 _filteredActions.Add(action);
         }

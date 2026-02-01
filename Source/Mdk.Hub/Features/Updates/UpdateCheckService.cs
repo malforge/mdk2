@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Updates;
@@ -21,17 +22,22 @@ public class UpdateCheckService : IUpdateCheckService
     readonly IGitHubService _gitHubService;
     readonly ILogger _logger;
     readonly INuGetService _nuGetService;
+    readonly IShell _shell;
     int _isChecking; // 0 = not checking, 1 = checking
 
-    public UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings)
+    public UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings, IShell shell)
     {
         _logger = logger;
         _nuGetService = nuGetService;
         _gitHubService = gitHubService;
         _settings = settings;
+        _shell = shell;
         
         // Subscribe to settings changes to invalidate cache when prerelease preference changes
         _settings.SettingsChanged += OnSettingsChanged;
+        
+        // Subscribe to refresh requests to re-check for updates
+        _shell.RefreshRequested += OnRefreshRequested;
     }
     
     void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
@@ -43,6 +49,13 @@ public class UpdateCheckService : IUpdateCheckService
             _logger.Info("Settings changed, invalidating cached version check results");
             LastKnownVersions = null;
         }
+    }
+    
+    void OnRefreshRequested(object? sender, EventArgs e)
+    {
+        _logger.Info("Refresh requested - re-checking for updates");
+        LastKnownVersions = null;
+        _ = CheckForUpdatesAsync(); // Fire and forget
     }
 
     public VersionCheckCompletedEventArgs? LastKnownVersions { get; private set; }

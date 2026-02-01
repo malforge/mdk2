@@ -1,4 +1,10 @@
-﻿v.1.0.0-pre.9
+v.1.0.0-pre.10
+   - Added automatic prompt to enable prerelease updates when running a prerelease version.
+   - Fixed actions panel to show global actions (announcements, updates) when no projects exist.
+   - Fixed update check not responding to Ctrl+R refresh command.
+   - Fixed window positioning on first run to center on screen instead of appearing in top-left corner.
+
+v.1.0.0-pre.9
    - Fixed actions panel not appearing when Hub starts with no previously selected project.
    - Fixed About screen version number not displaying correctly.
    - Improved project selection to automatically select first project when none is saved.

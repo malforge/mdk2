@@ -36,6 +36,12 @@ public struct HubSettings
     public bool IncludePrereleaseUpdates { get; set; }
 
     /// <summary>
+    ///     Gets or sets whether the user has been prompted about enabling prerelease updates.
+    ///     Used to avoid repeatedly asking when running a prerelease version.
+    /// </summary>
+    public bool HasPromptedForPrereleaseUpdates { get; set; }
+
+    /// <summary>
     ///     Gets or sets the list of dismissed announcement IDs.
     /// </summary>
     public ImmutableArray<string> DismissedAnnouncementIds { get; set; } = ImmutableArray<string>.Empty;

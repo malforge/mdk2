@@ -41,10 +41,13 @@ public partial class ShellWindow : Window
                 var windowSettings = viewModel.Settings.GetValue("MainWindowSettings", new WindowSettings(this));
                 if (!windowSettings.IsNew())
                     windowSettings.Restore(this);
+                else
+                    CenterWindow(); // Center on first run
             }
             catch
             {
-                // If settings are corrupt, just use defaults
+                // If settings are corrupt, just use defaults and center
+                CenterWindow();
             }
         }
     }
@@ -97,6 +100,25 @@ public partial class ShellWindow : Window
         {
             // Close programmatically to bypass the check
             Close();
+        }
+    }
+
+    void CenterWindow()
+    {
+        // Center the window on the primary screen
+        var screen = Screens.Primary;
+        if (screen != null)
+        {
+            var workingArea = screen.WorkingArea;
+            var scaling = screen.Scaling;
+            
+            // Convert logical size to physical pixels
+            var physicalWidth = Width * scaling;
+            var physicalHeight = Height * scaling;
+            
+            var left = workingArea.X + (workingArea.Width - physicalWidth) / 2;
+            var top = workingArea.Y + (workingArea.Height - physicalHeight) / 2;
+            Position = new PixelPoint((int)left, (int)top);
         }
     }
 
