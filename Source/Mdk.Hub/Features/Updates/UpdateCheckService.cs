@@ -11,7 +11,6 @@ using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
-using Mdk.Hub.Framework;
 using NuGet.Versioning;
 
 namespace Mdk.Hub.Features.Updates;
@@ -20,10 +19,10 @@ namespace Mdk.Hub.Features.Updates;
 public class UpdateCheckService : IUpdateCheckService
 {
     readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();
-    readonly ISettings _settings;
     readonly IGitHubService _gitHubService;
     readonly ILogger _logger;
     readonly INuGetService _nuGetService;
+    readonly ISettings _settings;
     readonly IShell _shell;
     int _isChecking; // 0 = not checking, 1 = checking
 
@@ -34,40 +33,21 @@ public class UpdateCheckService : IUpdateCheckService
         _gitHubService = gitHubService;
         _settings = settings;
         _shell = shell;
-        
+
         // Subscribe to settings changes to invalidate cache when prerelease preference changes
         _settings.SettingsChanged += OnSettingsChanged;
-        
+
         // Subscribe to refresh requests to re-check for updates
         _shell.RefreshRequested += OnRefreshRequested;
-    }
-    
-    void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
-    {
-        // Invalidate cached version check results when HubSettings change
-        // (specifically when IncludePrereleaseUpdates changes)
-        if (e.Key == SettingsKeys.HubSettings)
-        {
-            _logger.Info("Settings changed, invalidating cached version check results");
-            LastKnownVersions = null;
-        }
-    }
-    
-    void OnRefreshRequested(object? sender, EventArgs e)
-    {
-        _logger.Info("Refresh requested - re-checking for updates");
-        LastKnownVersions = null;
-        _ = CheckForUpdatesAsync(); // Fire and forget
     }
 
     public VersionCheckCompletedEventArgs? LastKnownVersions { get; private set; }
 
-    public void WhenVersionCheckCompleted(Action<VersionCheckCompletedEventArgs> callback)
+    public void WhenVersionCheckUpdates(Action<VersionCheckCompletedEventArgs> callback)
     {
         if (LastKnownVersions != null)
             callback(LastKnownVersions);
-        else
-            _completionCallbacks.Add(callback);
+        _completionCallbacks.Add(callback);
     }
 
     public async Task<bool> CheckForUpdatesAsync()
@@ -101,8 +81,7 @@ public class UpdateCheckService : IUpdateCheckService
             // Invoke queued callbacks
             foreach (var callback in _completionCallbacks)
                 callback(results);
-            _completionCallbacks.Clear();
-
+            
             return true;
         }
         catch (Exception ex)
@@ -163,8 +142,8 @@ public class UpdateCheckService : IUpdateCheckService
             _logger.Info("Installing MDK² template package");
 
             // Build arguments - include --prerelease if user wants prerelease updates
-            var args = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates 
-                ? $"new install {EnvironmentMetadata.TemplatePackageId} --prerelease" 
+            var args = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates
+                ? $"new install {EnvironmentMetadata.TemplatePackageId} --prerelease"
                 : $"new install {EnvironmentMetadata.TemplatePackageId}";
 
             var startInfo = new ProcessStartInfo
@@ -369,6 +348,25 @@ public class UpdateCheckService : IUpdateCheckService
         }
     }
 
+    void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
+    {
+        // Invalidate cached version check results when HubSettings change
+        // (specifically when IncludePrereleaseUpdates changes)
+        if (e.Key == SettingsKeys.HubSettings)
+        {
+            _logger.Info("Settings changed, invalidating cached version check results");
+            LastKnownVersions = null;
+            _ = CheckForUpdatesAsync(); // Fire and forget
+        }
+    }
+
+    void OnRefreshRequested(object? sender, EventArgs e)
+    {
+        _logger.Info("Refresh requested - re-checking for updates");
+        LastKnownVersions = null;
+        _ = CheckForUpdatesAsync(); // Fire and forget
+    }
+
     async Task<IReadOnlyList<PackageVersionInfo>> CheckNuGetPackagesAsync(CancellationToken cancellationToken)
     {
         _logger.Info("Checking NuGet packages for updates");
@@ -420,9 +418,7 @@ public class UpdateCheckService : IUpdateCheckService
         _logger.Info($"Template package installed version: {installedVersion}, latest: {latestVersion}");
 
         // Use semantic version comparison
-        if (NuGetVersion.TryParse(installedVersion, out var installedVer) &&
-            NuGetVersion.TryParse(latestVersion, out var latestVer) &&
-            latestVer > installedVer)
+        if (NuGetVersion.TryParse(installedVersion, out var installedVer) && NuGetVersion.TryParse(latestVersion, out var latestVer) && latestVer > installedVer)
         {
             _logger.Info($"Template update available: {installedVersion} -> {latestVersion}");
             return new TemplateVersionInfo
@@ -448,7 +444,7 @@ public class UpdateCheckService : IUpdateCheckService
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-            
+
             // Force English output to avoid localization issues
             startInfo.Environment["DOTNET_CLI_UI_LANGUAGE"] = "en-US";
 
@@ -465,12 +461,12 @@ public class UpdateCheckService : IUpdateCheckService
             // Parse output to find our template package and its version
             // Format: "   Mal.Mdk2.ScriptTemplates\n      Version: 2.2.50"
             var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < lines.Length; i++)
+            for (var i = 0; i < lines.Length; i++)
             {
                 if (lines[i].Contains(EnvironmentMetadata.TemplatePackageId, StringComparison.OrdinalIgnoreCase))
                 {
                     // Version is on the next line or two after package name
-                    for (int j = i + 1; j < Math.Min(i + 5, lines.Length); j++)
+                    for (var j = i + 1; j < Math.Min(i + 5, lines.Length); j++)
                     {
                         var line = lines[j].Trim();
                         if (line.StartsWith("Version:", StringComparison.OrdinalIgnoreCase))
@@ -504,19 +500,19 @@ public class UpdateCheckService : IUpdateCheckService
             // Get current version and compare
             var currentVersionString = GetCurrentHubVersion();
             var latestVersionString = version.Value.Version;
-            
+
             // Strip "hub-v" prefix if present
             if (latestVersionString.StartsWith("hub-v", StringComparison.OrdinalIgnoreCase))
                 latestVersionString = latestVersionString.Substring(6);
-            
+
             _logger.Info($"Current version: {currentVersionString}, Latest version: {latestVersionString}");
-            
+
             // Parse semantic versions for proper comparison
             try
             {
                 var currentVersion = NuGetVersion.Parse(currentVersionString);
                 var latestVersion = NuGetVersion.Parse(latestVersionString);
-                
+
                 // Only return update info if the latest version is newer than current
                 if (latestVersion > currentVersion)
                 {
@@ -528,10 +524,7 @@ public class UpdateCheckService : IUpdateCheckService
                         DownloadUrl = $"{EnvironmentMetadata.GitHubRepoUrl}/releases/latest"
                     };
                 }
-                else
-                {
-                    _logger.Info($"Already running the latest version (current: {currentVersion}, latest: {latestVersion})");
-                }
+                _logger.Info($"Already running the latest version (current: {currentVersion}, latest: {latestVersion})");
             }
             catch (Exception ex)
             {
@@ -541,12 +534,12 @@ public class UpdateCheckService : IUpdateCheckService
 
         return null;
     }
-    
+
     string GetCurrentHubVersion()
     {
-        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-        var version = assembly.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        
+        var assembly = Assembly.GetExecutingAssembly();
+        var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
         if (version != null)
         {
             // Strip git metadata (everything after +)
@@ -554,7 +547,7 @@ public class UpdateCheckService : IUpdateCheckService
             if (plusIndex >= 0)
                 version = version.Substring(0, plusIndex);
         }
-        
+
         return version ?? "unknown";
     }
 }

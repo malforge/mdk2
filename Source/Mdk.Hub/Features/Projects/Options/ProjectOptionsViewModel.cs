@@ -293,7 +293,7 @@ public class ProjectOptionsViewModel : ViewModel
         }
         catch (UnauthorizedAccessException ex)
         {
-            await _dialogShell.ShowAsync(new ConfirmationMessage
+            await _dialogShell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Permission Denied",
                 Message = $"Cannot save configuration file. Access is denied.\n\nPlease check file permissions and try again.\n\nDetails: {ex.Message}",
@@ -303,7 +303,7 @@ public class ProjectOptionsViewModel : ViewModel
         }
         catch (IOException ex)
         {
-            await _dialogShell.ShowAsync(new ConfirmationMessage
+            await _dialogShell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Save Failed",
                 Message = $"Cannot save configuration file. The disk may be full or the file may be in use.\n\nDetails: {ex.Message}",

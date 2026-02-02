@@ -128,7 +128,7 @@ public class ProjectManagementAction : ActionItem
                 await busyTask;
 
                 // Show error
-                await _shell.ShowAsync(new InformationMessage
+                await _shell.ShowOverlayAsync(new InformationMessage
                 {
                     Title = "Project Creation Failed",
                     Message = errorMessage ?? "Unknown error occurred"
@@ -144,7 +144,7 @@ public class ProjectManagementAction : ActionItem
                 busyOverlay.Dismiss();
                 await busyTask;
 
-                await _shell.ShowAsync(new InformationMessage
+                await _shell.ShowOverlayAsync(new InformationMessage
                 {
                     Title = "Failed to Add Project",
                     Message = addError ?? "Unknown error occurred"
@@ -165,7 +165,7 @@ public class ProjectManagementAction : ActionItem
             busyOverlay.Dismiss();
             await busyTask;
 
-            await _shell.ShowAsync(new InformationMessage
+            await _shell.ShowOverlayAsync(new InformationMessage
             {
                 Title = "Unexpected Error",
                 Message = $"An error occurred while creating the project: {ex.Message}"
@@ -207,7 +207,7 @@ public class ProjectManagementAction : ActionItem
         }
         else
         {
-            await _shell.ShowAsync(new ConfirmationMessage
+            await _shell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Invalid Project",
                 Message = errorMessage ?? "The selected file is not a valid MDK² project.",

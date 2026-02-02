@@ -286,7 +286,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
     }
 
     async Task ShowErrorAsync(string title, string message) =>
-        await _shell.ShowAsync(new InformationMessage
+        await _shell.ShowOverlayAsync(new InformationMessage
         {
             Title = title,
             Message = message

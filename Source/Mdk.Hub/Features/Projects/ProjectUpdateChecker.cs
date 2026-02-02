@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.Diagnostics;
@@ -15,28 +16,29 @@ namespace Mdk.Hub.Features.Projects;
 /// </summary>
 class ProjectUpdateChecker
 {
-    readonly object _lock = new();
+    readonly Lock _lock = new();
     readonly ILogger _logger;
     readonly IProjectService _projectService;
     readonly Queue<CanonicalPath> _queue = new();
     readonly HashSet<CanonicalPath> _queued = new();
+    readonly IProjectRegistry _registry;
     CancellationTokenSource? _cancellationTokenSource;
     bool _hasVersionData;
     Dictionary<string, string>? _latestVersions;
     Task? _processingTask;
 
-    public ProjectUpdateChecker(ILogger logger, IProjectService projectService)
+    public ProjectUpdateChecker(ILogger logger, IProjectService projectService, IUpdateCheckService updateCheckService, IProjectRegistry registry)
     {
         _logger = logger;
         _projectService = projectService;
+        _registry = registry;
+        // When version data is available, start checking projects
+        updateCheckService.WhenVersionCheckUpdates(OnVersionDataUpdated);
     }
 
     public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
 
-    /// <summary>
-    ///     Starts background processing when version data becomes available.
-    /// </summary>
-    public void OnVersionDataAvailable(VersionCheckCompletedEventArgs versionData)
+    void OnVersionDataUpdated(VersionCheckCompletedEventArgs versionData)
     {
         _logger.Info($"Version data available, storing latest versions for {versionData.Packages.Count} MDK package(s)");
         _hasVersionData = true;
@@ -52,12 +54,12 @@ class ProjectUpdateChecker
             if (_queue.Count > 0 && _processingTask == null)
                 StartProcessing();
         }
+
+        var projects = _registry.GetProjects();
+        QueueProjectsCheck(projects.Select(p => p.ProjectPath));
     }
 
-    /// <summary>
-    ///     Queues a project for update checking. If project is selected, moves to front of queue.
-    /// </summary>
-    public void QueueProjectCheck(CanonicalPath projectPath, bool priority = false)
+    void QueueProjectCheck(CanonicalPath projectPath, bool priority = false)
     {
         lock (_lock)
         {
@@ -103,13 +105,10 @@ class ProjectUpdateChecker
         }
     }
 
-    /// <summary>
-    ///     Queues multiple projects for checking.
-    /// </summary>
-    public void QueueProjectsCheck(IEnumerable<CanonicalPath> projectPaths)
+    void QueueProjectsCheck(IEnumerable<CanonicalPath> projectPaths)
     {
         foreach (var path in projectPaths)
-            QueueProjectCheck(path, false);
+            QueueProjectCheck(path);
     }
 
     /// <summary>
@@ -192,7 +191,15 @@ class ProjectUpdateChecker
                         });
                 }
                 else
+                {
                     _logger.Debug($"No updates available for {projectPath}");
+                    ProjectUpdateAvailable?.Invoke(this,
+                        new ProjectUpdateAvailableEventArgs
+                        {
+                            ProjectPath = projectPath,
+                            AvailableUpdates = Array.Empty<PackageUpdateInfo>()
+                        });
+                }
             }
             catch (OperationCanceledException)
             {
@@ -225,9 +232,7 @@ class ProjectUpdateChecker
                 if (_latestVersions.TryGetValue(packageId, out var latestVersion))
                 {
                     // Use semantic version comparison
-                    if (NuGetVersion.TryParse(currentVersion, out var currentVer) &&
-                        NuGetVersion.TryParse(latestVersion, out var latestVer) &&
-                        latestVer > currentVer)
+                    if (NuGetVersion.TryParse(currentVersion, out var currentVer) && NuGetVersion.TryParse(latestVersion, out var latestVer) && latestVer > currentVer)
                     {
                         updates.Add(new PackageUpdateInfo
                         {

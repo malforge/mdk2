@@ -29,9 +29,9 @@ public class ProjectService : IProjectService
     readonly ILogger _logger;
     readonly INuGetService _nugetService;
     readonly IProjectRegistry _registry;
+    readonly ISettings _settings;
     readonly IShell _shell;
     readonly ISnackbarService _snackbarService;
-    readonly ISettings _settings;
     readonly ProjectUpdateChecker _updateChecker;
     readonly Dictionary<CanonicalPath, (bool needsUpdate, int updateCount, IReadOnlyList<PackageUpdateInfo> updates)> _updateStates = new();
     readonly Lock _updateStatesLock = new();
@@ -47,26 +47,16 @@ public class ProjectService : IProjectService
         _settings = settings;
         Settings = settings;
         _nugetService = nugetService;
-        _updateChecker = new ProjectUpdateChecker(logger, this);
+        _updateChecker = new ProjectUpdateChecker(logger, this, updateCheckService, registry);
         _state = new ProjectStateData(default, true, true);
 
         _updateChecker.ProjectUpdateAvailable += OnProjectUpdateAvailable;
 
-        // When version data is available, start checking projects
-        updateCheckService.WhenVersionCheckCompleted(versionData =>
-        {
-            _updateChecker.OnVersionDataAvailable(versionData);
-
-            // Queue all existing projects for checking
-            var projects = _registry.GetProjects();
-            _updateChecker.QueueProjectsCheck(projects.Select(p => p.ProjectPath));
-        });
-
         // Subscribe to IPC messages
-        ipc.MessageReceived += async (_, e) => await HandleBuildNotificationAsync(e.Message);
+        ipc.MessageReceived += (_, e) => HandleBuildNotification(e.Message);
 
         // Handle startup arguments when shell is ready
-        shell.WhenReady(args => HandleStartupArguments(args));
+        shell.WhenReady(HandleStartupArguments);
     }
 
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
@@ -368,7 +358,7 @@ public class ProjectService : IProjectService
 
         // Update state directly - this raises StateChanged event
         State = new ProjectStateData(projectPath, _state.CanMakeScript, _state.CanMakeMod);
-        
+
         _logger.Info($"Navigated to project: {projectPath}{(openOptions ? " (with options)" : "")}");
 
         // Raise event for additional navigation actions (e.g., opening options drawer)
@@ -412,7 +402,7 @@ public class ProjectService : IProjectService
 
             // Find all PackageReference elements with MDK package IDs
             var packageReferences = doc.Descendants(ns + "PackageReference")
-                .Where(e => e.Attribute("Include")?.Value?.StartsWith(EnvironmentMetadata.PackagePrefix, StringComparison.OrdinalIgnoreCase) == true);
+                .Where(e => e.Attribute("Include")?.Value.StartsWith(EnvironmentMetadata.PackagePrefix, StringComparison.OrdinalIgnoreCase) == true);
 
             foreach (var pkgRef in packageReferences)
             {
@@ -477,9 +467,7 @@ public class ProjectService : IProjectService
                     }
 
                     // Use semantic version comparison
-                    if (NuGetVersion.TryParse(currentVersion, out var currentVer) &&
-                        NuGetVersion.TryParse(latestVersion, out var latestVer) &&
-                        latestVer > currentVer)
+                    if (NuGetVersion.TryParse(currentVersion, out var currentVer) && NuGetVersion.TryParse(latestVersion, out var latestVer) && latestVer > currentVer)
                     {
                         _logger.Info($"Update available for {packageId}: {currentVersion} -> {latestVersion}");
                         return new PackageUpdateInfo
@@ -664,14 +652,14 @@ public class ProjectService : IProjectService
         return new ConfigurationValue<bool>(defaultValue, SourceLayer.Default);
     }
 
-    async Task HandleBuildNotificationAsync(InterConnectMessage message)
+    Task HandleBuildNotification(InterConnectMessage message)
     {
         // Parse project path from message arguments
         // Expected format: script/mod <ProjectName> <ProjectPath> <OptionalMessage> [--simulate]
         if (message.Arguments.Length < 2)
         {
             _logger.Warning($"Build notification has insufficient arguments: {string.Join(", ", message.Arguments)}");
-            return;
+            return Task.CompletedTask;
         }
 
         var projectName = message.Arguments[0]; // First argument is project name
@@ -694,8 +682,6 @@ public class ProjectService : IProjectService
             // New project - try to add it
             _logger.Info($"New project detected: {projectPath}");
 
-            ProjectInfo? projectInfo;
-
             if (isSimulated)
             {
                 // For simulated projects, create fake ProjectInfo without validation
@@ -703,7 +689,7 @@ public class ProjectService : IProjectService
                     ? ProjectType.IngameScript
                     : ProjectType.Mod;
 
-                projectInfo = new ProjectInfo
+                var projectInfo = new ProjectInfo
                 {
                     Name = projectName,
                     ProjectPath = new CanonicalPath(projectPath),
@@ -760,6 +746,7 @@ public class ProjectService : IProjectService
             if (message.Type == NotificationType.Script)
                 HandleBuildNotification(projectName, projectPath, false);
         }
+        return Task.CompletedTask;
     }
 
     void HandleStartupArguments(string[] args)
@@ -791,7 +778,7 @@ public class ProjectService : IProjectService
 
         // Create message and handle it
         var message = new InterConnectMessage(type, args.Skip(1).ToArray());
-        _ = HandleBuildNotificationAsync(message); // Fire and forget
+        _ = HandleBuildNotification(message); // Fire and forget
     }
 
     async Task<bool> RunDotnetRestoreAsync(CanonicalPath projectPath, CancellationToken cancellationToken)
@@ -816,8 +803,8 @@ public class ProjectService : IProjectService
             }
 
             // Read output asynchronously
-            var outputTask = process.StandardOutput.ReadToEndAsync();
-            var errorTask = process.StandardError.ReadToEndAsync();
+            var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+            var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
 
             await process.WaitForExitAsync(cancellationToken);
 
@@ -913,32 +900,44 @@ public class ProjectService : IProjectService
             new()
             {
                 Text = "Copy to clipboard",
-                Action = async ctx =>
-                {
-                    if (ctx is string path)
-                    {
-                        var success = await CopyScriptToClipboardAsync(new CanonicalPath(path));
-                        if (success)
-                            _snackbarService.Show("Script copied to clipboard.", 2000);
-                    }
-                },
+                Action = OnCopyToClipboard,
                 Context = projectPath,
                 IsClosingAction = true
             },
             new()
             {
                 Text = "Show me",
-                Action = ctx =>
-                {
-                    if (ctx is string path)
-                        OpenOutputFolder(new CanonicalPath(path));
-                },
+                Action = OnShowMe,
                 Context = projectPath,
                 IsClosingAction = true
             }
         };
 
         _snackbarService.Show(message, actions);
+    }
+
+    void OnShowMe(object? ctx)
+    {
+        if (ctx is string path)
+            OpenOutputFolder(new CanonicalPath(path));
+    }
+
+    async void OnCopyToClipboard(object? ctx)
+    {
+        try
+        {
+            if (ctx is string path)
+            {
+                var success = await CopyScriptToClipboardAsync(new CanonicalPath(path));
+                if (success)
+                    _snackbarService.Show("Script copied to clipboard.", 2000);
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.Error($"Failed to copy script to clipboard: {e.Message}");
+            _shell.ShowToast("Failed to copy script to clipboard.");
+        }
     }
 
     async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProjectInternalAsync(string projectName, string location, string templateName)

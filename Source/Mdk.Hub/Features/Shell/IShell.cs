@@ -76,9 +76,9 @@ public interface IShell
 
     // Dialog methods
     Task ShowOverlayAsync(OverlayModel model);
-    Task<bool> ShowAsync(ConfirmationMessage message);
-    Task ShowAsync(InformationMessage message);
-    Task<bool> ShowAsync(KeyPhraseValidationMessage message);
+    Task<bool> ShowOverlayAsync(ConfirmationMessage message);
+    Task ShowOverlayAsync(InformationMessage message);
+    Task<bool> ShowOverlayAsync(KeyPhraseValidationMessage message);
     Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay);
 }
 

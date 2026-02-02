@@ -1,9 +1,9 @@
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Updates;
@@ -20,6 +20,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 [ViewModelFor<UpdatesActionView>]
 public class UpdatesAction : ActionItem
 {
+    readonly ILogger _logger;
     readonly ISettings _settings;
     readonly IShell _shell;
     readonly IUpdateCheckService _updateCheckService;
@@ -31,49 +32,28 @@ public class UpdatesAction : ActionItem
     bool _isTemplateUpdateAvailable;
     UpdateInfo? _pendingUpdate;
 
-    public UpdatesAction(ISettings settings, IShell shell, IUpdateCheckService updateCheckService)
+    string _statusMessage = "Checking for updates...";
+
+    public UpdatesAction(ISettings settings, IShell shell, IUpdateCheckService updateCheckService, ILogger logger)
     {
         _settings = settings;
         _shell = shell;
         _updateCheckService = updateCheckService;
-        
+        _logger = logger;
+
         UpdateTemplatesCommand = new RelayCommand(UpdateTemplates);
         UpdateHubCommand = new RelayCommand(UpdateHub);
         InstallHubUpdateCommand = new RelayCommand(InstallHubUpdate);
 
         // Subscribe to update check results
-        _updateCheckService.WhenVersionCheckCompleted(OnVersionCheckCompleted);
+        updateCheckService.WhenVersionCheckUpdates(OnVersionCheckCompleted);
 
         // Subscribe to refresh requests
         _shell.RefreshRequested += OnRefreshRequested;
     }
 
-    void OnRefreshRequested(object? sender, EventArgs e)
-    {
-        // Force a fresh update check
-        _ = _updateCheckService.CheckForUpdatesAsync();
-    }
-
     public override string? Category => null; // No category - appears at top
     public override bool IsGlobal => true; // This is a global action, not project-specific
-
-    public override bool ShouldShow() => IsTemplateUpdateAvailable || IsHubUpdateAvailable || IsDownloading || IsReadyToInstall;
-
-    void OnVersionCheckCompleted(VersionCheckCompletedEventArgs args)
-    {
-        // Check if template update is available
-        IsTemplateUpdateAvailable = args.TemplatePackage != null;
-
-        // Check if Hub update is available
-        if (args.HubVersion != null)
-        {
-            IsHubUpdateAvailable = true;
-            HubVersionInfo = args.HubVersion;
-        }
-
-        // Update status message
-        UpdateStatusMessage();
-    }
 
     public bool IsTemplateUpdateAvailable
     {
@@ -143,7 +123,6 @@ public class UpdatesAction : ActionItem
         }
     }
 
-    string _statusMessage = "Checking for updates...";
     public string StatusMessage
     {
         get => _statusMessage;
@@ -155,6 +134,28 @@ public class UpdatesAction : ActionItem
     public ICommand UpdateTemplatesCommand { get; }
     public ICommand UpdateHubCommand { get; }
     public ICommand InstallHubUpdateCommand { get; }
+
+    void OnRefreshRequested(object? sender, EventArgs e) =>
+        // Force a fresh update check
+        _ = _updateCheckService.CheckForUpdatesAsync();
+
+    public override bool ShouldShow() => IsTemplateUpdateAvailable || IsHubUpdateAvailable || IsDownloading || IsReadyToInstall;
+
+    void OnVersionCheckCompleted(VersionCheckCompletedEventArgs args)
+    {
+        // Check if template update is available
+        IsTemplateUpdateAvailable = args.TemplatePackage != null;
+
+        // Check if Hub update is available
+        if (args.HubVersion != null)
+        {
+            IsHubUpdateAvailable = true;
+            HubVersionInfo = args.HubVersion;
+        }
+
+        // Update status message
+        UpdateStatusMessage();
+    }
 
     void UpdateStatusMessage()
     {
@@ -215,11 +216,15 @@ public class UpdatesAction : ActionItem
             {
                 var error = await process.StandardError.ReadToEndAsync();
                 StatusMessage = $"Update failed: {error}";
+                _shell.ShowToast("Template update failed");
+                _logger.Error($"Template update failed with exit code {process.ExitCode}: {error}");
             }
         }
         catch (Exception ex)
         {
             StatusMessage = $"Update error: {ex.Message}";
+            _shell.ShowToast("Template update failed");
+            _logger?.Error("Template update failed", ex);
         }
     }
 
@@ -234,7 +239,7 @@ public class UpdatesAction : ActionItem
             var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
             var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
             var newVersion = await mgr.CheckForUpdatesAsync();
-            
+
             if (newVersion == null)
             {
                 IsDownloading = false;
@@ -242,10 +247,7 @@ public class UpdatesAction : ActionItem
                 return;
             }
 
-            await mgr.DownloadUpdatesAsync(newVersion, progress =>
-            {
-                DownloadProgress = progress / 100.0;
-            });
+            await mgr.DownloadUpdatesAsync(newVersion, progress => { DownloadProgress = progress / 100.0; });
 
             _pendingUpdate = newVersion;
             IsDownloading = false;
@@ -255,20 +257,21 @@ public class UpdatesAction : ActionItem
         {
             IsDownloading = false;
             StatusMessage = $"Update failed: {ex.Message}";
+            _logger.Error("Hub update failed", ex);
         }
     }
 
     async void InstallHubUpdate()
     {
-        if (_pendingUpdate == null)
-        {
-            StatusMessage = "No update ready to install";
-            return;
-        }
-
         try
         {
-            var confirmed = await _shell.ShowAsync(new ConfirmationMessage
+            if (_pendingUpdate == null)
+            {
+                StatusMessage = "No update ready to install";
+                return;
+            }
+
+            var confirmed = await _shell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Install Hub Update",
                 Message = "Installing the update will restart MDK Hub.\n\nContinue?",
@@ -286,6 +289,8 @@ public class UpdatesAction : ActionItem
         catch (Exception ex)
         {
             StatusMessage = $"Failed to install: {ex.Message}";
+            _logger.Error("Failed to install Hub update", ex);
+            _shell.ShowToast("Hub update installation failed");
         }
     }
 }

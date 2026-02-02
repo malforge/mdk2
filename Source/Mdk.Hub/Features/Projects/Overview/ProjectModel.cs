@@ -103,7 +103,7 @@ public class ProjectModel : ViewModel
     {
         if (!CanDelete())
             return;
-        var result = await _shell.ShowAsync(
+        var result = await _shell.ShowOverlayAsync(
             new ConfirmationMessage
             {
                 Title = "Remove Project",
@@ -122,7 +122,7 @@ public class ProjectModel : ViewModel
         }
         catch (Exception ex)
         {
-            await _shell.ShowAsync(new ConfirmationMessage
+            await _shell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Remove Failed",
                 Message = $"Failed to remove project from Hub: {ex.Message}",
@@ -136,7 +136,7 @@ public class ProjectModel : ViewModel
     {
         if (!CanDelete())
             return;
-        var result = await _shell.ShowAsync(
+        var result = await _shell.ShowOverlayAsync(
             new KeyPhraseValidationMessage
             {
                 Title = "Delete Project",
@@ -161,7 +161,7 @@ public class ProjectModel : ViewModel
         }
         catch (Exception ex)
         {
-            await _shell.ShowAsync(new ConfirmationMessage
+            await _shell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Delete Failed",
                 Message = $"Failed to delete project: {ex.Message}",

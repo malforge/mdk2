@@ -219,7 +219,7 @@ public class ProjectInfoAction : ActionItem
         catch (Exception ex)
         {
             Debug.WriteLine($"Exception: {ex}");
-            await _shell.ShowAsync(new ConfirmationMessage
+            await _shell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Copy Failed",
                 Message = $"Failed to copy script to clipboard: {ex.Message}",

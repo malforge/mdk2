@@ -34,7 +34,7 @@ public class EasterEggDismissAction : ActionItem
 
     async Task DisableForToday()
     {
-        var result = await _shell.ShowAsync(new ConfirmationMessage
+        var result = await _shell.ShowOverlayAsync(new ConfirmationMessage
         {
             Title = "Disable Easter Egg",
             Message = "Hide the easter egg for today? It will return next year on this date.",
@@ -48,7 +48,7 @@ public class EasterEggDismissAction : ActionItem
 
     async Task DisableForever()
     {
-        var result = await _shell.ShowAsync(new ConfirmationMessage
+        var result = await _shell.ShowOverlayAsync(new ConfirmationMessage
         {
             Title = "Disable Easter Egg Forever",
             Message = "Hide the easter egg permanently? This cannot be undone.",

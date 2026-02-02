@@ -6,7 +6,7 @@ using Mal.DependencyInjection;
 
 namespace Mdk.Hub.Features.Settings;
 
-[Singleton<GlobalSettingsView>]
+[Singleton]
 public partial class GlobalSettingsView : UserControl
 {
     public GlobalSettingsView()

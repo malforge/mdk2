@@ -7,16 +7,17 @@ using Mal.DependencyInjection;
 
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Settings;
 
-[Instance<GlobalSettingsViewModel>]
+[Instance]
 [ViewModelFor<GlobalSettingsView>]
 public class GlobalSettingsViewModel : OverlayModel
 {
-    readonly RelayCommand _cancelCommand;
+    readonly AsyncRelayCommand _cancelCommand;
     readonly AsyncRelayCommand _checkPrerequisitesCommand;
     readonly ISettings _settings;
     readonly RelayCommand _saveCommand;
@@ -29,7 +30,7 @@ public class GlobalSettingsViewModel : OverlayModel
     bool _includePrereleaseUpdates;
     bool _openedForLinuxValidation;
 
-    public GlobalSettingsViewModel(ISettings settings, IUpdateCheckService updateCheckService, IShell shell)
+    public GlobalSettingsViewModel(ISettings settings, IUpdateCheckService updateCheckService, IShell shell, ILogger logger)
     {
         _settings = settings;
         _updateCheckService = updateCheckService;
@@ -43,7 +44,7 @@ public class GlobalSettingsViewModel : OverlayModel
         _settings.SettingsChanged += OnSettingsChanged;
         
         _saveCommand = new RelayCommand(Save);
-        _cancelCommand = new RelayCommand(Cancel);
+        _cancelCommand = new AsyncRelayCommand(CancelAsync, logger: logger);
         _checkPrerequisitesCommand = new AsyncRelayCommand(CheckPrerequisitesAsync);
     }
     
@@ -204,7 +205,7 @@ public class GlobalSettingsViewModel : OverlayModel
             
             if (errors.Count > 0)
             {
-                _shell.ShowToast("Please set all required paths for Linux", 3000);
+                _shell.ShowToast("Please set all required paths for Linux");
                 return;
             }
         }
@@ -220,7 +221,7 @@ public class GlobalSettingsViewModel : OverlayModel
         Dismiss();
     }
 
-    async void Cancel()
+    async Task CancelAsync()
     {
         // On Linux, if dialog was auto-opened for validation and SAVED paths are still invalid, confirm shutdown
         if (App.IsLinux && _openedForLinuxValidation)
@@ -236,21 +237,16 @@ public class GlobalSettingsViewModel : OverlayModel
             
             if (hasErrors)
             {
-                var result = await _shell.ShowAsync(new ConfirmationMessage
+                var result = await _shell.ShowOverlayAsync(new ConfirmationMessage
                 {
                     Title = "Invalid Configuration",
                     Message = "The Hub requires valid paths to function. Do you want to shut down the Hub?",
                     OkText = "Shut Down",
                     CancelText = "Go Back"
                 });
-                
-                if (result)
-                {
-                    // User chose to shut down
-                    _shell.Shutdown();
-                }
-                // User chose "Go Back" - don't dismiss, stay in dialog
-                return;
+
+                // If user chose to go back, do not dismiss
+                if (!result) return;
             }
         }
         
@@ -284,7 +280,7 @@ public class GlobalSettingsViewModel : OverlayModel
 
             busyOverlay.Dismiss();
 
-            await _shell.ShowAsync(new InformationMessage
+            await _shell.ShowOverlayAsync(new InformationMessage
             {
                 Title = "Prerequisites Check",
                 Message = string.Join("\n", messages)
@@ -293,7 +289,7 @@ public class GlobalSettingsViewModel : OverlayModel
         catch (Exception ex)
         {
             busyOverlay.Dismiss();
-            await _shell.ShowAsync(new InformationMessage
+            await _shell.ShowOverlayAsync(new InformationMessage
             {
                 Title = "Check Failed",
                 Message = $"An error occurred while checking prerequisites:\n\n{ex.Message}"

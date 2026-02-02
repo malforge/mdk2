@@ -16,7 +16,7 @@ public class DependencyRegistryGenerator : IIncrementalGenerator
                 static (node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
                 static (ctx, _) => Transform(ctx))
             .Where(static x => x.HasValue)
-            .Select((x, _) => x.GetValueOrDefault());
+            .SelectMany(static (items, _) => items!.Value);
 
 
         context.RegisterSourceOutput(candidates.Collect(),
@@ -29,11 +29,13 @@ public class DependencyRegistryGenerator : IIncrementalGenerator
             });
     }
 
-    private static Item? Transform(GeneratorSyntaxContext ctx)
+    private static ImmutableArray<Item>? Transform(GeneratorSyntaxContext ctx)
     {
         var cds = (ClassDeclarationSyntax)ctx.Node;
         if (ctx.SemanticModel.GetDeclaredSymbol(cds) is not INamedTypeSymbol impl)
             return null;
+
+        var items = ImmutableArray.CreateBuilder<Item>();
 
         foreach (var attr in impl.GetAttributes())
         {
@@ -43,18 +45,22 @@ public class DependencyRegistryGenerator : IIncrementalGenerator
                 switch (ac.Arity)
                 {
                     case 0:
-                        return new Item(impl, impl, isInstance);
+                        items.Add(new Item(impl, impl, isInstance));
+                        break;
 
                     case 1:
                         var t = ac.TypeArguments[0];
-                        return new Item(impl, t, isInstance);
+                        items.Add(new Item(impl, t, isInstance));
+                        break;
 
                     case > 1:
-                        return null;
+                        // Skip invalid attributes
+                        break;
                 }
             }
         }
-        return null;
+
+        return items.Count > 0 ? items.ToImmutable() : null;
     }
 
     public readonly struct Item

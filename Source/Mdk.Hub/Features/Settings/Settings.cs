@@ -33,6 +33,28 @@ public class Settings : ISettings
         }
     }
 
+    public bool TryGetValue<T>(string key, out T value) where T : struct
+    {
+        // Check cache first - only use if type matches exactly (struct is copied by value)
+        if (_cache.TryGetValue(key, out var cachedValue) && cachedValue is T typedCached)
+        {
+            value = typedCached;
+            return true;
+        }
+
+        // Not in cache or wrong type, deserialize
+        if (_settings.TryGetPropertyValue(key, out var jsonValue))
+        {
+            var deserialized = jsonValue.Deserialize<T>()!;
+            _cache[key] = deserialized;
+            value = deserialized;
+            return true;
+        }
+
+        value = default!;
+        return false;
+    }
+    
     public T GetValue<T>(string key) where T : struct
     {
         // Check cache first - only use if type matches exactly (struct is copied by value)
@@ -47,7 +69,7 @@ public class Settings : ISettings
             return deserialized;
         }
         
-        throw new KeyNotFoundException($"Key '{key}' not found in settings.");
+        return default;
     }
 
     public T GetValue<T>(string key, T defaultValue) where T : struct

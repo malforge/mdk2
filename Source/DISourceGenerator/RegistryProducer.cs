@@ -14,6 +14,7 @@ public class RegistryProducer
         using System;
         using System.Diagnostics.CodeAnalysis;
         using System.Collections.Generic;
+        using System.Linq;
 
         namespace Mal.DependencyInjection;
         
@@ -68,7 +69,8 @@ public class RegistryProducer
                 return instance;
             }}
             
-            HashSet<Type> _resolving = new();
+            Stack<Type> _resolvingStack = new();
+            HashSet<Type> _resolvingSet = new();
             
             /// <inheritdoc/>
             public bool TryResolve(Type serviceType, [MaybeNullWhen(false)] out object instance)
@@ -82,19 +84,23 @@ public class RegistryProducer
                     instance = null;
                     return false;
                 }}
-                if (!_resolving.Add(serviceType))
-                    throw new InvalidOperationException($"Circular dependency detected while resolving service of type {{serviceType}}.");
+                
+                if (!_resolvingSet.Add(serviceType))
+                {{
+                    // Build dependency chain for error message
+                    var chain = string.Join(" -> ", _resolvingStack.Reverse().Select(t => t.Name)) + " -> " + serviceType.Name;
+                    throw new InvalidOperationException($"Circular dependency detected: {{chain}}");
+                }}
+                
+                _resolvingStack.Push(serviceType);
                 try
                 {{
                     instance = factory(this);
                 }}
-                catch
-                {{
-                    throw;
-                }}
                 finally
                 {{
-                    _resolving.Remove(serviceType);
+                    _resolvingStack.Pop();
+                    _resolvingSet.Remove(serviceType);
                 }}
                 
                 // Only cache if not instance-per-resolve
@@ -148,11 +154,19 @@ public class RegistryProducer
         var items = new List<string>();
         var instances = new List<string>();
         
-        foreach (var item in _items)
+        // Group items by implementation type to handle multiple registrations
+        var grouped = _items.GroupBy(item => item.Implementation, SymbolEqualityComparer.Default);
+        
+        foreach (var group in grouped)
         {
-            var ctor = item.Implementation.Constructors.Length > 0
-                ? item.Implementation.Constructors.OrderByDescending(c => c.Parameters.Length).First()
+            var itemList = group.ToList();
+            var firstItem = itemList[0];
+            
+            // Get constructor for the implementation
+            var ctor = firstItem.Implementation.Constructors.Length > 0
+                ? firstItem.Implementation.Constructors.OrderByDescending(c => c.Parameters.Length).First()
                 : null;
+            
             var parameters = new List<string>();
             if (ctor is not null)
             {
@@ -167,10 +181,39 @@ public class RegistryProducer
                     parameters.Add(string.Format(ParameterTemplate, p.Type.ToDisplayString()));
                 }
             }
-            items.Add(string.Format(ItemTemplate, item.Service.ToDisplayString(), item.Implementation.ToDisplayString(), string.Join(", ", parameters)));
             
-            if (item.IsInstance)
-                instances.Add(string.Format(InstanceItemTemplate, item.Service.ToDisplayString()));
+            if (firstItem.IsInstance)
+            {
+                // For instances, each registration gets its own factory (no sharing)
+                foreach (var item in itemList)
+                {
+                    items.Add(string.Format(ItemTemplate, item.Service.ToDisplayString(), item.Implementation.ToDisplayString(), string.Join(", ", parameters)));
+                    instances.Add(string.Format(InstanceItemTemplate, item.Service.ToDisplayString()));
+                }
+            }
+            else
+            {
+                // For singletons with multiple registrations:
+                // - First one becomes the "master" with the actual factory
+                // - Others become "aliases" that resolve the master type
+                
+                // Add the master registration (first item or the one matching the implementation type)
+                var masterItem = itemList.FirstOrDefault(i => SymbolEqualityComparer.Default.Equals(i.Service, i.Implementation));
+                if (masterItem.Equals(default(DependencyRegistryGenerator.Item)))
+                    masterItem = firstItem;
+                    
+                items.Add(string.Format(ItemTemplate, masterItem.Service.ToDisplayString(), masterItem.Implementation.ToDisplayString(), string.Join(", ", parameters)));
+                
+                // Add alias registrations for the rest
+                foreach (var item in itemList)
+                {
+                    if (SymbolEqualityComparer.Default.Equals(item.Service, masterItem.Service))
+                        continue; // Skip the master
+                    
+                    // Alias: just resolve the master type
+                    items.Add(string.Format("[typeof({0})] = dr => dr.Resolve<{1}>()", item.Service.ToDisplayString(), masterItem.Service.ToDisplayString()));
+                }
+            }
         }
         
         return string.Format(RegistryTemplate, string.Join(ItemSeparator, items), string.Join(ItemSeparator, instances));
