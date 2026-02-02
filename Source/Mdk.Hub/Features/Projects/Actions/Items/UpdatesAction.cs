@@ -215,6 +215,7 @@ public class UpdatesAction : ActionItem
     {
         try
         {
+            _logger.Info("Starting Hub update download");
             IsHubUpdateAvailable = false;
             IsDownloading = true;
             DownloadProgress = 0;
@@ -232,16 +233,21 @@ public class UpdatesAction : ActionItem
             
             // For now, use direct Velopack for two-step flow
             var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
+            _logger.Info($"Creating Velopack UpdateManager (includePrerelease={includePrerelease})");
             var mgr = new Velopack.UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
+            
+            _logger.Info("Checking for Hub updates via Velopack");
             var newVersion = await mgr.CheckForUpdatesAsync();
 
             if (newVersion == null)
             {
+                _logger.Info("Velopack reports no Hub update available");
                 IsDownloading = false;
                 StatusMessage = "No update available";
                 return;
             }
 
+            _logger.Info($"Downloading Hub update: {newVersion.TargetFullRelease.Version}");
             await mgr.DownloadUpdatesAsync(newVersion, p => { DownloadProgress = p / 100.0; });
 
             IsDownloading = false;
@@ -252,7 +258,7 @@ public class UpdatesAction : ActionItem
         {
             IsDownloading = false;
             StatusMessage = $"Update failed: {ex.Message}";
-            _logger.Error("Hub update failed", ex);
+            _logger.Error("Hub update download failed", ex);
         }
     }
 
@@ -270,8 +276,12 @@ public class UpdatesAction : ActionItem
             });
 
             if (!confirmed)
+            {
+                _logger.Info("User cancelled Hub update installation");
                 return;
+            }
 
+            _logger.Info("User confirmed Hub update installation, proceeding");
             StatusMessage = "Installing update and restarting...";
 
             // Now use UpdateManager to actually install

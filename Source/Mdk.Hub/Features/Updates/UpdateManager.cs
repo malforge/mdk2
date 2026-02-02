@@ -515,7 +515,7 @@ public class UpdateManager : IUpdateManager
 
             // Strip "hub-v" prefix if present
             if (latestVersionString.StartsWith("hub-v", StringComparison.OrdinalIgnoreCase))
-                latestVersionString = latestVersionString.Substring(6);
+                latestVersionString = latestVersionString.Substring(5); // "hub-v" is 5 chars
 
             _logger.Info($"Current version: {currentVersionString}, Latest version: {latestVersionString}");
 

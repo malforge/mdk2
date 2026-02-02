@@ -57,6 +57,8 @@ public class GitHubService(ILogger logger) : IGitHubService
                 // Parse array and find the actual latest release by semantic version
                 if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() > 0)
                 {
+                    _logger.Debug($"Found {doc.RootElement.GetArrayLength()} releases in GitHub API response");
+                    
                     // Collect all releases with parsed versions
                     var releases = doc.RootElement.EnumerateArray()
                         .Select(release =>
@@ -67,21 +69,25 @@ public class GitHubService(ILogger logger) : IGitHubService
                             // Strip common prefixes to get version string
                             var versionString = tagName;
                             if (versionString?.StartsWith("hub-v", StringComparison.OrdinalIgnoreCase) == true)
-                                versionString = versionString.Substring(6);
+                                versionString = versionString.Substring(5); // "hub-v" is 5 chars
                             else if (versionString?.StartsWith("v", StringComparison.OrdinalIgnoreCase) == true)
                                 versionString = versionString.Substring(1);
                             
                             // Try to parse as semantic version
                             if (versionString != null && NuGetVersion.TryParse(versionString, out var version))
                             {
+                                _logger.Debug($"  ✓ {tagName} → {versionString} (parsed OK, prerelease={isPrerelease})");
                                 return (TagName: tagName, IsPrerelease: isPrerelease, Version: version);
                             }
                             
+                            _logger.Debug($"  ✗ {tagName} → {versionString} (parse FAILED)");
                             return (TagName: tagName, IsPrerelease: isPrerelease, Version: (NuGetVersion?)null);
                         })
                         .Where(r => r.Version != null && r.TagName != null)
                         .OrderByDescending(r => r.Version)
                         .ToList();
+                    
+                    _logger.Debug($"After filtering: {releases.Count} valid releases");
                     
                     if (releases.Count > 0)
                     {

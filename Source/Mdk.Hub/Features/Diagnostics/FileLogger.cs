@@ -30,12 +30,33 @@ public class FileLogger : ILogger
         // Clean up old log files
         CleanupOldLogs();
 
-        // Write startup message
+        // Write startup message with version
+        var version = GetType().Assembly.GetName().Version?.ToString() ?? "unknown";
+        var productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(GetType().Assembly.Location).ProductVersion ?? version;
+        
         WriteLog(new LogEntry
         {
             Timestamp = DateTimeOffset.Now,
             Level = LogLevel.Info,
-            Message = "=== MDK Hub Started ===",
+            Message = $"========================================",
+            FilePath = "",
+            LineNumber = 0,
+            MemberName = ""
+        });
+        WriteLog(new LogEntry
+        {
+            Timestamp = DateTimeOffset.Now,
+            Level = LogLevel.Info,
+            Message = $"MDK Hub {productVersion} - Session Started",
+            FilePath = "",
+            LineNumber = 0,
+            MemberName = ""
+        });
+        WriteLog(new LogEntry
+        {
+            Timestamp = DateTimeOffset.Now,
+            Level = LogLevel.Info,
+            Message = $"========================================",
             FilePath = "",
             LineNumber = 0,
             MemberName = ""

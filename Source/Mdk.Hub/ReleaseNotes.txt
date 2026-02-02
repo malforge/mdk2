@@ -1,3 +1,7 @@
+v.1.0.0-pre.20
+   - Fixed Hub update detection (off-by-one error parsing "hub-v" prefix).
+   - Added clear session start banner with version to log files.
+
 v.1.0.0-pre.19
    - Test release for update detection debugging.
 
