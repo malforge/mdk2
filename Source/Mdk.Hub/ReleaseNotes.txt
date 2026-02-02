@@ -1,3 +1,6 @@
+v.1.0.0-pre.21
+   - Fixed startup crash in single-file published apps.
+
 v.1.0.0-pre.20
    - Fixed Hub update detection (off-by-one error parsing "hub-v" prefix).
    - Added clear session start banner with version to log files.

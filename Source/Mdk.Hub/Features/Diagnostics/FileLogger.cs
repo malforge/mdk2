@@ -32,7 +32,24 @@ public class FileLogger : ILogger
 
         // Write startup message with version
         var version = GetType().Assembly.GetName().Version?.ToString() ?? "unknown";
-        var productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(GetType().Assembly.Location).ProductVersion ?? version;
+        // Use AppContext.BaseDirectory instead of Assembly.Location for single-file apps
+        var productVersion = "unknown";
+        try
+        {
+            var executablePath = Environment.ProcessPath ?? AppContext.BaseDirectory;
+            if (!string.IsNullOrEmpty(executablePath) && File.Exists(executablePath))
+            {
+                productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(executablePath).ProductVersion ?? version;
+            }
+            else
+            {
+                productVersion = version;
+            }
+        }
+        catch
+        {
+            productVersion = version;
+        }
         
         WriteLog(new LogEntry
         {
