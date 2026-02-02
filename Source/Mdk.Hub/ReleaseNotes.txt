@@ -1,3 +1,6 @@
+v.1.0.0-pre.19
+   - Test release for update detection debugging.
+
 v.1.0.0-pre.18
    - Fixed workflow to create tags at correct commits instead of defaulting to main branch.
    - Fixed GitHub release detection to sort by semantic version.

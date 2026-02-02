@@ -33,14 +33,20 @@ internal class HubUpdater
             progress?.Report(new UpdateProgress { Message = "Initializing Hub update...", PercentComplete = 0 });
 
             var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
-            var mgr = new Velopack.UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
+            
+            _logger.Info($"Creating GithubSource with RepoUrl={EnvironmentMetadata.GitHubRepoUrl}, Channel=null, Prerelease={includePrerelease}");
+            var source = new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease);
+            var mgr = new Velopack.UpdateManager(source);
 
             progress?.Report(new UpdateProgress { Message = "Checking for updates...", PercentComplete = 10 });
+            
+            _logger.Info("Calling Velopack CheckForUpdatesAsync...");
             var newVersion = await mgr.CheckForUpdatesAsync();
+            _logger.Info($"Velopack returned: {(newVersion == null ? "null (no updates)" : $"version {newVersion.TargetFullRelease.Version}")}");
 
             if (newVersion == null)
             {
-                _logger.Info("No Hub update available");
+                _logger.Info("No Hub update available from Velopack");
                 return new UpdateResult
                 {
                     Success = false,
