@@ -11,28 +11,40 @@ using Mal.DependencyInjection;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Utility;
 using NuGet.Versioning;
 
 namespace Mdk.Hub.Features.Updates;
 
-[Singleton<IUpdateCheckService>]
-public class UpdateCheckService : IUpdateCheckService
+/// <summary>
+///     Centralized manager for checking and executing all types of updates (Hub, Templates, NuGet packages).
+/// </summary>
+[Singleton<IUpdateManager>]
+public class UpdateManager : IUpdateManager
 {
     readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();
     readonly IGitHubService _gitHubService;
+    readonly HubUpdater _hubUpdater;
     readonly ILogger _logger;
     readonly INuGetService _nuGetService;
+    readonly PackageUpdater _packageUpdater;
     readonly ISettings _settings;
     readonly IShell _shell;
+    readonly TemplateUpdater _templateUpdater;
     int _isChecking; // 0 = not checking, 1 = checking
 
-    public UpdateCheckService(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings, IShell shell)
+    public UpdateManager(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings, IShell shell)
     {
         _logger = logger;
         _nuGetService = nuGetService;
         _gitHubService = gitHubService;
         _settings = settings;
         _shell = shell;
+
+        // Initialize internal updaters
+        _hubUpdater = new HubUpdater(settings, logger);
+        _templateUpdater = new TemplateUpdater(logger);
+        _packageUpdater = new PackageUpdater(nuGetService, settings, logger);
 
         // Subscribe to settings changes to invalidate cache when prerelease preference changes
         _settings.SettingsChanged += OnSettingsChanged;
@@ -549,5 +561,50 @@ public class UpdateCheckService : IUpdateCheckService
         }
 
         return version ?? "unknown";
+    }
+
+    // IUpdateManager update execution methods
+
+    public Task<UpdateResult> UpdateHubAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        if (LastKnownVersions?.HubVersion == null)
+        {
+            return Task.FromResult(new UpdateResult
+            {
+                Success = false,
+                ErrorMessage = "No Hub update information available. Run CheckForUpdatesAsync first."
+            });
+        }
+
+        return _hubUpdater.UpdateAsync(LastKnownVersions.HubVersion, progress, cancellationToken);
+    }
+
+    public Task<UpdateResult> UpdateTemplatesAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        if (LastKnownVersions?.TemplatePackage == null)
+        {
+            return Task.FromResult(new UpdateResult
+            {
+                Success = false,
+                ErrorMessage = "No template update information available. Run CheckForUpdatesAsync first."
+            });
+        }
+
+        return _templateUpdater.UpdateAsync(LastKnownVersions.TemplatePackage, progress, cancellationToken);
+    }
+
+    public Task<UpdateResult> UpdateProjectPackagesAsync(CanonicalPath projectPath, IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        return _packageUpdater.UpdateProjectAsync(projectPath, progress, cancellationToken);
+    }
+
+    public Task<bool> CanRollbackProjectAsync(CanonicalPath projectPath)
+    {
+        return _packageUpdater.CanRollbackAsync(projectPath);
+    }
+
+    public Task<UpdateResult> RollbackProjectPackagesAsync(CanonicalPath projectPath)
+    {
+        return _packageUpdater.RollbackProjectAsync(projectPath);
     }
 }

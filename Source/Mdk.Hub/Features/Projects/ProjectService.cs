@@ -38,7 +38,7 @@ public class ProjectService : IProjectService
 
     ProjectStateData _state;
 
-    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateCheckService updateCheckService, INuGetService nugetService)
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateManager updateManager, INuGetService nugetService)
     {
         _registry = registry;
         _logger = logger;
@@ -47,7 +47,7 @@ public class ProjectService : IProjectService
         _settings = settings;
         Settings = settings;
         _nugetService = nugetService;
-        _updateChecker = new ProjectUpdateChecker(logger, this, updateCheckService, registry);
+        _updateChecker = new ProjectUpdateChecker(logger, this, updateManager, registry);
         _state = new ProjectStateData(default, true, true);
 
         _updateChecker.ProjectUpdateAvailable += OnProjectUpdateAvailable;

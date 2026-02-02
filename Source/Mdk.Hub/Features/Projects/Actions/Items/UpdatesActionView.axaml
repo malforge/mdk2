@@ -44,14 +44,14 @@
                         Classes="success"
                         Padding="12,6" />
 
-                <!-- Update Hub button -->
+                <!-- Update Hub button (downloads only) -->
                 <Button Content="{Binding UpdateHubButtonText}"
                         Command="{Binding UpdateHubCommand}"
                         IsVisible="{Binding IsHubUpdateAvailable}"
                         Classes="success"
                         Padding="12,6" />
 
-                <!-- Install Now button -->
+                <!-- Install Now button (explicit user action) -->
                 <Button Content="Install Now"
                         Command="{Binding InstallHubUpdateCommand}"
                         IsVisible="{Binding IsReadyToInstall}"

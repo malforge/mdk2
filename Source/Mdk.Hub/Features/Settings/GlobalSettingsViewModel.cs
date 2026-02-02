@@ -22,7 +22,7 @@ public class GlobalSettingsViewModel : OverlayModel
     readonly ISettings _settings;
     readonly RelayCommand _saveCommand;
     readonly IShell _shell;
-    readonly IUpdateCheckService _updateCheckService;
+    readonly IUpdateManager _updateManager;
     readonly HubSettings _hubSettings;
     string _customAutoBinaryPath = "";
     string _customAutoModOutputPath = "";
@@ -30,10 +30,10 @@ public class GlobalSettingsViewModel : OverlayModel
     bool _includePrereleaseUpdates;
     bool _openedForLinuxValidation;
 
-    public GlobalSettingsViewModel(ISettings settings, IUpdateCheckService updateCheckService, IShell shell, ILogger logger)
+    public GlobalSettingsViewModel(ISettings settings, IUpdateManager updateManager, IShell shell, ILogger logger)
     {
         _settings = settings;
-        _updateCheckService = updateCheckService;
+        _updateManager = updateManager;
         _shell = shell;
         _hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
         
@@ -264,7 +264,7 @@ public class GlobalSettingsViewModel : OverlayModel
 
             // Check .NET SDK
             busyOverlay.Message = "Checking .NET SDK...";
-            var (sdkInstalled, sdkVersion) = await _updateCheckService.CheckDotNetSdkAsync();
+            var (sdkInstalled, sdkVersion) = await _updateManager.CheckDotNetSdkAsync();
             if (sdkInstalled)
                 messages.Add($"✓ .NET SDK {sdkVersion} is installed");
             else
@@ -272,7 +272,7 @@ public class GlobalSettingsViewModel : OverlayModel
 
             // Check template package
             busyOverlay.Message = "Checking template package...";
-            var templateInstalled = await _updateCheckService.IsTemplateInstalledAsync();
+            var templateInstalled = await _updateManager.IsTemplateInstalledAsync();
             if (templateInstalled)
                 messages.Add("✓ MDK² template package is installed");
             else

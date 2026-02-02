@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Windows.Input;
 using Mal.DependencyInjection;
 using Mdk.Hub.Features.CommonDialogs;
@@ -8,7 +7,6 @@ using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
-using Velopack;
 using Velopack.Sources;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
@@ -23,22 +21,21 @@ public class UpdatesAction : ActionItem
     readonly ILogger _logger;
     readonly ISettings _settings;
     readonly IShell _shell;
-    readonly IUpdateCheckService _updateCheckService;
+    readonly IUpdateManager _updateManager;
     double _downloadProgress;
     HubVersionInfo? _hubVersionInfo;
     bool _isDownloading;
     bool _isHubUpdateAvailable;
     bool _isReadyToInstall;
     bool _isTemplateUpdateAvailable;
-    UpdateInfo? _pendingUpdate;
 
     string _statusMessage = "Checking for updates...";
 
-    public UpdatesAction(ISettings settings, IShell shell, IUpdateCheckService updateCheckService, ILogger logger)
+    public UpdatesAction(ISettings settings, IShell shell, IUpdateManager updateManager, ILogger logger)
     {
         _settings = settings;
         _shell = shell;
-        _updateCheckService = updateCheckService;
+        _updateManager = updateManager;
         _logger = logger;
 
         UpdateTemplatesCommand = new RelayCommand(UpdateTemplates);
@@ -46,7 +43,7 @@ public class UpdatesAction : ActionItem
         InstallHubUpdateCommand = new RelayCommand(InstallHubUpdate);
 
         // Subscribe to update check results
-        updateCheckService.WhenVersionCheckUpdates(OnVersionCheckCompleted);
+        updateManager.WhenVersionCheckUpdates(OnVersionCheckCompleted);
 
         // Subscribe to refresh requests
         _shell.RefreshRequested += OnRefreshRequested;
@@ -81,16 +78,6 @@ public class UpdatesAction : ActionItem
         }
     }
 
-    public bool IsDownloading
-    {
-        get => _isDownloading;
-        set
-        {
-            if (SetProperty(ref _isDownloading, value))
-                UpdateStatusMessage();
-        }
-    }
-
     public bool IsReadyToInstall
     {
         get => _isReadyToInstall;
@@ -101,6 +88,16 @@ public class UpdatesAction : ActionItem
                 UpdateStatusMessage();
                 RaiseShouldShowChanged();
             }
+        }
+    }
+
+    public bool IsDownloading
+    {
+        get => _isDownloading;
+        set
+        {
+            if (SetProperty(ref _isDownloading, value))
+                UpdateStatusMessage();
         }
     }
 
@@ -137,7 +134,7 @@ public class UpdatesAction : ActionItem
 
     void OnRefreshRequested(object? sender, EventArgs e) =>
         // Force a fresh update check
-        _ = _updateCheckService.CheckForUpdatesAsync();
+        _ = _updateManager.CheckForUpdatesAsync();
 
     public override bool ShouldShow() => IsTemplateUpdateAvailable || IsHubUpdateAvailable || IsDownloading || IsReadyToInstall;
 
@@ -162,7 +159,7 @@ public class UpdatesAction : ActionItem
         if (IsDownloading)
             StatusMessage = $"Downloading Hub update... {DownloadProgress:P0}";
         else if (IsReadyToInstall)
-            StatusMessage = "Hub update ready to install";
+            StatusMessage = "Hub update ready to install - click Install Now";
         else if (IsTemplateUpdateAvailable && IsHubUpdateAvailable)
         {
             var hubVersion = HubVersionInfo?.LatestVersion ?? "unknown";
@@ -188,43 +185,29 @@ public class UpdatesAction : ActionItem
             StatusMessage = "Updating templates...";
             IsTemplateUpdateAvailable = false;
 
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"new install {EnvironmentMetadata.TemplatePackageId} --force",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            var progress = new Progress<UpdateProgress>(p => StatusMessage = p.Message);
+            var result = await _updateManager.UpdateTemplatesAsync(progress);
 
-            using var process = Process.Start(startInfo);
-            if (process == null)
-            {
-                StatusMessage = "Failed to start template update";
-                return;
-            }
-
-            await process.WaitForExitAsync();
-
-            if (process.ExitCode == 0)
+            if (result.Success)
             {
                 _shell.ShowToast("Templates updated successfully");
                 UpdateStatusMessage();
             }
             else
             {
-                var error = await process.StandardError.ReadToEndAsync();
-                StatusMessage = $"Update failed: {error}";
+                StatusMessage = $"Update failed: {result.ErrorMessage}";
                 _shell.ShowToast("Template update failed");
-                _logger.Error($"Template update failed with exit code {process.ExitCode}: {error}");
+                if (result.Exception != null)
+                    _logger.Error($"Template update failed: {result.ErrorMessage}", result.Exception);
+                else
+                    _logger.Error($"Template update failed: {result.ErrorMessage}");
             }
         }
         catch (Exception ex)
         {
             StatusMessage = $"Update error: {ex.Message}";
             _shell.ShowToast("Template update failed");
-            _logger?.Error("Template update failed", ex);
+            _logger.Error("Template update failed", ex);
         }
     }
 
@@ -236,8 +219,20 @@ public class UpdatesAction : ActionItem
             IsDownloading = true;
             DownloadProgress = 0;
 
+            var progress = new Progress<UpdateProgress>(p =>
+            {
+                StatusMessage = p.Message;
+                if (p.PercentComplete.HasValue)
+                    DownloadProgress = p.PercentComplete.Value / 100.0;
+            });
+
+            // ONLY download - do not install automatically (user agency)
+            // UpdateHubAsync will download but not restart since we're not calling ApplyUpdatesAndRestart
+            // We need to refactor HubUpdater to support download-only mode
+            
+            // For now, use direct Velopack for two-step flow
             var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
-            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
+            var mgr = new Velopack.UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
             var newVersion = await mgr.CheckForUpdatesAsync();
 
             if (newVersion == null)
@@ -247,11 +242,11 @@ public class UpdatesAction : ActionItem
                 return;
             }
 
-            await mgr.DownloadUpdatesAsync(newVersion, progress => { DownloadProgress = progress / 100.0; });
+            await mgr.DownloadUpdatesAsync(newVersion, p => { DownloadProgress = p / 100.0; });
 
-            _pendingUpdate = newVersion;
             IsDownloading = false;
             IsReadyToInstall = true;
+            _logger.Info($"Hub update downloaded and ready to install: {newVersion.TargetFullRelease.Version}");
         }
         catch (Exception ex)
         {
@@ -265,12 +260,7 @@ public class UpdatesAction : ActionItem
     {
         try
         {
-            if (_pendingUpdate == null)
-            {
-                StatusMessage = "No update ready to install";
-                return;
-            }
-
+            // Explicit user confirmation required
             var confirmed = await _shell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Install Hub Update",
@@ -282,9 +272,22 @@ public class UpdatesAction : ActionItem
             if (!confirmed)
                 return;
 
-            var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
-            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
-            mgr.ApplyUpdatesAndRestart(_pendingUpdate);
+            StatusMessage = "Installing update and restarting...";
+
+            // Now use UpdateManager to actually install
+            var progress = new Progress<UpdateProgress>(p => StatusMessage = p.Message);
+            var result = await _updateManager.UpdateHubAsync(progress);
+
+            if (!result.Success)
+            {
+                StatusMessage = $"Installation failed: {result.ErrorMessage}";
+                if (result.Exception != null)
+                    _logger.Error($"Hub update installation failed: {result.ErrorMessage}", result.Exception);
+                else
+                    _logger.Error($"Hub update installation failed: {result.ErrorMessage}");
+                _shell.ShowToast("Hub update installation failed");
+            }
+            // If successful, app will restart and we won't reach here
         }
         catch (Exception ex)
         {

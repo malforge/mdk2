@@ -27,13 +27,13 @@ class ProjectUpdateChecker
     Dictionary<string, string>? _latestVersions;
     Task? _processingTask;
 
-    public ProjectUpdateChecker(ILogger logger, IProjectService projectService, IUpdateCheckService updateCheckService, IProjectRegistry registry)
+    public ProjectUpdateChecker(ILogger logger, IProjectService projectService, IUpdateManager updateManager, IProjectRegistry registry)
     {
         _logger = logger;
         _projectService = projectService;
         _registry = registry;
         // When version data is available, start checking projects
-        updateCheckService.WhenVersionCheckUpdates(OnVersionDataUpdated);
+        updateManager.WhenVersionCheckUpdates(OnVersionDataUpdated);
     }
 
     public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;

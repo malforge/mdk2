@@ -35,7 +35,7 @@ public class ShellViewModel : ViewModel, IShell
 {
     readonly Lazy<IAnnouncementService> _lazyAnnouncementService;
     readonly Lazy<IProjectService> _lazyProjectService;
-    readonly Lazy<IUpdateCheckService> _lazyUpdateCheckService;
+    readonly Lazy<IUpdateManager> _lazyUpdateManager;
     readonly ILogger _logger;
     readonly Lazy<ProjectActionsViewModel> _projectActionsViewModel;
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
@@ -66,18 +66,18 @@ public class ShellViewModel : ViewModel, IShell
     /// <param name="lazyAnnouncementService">Announcement service for user notifications.</param>
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
-    /// <param name="lazyUpdateCheckService">Update check service for monitoring MDK versions.</param>
+    /// <param name="lazyUpdateManager">Update manager service for monitoring MDK versions.</param>
     public ShellViewModel(
         ISettings settings,
         Lazy<IProjectService> lazyProjectService,
-        Lazy<IUpdateCheckService> lazyUpdateCheckService,
+        Lazy<IUpdateManager> lazyUpdateManager,
         Lazy<IAnnouncementService> lazyAnnouncementService,
         ILogger logger,
         Lazy<ProjectOverviewViewModel> projectOverviewViewModel,
         Lazy<ProjectActionsViewModel> projectActionsViewModel)
     {
         _lazyProjectService = lazyProjectService;
-        _lazyUpdateCheckService = lazyUpdateCheckService;
+        _lazyUpdateManager = lazyUpdateManager;
         _lazyAnnouncementService = lazyAnnouncementService;
         _logger = logger;
         _projectOverviewViewModel = projectOverviewViewModel;
@@ -361,7 +361,7 @@ public class ShellViewModel : ViewModel, IShell
 
         // Check for first-run setup (fire and forget)
         if (Program.IsFirstRun)
-            await CheckFirstRunSetupAsync(_lazyUpdateCheckService.Value);
+            await CheckFirstRunSetupAsync(_lazyUpdateManager.Value);
 
         if (!await CheckLinuxPathConfigurationAsync())
         {
@@ -444,7 +444,7 @@ public class ShellViewModel : ViewModel, IShell
         return model;
     }
 
-    async Task CheckFirstRunSetupAsync(IUpdateCheckService updateCheckService)
+    async Task CheckFirstRunSetupAsync(IUpdateManager updateManager)
     {
         try
         {
@@ -458,13 +458,13 @@ public class ShellViewModel : ViewModel, IShell
 
                 // Check and install .NET SDK
                 busyOverlay.Message = "Checking .NET SDK...";
-                var (sdkInstalled, sdkVersion) = await updateCheckService.CheckDotNetSdkAsync();
+                var (sdkInstalled, sdkVersion) = await updateManager.CheckDotNetSdkAsync();
                 if (!sdkInstalled)
                 {
                     busyOverlay.Message = "Installing .NET SDK... (this may take a few minutes)";
                     try
                     {
-                        await updateCheckService.InstallDotNetSdkAsync();
+                        await updateManager.InstallDotNetSdkAsync();
                         messages.Add("✓ .NET SDK installed successfully");
                     }
                     catch (Exception ex)
@@ -477,13 +477,13 @@ public class ShellViewModel : ViewModel, IShell
 
                 // Check and install template package
                 busyOverlay.Message = "Checking template package...";
-                var templateInstalled = await updateCheckService.IsTemplateInstalledAsync();
+                var templateInstalled = await updateManager.IsTemplateInstalledAsync();
                 if (!templateInstalled)
                 {
                     busyOverlay.Message = "Installing MDK² template package...";
                     try
                     {
-                        await updateCheckService.InstallTemplateAsync();
+                        await updateManager.InstallTemplateAsync();
                         messages.Add("✓ MDK² template package installed successfully");
                     }
                     catch (Exception ex)
@@ -538,7 +538,7 @@ public class ShellViewModel : ViewModel, IShell
 
         // Listen for navigation requests to coordinate OpenOptions flag
         _lazyProjectService.Value.ProjectNavigationRequested += OnProjectNavigationRequested;
-        _lazyUpdateCheckService.Value.CheckForUpdatesAsync();
+        _lazyUpdateManager.Value.CheckForUpdatesAsync();
         _lazyAnnouncementService.Value.CheckForAnnouncementsAsync();
 
         foreach (var callback in _readyCallbacks)
