@@ -97,7 +97,10 @@ public class UpdatesAction : ActionItem
         set
         {
             if (SetProperty(ref _isDownloading, value))
+            {
                 UpdateStatusMessage();
+                RaiseShouldShowChanged();
+            }
         }
     }
 
@@ -216,7 +219,6 @@ public class UpdatesAction : ActionItem
         try
         {
             _logger.Info("Starting Hub update download");
-            IsHubUpdateAvailable = false;
             IsDownloading = true;
             DownloadProgress = 0;
 
@@ -248,9 +250,15 @@ public class UpdatesAction : ActionItem
             }
 
             _logger.Info($"Downloading Hub update: {newVersion.TargetFullRelease.Version}");
-            await mgr.DownloadUpdatesAsync(newVersion, p => { DownloadProgress = p / 100.0; });
+            _logger.Info($"Calling DownloadUpdatesAsync with progress callback...");
+            await mgr.DownloadUpdatesAsync(newVersion, p => { 
+                DownloadProgress = p / 100.0;
+                _logger.Debug($"Download progress: {p}%");
+            });
+            _logger.Info($"DownloadUpdatesAsync completed successfully");
 
             IsDownloading = false;
+            IsHubUpdateAvailable = false; // Clear the update flag now that download is complete
             IsReadyToInstall = true;
             _logger.Info($"Hub update downloaded and ready to install: {newVersion.TargetFullRelease.Version}");
         }
