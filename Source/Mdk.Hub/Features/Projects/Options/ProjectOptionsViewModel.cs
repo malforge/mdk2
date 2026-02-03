@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Configuration;
+using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
@@ -33,27 +35,9 @@ public class ProjectOptionsViewModel : ViewModel
 
     readonly AsyncRelayCommand _saveCommand;
     readonly IShell _shell;
-    ProjectConfiguration? _configuration;
+    ProjectData? _projectData;
     string? _defaultBinaryPath;
     bool _defaultBinaryPathLoaded;
-    string? _originalLocalBinaryPath;
-    string? _originalLocalIgnores;
-    string? _originalLocalInteractive;
-    string? _originalLocalMinify;
-    string? _originalLocalMinifyExtraOptions;
-    string? _originalLocalNamespaces;
-    string? _originalLocalOutputPath;
-    string? _originalLocalTrace;
-    string? _originalMainBinaryPath;
-    string? _originalMainIgnores;
-
-    // Store original values to detect changes
-    string? _originalMainInteractive;
-    string? _originalMainMinify;
-    string? _originalMainMinifyExtraOptions;
-    string? _originalMainNamespaces;
-    string? _originalMainOutputPath;
-    string? _originalMainTrace;
 
     public ProjectOptionsViewModel(string projectPath, IProjectService projectService, IShell dialogShell, IShell shell, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
@@ -77,7 +61,7 @@ public class ProjectOptionsViewModel : ViewModel
         _openGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);
 
         // Subscribe to property changes to update override indicators and dirty state
-        MainConfig.PropertyChanged += (_, e) =>
+        MainConfig.PropertyChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(HasUnsavedChanges));
             NotifyDirtyStateChanged();
@@ -126,27 +110,51 @@ public class ProjectOptionsViewModel : ViewModel
 
     public string ProjectName => _projectPath.IsEmpty() ? string.Empty : Path.GetFileNameWithoutExtension(_projectPath.Value!);
 
-    public bool IsProgrammableBlock => _configuration?.Type.Value?.Equals("programmableblock", StringComparison.OrdinalIgnoreCase) ?? true;
+    public bool IsProgrammableBlock => _projectData?.Config.GetEffective().Type == ProjectType.ProgrammableBlock;
 
-    public bool HasUnsavedChanges =>
-        MainConfig.Interactive?.Value != _originalMainInteractive
-        || MainConfig.OutputPath != _originalMainOutputPath
-        || MainConfig.BinaryPath != _originalMainBinaryPath
-        || MainConfig.Minify?.Value != _originalMainMinify
-        || MainConfig.MinifyExtraOptions?.Value != _originalMainMinifyExtraOptions
-        || MainConfig.Trace?.Value != _originalMainTrace
-        || MainConfig.Ignores != _originalMainIgnores
-        || MainConfig.Namespaces != _originalMainNamespaces
-        || LocalConfig.Interactive?.Value != _originalLocalInteractive
-        || LocalConfig.OutputPath != _originalLocalOutputPath
-        || LocalConfig.BinaryPath != _originalLocalBinaryPath
-        || LocalConfig.Minify?.Value != _originalLocalMinify
-        || LocalConfig.MinifyExtraOptions?.Value != _originalLocalMinifyExtraOptions
-        || LocalConfig.Trace?.Value != _originalLocalTrace
-        || LocalConfig.Ignores != _originalLocalIgnores
-        || LocalConfig.Namespaces != _originalLocalNamespaces;
+    public bool HasUnsavedChanges
+    {
+        get
+        {
+            if (_projectData == null)
+                return false;
 
-    public string? DefaultOutputPath => _configuration?.GetResolvedOutputPath();
+            // Check if Main layer has changed
+            var currentMain = new ProjectConfigLayer
+            {
+                Type = IsProgrammableBlock ? ProjectType.ProgrammableBlock : ProjectType.Mod,
+                Interactive = ToInteractiveMode(MainConfig.Interactive?.Value),
+                Output = ToCanonicalPath(MainConfig.OutputPath),
+                BinaryPath = ToCanonicalPath(MainConfig.BinaryPath),
+                Minify = ToMinifierLevel(MainConfig.Minify?.Value),
+                MinifyExtraOptions = ToMinifierExtraOptions(MainConfig.MinifyExtraOptions?.Value),
+                Trace = ToBool(MainConfig.Trace?.Value),
+                Ignores = ToStringArray(MainConfig.Ignores),
+                Namespaces = ToStringArray(MainConfig.Namespaces)
+            };
+
+            // Check if Local layer has changed
+            var currentLocal = new ProjectConfigLayer
+            {
+                Type = null,
+                Interactive = ToInteractiveMode(LocalConfig.Interactive?.Value),
+                Output = ToCanonicalPath(LocalConfig.OutputPath),
+                BinaryPath = ToCanonicalPath(LocalConfig.BinaryPath),
+                Minify = ToMinifierLevel(LocalConfig.Minify?.Value),
+                MinifyExtraOptions = ToMinifierExtraOptions(LocalConfig.MinifyExtraOptions?.Value),
+                Trace = ToBool(LocalConfig.Trace?.Value),
+                Ignores = ToStringArray(LocalConfig.Ignores),
+                Namespaces = ToStringArray(LocalConfig.Namespaces)
+            };
+
+            bool mainChanged = !(_projectData.Config.Main?.Equals(currentMain) ?? false);
+            bool localChanged = !(_projectData.Config.Local?.Equals(currentLocal) ?? false);
+
+            return mainChanged || localChanged;
+        }
+    }
+
+    public string? DefaultOutputPath => null; // TODO: Calculate from ProjectData if needed
 
     public string? DefaultBinaryPath
     {
@@ -188,106 +196,123 @@ public class ProjectOptionsViewModel : ViewModel
 
     void LoadConfiguration()
     {
-        _configuration = _projectService.LoadConfiguration(_projectPath);
+        _projectData = _projectService.LoadProjectData(_projectPath);
         OnPropertyChanged(nameof(IsProgrammableBlock));
 
-        // Set defaults for Main
+        // Set defaults for Main (these will be overwritten if data exists)
         MainConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList[0]; // "OpenHub"
         MainConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList[0]; // "none"
         MainConfig.MinifyExtraOptions = ConfigurationSectionViewModel.MinifyExtraOptionsList[0]; // "none"
         MainConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList[0]; // "false"
         MainConfig.Namespaces = "IngameScript";
+        MainConfig.OutputPath = "auto";
+        MainConfig.BinaryPath = "auto";
 
-        if (_configuration == null)
+        if (_projectData == null)
             return;
 
-        // Load Main INI values (overriding defaults if present)
-        if (_configuration.MainIni != null)
+        // Load Main from ProjectData
+        if (_projectData.Config.Main != null)
         {
-            var section = _configuration.MainIni["mdk"];
-            if (section.TryGet("interactive", out string? interactive))
-                MainConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value == interactive) ?? MainConfig.Interactive;
-            MainConfig.OutputPath = section.TryGet("output", out string? output) ? output : "auto";
-            MainConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : "auto";
-            if (section.TryGet("minify", out string? minify))
-                MainConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList.FirstOrDefault(o => o.Value == minify) ?? MainConfig.Minify;
-            if (section.TryGet("minifyextraoptions", out string? minifyExtra))
-                MainConfig.MinifyExtraOptions = ConfigurationSectionViewModel.MinifyExtraOptionsList.FirstOrDefault(o => o.Value == minifyExtra) ?? MainConfig.MinifyExtraOptions;
-            if (section.TryGet("trace", out string? trace))
-                MainConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList.FirstOrDefault(o => o.Value == trace) ?? MainConfig.Trace;
-            MainConfig.Ignores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
-            MainConfig.Namespaces = section.TryGet("namespaces", out string? namespaces) && !string.IsNullOrWhiteSpace(namespaces) ? namespaces : MainConfig.Namespaces;
+            var main = _projectData.Config.Main;
+            MainConfig.Interactive = main.Interactive.HasValue 
+                ? ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value.Equals(main.Interactive.ToString(), StringComparison.OrdinalIgnoreCase))
+                : MainConfig.Interactive;
+            MainConfig.OutputPath = main.Output?.Value ?? "auto";
+            MainConfig.BinaryPath = main.BinaryPath?.Value ?? "auto";
+            MainConfig.Minify = main.Minify.HasValue
+                ? ConfigurationSectionViewModel.MinifyOptionsList.FirstOrDefault(o => o.Value.Equals(main.Minify.ToString(), StringComparison.OrdinalIgnoreCase))
+                : MainConfig.Minify;
+            MainConfig.MinifyExtraOptions = main.MinifyExtraOptions.HasValue
+                ? ConfigurationSectionViewModel.MinifyExtraOptionsList.FirstOrDefault(o => o.Value.Equals(main.MinifyExtraOptions.ToString(), StringComparison.OrdinalIgnoreCase))
+                : MainConfig.MinifyExtraOptions;
+            MainConfig.Trace = main.Trace.HasValue
+                ? ConfigurationSectionViewModel.TraceOptionsList.FirstOrDefault(o => o.Value == (main.Trace.Value ? "true" : "false"))
+                : MainConfig.Trace;
+            MainConfig.Ignores = main.Ignores.HasValue ? string.Join(",", main.Ignores.Value) : string.Empty;
+            MainConfig.Namespaces = main.Namespaces.HasValue ? string.Join(",", main.Namespaces.Value) : "IngameScript";
         }
 
-        // Load Local INI values
-        if (_configuration.LocalIni != null)
+        // Load Local from ProjectData
+        if (_projectData.Config.Local != null)
         {
-            var section = _configuration.LocalIni["mdk"];
-            if (section.TryGet("interactive", out string? interactive))
-                LocalConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value == interactive);
-            LocalConfig.OutputPath = section.TryGet("output", out string? output) ? output : string.Empty;
-            LocalConfig.BinaryPath = section.TryGet("binarypath", out string? binary) ? binary : string.Empty;
-            if (section.TryGet("minify", out string? minify))
-                LocalConfig.Minify = ConfigurationSectionViewModel.MinifyOptionsList.FirstOrDefault(o => o.Value == minify);
-            if (section.TryGet("minifyextraoptions", out string? minifyExtra))
-                LocalConfig.MinifyExtraOptions = ConfigurationSectionViewModel.MinifyExtraOptionsList.FirstOrDefault(o => o.Value == minifyExtra);
-            if (section.TryGet("trace", out string? trace))
-                LocalConfig.Trace = ConfigurationSectionViewModel.TraceOptionsList.FirstOrDefault(o => o.Value == trace);
-            LocalConfig.Ignores = section.TryGet("ignores", out string? ignores) ? ignores : string.Empty;
-            LocalConfig.Namespaces = section.TryGet("namespaces", out string? namespaces) ? namespaces : string.Empty;
+            var local = _projectData.Config.Local;
+            LocalConfig.Interactive = local.Interactive.HasValue
+                ? ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value.Equals(local.Interactive.ToString(), StringComparison.OrdinalIgnoreCase))
+                : null;
+            LocalConfig.OutputPath = local.Output?.Value ?? string.Empty;
+            LocalConfig.BinaryPath = local.BinaryPath?.Value ?? string.Empty;
+            LocalConfig.Minify = local.Minify.HasValue
+                ? ConfigurationSectionViewModel.MinifyOptionsList.FirstOrDefault(o => o.Value.Equals(local.Minify.ToString(), StringComparison.OrdinalIgnoreCase))
+                : null;
+            LocalConfig.MinifyExtraOptions = local.MinifyExtraOptions.HasValue
+                ? ConfigurationSectionViewModel.MinifyExtraOptionsList.FirstOrDefault(o => o.Value.Equals(local.MinifyExtraOptions.ToString(), StringComparison.OrdinalIgnoreCase))
+                : null;
+            LocalConfig.Trace = local.Trace.HasValue
+                ? ConfigurationSectionViewModel.TraceOptionsList.FirstOrDefault(o => o.Value == (local.Trace.Value ? "true" : "false"))
+                : null;
+            LocalConfig.Ignores = local.Ignores.HasValue ? string.Join(",", local.Ignores.Value) : string.Empty;
+            LocalConfig.Namespaces = local.Namespaces.HasValue ? string.Join(",", local.Namespaces.Value) : string.Empty;
         }
 
-        // If interactive is not set anywhere (neither Main nor Local), default LocalConfig to "ShowNotification"
-        // This triggers unsaved changes and teaches users to explicitly save their preference
-        var hasInteractiveInMain = _configuration.MainIni != null && _configuration.MainIni["mdk"].TryGet("interactive", out string? _);
-        var hasInteractiveInLocal = LocalConfig.Interactive != null;
-        if (!hasInteractiveInMain && !hasInteractiveInLocal)
+        // If interactive is not set anywhere, default LocalConfig to "ShowNotification"
+        if ((_projectData.Config.Main?.Interactive.HasValue != true) && (_projectData.Config.Local?.Interactive.HasValue != true))
             LocalConfig.Interactive = ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value == "ShowNotification");
-
-        // Store original values for dirty tracking
-        _originalMainInteractive = MainConfig.Interactive?.Value;
-        _originalMainOutputPath = MainConfig.OutputPath;
-        _originalMainBinaryPath = MainConfig.BinaryPath;
-        _originalMainMinify = MainConfig.Minify?.Value;
-        _originalMainMinifyExtraOptions = MainConfig.MinifyExtraOptions?.Value;
-        _originalMainTrace = MainConfig.Trace?.Value;
-        _originalMainIgnores = MainConfig.Ignores;
-        _originalMainNamespaces = MainConfig.Namespaces;
-        _originalLocalInteractive = LocalConfig.Interactive?.Value;
-        _originalLocalOutputPath = LocalConfig.OutputPath;
-        _originalLocalBinaryPath = LocalConfig.BinaryPath;
-        _originalLocalMinify = LocalConfig.Minify?.Value;
-        _originalLocalMinifyExtraOptions = LocalConfig.MinifyExtraOptions?.Value;
-        _originalLocalTrace = LocalConfig.Trace?.Value;
-        _originalLocalIgnores = LocalConfig.Ignores;
-        _originalLocalNamespaces = LocalConfig.Namespaces;
     }
 
     async Task Save()
     {
         try
         {
-            // Save both Main and Local INI files
-            await _projectService.SaveConfiguration(_projectPath,
-                MainConfig.Interactive?.Value ?? "OpenHub",
-                MainConfig.OutputPath,
-                MainConfig.BinaryPath,
-                MainConfig.Minify?.Value ?? "none",
-                MainConfig.MinifyExtraOptions?.Value ?? "none",
-                MainConfig.Trace?.Value ?? "false",
-                MainConfig.Ignores,
-                MainConfig.Namespaces,
-                false);
-            await _projectService.SaveConfiguration(_projectPath,
-                LocalConfig.Interactive?.Value ?? string.Empty,
-                LocalConfig.OutputPath,
-                LocalConfig.BinaryPath,
-                LocalConfig.Minify?.Value ?? string.Empty,
-                LocalConfig.MinifyExtraOptions?.Value ?? string.Empty,
-                LocalConfig.Trace?.Value ?? string.Empty,
-                LocalConfig.Ignores,
-                LocalConfig.Namespaces,
-                true);
+            if (_projectData == null)
+                throw new InvalidOperationException("Configuration not loaded");
+
+            // Build Main layer from UI
+            var mainLayer = new ProjectConfigLayer
+            {
+                Type = IsProgrammableBlock ? ProjectType.ProgrammableBlock : ProjectType.Mod,
+                Interactive = ToInteractiveMode(MainConfig.Interactive?.Value),
+                Output = ToCanonicalPath(MainConfig.OutputPath),
+                BinaryPath = ToCanonicalPath(MainConfig.BinaryPath),
+                Minify = ToMinifierLevel(MainConfig.Minify?.Value),
+                MinifyExtraOptions = ToMinifierExtraOptions(MainConfig.MinifyExtraOptions?.Value),
+                Trace = ToBool(MainConfig.Trace?.Value),
+                Ignores = ToStringArray(MainConfig.Ignores),
+                Namespaces = ToStringArray(MainConfig.Namespaces)
+            };
+
+            // Build Local layer from UI (null means inherit from main)
+            var localLayer = new ProjectConfigLayer
+            {
+                Type = null, // Type is always in main, never in local
+                Interactive = ToInteractiveMode(LocalConfig.Interactive?.Value),
+                Output = ToCanonicalPath(LocalConfig.OutputPath),
+                BinaryPath = ToCanonicalPath(LocalConfig.BinaryPath),
+                Minify = ToMinifierLevel(LocalConfig.Minify?.Value),
+                MinifyExtraOptions = ToMinifierExtraOptions(LocalConfig.MinifyExtraOptions?.Value),
+                Trace = ToBool(LocalConfig.Trace?.Value),
+                Ignores = ToStringArray(LocalConfig.Ignores),
+                Namespaces = ToStringArray(LocalConfig.Namespaces)
+            };
+
+            // Create updated ProjectData
+            var updatedProjectData = new ProjectData
+            {
+                MainIni = _projectData.MainIni,
+                LocalIni = _projectData.LocalIni,
+                MainIniPath = _projectData.MainIniPath,
+                LocalIniPath = _projectData.LocalIniPath,
+                ProjectPath = _projectData.ProjectPath,
+                Config = new ProjectConfig
+                {
+                    Default = _projectData.Config.Default,
+                    Main = mainLayer,
+                    Local = localLayer
+                }
+            };
+
+            // Save using the new system
+            await _projectService.SaveProjectData(updatedProjectData);
 
             _onClose(true); // Saved
         }
@@ -333,9 +358,80 @@ public class ProjectOptionsViewModel : ViewModel
 
     void ClearLocalNamespaces() => LocalConfig.Namespaces = string.Empty;
 
+    InteractiveMode? ToInteractiveMode(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<InteractiveMode>(value, ignoreCase: true, out var result) ? result : null;
+    }
+
+    MinifierLevel? ToMinifierLevel(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<MinifierLevel>(value, ignoreCase: true, out var result) ? result : null;
+    }
+
+    MinifierExtraOptions? ToMinifierExtraOptions(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<MinifierExtraOptions>(value, ignoreCase: true, out var result) ? result : null;
+    }
+
+    bool? ToBool(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return value.ToLowerInvariant() switch
+        {
+            "true" => true,
+            "false" => false,
+            _ => null
+        };
+    }
+
+    ImmutableArray<string>? ToStringArray(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var items = value.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(item => item.Trim())
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .ToImmutableArray();
+
+        return items.IsEmpty ? null : items;
+    }
+
+    CanonicalPath? ToCanonicalPath(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        value = value.Trim();
+
+        // "auto" means null (auto-detect)
+        if (value.Equals("auto", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        // Real path
+        try
+        {
+            return new CanonicalPath(value);
+        }
+        catch
+        {
+            // Invalid path, treat as null
+            return null;
+        }
+    }
+
     void OpenGlobalSettings()
     {
         var viewModel = App.Container.Resolve<GlobalSettingsViewModel>();
         _shell.AddOverlay(viewModel);
     }
 }
+

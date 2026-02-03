@@ -119,6 +119,19 @@ public interface IProjectService
     ProjectConfiguration? LoadConfiguration(CanonicalPath projectPath);
 
     /// <summary>
+    ///     Loads typed project configuration data with separate layers for Default, Main, and Local.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <returns>Project configuration data with all layers, or null if project files not found.</returns>
+    ProjectData? LoadProjectData(CanonicalPath projectPath);
+
+    /// <summary>
+    ///     Saves project configuration data back to INI files, preserving comments and custom keys.
+    /// </summary>
+    /// <param name="projectData">The project data to save.</param>
+    Task SaveProjectData(ProjectData projectData);
+
+    /// <summary>
     ///     Saves configuration changes to the specified INI file.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
@@ -131,7 +144,13 @@ public interface IProjectService
     /// <param name="ignores">Ignores value.</param>
     /// <param name="namespaces">Namespaces value.</param>
     /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
-    Task SaveConfiguration(CanonicalPath projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal);
+    /// <summary>
+    ///     Saves configuration changes back to the INI files, preserving comments and custom keys.
+    /// </summary>
+    /// <param name="configuration">The loaded project configuration with Ini instances</param>
+    /// <param name="mainUpdates">Dictionary of key/value pairs to update in main INI (null if no changes)</param>
+    /// <param name="localUpdates">Dictionary of key/value pairs to update in local INI (null if no changes). Empty string values remove the key.</param>
+    Task SaveConfiguration(ProjectConfiguration configuration, Dictionary<string, string>? mainUpdates, Dictionary<string, string>? localUpdates);
 
     /// <summary>
     ///     Copies the deployed script to the clipboard.

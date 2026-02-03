@@ -1,4 +1,4 @@
-﻿namespace Mdk.Hub.Utility;
+namespace Mdk.Hub.Utility;
 
 /// <summary>
 ///     Provides a set of static methods for string operations that take into account human-centric factors such as

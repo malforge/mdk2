@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls.Templates;
+using Avalonia.Controls.Templates;
 using Avalonia.Metadata;
 
 namespace Mdk.Hub.Features.Projects.Overview.Icons;

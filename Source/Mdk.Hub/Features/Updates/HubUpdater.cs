@@ -105,3 +105,4 @@ internal class HubUpdater
         }
     }
 }
+

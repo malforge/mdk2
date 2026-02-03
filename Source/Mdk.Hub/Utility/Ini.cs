@@ -485,11 +485,17 @@ public class Ini
 
         /// <summary>
         ///     Creates a clone of the current instance with the specified key.
+        ///     Preserves the comment from the existing key if present.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public Section WithKey(string name, string value) => new(Name, Keys.SetItem(name, new Key(name, value, null)), LeadingComment);
+        public Section WithKey(string name, string value)
+        {
+            // Preserve comment from existing key if it exists
+            var comment = Keys.TryGetValue(name, out var existingKey) ? existingKey.Comment : null;
+            return new(Name, Keys.SetItem(name, new Key(name, value, comment)), LeadingComment);
+        }
 
         /// <summary>
         ///     Creates a clone of the current instance without the specified key.

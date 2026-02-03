@@ -1,4 +1,4 @@
-﻿namespace Mdk.Hub.Framework;
+namespace Mdk.Hub.Framework;
 
 /// <summary>
 ///     Base class for view models that inherit from <see cref="Model" /> for property change notification.

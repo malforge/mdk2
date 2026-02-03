@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -199,46 +200,327 @@ public class ProjectService : IProjectService
         };
     }
 
-    public async Task SaveConfiguration(CanonicalPath projectPath, string interactive, string output, string binaryPath, string minify, string minifyExtraOptions, string trace, string ignores, string namespaces, bool saveToLocal)
+    /// <summary>
+    ///     Saves configuration changes back to the INI files, preserving comments and custom keys.
+    /// </summary>
+    /// <param name="configuration">The loaded project configuration with Ini instances</param>
+    /// <param name="mainUpdates">Dictionary of key/value pairs to update in main INI (null if no changes)</param>
+    /// <param name="localUpdates">Dictionary of key/value pairs to update in local INI (null if no changes). Empty string values remove the key.</param>
+    public async Task SaveConfiguration(ProjectConfiguration configuration, Dictionary<string, string>? mainUpdates, Dictionary<string, string>? localUpdates)
+    {
+        const string mdkSection = "mdk";
+
+        // Update and save main INI if there are changes
+        if (mainUpdates != null && mainUpdates.Count > 0)
+        {
+            var mainIni = configuration.MainIni ?? new Ini();
+            
+            foreach (var (key, value) in mainUpdates)
+                mainIni = mainIni.WithKey(mdkSection, key, value);
+
+            var mainIniPath = configuration.MainIniPath;
+            if (string.IsNullOrEmpty(mainIniPath))
+            {
+                var projectDir = Path.GetDirectoryName(configuration.ProjectPath.Value);
+                if (string.IsNullOrEmpty(projectDir))
+                    throw new InvalidOperationException("Cannot determine project directory");
+                mainIniPath = Path.Combine(projectDir, "mdk.ini");
+            }
+
+            await File.WriteAllTextAsync(mainIniPath, mainIni.ToString());
+        }
+
+        // Update and save local INI if there are changes
+        if (localUpdates != null && localUpdates.Count > 0)
+        {
+            var localIni = configuration.LocalIni ?? new Ini();
+
+            foreach (var (key, value) in localUpdates)
+            {
+                if (string.IsNullOrEmpty(value))
+                    // Empty value means remove the override (inherit from main)
+                    localIni = localIni.WithoutKey(mdkSection, key);
+                else
+                    localIni = localIni.WithKey(mdkSection, key, value);
+            }
+
+            var localIniPath = configuration.LocalIniPath;
+            if (string.IsNullOrEmpty(localIniPath))
+            {
+                var projectDir = Path.GetDirectoryName(configuration.ProjectPath.Value);
+                if (string.IsNullOrEmpty(projectDir))
+                    throw new InvalidOperationException("Cannot determine project directory");
+                localIniPath = Path.Combine(projectDir, "mdk.local.ini");
+            }
+
+            await File.WriteAllTextAsync(localIniPath, localIni.ToString());
+        }
+    }
+
+    /// <summary>
+    ///     Saves project configuration back to INI files, preserving comments and custom keys.
+    /// </summary>
+    public async Task SaveProjectData(ProjectData projectData)
+    {
+        const string mdkSection = "mdk";
+
+        // Update main INI
+        var mainIni = projectData.MainIni ?? new Ini();
+        if (projectData.Config.Main != null)
+        {
+            mainIni = UpdateIniFromLayer(mainIni, mdkSection, projectData.Config.Main, forceAutoForNullPaths: false);
+            
+            var mainIniPath = projectData.MainIniPath;
+            if (string.IsNullOrEmpty(mainIniPath))
+            {
+                var projectDir = Path.GetDirectoryName(projectData.ProjectPath.Value);
+                if (string.IsNullOrEmpty(projectDir))
+                    throw new InvalidOperationException("Cannot determine project directory");
+                mainIniPath = Path.Combine(projectDir, "mdk.ini");
+            }
+
+            await File.WriteAllTextAsync(mainIniPath, mainIni.ToString());
+        }
+
+        // Update local INI
+        var localIni = projectData.LocalIni ?? new Ini();
+        if (projectData.Config.Local != null)
+        {
+            // Special behavior: Output and BinaryPath are machine-specific and should be in local
+            // If both Main and Local are null, explicitly write "auto" to local to make it visible
+            bool forceAutoForNullPaths = projectData.Config.Main?.Output == null && projectData.Config.Local.Output == null
+                                      || projectData.Config.Main?.BinaryPath == null && projectData.Config.Local.BinaryPath == null;
+            
+            localIni = UpdateIniFromLayer(localIni, mdkSection, projectData.Config.Local, removeNulls: true, forceAutoForNullPaths: forceAutoForNullPaths);
+            
+            var localIniPath = projectData.LocalIniPath;
+            if (string.IsNullOrEmpty(localIniPath))
+            {
+                var projectDir = Path.GetDirectoryName(projectData.ProjectPath.Value);
+                if (string.IsNullOrEmpty(projectDir))
+                    throw new InvalidOperationException("Cannot determine project directory");
+                localIniPath = Path.Combine(projectDir, "mdk.local.ini");
+            }
+
+            await File.WriteAllTextAsync(localIniPath, localIni.ToString());
+        }
+    }
+
+    static Ini UpdateIniFromLayer(Ini ini, string section, ProjectConfigLayer layer, bool removeNulls = false, bool forceAutoForNullPaths = false)
+    {
+        // Type - convert enum to lowercase string
+        ini = UpdateIniValue(ini, section, "type", layer.Type?.ToString().ToLowerInvariant(), removeNulls);
+        
+        // Interactive - convert enum to PascalCase string (OpenHub, ShowNotification, DoNothing)
+        ini = UpdateIniValue(ini, section, "interactive", layer.Interactive?.ToString(), removeNulls);
+        
+        // Trace - convert bool to "on"/"off"
+        ini = UpdateIniValue(ini, section, "trace", layer.Trace.HasValue ? (layer.Trace.Value ? "on" : "off") : null, removeNulls);
+        
+        // Minify - convert enum to lowercase string
+        ini = UpdateIniValue(ini, section, "minify", layer.Minify?.ToString().ToLowerInvariant(), removeNulls);
+        
+        // MinifyExtraOptions - convert enum to lowercase string
+        ini = UpdateIniValue(ini, section, "minifyextraoptions", layer.MinifyExtraOptions?.ToString().ToLowerInvariant(), removeNulls);
+        
+        // Ignores - convert array to comma-separated string
+        ini = UpdateIniValue(ini, section, "ignores", layer.Ignores.HasValue ? string.Join(",", layer.Ignores.Value) : null, removeNulls);
+        
+        // Namespaces - convert array to comma-separated string
+        ini = UpdateIniValue(ini, section, "namespaces", layer.Namespaces.HasValue ? string.Join(",", layer.Namespaces.Value) : null, removeNulls);
+        
+        // Output - CanonicalPath? (null = "auto" in INI)
+        string? outputValue = layer.Output?.Value;
+        if (forceAutoForNullPaths && outputValue == null)
+            outputValue = "auto";
+        ini = UpdateIniValue(ini, section, "output", outputValue, removeNulls);
+        
+        // BinaryPath - CanonicalPath? (null = "auto" in INI)  
+        string? binaryPathValue = layer.BinaryPath?.Value;
+        if (forceAutoForNullPaths && binaryPathValue == null)
+            binaryPathValue = "auto";
+        ini = UpdateIniValue(ini, section, "binarypath", binaryPathValue, removeNulls);
+        
+        return ini;
+    }
+
+    static Ini UpdateIniValue(Ini ini, string section, string key, string? value, bool removeNulls)
+    {
+        if (value == null && removeNulls)
+            return ini.WithoutKey(section, key);
+        if (value != null)
+            return ini.WithKey(section, key, value);
+        return ini;
+    }
+
+    /// <summary>
+    ///     Loads project configuration into the new ProjectData model with typed layers.
+    /// </summary>
+    public ProjectData? LoadProjectData(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
-            return;
+            return null;
+
+        if (!File.Exists(projectPath.Value))
+            return null;
 
         var mainIniPath = IniFileFinder.FindMainIni(projectPath.Value!);
         var localIniPath = IniFileFinder.FindLocalIni(projectPath.Value!);
-        var targetIniPath = saveToLocal ? localIniPath : mainIniPath;
 
-        // Ensure we have a target path
-        if (string.IsNullOrWhiteSpace(targetIniPath))
+        // Need at least one INI file to proceed
+        if (mainIniPath == null && localIniPath == null)
+            return null;
+
+        Ini? mainIni = null;
+        Ini? localIni = null;
+
+        if (mainIniPath != null && File.Exists(mainIniPath))
         {
-            // Create the path if it doesn't exist
-            var projectDir = Path.GetDirectoryName(projectPath.Value);
-            if (string.IsNullOrWhiteSpace(projectDir))
-                throw new InvalidOperationException("Cannot determine project directory");
-
-            targetIniPath = Path.Combine(projectDir, saveToLocal ? "mdk.local.ini" : "mdk.ini");
+            if (Ini.TryParse(File.ReadAllText(mainIniPath), out var parsed))
+                mainIni = parsed;
+            else
+                _logger.Warning($"Failed to parse main INI file: {mainIniPath}");
         }
 
-        // Load the target INI file or create a new one
-        Ini targetIni;
-        if (File.Exists(targetIniPath) && Ini.TryParse(await File.ReadAllTextAsync(targetIniPath), out var parsed))
-            targetIni = parsed;
-        else
-            targetIni = new Ini();
+        if (localIniPath != null && File.Exists(localIniPath))
+        {
+            if (Ini.TryParse(File.ReadAllText(localIniPath), out var parsed))
+                localIni = parsed;
+            else
+                _logger.Warning($"Failed to parse local INI file: {localIniPath}");
+        }
 
-        // Update values in the [mdk] section
-        targetIni = targetIni
-            .WithKey("mdk", "interactive", interactive)
-            .WithKey("mdk", "output", output)
-            .WithKey("mdk", "binarypath", binaryPath)
-            .WithKey("mdk", "minify", minify)
-            .WithKey("mdk", "minifyextraoptions", minifyExtraOptions)
-            .WithKey("mdk", "trace", trace)
-            .WithKey("mdk", "ignores", ignores)
-            .WithKey("mdk", "namespaces", namespaces);
+        // Create default layer with hardcoded defaults
+        var defaultLayer = new ProjectConfigLayer
+        {
+            Type = null, // Type must be set explicitly in INI
+            Interactive = InteractiveMode.OpenHub,
+            Trace = false,
+            Minify = MinifierLevel.None,
+            MinifyExtraOptions = MinifierExtraOptions.None,
+            Ignores = ImmutableArray.Create("obj/**/*", "MDK/**/*", "**/*.debug.cs"),
+            Namespaces = ImmutableArray.Create("IngameScript"),
+            Output = null,
+            BinaryPath = null
+        };
 
-        // Write the file
-        await File.WriteAllTextAsync(targetIniPath, targetIni.ToString());
+        // Parse main layer
+        var mainLayer = ParseLayer(mainIni);
+
+        // Parse local layer
+        var localLayer = ParseLayer(localIni);
+
+        return new ProjectData
+        {
+            MainIni = mainIni,
+            LocalIni = localIni,
+            MainIniPath = mainIniPath,
+            LocalIniPath = localIniPath,
+            ProjectPath = projectPath,
+            Config = new ProjectConfig
+            {
+                Default = defaultLayer,
+                Main = mainLayer,
+                Local = localLayer
+            }
+        };
+    }
+
+    static ProjectConfigLayer ParseLayer(Ini? ini)
+    {
+        if (ini == null)
+            return new ProjectConfigLayer();
+
+        var section = ini["mdk"];
+
+        return new ProjectConfigLayer
+        {
+            Type = ParseProjectType(section.TryGet("type", out string? type) ? type : null),
+            Interactive = ParseInteractiveMode(section.TryGet("interactive", out string? interactive) ? interactive : null),
+            Trace = ParseBool(section.TryGet("trace", out string? trace) ? trace : null),
+            Minify = ParseMinifierLevel(section.TryGet("minify", out string? minify) ? minify : null),
+            MinifyExtraOptions = ParseMinifierExtraOptions(section.TryGet("minifyextraoptions", out string? minifyExtra) ? minifyExtra : null),
+            Ignores = ParseStringList(section.TryGet("ignores", out string? ignores) ? ignores : null),
+            Namespaces = ParseStringList(section.TryGet("namespaces", out string? namespaces) ? namespaces : null),
+            Output = ParsePath(section.TryGet("output", out string? output) ? output : null),
+            BinaryPath = ParsePath(section.TryGet("binarypath", out string? binaryPath) ? binaryPath : null)
+        };
+    }
+
+    static CanonicalPath? ParsePath(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        value = value.Trim();
+
+        // "auto" keyword means null (auto-detect)
+        if (value.Equals("auto", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        // Real path
+        try
+        {
+            return new CanonicalPath(value);
+        }
+        catch
+        {
+            // Invalid path, treat as null
+            return null;
+        }
+    }
+
+    static ProjectType? ParseProjectType(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<ProjectType>(value, ignoreCase: true, out var result) ? result : null;
+    }
+
+    static InteractiveMode? ParseInteractiveMode(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<InteractiveMode>(value, ignoreCase: true, out var result) ? result : null;
+    }
+
+    static bool? ParseBool(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "on" or "true" or "yes" or "1" => true,
+            "off" or "false" or "no" or "0" => false,
+            _ => null
+        };
+    }
+
+    static MinifierLevel? ParseMinifierLevel(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<MinifierLevel>(value, ignoreCase: true, out var result) ? result : null;
+    }
+
+    static MinifierExtraOptions? ParseMinifierExtraOptions(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<MinifierExtraOptions>(value, ignoreCase: true, out var result) ? result : null;
+    }
+
+    static ImmutableArray<string>? ParseStringList(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var items = value.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(item => item.Trim())
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .ToArray();
+
+        return items.Length > 0 ? ImmutableArray.Create(items) : null;
     }
 
     public async Task<bool> CopyScriptToClipboardAsync(CanonicalPath projectPath)
@@ -686,7 +968,7 @@ public class ProjectService : IProjectService
             {
                 // For simulated projects, create fake ProjectInfo without validation
                 var projectType = message.Type == NotificationType.Script
-                    ? ProjectType.IngameScript
+                    ? ProjectType.ProgrammableBlock
                     : ProjectType.Mod;
 
                 var projectInfo = new ProjectInfo

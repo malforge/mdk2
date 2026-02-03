@@ -45,9 +45,9 @@ public class ProjectInfoAction : ActionItem
         ShowOptionsCommand = new RelayCommand(ShowOptions, CanShowOptions);
     }
 
-    public bool IsScript => Project?.Type == ProjectType.IngameScript;
+    public bool IsScript => Project?.Type == ProjectType.ProgrammableBlock;
 
-    public string ProjectTypeName => Project?.Type == ProjectType.IngameScript
+    public string ProjectTypeName => Project?.Type == ProjectType.ProgrammableBlock
         ? "Programmable Block Script"
         : "Mod";
 

@@ -98,6 +98,16 @@
                                 <TextBlock Grid.Column="0"
                                            Text="Output Path"
                                            Classes="label muted" />
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Spacing="4"
+                                            IsVisible="{Binding IsOutputOverridden}">
+                                    <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
+                                    <TextBlock Text="Overridden in Local"
+                                               Classes="label warning"
+                                               FontStyle="Italic"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
                             </Grid>
                             <controls:PathSelectorControl Path="{Binding MainConfig.OutputPath}"
                                                           DefaultPath="{Binding DefaultOutputPath}"
@@ -110,6 +120,16 @@
                                 <TextBlock Grid.Column="0"
                                            Text="Binary Path"
                                            Classes="label muted" />
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Spacing="4"
+                                            IsVisible="{Binding IsBinaryPathOverridden}">
+                                    <TextBlock Text="⚠️" Classes="label" VerticalAlignment="Center" />
+                                    <TextBlock Text="Overridden in Local"
+                                               Classes="label warning"
+                                               FontStyle="Italic"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
                             </Grid>
                             <controls:PathSelectorControl Path="{Binding MainConfig.BinaryPath}"
                                                           DefaultPath="{Binding DefaultBinaryPath}"

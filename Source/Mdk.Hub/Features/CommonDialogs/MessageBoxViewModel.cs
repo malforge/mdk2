@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 

@@ -297,3 +297,4 @@ public class GlobalSettingsViewModel : OverlayModel
         }
     }
 }
+

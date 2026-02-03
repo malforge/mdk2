@@ -24,3 +24,4 @@ public readonly struct KeyPhraseValidationMessage()
     public string OkText { get; init; } = "OK";
     public string CancelText { get; init; } = "Cancel";
 }
+

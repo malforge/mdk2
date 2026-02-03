@@ -90,3 +90,4 @@ public interface IUpdateManager
     /// <returns>Update result indicating success/failure.</returns>
     Task<UpdateResult> RollbackProjectPackagesAsync(CanonicalPath projectPath);
 }
+

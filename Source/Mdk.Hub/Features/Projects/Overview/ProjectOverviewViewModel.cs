@@ -63,9 +63,9 @@ public class ProjectOverviewViewModel : ViewModel
             AllProjects = ImmutableArray.Create(
                 new[]
                 {
-                    new ProjectModel(ProjectType.IngameScript, "My Programmable Block Script", new CanonicalPath(@"C:\Projects\MyScript\MyScript.csproj"), DateTimeOffset.Now, shell),
+                    new ProjectModel(ProjectType.ProgrammableBlock, "My Programmable Block Script", new CanonicalPath(@"C:\Projects\MyScript\MyScript.csproj"), DateTimeOffset.Now, shell),
                     new ProjectModel(ProjectType.Mod, "My Mod", new CanonicalPath(@"C:\Projects\MyMod\MyMod.csproj"), DateTimeOffset.Now.AddDays(-1), shell),
-                    new ProjectModel(ProjectType.IngameScript, "Another Programmable Block Script", new CanonicalPath(@"C:\Projects\AnotherScript\AnotherScript.csproj"), DateTimeOffset.Now.AddDays(-2), shell)
+                    new ProjectModel(ProjectType.ProgrammableBlock, "Another Programmable Block Script", new CanonicalPath(@"C:\Projects\AnotherScript\AnotherScript.csproj"), DateTimeOffset.Now.AddDays(-2), shell)
                 });
         }
     }

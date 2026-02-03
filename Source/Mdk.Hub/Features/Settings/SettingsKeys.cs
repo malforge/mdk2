@@ -9,3 +9,4 @@ public static class SettingsKeys
     public const string HubSettings = nameof(HubSettings);
     public const string MainWindowSettings = nameof(MainWindowSettings);
 }
+

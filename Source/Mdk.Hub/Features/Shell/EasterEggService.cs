@@ -79,3 +79,4 @@ public class EasterEggService : IEasterEggService
         ActiveChanged?.Invoke(this, EventArgs.Empty);
     }
 }
+

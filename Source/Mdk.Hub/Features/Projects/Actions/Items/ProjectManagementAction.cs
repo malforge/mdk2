@@ -65,7 +65,7 @@ public class ProjectManagementAction : ActionItem
         CanMakeScript || CanMakeMod;
 
     async Task CreateScriptAsync() =>
-        await CreateProjectAsync(ProjectType.IngameScript,
+        await CreateProjectAsync(ProjectType.ProgrammableBlock,
             "New Programmable Block Script",
             "Create a new Programmable Block Script project");
 
@@ -80,7 +80,7 @@ public class ProjectManagementAction : ActionItem
 
         // Get the last used location for this project type
         var hubSettings = _projectService.Settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
-        var lastLocation = projectType == ProjectType.IngameScript
+        var lastLocation = projectType == ProjectType.ProgrammableBlock
             ? hubSettings.LastIngameScriptLocation ?? defaultLocation
             : hubSettings.LastModLocation ?? defaultLocation;
 
@@ -101,7 +101,7 @@ public class ProjectManagementAction : ActionItem
             return; // User cancelled
 
         // Save the location for next time
-        if (projectType == ProjectType.IngameScript)
+        if (projectType == ProjectType.ProgrammableBlock)
             hubSettings.LastIngameScriptLocation = result.Value.Location;
         else
             hubSettings.LastModLocation = result.Value.Location;
@@ -114,7 +114,7 @@ public class ProjectManagementAction : ActionItem
         try
         {
             // Create the project
-            var createResult = projectType == ProjectType.IngameScript
+            var createResult = projectType == ProjectType.ProgrammableBlock
                 ? await _projectService.CreateProgrammableBlockProjectAsync(result.Value.ProjectName, result.Value.Location)
                 : await _projectService.CreateModProjectAsync(result.Value.ProjectName, result.Value.Location);
 

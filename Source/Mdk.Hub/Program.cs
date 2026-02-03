@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Avalonia;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Interop;

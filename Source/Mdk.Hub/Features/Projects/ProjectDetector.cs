@@ -54,7 +54,7 @@ public static class ProjectDetector
             var hasModPackager = packageReferences.Any(p => p == EnvironmentMetadata.ModPackagerPackageId);
 
             // Default to IngameScript if can't determine from packages
-            var projectType = hasModPackager ? ProjectType.Mod : ProjectType.IngameScript;
+            var projectType = hasModPackager ? ProjectType.Mod : ProjectType.ProgrammableBlock;
             var projectName = Path.GetFileNameWithoutExtension(projectPath);
             var lastReferenced = File.GetLastWriteTimeUtc(projectPath);
 

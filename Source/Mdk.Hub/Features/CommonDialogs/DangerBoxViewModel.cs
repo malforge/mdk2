@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
 

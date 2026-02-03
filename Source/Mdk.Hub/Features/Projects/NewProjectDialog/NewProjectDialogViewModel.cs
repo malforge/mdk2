@@ -27,7 +27,7 @@ public class NewProjectDialogViewModel : OverlayModel
         _cancelCommand = new RelayCommand(Cancel);
 
         // Set default project name based on project type
-        ProjectName = message.ProjectType == ProjectType.IngameScript
+        ProjectName = message.ProjectType == ProjectType.ProgrammableBlock
             ? "MdkScriptProject"
             : "MdkModProject";
 

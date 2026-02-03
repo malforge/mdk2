@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -175,7 +175,7 @@ public class ProjectModel : ViewModel
     {
         if (mustBeMod && Type != ProjectType.Mod)
             return false;
-        if (mustBeScript && Type != ProjectType.IngameScript)
+        if (mustBeScript && Type != ProjectType.ProgrammableBlock)
             return false;
         if (!string.IsNullOrWhiteSpace(searchText) && !Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
             return false;
@@ -193,3 +193,4 @@ public class ProjectModel : ViewModel
         // Note: ProjectPath, IsSelected, NeedsAttention, HasUnsavedChanges are NOT updated - those preserve UI state
     }
 }
+

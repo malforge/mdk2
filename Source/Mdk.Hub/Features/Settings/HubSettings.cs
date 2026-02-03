@@ -71,3 +71,4 @@ public struct HubSettings
     /// </summary>
     public string LastSelectedProject { get; set; } = string.Empty;
 }
+

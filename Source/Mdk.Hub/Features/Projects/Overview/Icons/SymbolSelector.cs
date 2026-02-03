@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Metadata;

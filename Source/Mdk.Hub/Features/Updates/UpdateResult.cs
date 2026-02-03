@@ -22,3 +22,4 @@ public record UpdateProgress
     public required string Message { get; init; }
     public double? PercentComplete { get; init; }
 }
+

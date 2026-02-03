@@ -21,7 +21,7 @@ public partial class NewProjectDialogView : UserControl
     {
         Title = "Create New Project",
         Message = "Enter a name and location for your new project.",
-        ProjectType = ProjectType.IngameScript,
+        ProjectType = ProjectType.ProgrammableBlock,
         DefaultLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Projects"),
         OkText = "Create",
         CancelText = "Cancel"

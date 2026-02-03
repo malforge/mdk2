@@ -38,3 +38,4 @@ public static class CollectionExtensions
         return -1;
     }
 }
+

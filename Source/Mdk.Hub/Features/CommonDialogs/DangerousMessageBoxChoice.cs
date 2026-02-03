@@ -1,4 +1,4 @@
-﻿namespace Mdk.Hub.Features.CommonDialogs;
+namespace Mdk.Hub.Features.CommonDialogs;
 
 public class DangerousMessageBoxChoice : MessageBoxChoice
 {

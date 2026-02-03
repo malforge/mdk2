@@ -84,7 +84,7 @@ public class ApiDocsAction : ActionItem
         var projectInfo = _projectService.GetProjects()
             .FirstOrDefault(p => CanonicalPathComparer.Instance.Equals(p.ProjectPath, selectedProject));
 
-        Description = projectInfo?.Type == ProjectType.IngameScript
+        Description = projectInfo?.Type == ProjectType.ProgrammableBlock
             ? "Open the API documentation for scripts"
             : "Open the API documentation for mods";
     }

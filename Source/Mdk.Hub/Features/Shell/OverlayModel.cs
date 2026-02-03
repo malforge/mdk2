@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;

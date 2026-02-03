@@ -24,3 +24,4 @@ public interface IEasterEggService
     /// </summary>
     void DisableForever();
 }
+

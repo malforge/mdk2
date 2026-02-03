@@ -1,5 +1,7 @@
 v.1.0.0-pre.25
    - Fixed build notifications not registering projects in Hub (validates via mdk.ini files now).
+   - Internal: Refactored project configuration system for better maintainability.
+
 
 v.1.0.0-pre.23
    - Fixed Hub update card disappearing during download (critical state flow bug).
