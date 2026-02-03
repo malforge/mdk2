@@ -241,7 +241,8 @@ public class ScriptPacker: ProjectJob
         if (final.Length > MaxScriptLength)
             context.Interaction.Custom($"NOTE: The final script has {final.Length} characters, which exceeds the maximum of {MaxScriptLength}. The programmable block will not be able to run it.");
         
-        context.Interaction.Script(project.Name, outputDirectory.FullName);
+        if (!string.IsNullOrEmpty(project.FilePath))
+            context.Interaction.Script(project.Name, project.FilePath);
 
         return result;
     }

@@ -11,11 +11,13 @@ namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
 ///     Detects whether a project is a valid MDK2 project and determines its type.
+///     A valid MDK2 project is identified by the presence of mdk.ini or mdk.local.ini configuration files.
 /// </summary>
 public static class ProjectDetector
 {
     /// <summary>
     ///     Attempts to detect if a .csproj file is a valid MDK2 project.
+    ///     Checks for mdk.ini or mdk.local.ini files to validate MDK2 project status.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <param name="projectInfo">The detected project information if valid.</param>
@@ -32,6 +34,14 @@ public static class ProjectDetector
 
         try
         {
+            // Check for mdk.ini or mdk.local.ini files (modern and legacy naming)
+            var mainIniPath = IniFileFinder.FindMainIni(projectPath);
+            var localIniPath = IniFileFinder.FindLocalIni(projectPath);
+
+            if (mainIniPath == null && localIniPath == null)
+                return false; // No MDK configuration files found
+
+            // Read the .csproj to determine project type
             var document = XDocument.Load(projectPath);
             var packageReferences = document.Descendants()
                 .Where(e => e.Name.LocalName == "PackageReference")
@@ -39,15 +49,12 @@ public static class ProjectDetector
                 .Where(v => v != null)
                 .ToList();
 
-            // Check for MDK2 packages
+            // Determine project type based on which packager is present
             var hasPbPackager = packageReferences.Any(p => p == EnvironmentMetadata.PbPackagerPackageId);
             var hasModPackager = packageReferences.Any(p => p == EnvironmentMetadata.ModPackagerPackageId);
 
-            if (!hasPbPackager && !hasModPackager)
-                return false;
-
-            // Determine project type based on which packager is present
-            var projectType = hasPbPackager ? ProjectType.IngameScript : ProjectType.Mod;
+            // Default to IngameScript if can't determine from packages
+            var projectType = hasModPackager ? ProjectType.Mod : ProjectType.IngameScript;
             var projectName = Path.GetFileNameWithoutExtension(projectPath);
             var lastReferenced = File.GetLastWriteTimeUtc(projectPath);
 

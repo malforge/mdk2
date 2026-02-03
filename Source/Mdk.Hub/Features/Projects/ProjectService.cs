@@ -616,7 +616,7 @@ public class ProjectService : IProjectService
             return true;
         }
 
-        errorMessage = $"The selected project is not a valid MDK² project. MDK² projects must reference either {EnvironmentMetadata.PbPackagerPackageId} or {EnvironmentMetadata.ModPackagerPackageId}.";
+        errorMessage = $"The selected project is not a valid MDK² project. MDK² projects must have a mdk.ini or mdk.local.ini configuration file.";
         return false;
     }
 

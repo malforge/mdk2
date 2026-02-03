@@ -42,7 +42,7 @@ public class Interaction : IInteraction
         Run(arguments);
     }
 
-    public void Script(string scriptName, string folder, string? message, params object?[] args)
+    public void Script(string scriptName, string projectPath, string? message, params object?[] args)
     {
         if (string.IsNullOrEmpty(message))
             message = $"Your script \"{scriptName}\" has been successfully deployed.";
@@ -51,7 +51,7 @@ public class Interaction : IInteraction
         _console.Print(message);
         if (_hubPath is null)
             return;
-        var arguments = $"script {Escape(scriptName)} {Escape(folder)} {Escape(message)}";
+        var arguments = $"script {Escape(scriptName)} {Escape(projectPath)} {Escape(message)}";
         _console.Trace($"Running Hub: {arguments}");
         Run(arguments);
     }
