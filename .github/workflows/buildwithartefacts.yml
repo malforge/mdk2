@@ -366,8 +366,12 @@ jobs:
       - name: Extract release notes
         id: release-notes
         run: |
+          # Escape dots in version for regex matching
+          ESCAPED_VERSION=$(echo "$VERSION" | sed 's/\./\\./g')
+          
           # Read release notes and extract the section for this version
-          NOTES=$(awk '/^v\.'$VERSION'/,/^v\./ {if (/^v\.'$VERSION'/) found=1; else if (/^v\./ && found) exit; if (found) print}' Source/Mdk.Hub/ReleaseNotes.txt)
+          # Skip the version header line itself, only get the bullet points
+          NOTES=$(awk '/^v\.'"$ESCAPED_VERSION"'$/,/^v\./ {if (/^v\.'"$ESCAPED_VERSION"'$/) next; if (/^v\./) exit; print}' Source/Mdk.Hub/ReleaseNotes.txt)
           
           # If notes found, use them; otherwise use a default message
           if [ -z "$NOTES" ]; then

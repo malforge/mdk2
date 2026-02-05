@@ -1,3 +1,10 @@
+v.1.0.0-pre.26
+   - Configuration editor now displays settings in a single scrollable view (no tabs).
+   - Added "Fix it" button to reorganize misplaced configuration settings.
+   - INI parser now preserves comments and formatting when saving changes.
+   - Prerequisites check only shows dialog when problems are found.
+   - Reordered configuration options to prioritize minification settings.
+
 v.1.0.0-pre.25
    - Fixed build notifications not registering projects in Hub (validates via mdk.ini files now).
    - Internal: Refactored project configuration system for better maintainability.
