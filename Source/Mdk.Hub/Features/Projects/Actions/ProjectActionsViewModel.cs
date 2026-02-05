@@ -141,7 +141,7 @@ public partial class ProjectActionsViewModel : ViewModel
         // Reuse cached ViewModel if it exists, otherwise create new
         if (context != null)
         {
-            context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
+            context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, _logger, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
 
             OptionsViewModel = context.OptionsViewModel;
             IsOptionsDrawerOpen = true;

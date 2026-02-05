@@ -111,46 +111,17 @@ public interface IProjectService
     void RemoveProject(CanonicalPath projectPath);
 
     /// <summary>
-    ///     Loads and merges configuration from mdk.ini and mdk.local.ini for the specified project.
-    ///     Local settings override main settings where both are present.
-    /// </summary>
-    /// <param name="projectPath">Path to the .csproj file.</param>
-    /// <returns>Merged project configuration, or null if no configuration files found.</returns>
-    ProjectConfiguration? LoadConfiguration(CanonicalPath projectPath);
-
-    /// <summary>
     ///     Loads typed project configuration data with separate layers for Default, Main, and Local.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <returns>Project configuration data with all layers, or null if project files not found.</returns>
-    ProjectData? LoadProjectData(CanonicalPath projectPath);
+    Task<ProjectData?> LoadProjectDataAsync(CanonicalPath projectPath);
 
     /// <summary>
     ///     Saves project configuration data back to INI files, preserving comments and custom keys.
     /// </summary>
     /// <param name="projectData">The project data to save.</param>
-    Task SaveProjectData(ProjectData projectData);
-
-    /// <summary>
-    ///     Saves configuration changes to the specified INI file.
-    /// </summary>
-    /// <param name="projectPath">Path to the .csproj file.</param>
-    /// <param name="interactive">Interactive/notification behavior value.</param>
-    /// <param name="output">Output path value.</param>
-    /// <param name="binaryPath">Binary path value.</param>
-    /// <param name="minify">Minify value.</param>
-    /// <param name="minifyExtraOptions">MinifyExtraOptions value.</param>
-    /// <param name="trace">Trace value.</param>
-    /// <param name="ignores">Ignores value.</param>
-    /// <param name="namespaces">Namespaces value.</param>
-    /// <param name="saveToLocal">True to save to mdk.local.ini, false to save to mdk.ini.</param>
-    /// <summary>
-    ///     Saves configuration changes back to the INI files, preserving comments and custom keys.
-    /// </summary>
-    /// <param name="configuration">The loaded project configuration with Ini instances</param>
-    /// <param name="mainUpdates">Dictionary of key/value pairs to update in main INI (null if no changes)</param>
-    /// <param name="localUpdates">Dictionary of key/value pairs to update in local INI (null if no changes). Empty string values remove the key.</param>
-    Task SaveConfiguration(ProjectConfiguration configuration, Dictionary<string, string>? mainUpdates, Dictionary<string, string>? localUpdates);
+    Task SaveProjectDataAsync(ProjectData projectData);
 
     /// <summary>
     ///     Copies the deployed script to the clipboard.
@@ -171,7 +142,7 @@ public interface IProjectService
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <returns>True if the folder was opened successfully.</returns>
-    bool OpenOutputFolder(CanonicalPath projectPath);
+    Task<bool> OpenOutputFolderAsync(CanonicalPath projectPath);
 
     /// <summary>
     ///     Navigates to and selects the specified project in the Hub UI.

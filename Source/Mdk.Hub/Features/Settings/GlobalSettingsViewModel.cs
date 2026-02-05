@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Mal.DependencyInjection;
@@ -280,11 +281,20 @@ public class GlobalSettingsViewModel : OverlayModel
 
             busyOverlay.Dismiss();
 
-            await _shell.ShowOverlayAsync(new InformationMessage
+            // Only show dialog if there are problems - otherwise just toast
+            var hasProblems = messages.Any(m => m.StartsWith("✗"));
+            if (hasProblems)
             {
-                Title = "Prerequisites Check",
-                Message = string.Join("\n", messages)
-            });
+                await _shell.ShowOverlayAsync(new InformationMessage
+                {
+                    Title = "Prerequisites Check",
+                    Message = string.Join("\n", messages)
+                });
+            }
+            else
+            {
+                _shell.ShowToast("All prerequisites installed ✓");
+            }
         }
         catch (Exception ex)
         {

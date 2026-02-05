@@ -14,14 +14,14 @@ namespace Mdk.Hub.Utility;
 /// </summary>
 public class Ini
 {
-    readonly ImmutableDictionary<string, Section> _sections;
+    readonly ImmutableArray<Section> _sections;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="Ini" /> class.
     /// </summary>
     /// <param name="trailingTrivia"></param>
     public Ini(string? trailingTrivia = null)
-        : this(ImmutableDictionary<string, Section>.Empty, trailingTrivia) { }
+        : this(ImmutableArray<Section>.Empty, trailingTrivia) { }
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="Ini" /> class.
@@ -29,14 +29,14 @@ public class Ini
     /// <param name="sections"></param>
     /// <param name="trailingTrivia"></param>
     public Ini(IEnumerable<Section> sections, string? trailingTrivia = null)
-        : this(sections.ToImmutableDictionary(s => s.Name, s => s, StringComparer.OrdinalIgnoreCase), trailingTrivia) { }
+        : this(sections.ToImmutableArray(), trailingTrivia) { }
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="Ini" /> class.
     /// </summary>
     /// <param name="sections"></param>
     /// <param name="trailingTrivia"></param>
-    public Ini(ImmutableDictionary<string, Section> sections, string? trailingTrivia = null)
+    public Ini(ImmutableArray<Section> sections, string? trailingTrivia = null)
     {
         _sections = sections;
         TrailingTrivia = trailingTrivia;
@@ -55,9 +55,12 @@ public class Ini
     {
         get
         {
-            if (!_sections.TryGetValue(section, out var value))
-                return new Section(section, ImmutableDictionary<string, Key>.Empty);
-            return value;
+            foreach (var s in _sections)
+            {
+                if (string.Equals(s.Name, section, StringComparison.OrdinalIgnoreCase))
+                    return s;
+            }
+            return new Section(section);
         }
     }
 
@@ -109,13 +112,14 @@ public class Ini
     {
         if (string.IsNullOrWhiteSpace(ini))
         {
-            result = new Ini(ImmutableDictionary<string, Section>.Empty);
+            result = new Ini();
             return false;
         }
 
         var sections = new List<Section>();
         Section? currentSection = null;
         StringBuilder comment = new();
+        bool hasTrivia = false;  // Track if we have any trivia (comments or blank lines)
 
         bool tryReadLine(string text, ref int index, out ReadOnlySpan<char> line)
         {
@@ -142,18 +146,21 @@ public class Ini
             var trimmed = line.Trim();
             if (trimmed.StartsWith(";"))
             {
-                if (addNewline)
-                    comment.AppendLine();
-                comment.Append(line);
-                addNewline = true;
+                // Comment line - append with newline separator if needed
+                if (comment.Length > 0 || hasTrivia)
+                    comment.Append("\r\n");
+                comment.Append(line.ToString());
+                hasTrivia = true;
                 continue;
             }
             if (trimmed.IsEmpty || trimmed.IsWhiteSpace())
             {
-                if (addNewline)
-                    comment.AppendLine();
-                comment.Append(line);
-                addNewline = true;
+                // Blank line - record it in trivia
+                if (comment.Length > 0 || hasTrivia)
+                    comment.Append("\r\n");
+                // Append the line content (may be empty for completely blank lines)
+                comment.Append(line.ToString());
+                hasTrivia = true;
                 continue;
             }
             if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
@@ -161,11 +168,14 @@ public class Ini
                 if (currentSection is not null)
                     sections.Add(currentSection.Value);
                 currentSection = new Section(trimmed[1..^1].ToString());
-                if (comment.Length <= 0)
-                    continue;
-                currentSection = currentSection.Value.WithComment(comment.ToString());
-                comment.Clear();
-                addNewline = false;
+                if (hasTrivia)
+                {
+                    // Add final newline to section trivia
+                    comment.Append("\r\n");
+                    currentSection = currentSection.Value.WithComment(comment.ToString());
+                    comment.Clear();
+                    hasTrivia = false;
+                }
             }
             else if (currentSection is not null)
             {
@@ -175,14 +185,22 @@ public class Ini
                     logger?.Warning($"Skipping malformed INI line {lineNumber} (missing '='): {trimmed.ToString()}");
                     continue;
                 }
-                var key = trimmed[..equals].Trim();
-                var value = trimmed[(equals + 1)..].Trim();
-                if (comment.Length > 0)
-                    currentSection = currentSection.Value.WithKey(key.ToString(), value.ToString()).WithComment(comment.ToString());
-                else
-                    currentSection = currentSection.Value.WithKey(key.ToString(), value.ToString());
-                comment.Clear();
-                addNewline = false;
+                var keyName = trimmed[..equals].Trim().ToString();
+                var keyValue = trimmed[(equals + 1)..].Trim().ToString();
+                
+                // Create key with its comment (if any was accumulated before this key)
+                string? keyComment = null;
+                if (hasTrivia)
+                {
+                    // Add final newline to key trivia
+                    comment.Append("\r\n");
+                    keyComment = comment.ToString();
+                    comment.Clear();
+                    hasTrivia = false;
+                }
+                
+                var newKey = new Key(keyName, keyValue, keyComment);
+                currentSection = currentSection.Value.WithKey(newKey);
             }
             else
             {
@@ -192,8 +210,18 @@ public class Ini
         }
         if (currentSection is not null)
             sections.Add(currentSection.Value);
-        result = new Ini(sections);
-        result = comment.Length > 0 ? new Ini(sections, comment.ToString()) : new Ini(sections);
+        
+        // Handle trailing trivia (comments/blank lines after last section)
+        if (hasTrivia)
+        {
+            // Add final \r\n for consistency with other trivia
+            comment.Append("\r\n");
+            result = new Ini(sections, comment.ToString());
+        }
+        else
+        {
+            result = new Ini(sections);
+        }
         return true;
     }
 
@@ -202,7 +230,26 @@ public class Ini
     /// </summary>
     /// <param name="section"></param>
     /// <returns></returns>
-    public Ini WithSection(Section section) => new(_sections.SetItem(section.Name, section));
+    public Ini WithSection(Section section)
+    {
+        var builder = ImmutableArray.CreateBuilder<Section>();
+        bool found = false;
+        foreach (var s in _sections)
+        {
+            if (string.Equals(s.Name, section.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                builder.Add(section);
+                found = true;
+            }
+            else
+            {
+                builder.Add(s);
+            }
+        }
+        if (!found)
+            builder.Add(section);
+        return new Ini(builder.ToImmutable(), TrailingTrivia);
+    }
 
     /// <summary>
     ///     Creates a clone of the current instance with the specified section.
@@ -210,7 +257,26 @@ public class Ini
     /// <param name="name"></param>
     /// <param name="buildSection"></param>
     /// <returns></returns>
-    public Ini WithSection(string name, Func<Section, Section> buildSection) => new(_sections.SetItem(name, buildSection(this[name])));
+    public Ini WithSection(string name, Func<Section, Section> buildSection)
+    {
+        var builder = ImmutableArray.CreateBuilder<Section>();
+        bool found = false;
+        foreach (var s in _sections)
+        {
+            if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                builder.Add(buildSection(s));
+                found = true;
+            }
+            else
+            {
+                builder.Add(s);
+            }
+        }
+        if (!found)
+            builder.Add(buildSection(new Section(name)));
+        return new Ini(builder.ToImmutable(), TrailingTrivia);
+    }
 
     /// <summary>
     ///     Creates a clone of the current instance with the specified section.
@@ -218,7 +284,26 @@ public class Ini
     /// <param name="name"></param>
     /// <param name="keys"></param>
     /// <returns></returns>
-    public Ini WithSection(string name, IEnumerable<Key> keys) => new(_sections.SetItem(name, new Section(name, keys)));
+    public Ini WithSection(string name, IEnumerable<Key> keys)
+    {
+        var builder = ImmutableArray.CreateBuilder<Section>();
+        bool found = false;
+        foreach (var s in _sections)
+        {
+            if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                builder.Add(new Section(name, keys));
+                found = true;
+            }
+            else
+            {
+                builder.Add(s);
+            }
+        }
+        if (!found)
+            builder.Add(new Section(name, keys));
+        return new Ini(builder.ToImmutable(), TrailingTrivia);
+    }
 
     /// <summary>
     ///     Creates a clone of the current instance with the specified section.
@@ -228,10 +313,13 @@ public class Ini
     public Ini WithSection(string name)
     {
         // If the section already exists, return the current instance
-        if (_sections.ContainsKey(name))
-            return this;
+        foreach (var s in _sections)
+        {
+            if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
+                return this;
+        }
 
-        return new Ini(_sections.SetItem(name, new Section(name, ImmutableDictionary<string, Key>.Empty)));
+        return new Ini(_sections.Add(new Section(name)), TrailingTrivia);
     }
 
     /// <summary>
@@ -239,7 +327,16 @@ public class Ini
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    public Ini WithoutSection(string name) => new(_sections.Remove(name));
+    public Ini WithoutSection(string name)
+    {
+        var builder = ImmutableArray.CreateBuilder<Section>();
+        foreach (var s in _sections)
+        {
+            if (!string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
+                builder.Add(s);
+        }
+        return new Ini(builder.ToImmutable(), TrailingTrivia);
+    }
 
     /// <summary>
     ///     Creates a clone of the current instance with the specified key.
@@ -249,9 +346,23 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, Key key)
     {
-        if (!_sections.TryGetValue(section, out var sectionValue))
-            return new Ini(_sections.SetItem(section, new Section(section, new[] { key })));
-        return new Ini(_sections.SetItem(section, sectionValue.WithKey(key)));
+        var builder = ImmutableArray.CreateBuilder<Section>();
+        bool found = false;
+        foreach (var s in _sections)
+        {
+            if (string.Equals(s.Name, section, StringComparison.OrdinalIgnoreCase))
+            {
+                builder.Add(s.WithKey(key));
+                found = true;
+            }
+            else
+            {
+                builder.Add(s);
+            }
+        }
+        if (!found)
+            builder.Add(new Section(section, new[] { key }));
+        return new Ini(builder.ToImmutable(), TrailingTrivia);
     }
 
     /// <summary>
@@ -263,9 +374,23 @@ public class Ini
     /// <returns></returns>
     public Ini WithKey(string section, string name, string value)
     {
-        if (!_sections.TryGetValue(section, out var sectionValue))
-            return new Ini(_sections.SetItem(section, new Section(section, new[] { new Key(name, value, null) })));
-        return new Ini(_sections.SetItem(section, sectionValue.WithKey(name, value)));
+        var builder = ImmutableArray.CreateBuilder<Section>();
+        bool found = false;
+        foreach (var s in _sections)
+        {
+            if (string.Equals(s.Name, section, StringComparison.OrdinalIgnoreCase))
+            {
+                builder.Add(s.WithKey(name, value));
+                found = true;
+            }
+            else
+            {
+                builder.Add(s);
+            }
+        }
+        if (!found)
+            builder.Add(new Section(section, new[] { new Key(name, value, null) }));
+        return new Ini(builder.ToImmutable(), TrailingTrivia);
     }
 
     /// <summary>
@@ -386,29 +511,44 @@ public class Ini
     /// <returns></returns>
     public Ini WithoutKey(string section, string name)
     {
-        if (!_sections.TryGetValue(section, out var sectionValue))
-            return this;
-        return new Ini(_sections.SetItem(section, sectionValue.WithoutKey(name)));
+        var builder = ImmutableArray.CreateBuilder<Section>();
+        foreach (var s in _sections)
+        {
+            if (string.Equals(s.Name, section, StringComparison.OrdinalIgnoreCase))
+            {
+                builder.Add(s.WithoutKey(name));
+            }
+            else
+            {
+                builder.Add(s);
+            }
+        }
+        return new Ini(builder.ToImmutable(), TrailingTrivia);
     }
 
     /// <inheritdoc />
     public override string ToString()
     {
         var builder = new StringBuilder();
-        foreach (var section in _sections.Values)
+        foreach (var section in _sections)
         {
-            if (!string.IsNullOrWhiteSpace(section.LeadingComment))
-                builder.AppendLine(section.LeadingComment);
+            // Write section leading trivia exactly as stored (already includes ; and blank lines)
+            if (!string.IsNullOrEmpty(section.LeadingComment))
+                builder.Append(section.LeadingComment);
+                
             builder.AppendLine($"[{section.Name}]");
-            foreach (var key in section.Keys.Values)
+            
+            foreach (var key in section.Keys)
             {
-                if (!string.IsNullOrWhiteSpace(key.Comment))
-                    builder.AppendLine($"; {key.Comment}");
+                // Write key trivia exactly as stored (already includes ; and blank lines)
+                if (!string.IsNullOrEmpty(key.Comment))
+                    builder.Append(key.Comment);
+                    
                 builder.AppendLine($"{key.Name}={key.Value}");
             }
         }
-        if (!string.IsNullOrWhiteSpace(TrailingTrivia))
-            builder.AppendLine(TrailingTrivia);
+        if (!string.IsNullOrEmpty(TrailingTrivia))
+            builder.Append(TrailingTrivia);
         return builder.ToString();
     }
 
@@ -423,7 +563,7 @@ public class Ini
         /// <param name="name"></param>
         /// <param name="leadingComment"></param>
         public Section(string name, string? leadingComment = null)
-            : this(name, ImmutableDictionary<string, Key>.Empty, leadingComment) { }
+            : this(name, ImmutableArray<Key>.Empty, leadingComment) { }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Section" /> class.
@@ -432,7 +572,7 @@ public class Ini
         /// <param name="keys"></param>
         /// <param name="leadingComment"></param>
         public Section(string name, IEnumerable<Key> keys, string? leadingComment = null)
-            : this(name, keys.ToImmutableDictionary(k => k.Name, k => k, StringComparer.OrdinalIgnoreCase), leadingComment) { }
+            : this(name, keys.ToImmutableArray(), leadingComment) { }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Section" /> class.
@@ -440,7 +580,7 @@ public class Ini
         /// <param name="name"></param>
         /// <param name="keys"></param>
         /// <param name="leadingComment"></param>
-        public Section(string name, ImmutableDictionary<string, Key> keys, string? leadingComment = null)
+        public Section(string name, ImmutableArray<Key> keys, string? leadingComment = null)
         {
             LeadingComment = leadingComment;
             Name = name;
@@ -458,9 +598,9 @@ public class Ini
         public string Name { get; }
 
         /// <summary>
-        ///     Gets the keys in the section.
+        ///     Gets the keys in the section (ordered).
         /// </summary>
-        public ImmutableDictionary<string, Key> Keys { get; }
+        public ImmutableArray<Key> Keys { get; }
 
         /// <summary>
         ///     Gets a specific key by name.
@@ -470,9 +610,12 @@ public class Ini
         {
             get
             {
-                if (!Keys.TryGetValue(key, out var value))
-                    return new Key(key, null, null);
-                return value;
+                foreach (var k in Keys)
+                {
+                    if (string.Equals(k.Name, key, StringComparison.OrdinalIgnoreCase))
+                        return k;
+                }
+                return Key.Empty;
             }
         }
 
@@ -481,7 +624,26 @@ public class Ini
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public Section WithKey(Key key) => new(Name, Keys.SetItem(key.Name, key), LeadingComment);
+        public Section WithKey(Key key)
+        {
+            // Find existing key index
+            var index = -1;
+            for (var i = 0; i < Keys.Length; i++)
+            {
+                if (string.Equals(Keys[i].Name, key.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            // Replace existing or append new
+            var newKeys = index >= 0 
+                ? Keys.SetItem(index, key) 
+                : Keys.Add(key);
+            
+            return new(Name, newKeys, LeadingComment);
+        }
 
         /// <summary>
         ///     Creates a clone of the current instance with the specified key.
@@ -492,9 +654,25 @@ public class Ini
         /// <returns></returns>
         public Section WithKey(string name, string value)
         {
-            // Preserve comment from existing key if it exists
-            var comment = Keys.TryGetValue(name, out var existingKey) ? existingKey.Comment : null;
-            return new(Name, Keys.SetItem(name, new Key(name, value, comment)), LeadingComment);
+            // Find existing key to preserve comment
+            string? existingComment = null;
+            var index = -1;
+            for (var i = 0; i < Keys.Length; i++)
+            {
+                if (string.Equals(Keys[i].Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    existingComment = Keys[i].Comment;
+                    index = i;
+                    break;
+                }
+            }
+
+            var newKey = new Key(name, value, existingComment);
+            var newKeys = index >= 0 
+                ? Keys.SetItem(index, newKey) 
+                : Keys.Add(newKey);
+            
+            return new(Name, newKeys, LeadingComment);
         }
 
         /// <summary>
@@ -502,7 +680,23 @@ public class Ini
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public Section WithoutKey(string name) => new(Name, Keys.Remove(name), LeadingComment);
+        public Section WithoutKey(string name)
+        {
+            var index = -1;
+            for (var i = 0; i < Keys.Length; i++)
+            {
+                if (string.Equals(Keys[i].Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index < 0)
+                return this;
+
+            return new(Name, Keys.RemoveAt(index), LeadingComment);
+        }
 
         /// <summary>
         ///     Creates a clone of the current instance with the specified leading comment.
@@ -525,10 +719,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, out Key key)
         {
-            if (Keys.TryGetValue(name, out var value))
+            foreach (var k in Keys)
             {
-                key = value;
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    key = k;
+                    return true;
+                }
             }
             key = new Key(name, null, null);
             return false;
@@ -542,10 +739,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, out bool value)
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToBool();
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToBool();
+                    return true;
+                }
             }
             value = false;
             return false;
@@ -559,10 +759,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, [MaybeNullWhen(false)] out string value)
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToString()!;
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToString()!;
+                    return true;
+                }
             }
             value = string.Empty;
             return false;
@@ -576,10 +779,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, out int value)
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToInt();
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToInt();
+                    return true;
+                }
             }
             value = 0;
             return false;
@@ -593,10 +799,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, out long value)
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToLong();
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToLong();
+                    return true;
+                }
             }
             value = 0;
             return false;
@@ -610,10 +819,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, out float value)
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToFloat();
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToFloat();
+                    return true;
+                }
             }
             value = 0;
             return false;
@@ -627,10 +839,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, out double value)
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToDouble();
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToDouble();
+                    return true;
+                }
             }
             value = 0;
             return false;
@@ -644,10 +859,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet(string name, out decimal value)
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToDecimal();
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToDecimal();
+                    return true;
+                }
             }
             value = 0;
             return false;
@@ -662,10 +880,13 @@ public class Ini
         /// <returns></returns>
         public bool TryGet<T>(string name, out T value) where T : struct, Enum
         {
-            if (Keys.TryGetValue(name, out var key))
+            foreach (var k in Keys)
             {
-                value = key.ToEnum<T>();
-                return true;
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = k.ToEnum<T>();
+                    return true;
+                }
             }
             value = default;
             return false;
@@ -676,7 +897,15 @@ public class Ini
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public bool HasKey(string name) => Keys.ContainsKey(name);
+        public bool HasKey(string name)
+        {
+            foreach (var k in Keys)
+            {
+                if (string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
     }
 
     /// <summary>

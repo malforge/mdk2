@@ -132,135 +132,10 @@ public class ProjectService : IProjectService
         ProjectRemoved?.Invoke(this, projectPath);
     }
 
-    public ProjectConfiguration? LoadConfiguration(CanonicalPath projectPath)
-    {
-        if (projectPath.IsEmpty())
-            return null;
-
-        if (!File.Exists(projectPath.Value))
-            return null;
-
-        var mainIniPath = IniFileFinder.FindMainIni(projectPath.Value!);
-        var localIniPath = IniFileFinder.FindLocalIni(projectPath.Value!);
-
-        // Need at least one INI file to proceed
-        if (mainIniPath == null && localIniPath == null)
-            return null;
-
-        Ini? mainIni = null;
-        Ini? localIni = null;
-        var warnings = new List<string>();
-
-        if (mainIniPath != null && File.Exists(mainIniPath))
-        {
-            if (Ini.TryParse(File.ReadAllText(mainIniPath), out var parsed))
-                mainIni = parsed;
-            else
-            {
-                warnings.Add($"Main configuration file is corrupt or malformed: {Path.GetFileName(mainIniPath)}");
-                _logger.Warning($"Failed to parse main INI file: {mainIniPath}");
-            }
-        }
-        else if (mainIniPath != null)
-        {
-            warnings.Add($"Main configuration file not found: {Path.GetFileName(mainIniPath)}");
-            _logger.Info($"Main INI file not found: {mainIniPath}");
-        }
-
-        if (localIniPath != null && File.Exists(localIniPath))
-        {
-            if (Ini.TryParse(File.ReadAllText(localIniPath), out var parsed))
-                localIni = parsed;
-            else
-            {
-                warnings.Add($"Local configuration file is corrupt or malformed: {Path.GetFileName(localIniPath)}");
-                _logger.Warning($"Failed to parse local INI file: {localIniPath}");
-            }
-        }
-
-        return new ProjectConfiguration
-        {
-            MainIni = mainIni,
-            LocalIni = localIni,
-            MainIniPath = mainIniPath,
-            LocalIniPath = localIniPath,
-            ProjectPath = projectPath,
-            ConfigurationWarnings = warnings,
-
-            // Merge configuration values (local overrides main)
-            Type = GetConfigValue(mainIni, localIni, "type", "programmableblock"),
-            Minify = GetConfigValue(mainIni, localIni, "minify", "none"),
-            MinifyExtraOptions = GetConfigValue(mainIni, localIni, "minifyextraoptions", "none"),
-            Trace = GetConfigBoolValue(mainIni, localIni, "trace", false),
-            Ignores = GetConfigValue(mainIni, localIni, "ignores", "obj/**/*,MDK/**/*,**/*.debug.cs"),
-            Namespaces = GetConfigValue(mainIni, localIni, "namespaces", "IngameScript"),
-            Output = GetConfigValue(mainIni, localIni, "output", "auto"),
-            BinaryPath = GetConfigValue(mainIni, localIni, "binarypath", "auto"),
-            Interactive = GetConfigValue(mainIni, localIni, "interactive", "")
-        };
-    }
-
-    /// <summary>
-    ///     Saves configuration changes back to the INI files, preserving comments and custom keys.
-    /// </summary>
-    /// <param name="configuration">The loaded project configuration with Ini instances</param>
-    /// <param name="mainUpdates">Dictionary of key/value pairs to update in main INI (null if no changes)</param>
-    /// <param name="localUpdates">Dictionary of key/value pairs to update in local INI (null if no changes). Empty string values remove the key.</param>
-    public async Task SaveConfiguration(ProjectConfiguration configuration, Dictionary<string, string>? mainUpdates, Dictionary<string, string>? localUpdates)
-    {
-        const string mdkSection = "mdk";
-
-        // Update and save main INI if there are changes
-        if (mainUpdates != null && mainUpdates.Count > 0)
-        {
-            var mainIni = configuration.MainIni ?? new Ini();
-            
-            foreach (var (key, value) in mainUpdates)
-                mainIni = mainIni.WithKey(mdkSection, key, value);
-
-            var mainIniPath = configuration.MainIniPath;
-            if (string.IsNullOrEmpty(mainIniPath))
-            {
-                var projectDir = Path.GetDirectoryName(configuration.ProjectPath.Value);
-                if (string.IsNullOrEmpty(projectDir))
-                    throw new InvalidOperationException("Cannot determine project directory");
-                mainIniPath = Path.Combine(projectDir, "mdk.ini");
-            }
-
-            await File.WriteAllTextAsync(mainIniPath, mainIni.ToString());
-        }
-
-        // Update and save local INI if there are changes
-        if (localUpdates != null && localUpdates.Count > 0)
-        {
-            var localIni = configuration.LocalIni ?? new Ini();
-
-            foreach (var (key, value) in localUpdates)
-            {
-                if (string.IsNullOrEmpty(value))
-                    // Empty value means remove the override (inherit from main)
-                    localIni = localIni.WithoutKey(mdkSection, key);
-                else
-                    localIni = localIni.WithKey(mdkSection, key, value);
-            }
-
-            var localIniPath = configuration.LocalIniPath;
-            if (string.IsNullOrEmpty(localIniPath))
-            {
-                var projectDir = Path.GetDirectoryName(configuration.ProjectPath.Value);
-                if (string.IsNullOrEmpty(projectDir))
-                    throw new InvalidOperationException("Cannot determine project directory");
-                localIniPath = Path.Combine(projectDir, "mdk.local.ini");
-            }
-
-            await File.WriteAllTextAsync(localIniPath, localIni.ToString());
-        }
-    }
-
     /// <summary>
     ///     Saves project configuration back to INI files, preserving comments and custom keys.
     /// </summary>
-    public async Task SaveProjectData(ProjectData projectData)
+    public async Task SaveProjectDataAsync(ProjectData projectData)
     {
         const string mdkSection = "mdk";
 
@@ -268,7 +143,7 @@ public class ProjectService : IProjectService
         var mainIni = projectData.MainIni ?? new Ini();
         if (projectData.Config.Main != null)
         {
-            mainIni = UpdateIniFromLayer(mainIni, mdkSection, projectData.Config.Main, forceAutoForNullPaths: false);
+            mainIni = ProjectConfigIniConverter.UpdateIniFromLayer(mainIni, mdkSection, projectData.Config.Main, removeNulls: true, forceAutoForNullPaths: false);
             
             var mainIniPath = projectData.MainIniPath;
             if (string.IsNullOrEmpty(mainIniPath))
@@ -291,7 +166,7 @@ public class ProjectService : IProjectService
             bool forceAutoForNullPaths = projectData.Config.Main?.Output == null && projectData.Config.Local.Output == null
                                       || projectData.Config.Main?.BinaryPath == null && projectData.Config.Local.BinaryPath == null;
             
-            localIni = UpdateIniFromLayer(localIni, mdkSection, projectData.Config.Local, removeNulls: true, forceAutoForNullPaths: forceAutoForNullPaths);
+            localIni = ProjectConfigIniConverter.UpdateIniFromLayer(localIni, mdkSection, projectData.Config.Local, removeNulls: true, forceAutoForNullPaths: forceAutoForNullPaths);
             
             var localIniPath = projectData.LocalIniPath;
             if (string.IsNullOrEmpty(localIniPath))
@@ -306,57 +181,10 @@ public class ProjectService : IProjectService
         }
     }
 
-    static Ini UpdateIniFromLayer(Ini ini, string section, ProjectConfigLayer layer, bool removeNulls = false, bool forceAutoForNullPaths = false)
-    {
-        // Type - convert enum to lowercase string
-        ini = UpdateIniValue(ini, section, "type", layer.Type?.ToString().ToLowerInvariant(), removeNulls);
-        
-        // Interactive - convert enum to PascalCase string (OpenHub, ShowNotification, DoNothing)
-        ini = UpdateIniValue(ini, section, "interactive", layer.Interactive?.ToString(), removeNulls);
-        
-        // Trace - convert bool to "on"/"off"
-        ini = UpdateIniValue(ini, section, "trace", layer.Trace.HasValue ? (layer.Trace.Value ? "on" : "off") : null, removeNulls);
-        
-        // Minify - convert enum to lowercase string
-        ini = UpdateIniValue(ini, section, "minify", layer.Minify?.ToString().ToLowerInvariant(), removeNulls);
-        
-        // MinifyExtraOptions - convert enum to lowercase string
-        ini = UpdateIniValue(ini, section, "minifyextraoptions", layer.MinifyExtraOptions?.ToString().ToLowerInvariant(), removeNulls);
-        
-        // Ignores - convert array to comma-separated string
-        ini = UpdateIniValue(ini, section, "ignores", layer.Ignores.HasValue ? string.Join(",", layer.Ignores.Value) : null, removeNulls);
-        
-        // Namespaces - convert array to comma-separated string
-        ini = UpdateIniValue(ini, section, "namespaces", layer.Namespaces.HasValue ? string.Join(",", layer.Namespaces.Value) : null, removeNulls);
-        
-        // Output - CanonicalPath? (null = "auto" in INI)
-        string? outputValue = layer.Output?.Value;
-        if (forceAutoForNullPaths && outputValue == null)
-            outputValue = "auto";
-        ini = UpdateIniValue(ini, section, "output", outputValue, removeNulls);
-        
-        // BinaryPath - CanonicalPath? (null = "auto" in INI)  
-        string? binaryPathValue = layer.BinaryPath?.Value;
-        if (forceAutoForNullPaths && binaryPathValue == null)
-            binaryPathValue = "auto";
-        ini = UpdateIniValue(ini, section, "binarypath", binaryPathValue, removeNulls);
-        
-        return ini;
-    }
-
-    static Ini UpdateIniValue(Ini ini, string section, string key, string? value, bool removeNulls)
-    {
-        if (value == null && removeNulls)
-            return ini.WithoutKey(section, key);
-        if (value != null)
-            return ini.WithKey(section, key, value);
-        return ini;
-    }
-
     /// <summary>
     ///     Loads project configuration into the new ProjectData model with typed layers.
     /// </summary>
-    public ProjectData? LoadProjectData(CanonicalPath projectPath)
+    public async Task<ProjectData?> LoadProjectDataAsync(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
             return null;
@@ -376,7 +204,7 @@ public class ProjectService : IProjectService
 
         if (mainIniPath != null && File.Exists(mainIniPath))
         {
-            if (Ini.TryParse(File.ReadAllText(mainIniPath), out var parsed))
+            if (Ini.TryParse(await File.ReadAllTextAsync(mainIniPath), out var parsed))
                 mainIni = parsed;
             else
                 _logger.Warning($"Failed to parse main INI file: {mainIniPath}");
@@ -384,7 +212,7 @@ public class ProjectService : IProjectService
 
         if (localIniPath != null && File.Exists(localIniPath))
         {
-            if (Ini.TryParse(File.ReadAllText(localIniPath), out var parsed))
+            if (Ini.TryParse(await File.ReadAllTextAsync(localIniPath), out var parsed))
                 localIni = parsed;
             else
                 _logger.Warning($"Failed to parse local INI file: {localIniPath}");
@@ -530,11 +358,33 @@ public class ProjectService : IProjectService
 
         try
         {
-            var config = LoadConfiguration(projectPath);
-            if (config == null)
+            var projectData = await LoadProjectDataAsync(projectPath);
+            if (projectData == null)
                 return false;
 
-            var outputPath = config.GetResolvedOutputPath();
+            var config = projectData.Config.GetEffective();
+            var outputPath = config.Output?.Value;
+            
+            // Resolve "auto" to actual path
+            if (string.Equals(outputPath, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPath))
+            {
+                var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                if (string.IsNullOrEmpty(projectName))
+                    return false;
+                    
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                outputPath = config.Type == ProjectType.ProgrammableBlock
+                    ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
+                    : null;
+            }
+            else if (!string.IsNullOrEmpty(outputPath))
+            {
+                // Custom paths should include project name subfolder
+                var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                if (!string.IsNullOrEmpty(projectName))
+                    outputPath = Path.Combine(outputPath, projectName);
+            }
+
             if (string.IsNullOrEmpty(outputPath) || !Directory.Exists(outputPath))
                 return false;
 
@@ -595,18 +445,42 @@ public class ProjectService : IProjectService
         }
     }
 
-    public bool OpenOutputFolder(CanonicalPath projectPath)
+    public async Task<bool> OpenOutputFolderAsync(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
             return false;
 
         try
         {
-            var config = LoadConfiguration(projectPath);
-            if (config == null)
+            var projectData = await LoadProjectDataAsync(projectPath);
+            if (projectData == null)
                 return false;
 
-            var outputPath = config.GetResolvedOutputPath();
+            var config = projectData.Config.GetEffective();
+            var outputPath = config.Output?.Value;
+            
+            // Resolve "auto" to actual path
+            if (string.Equals(outputPath, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPath))
+            {
+                var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                if (string.IsNullOrEmpty(projectName))
+                    return false;
+                    
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                outputPath = config.Type == ProjectType.ProgrammableBlock
+                    ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
+                    : config.Type == ProjectType.Mod
+                        ? Path.Combine(appData, "SpaceEngineers", "Mods", projectName)
+                        : null;
+            }
+            else if (!string.IsNullOrEmpty(outputPath))
+            {
+                // Custom paths should include project name subfolder
+                var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                if (!string.IsNullOrEmpty(projectName))
+                    outputPath = Path.Combine(outputPath, projectName);
+            }
+
             if (string.IsNullOrEmpty(outputPath) || !Directory.Exists(outputPath))
                 return false;
 
@@ -902,38 +776,6 @@ public class ProjectService : IProjectService
         return false;
     }
 
-    static ConfigurationValue<string> GetConfigValue(Ini? mainIni, Ini? localIni, string key, string defaultValue)
-    {
-        var mdkSection = "mdk";
-
-        // Check local first (highest priority)
-        if (localIni != null && localIni[mdkSection].TryGet(key, out string? localValue))
-            return new ConfigurationValue<string>(localValue, SourceLayer.Local);
-
-        // Check main second
-        if (mainIni != null && mainIni[mdkSection].TryGet(key, out string? mainValue))
-            return new ConfigurationValue<string>(mainValue, SourceLayer.Main);
-
-        // Fall back to default
-        return new ConfigurationValue<string>(defaultValue, SourceLayer.Default);
-    }
-
-    static ConfigurationValue<bool> GetConfigBoolValue(Ini? mainIni, Ini? localIni, string key, bool defaultValue)
-    {
-        var mdkSection = "mdk";
-
-        // Check local first (highest priority)
-        if (localIni != null && localIni[mdkSection].TryGet(key, out bool localValue))
-            return new ConfigurationValue<bool>(localValue, SourceLayer.Local);
-
-        // Check main second
-        if (mainIni != null && mainIni[mdkSection].TryGet(key, out bool mainValue))
-            return new ConfigurationValue<bool>(mainValue, SourceLayer.Main);
-
-        // Fall back to default
-        return new ConfigurationValue<bool>(defaultValue, SourceLayer.Default);
-    }
-
     Task HandleBuildNotification(InterConnectMessage message)
     {
         // Parse project path from message arguments
@@ -1117,11 +959,11 @@ public class ProjectService : IProjectService
         }
     }
 
-    void HandleBuildNotification(string projectName, string projectPath, bool isNewProject)
+    async void HandleBuildNotification(string projectName, string projectPath, bool isNewProject)
     {
         // Load configuration to check notification preference
-        var config = LoadConfiguration(new CanonicalPath(projectPath));
-        var preference = config?.Interactive.Value ?? "";
+        var projectData = await LoadProjectDataAsync(new CanonicalPath(projectPath));
+        var preference = projectData?.Config.GetEffective().Interactive?.ToString() ?? "";
 
         // If not set in INI, default to "OpenHub" (teaches new users about Hub)
         // But UI will show "ShowNotification" as the default choice when they open settings
@@ -1201,7 +1043,7 @@ public class ProjectService : IProjectService
     void OnShowMe(object? ctx)
     {
         if (ctx is string path)
-            OpenOutputFolder(new CanonicalPath(path));
+            OpenOutputFolderAsync(new CanonicalPath(path));
     }
 
     async void OnCopyToClipboard(object? ctx)

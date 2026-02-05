@@ -152,7 +152,7 @@ public class ProjectInfoAction : ActionItem
         if (!CanOpenOutputFolder())
             return;
 
-        _projectService.OpenOutputFolder(Project!.ProjectPath);
+        _projectService.OpenOutputFolderAsync(Project!.ProjectPath);
     }
 
     bool CanOpenInIde() => Project is not null && File.Exists(Project.ProjectPath.Value);
@@ -247,7 +247,7 @@ public class ProjectInfoAction : ActionItem
         try
         {
             // Run I/O operations on background thread
-            var result = await Task.Run(() =>
+            var result = await Task.Run(async () =>
             {
                 DateTimeOffset? lastChanged = null;
                 string? lastChangedError = null;
@@ -281,16 +281,31 @@ public class ProjectInfoAction : ActionItem
                 }
 
                 // Load configuration and check deployment
-                var config = projectService.LoadConfiguration(projectPath);
+                var projectData = await projectService.LoadProjectDataAsync(projectPath);
                 configWarning = null;
 
-                if (config != null)
+                if (projectData != null)
                 {
-                    // Check for configuration warnings
-                    if (config.ConfigurationWarnings.Count > 0)
-                        configWarning = string.Join("\n", config.ConfigurationWarnings);
+                    var config = projectData.Config.GetEffective();
+                    var outputPathValue = config.Output?.Value;
 
-                    outputPath = config.GetResolvedOutputPath();
+                    // Resolve "auto" to actual path
+                    if (string.Equals(outputPathValue, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPathValue))
+                    {
+                        var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                        outputPath = config.Type == ProjectType.ProgrammableBlock
+                            ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
+                            : config.Type == ProjectType.Mod
+                                ? Path.Combine(appData, "SpaceEngineers", "Mods", projectName)
+                                : null;
+                    }
+                    else if (!string.IsNullOrEmpty(outputPathValue))
+                    {
+                        // Custom paths should include project name subfolder
+                        var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                        outputPath = Path.Combine(outputPathValue, projectName);
+                    }
 
                     if (!string.IsNullOrEmpty(outputPath) && Directory.Exists(outputPath))
                     {

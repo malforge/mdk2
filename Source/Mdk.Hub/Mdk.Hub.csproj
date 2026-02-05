@@ -16,6 +16,10 @@
         <SelfContained>true</SelfContained>
         <!--        <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>-->
     </PropertyGroup>
+    
+    <ItemGroup>
+        <InternalsVisibleTo Include="Mdk.Hub.Tests" />
+    </ItemGroup>
 
     <Choose>
         <When Condition="$([System.String]::Copy('$(TargetFramework)').Contains('-windows'))">
