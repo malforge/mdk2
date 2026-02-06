@@ -35,6 +35,9 @@ public partial class ShellWindow : Window
             // Subscribe to close requests
             viewModel.CloseRequested += OnCloseRequested;
 
+            // Subscribe to bring-to-front requests
+            viewModel.BringToFrontRequested += OnBringToFrontRequested;
+
             // Restore window settings
             try
             {
@@ -53,6 +56,23 @@ public partial class ShellWindow : Window
     }
 
     void OnCloseRequested(object? sender, EventArgs e) => Close();
+
+    void OnBringToFrontRequested(object? sender, EventArgs e)
+    {
+        // Restore if minimized
+        if (WindowState == WindowState.Minimized)
+            WindowState = WindowState.Normal;
+
+        // Activate and bring to front
+        Activate();
+
+        // On Linux (and macOS), also use Topmost trick to ensure window comes to front
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() || App.IsLinux)
+        {
+            Topmost = true;
+            Topmost = false;
+        }
+    }
 
     void OnKeyDown(object? sender, KeyEventArgs e)
     {

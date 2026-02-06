@@ -181,25 +181,25 @@ public class ProjectService : IProjectService
         }
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<ProjectData> NormalizeConfigurationAsync(ProjectData projectData)
     {
         if (projectData == null) throw new ArgumentNullException(nameof(projectData));
-        
+
         _logger.Info($"Starting configuration normalization for {projectData.Name}");
 
         // Create backup files
         if (projectData.MainIniPath != null && File.Exists(projectData.MainIniPath))
         {
             var backupPath = projectData.MainIniPath + ".backup";
-            File.Copy(projectData.MainIniPath, backupPath, overwrite: true);
+            File.Copy(projectData.MainIniPath, backupPath, true);
             _logger.Info($"Created backup: {backupPath}");
         }
 
         if (projectData.LocalIniPath != null && File.Exists(projectData.LocalIniPath))
         {
             var backupPath = projectData.LocalIniPath + ".backup";
-            File.Copy(projectData.LocalIniPath, backupPath, overwrite: true);
+            File.Copy(projectData.LocalIniPath, backupPath, true);
             _logger.Info($"Created backup: {backupPath}");
         }
 
@@ -241,8 +241,8 @@ public class ProjectService : IProjectService
         mainIni = mainIni.WithoutKey("mdk", "binarypath");
         mainIni = mainIni.WithoutKey("mdk", "interactive");
         // Update known "main" keys
-        mainIni = UpdateIniFromLayer(mainIni, "mdk", newMain, removeNulls: false);
-        
+        mainIni = UpdateIniFromLayer(mainIni, "mdk", newMain, false);
+
         var localIni = projectData.LocalIni ?? new Ini();
         // Remove known "main" keys from local
         localIni = localIni.WithoutKey("mdk", "type");
@@ -252,7 +252,7 @@ public class ProjectService : IProjectService
         localIni = localIni.WithoutKey("mdk", "minifyextraoptions");
         localIni = localIni.WithoutKey("mdk", "trace");
         // Update known "local" keys
-        localIni = UpdateIniFromLayer(localIni, "mdk", newLocal, removeNulls: false);
+        localIni = UpdateIniFromLayer(localIni, "mdk", newLocal, false);
 
         // Normalization is complete - keys are in the right files with their existing comments preserved
 
@@ -272,12 +272,12 @@ public class ProjectService : IProjectService
                 Local = newLocal
             }
         };
-        
+
         _logger.Info($"Configuration normalization complete for {projectData.Name}");
-        
+
         return migratedData;
     }
-    
+
     /// <summary>
     ///     Loads project configuration into the new ProjectData model with typed layers.
     /// </summary>
@@ -1094,6 +1094,9 @@ public class ProjectService : IProjectService
                 break;
 
             case "openhub":
+                // Bring window to front
+                _shell.BringToFront();
+                
                 // For new projects, ProjectAdded event already handles selection with cooldown logic
                 // For existing projects, navigate explicitly
                 if (!isNewProject)
@@ -1109,12 +1112,7 @@ public class ProjectService : IProjectService
             default:
                 // Unknown preference - default to OpenHub for new projects, ShowNotification for existing
                 _logger.Warning($"Unknown notification preference '{preference}', using default");
-                if (isNewProject)
-                {
-                    // Let OnProjectAdded handle selection
-                }
-                else
-                    ShowScriptDeployedSnackbar(projectName, projectPath);
+                ShowScriptDeployedSnackbar(projectName, projectPath);
                 break;
         }
     }

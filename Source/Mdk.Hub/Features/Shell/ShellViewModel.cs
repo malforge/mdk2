@@ -185,6 +185,12 @@ public class ShellViewModel : ViewModel, IShell
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    public void BringToFront()
+    {
+        _logger.Info("Bringing window to front");
+        BringToFrontRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     public void ShowToast(string message, int durationMs = 3000)
     {
         var toast = new ToastMessage { Message = message };
@@ -378,6 +384,11 @@ public class ShellViewModel : ViewModel, IShell
     ///     Raised when the ViewModel requests the window to close.
     /// </summary>
     public event EventHandler? CloseRequested;
+
+    /// <summary>
+    ///     Raised when the ViewModel requests the window to be brought to the front.
+    /// </summary>
+    public event EventHandler? BringToFrontRequested;
 
     /// <summary>
     ///     Notifies the ViewModel that the window focus was gained.

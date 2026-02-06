@@ -10,12 +10,12 @@ namespace Mdk.Hub.Features.Snackbars;
 public partial class SnackbarActionViewModel : ViewModel
 {
     readonly SnackbarAction _action;
-    readonly Action onExecuted;
+    readonly Action _onExecuted;
 
     public SnackbarActionViewModel(SnackbarAction action, Action onExecuted)
     {
         _action = action;
-        this.onExecuted = onExecuted;
+        _onExecuted = onExecuted;
         Command = new RelayCommand(Execute);
     }
 
@@ -27,6 +27,6 @@ public partial class SnackbarActionViewModel : ViewModel
         _action.Action(_action.Context);
 
         if (_action.IsClosingAction)
-            onExecuted();
+            _onExecuted();
     }
 }

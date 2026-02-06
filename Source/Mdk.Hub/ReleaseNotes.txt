@@ -1,3 +1,7 @@
+v.1.0.0-pre.27
+   - Hub window now activates and comes to front when OpenHub build notification is triggered.
+   - Now using the Mal.SourceGeneratedDI package.
+
 v.1.0.0-pre.26
    - Configuration editor now displays settings in a single scrollable view (no tabs).
    - Added "Fix it" button to reorganize misplaced configuration settings.

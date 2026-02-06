@@ -74,6 +74,11 @@ public interface IShell
     /// </summary>
     void Shutdown();
 
+    /// <summary>
+    ///     Brings the main window to the front and activates it.
+    /// </summary>
+    void BringToFront();
+
     // Dialog methods
     Task ShowOverlayAsync(OverlayModel model);
     Task<bool> ShowOverlayAsync(ConfirmationMessage message);
