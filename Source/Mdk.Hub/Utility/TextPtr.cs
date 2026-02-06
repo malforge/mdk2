@@ -11,17 +11,39 @@ namespace Mdk.Hub.Utility;
 [DebuggerDisplay("{ToDebugString(),nq}")]
 public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr>
 {
+    /// <summary>
+    /// The underlying text string being pointed into.
+    /// </summary>
     public readonly string? Text = text;
+    
+    /// <summary>
+    /// The current position within the text.
+    /// </summary>
     public readonly int Index = index;
 
+    /// <summary>
+    /// Advances the pointer by the specified offset.
+    /// </summary>
     public static TextPtr operator +(TextPtr ptr, int offset) => new(ptr.Text, ptr.Index + offset);
 
+    /// <summary>
+    /// Advances the pointer by one position.
+    /// </summary>
     public static TextPtr operator ++(TextPtr ptr) => new(ptr.Text, ptr.Index + 1);
 
+    /// <summary>
+    /// Moves the pointer backward by the specified offset.
+    /// </summary>
     public static TextPtr operator -(TextPtr ptr, int offset) => new(ptr.Text, ptr.Index - offset);
 
+    /// <summary>
+    /// Moves the pointer backward by one position.
+    /// </summary>
     public static TextPtr operator --(TextPtr ptr) => new(ptr.Text, ptr.Index - 1);
 
+    /// <summary>
+    /// Calculates the distance between two pointers into the same text.
+    /// </summary>
     public static int operator -(TextPtr left, TextPtr right)
     {
         if (!ReferenceEquals(left.Text, right.Text))
@@ -29,10 +51,19 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return left.Index - right.Index;
     }
 
+    /// <summary>
+    /// Determines whether two pointers are equal.
+    /// </summary>
     public static bool operator ==(TextPtr left, TextPtr right) => ReferenceEquals(left.Text, right.Text) && left.Index == right.Index;
 
+    /// <summary>
+    /// Determines whether two pointers are not equal.
+    /// </summary>
     public static bool operator !=(TextPtr left, TextPtr right) => !(left == right);
 
+    /// <summary>
+    /// Determines whether the left pointer is before the right pointer.
+    /// </summary>
     public static bool operator <(TextPtr left, TextPtr right)
     {
         if (!ReferenceEquals(left.Text, right.Text))
@@ -40,6 +71,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return left.Index < right.Index;
     }
 
+    /// <summary>
+    /// Determines whether the left pointer is after the right pointer.
+    /// </summary>
     public static bool operator >(TextPtr left, TextPtr right)
     {
         if (!ReferenceEquals(left.Text, right.Text))
@@ -47,6 +81,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return left.Index > right.Index;
     }
 
+    /// <summary>
+    /// Determines whether the left pointer is before or at the same position as the right pointer.
+    /// </summary>
     public static bool operator <=(TextPtr left, TextPtr right)
     {
         if (!ReferenceEquals(left.Text, right.Text))
@@ -54,6 +91,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return left.Index <= right.Index;
     }
 
+    /// <summary>
+    /// Determines whether the left pointer is after or at the same position as the right pointer.
+    /// </summary>
     public static bool operator >=(TextPtr left, TextPtr right)
     {
         if (!ReferenceEquals(left.Text, right.Text))
@@ -61,10 +101,19 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return left.Index >= right.Index;
     }
 
+    /// <summary>
+    /// Determines whether this pointer equals the specified object.
+    /// </summary>
     public override bool Equals(object? obj) => obj is TextPtr ptr && this == ptr;
 
+    /// <summary>
+    /// Determines whether the pointer is outside the valid range of the text.
+    /// </summary>
     public bool IsOutOfBounds() => Text == null || Index < 0 || Index >= Text.Length;
 
+    /// <summary>
+    /// Gets the character at the specified offset from the current position, or '\0' if out of bounds.
+    /// </summary>
     public char this[int offset]
     {
         get
@@ -76,8 +125,14 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         }
     }
 
+    /// <summary>
+    /// Determines whether this pointer equals another pointer.
+    /// </summary>
     public bool Equals(TextPtr other) => this == other;
 
+    /// <summary>
+    /// Returns the hash code for this pointer.
+    /// </summary>
     public override int GetHashCode() => HashCode.Combine(Text, Index);
 
 
@@ -114,6 +169,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Returns the substring from the current position to the end of the text.
+    /// </summary>
     public override string ToString()
     {
         // Return the substring from the current index to the end of the text
@@ -122,6 +180,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return Text[Index..];
     }
 
+    /// <summary>
+    /// Returns a substring of the specified length starting from the current position.
+    /// </summary>
     public string ToString(int length)
     {
         if (Text == null || Index < 0 || Index >= Text.Length || length <= 0)
@@ -130,6 +191,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return Text.Substring(Index, maxLength);
     }
 
+    /// <summary>
+    /// Returns a substring from the current position to the specified end pointer.
+    /// </summary>
     public string ToString(in TextPtr end)
     {
         if (Text == null || !ReferenceEquals(Text, end.Text) || Index < 0 || Index >= Text.Length || end.Index < 0 || end.Index > Text.Length || end.Index < Index)
@@ -150,6 +214,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return false;
     }
 
+    /// <summary>
+    /// Advances the pointer forward while the current character is in the specified list.
+    /// </summary>
     public TextPtr SkipForward(params IReadOnlyList<char> chars)
     {
         var ptr = this;
@@ -158,6 +225,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return ptr;
     }
 
+    /// <summary>
+    /// Advances the pointer forward while the current character is whitespace.
+    /// </summary>
     public TextPtr TrimForward()
     {
         var ptr = this;
@@ -166,6 +236,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return ptr;
     }
 
+    /// <summary>
+    /// Moves the pointer backward while the previous character is in the specified list.
+    /// </summary>
     public TextPtr SkipBackward(params IReadOnlyList<char> chars)
     {
         var ptr = this;
@@ -174,6 +247,9 @@ public readonly struct TextPtr(string? text, int index = 0) : IEquatable<TextPtr
         return ptr;
     }
 
+    /// <summary>
+    /// Moves the pointer backward while the previous character is whitespace.
+    /// </summary>
     public TextPtr TrimBackward()
     {
         var ptr = this;

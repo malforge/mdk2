@@ -14,8 +14,14 @@ using Mdk.Hub.Features.Snackbars;
 
 namespace Mdk.Hub;
 
+/// <summary>
+/// The main application class for MDK Hub, responsible for initialization and lifetime management.
+/// </summary>
 public class App : Application
 {
+    /// <summary>
+    /// Gets the dependency injection container for the application.
+    /// </summary>
     public static IDependencyContainer Container { get; } = new DependencyContainer();
     
     /// <summary>
@@ -28,8 +34,14 @@ public class App : Application
     /// </summary>
     public static bool IsLinux => SimulateLinux || OperatingSystem.IsLinux();
 
+    /// <summary>
+    /// Initializes the application by loading XAML resources.
+    /// </summary>
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
+    /// <summary>
+    /// Called when the framework initialization is completed, sets up services, exception handlers, and the main window.
+    /// </summary>
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

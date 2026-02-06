@@ -260,22 +260,3 @@ class ProjectUpdateChecker
         _cancellationTokenSource?.Dispose();
     }
 }
-
-/// <summary>
-///     Event arguments for when a project has updates available.
-/// </summary>
-public class ProjectUpdateAvailableEventArgs : EventArgs
-{
-    public required CanonicalPath ProjectPath { get; init; }
-    public required IReadOnlyList<PackageUpdateInfo> AvailableUpdates { get; init; }
-}
-
-/// <summary>
-///     Information about an available package update.
-/// </summary>
-public record PackageUpdateInfo
-{
-    public required string PackageId { get; init; }
-    public required string CurrentVersion { get; init; }
-    public required string LatestVersion { get; init; }
-}

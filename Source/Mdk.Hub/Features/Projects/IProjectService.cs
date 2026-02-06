@@ -9,45 +9,6 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
-///     Indicates how a project was added to the registry.
-/// </summary>
-public enum ProjectAdditionSource
-{
-    /// <summary>
-    ///     User manually added the project via UI.
-    /// </summary>
-    Manual,
-
-    /// <summary>
-    ///     Project was added via build notification (IPC).
-    /// </summary>
-    BuildNotification,
-
-    /// <summary>
-    ///     Project was loaded from registry on startup.
-    /// </summary>
-    Startup
-}
-
-/// <summary>
-///     Event arguments for when a new project is added to the registry.
-/// </summary>
-public class ProjectAddedEventArgs : EventArgs
-{
-    public required CanonicalPath ProjectPath { get; init; }
-    public ProjectAdditionSource Source { get; init; }
-}
-
-/// <summary>
-///     Event arguments for when navigation to a project is requested.
-/// </summary>
-public class ProjectNavigationRequestedEventArgs : EventArgs
-{
-    public required CanonicalPath ProjectPath { get; init; }
-    public bool OpenOptions { get; init; }
-}
-
-/// <summary>
 ///     Unified service for accessing project data and configuration.
 ///     Provides both project listing/management and configuration reading.
 /// </summary>

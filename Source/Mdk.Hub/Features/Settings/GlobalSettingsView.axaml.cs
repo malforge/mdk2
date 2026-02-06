@@ -6,9 +6,15 @@ using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Settings;
 
+/// <summary>
+///     View for configuring global application settings.
+/// </summary>
 [Singleton]
 public partial class GlobalSettingsView : UserControl
 {
+    /// <summary>
+    ///     Initializes a new instance of the GlobalSettingsView class.
+    /// </summary>
     public GlobalSettingsView()
     {
         InitializeComponent();

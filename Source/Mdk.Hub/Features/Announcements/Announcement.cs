@@ -42,14 +42,3 @@ public record Announcement
     /// </summary>
     public DateTime FetchedAt { get; init; } = DateTime.UtcNow;
 }
-
-/// <summary>
-///     Visual style options for announcements.
-/// </summary>
-public enum AnnouncementStyle
-{
-    Info,
-    Success,
-    Danger
-}
-

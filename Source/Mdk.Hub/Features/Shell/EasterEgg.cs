@@ -10,6 +10,9 @@ using Avalonia.Threading;
 
 namespace Mdk.Hub.Features.Shell;
 
+/// <summary>
+/// A control that displays an animated starfield background with an avatar overlay.
+/// </summary>
 public class EasterEgg : Control
 {
     const int AvatarHeight = 200;
@@ -20,6 +23,9 @@ public class EasterEgg : Control
     Bitmap? _avatar;
     Size _lastSize;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EasterEgg"/> class.
+    /// </summary>
     public EasterEgg()
     {
         HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -33,6 +39,10 @@ public class EasterEgg : Control
         IsHitTestVisible = false;
     }
 
+    /// <summary>
+    /// Called when the control is attached to the visual tree.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
@@ -50,14 +60,28 @@ public class EasterEgg : Control
         _timer.Start();
     }
 
+    /// <summary>
+    /// Called when the control is detached from the visual tree.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
         _timer.Stop();
     }
 
+    /// <summary>
+    /// Measures the desired size of the control.
+    /// </summary>
+    /// <param name="availableSize">The available size.</param>
+    /// <returns>The available size.</returns>
     protected override Size MeasureOverride(Size availableSize) => availableSize;
 
+    /// <summary>
+    /// Arranges the control and initializes stars if the size has changed.
+    /// </summary>
+    /// <param name="finalSize">The final size allocated to the control.</param>
+    /// <returns>The final size used.</returns>
     protected override Size ArrangeOverride(Size finalSize)
     {
         if (_stars.Count == 0 || Math.Abs(_lastSize.Width - finalSize.Width) > 1 || Math.Abs(_lastSize.Height - finalSize.Height) > 1)
@@ -121,6 +145,10 @@ public class EasterEgg : Control
         }
     }
 
+    /// <summary>
+    /// Renders the starfield and avatar overlay.
+    /// </summary>
+    /// <param name="context">The drawing context.</param>
     public override void Render(DrawingContext context)
     {
         base.Render(context);

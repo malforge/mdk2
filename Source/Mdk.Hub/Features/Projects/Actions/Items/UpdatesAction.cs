@@ -31,6 +31,13 @@ public class UpdatesAction : ActionItem
 
     string _statusMessage = "Checking for updates...";
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="UpdatesAction"/> class.
+    /// </summary>
+    /// <param name="settings">The settings manager for user preferences.</param>
+    /// <param name="shell">The shell interface for UI interactions.</param>
+    /// <param name="updateManager">The manager for handling updates.</param>
+    /// <param name="logger">The logger for diagnostic output.</param>
     public UpdatesAction(ISettings settings, IShell shell, IUpdateManager updateManager, ILogger logger)
     {
         _settings = settings;
@@ -49,9 +56,19 @@ public class UpdatesAction : ActionItem
         _shell.RefreshRequested += OnRefreshRequested;
     }
 
+    /// <summary>
+    ///     Gets the action category (null = no category, appears at top).
+    /// </summary>
     public override string? Category => null; // No category - appears at top
+    
+    /// <summary>
+    ///     Gets whether this is a global action (not project-specific).
+    /// </summary>
     public override bool IsGlobal => true; // This is a global action, not project-specific
 
+    /// <summary>
+    ///     Gets or sets whether a template update is available.
+    /// </summary>
     public bool IsTemplateUpdateAvailable
     {
         get => _isTemplateUpdateAvailable;
@@ -65,6 +82,9 @@ public class UpdatesAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets or sets whether a Hub update is available.
+    /// </summary>
     public bool IsHubUpdateAvailable
     {
         get => _isHubUpdateAvailable;
@@ -78,6 +98,9 @@ public class UpdatesAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets or sets whether a Hub update is ready to install.
+    /// </summary>
     public bool IsReadyToInstall
     {
         get => _isReadyToInstall;
@@ -91,6 +114,9 @@ public class UpdatesAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets or sets whether a Hub update is currently downloading.
+    /// </summary>
     public bool IsDownloading
     {
         get => _isDownloading;
@@ -104,12 +130,18 @@ public class UpdatesAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets or sets the download progress (0.0 to 1.0).
+    /// </summary>
     public double DownloadProgress
     {
         get => _downloadProgress;
         set => SetProperty(ref _downloadProgress, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the Hub version information for available updates.
+    /// </summary>
     public HubVersionInfo? HubVersionInfo
     {
         get => _hubVersionInfo;
@@ -123,22 +155,42 @@ public class UpdatesAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets or sets the status message displayed to the user.
+    /// </summary>
     public string StatusMessage
     {
         get => _statusMessage;
         set => SetProperty(ref _statusMessage, value);
     }
 
+    /// <summary>
+    ///     Gets the text for the Update Hub button.
+    /// </summary>
     public string UpdateHubButtonText => HubVersionInfo?.IsPrerelease == true ? "Update Hub (prerelease)" : "Update Hub";
 
+    /// <summary>
+    ///     Gets the command to update templates.
+    /// </summary>
     public ICommand UpdateTemplatesCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to download a Hub update.
+    /// </summary>
     public ICommand UpdateHubCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to install a downloaded Hub update.
+    /// </summary>
     public ICommand InstallHubUpdateCommand { get; }
 
     void OnRefreshRequested(object? sender, EventArgs e) =>
         // Force a fresh update check
         _ = _updateManager.CheckForUpdatesAsync();
 
+    /// <summary>
+    ///     Determines whether this action should be shown in the UI.
+    /// </summary>
     public override bool ShouldShow() => IsTemplateUpdateAvailable || IsHubUpdateAvailable || IsDownloading || IsReadyToInstall;
 
     void OnVersionCheckCompleted(VersionCheckCompletedEventArgs args)

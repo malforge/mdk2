@@ -130,12 +130,30 @@ public class ShellViewModel : ViewModel, IShell
     /// </summary>
     public bool HasOverlays => OverlayViews.Count > 0;
 
+    /// <summary>
+    ///     Raised when the window gains keyboard focus.
+    /// </summary>
     public event EventHandler? WindowFocusGained;
+    
+    /// <summary>
+    ///     Raised when a UI refresh has been requested (e.g., Ctrl+R).
+    /// </summary>
     public event EventHandler? RefreshRequested;
 
+    /// <summary>
+    ///     Gets the collection of currently displayed toast messages.
+    /// </summary>
     public ObservableCollection<ToastMessage> ToastMessages { get; } = new();
+    
+    /// <summary>
+    ///     Gets the collection of overlay views (dialogs, popups) currently shown over the main content.
+    /// </summary>
     public ObservableCollection<OverlayModel> OverlayViews { get; } = new();
 
+    /// <summary>
+    ///     Starts the shell with the specified command-line arguments and initializes the main UI.
+    /// </summary>
+    /// <param name="args">Command-line arguments passed to the application.</param>
     public void Start(string[] args)
     {
         _startupArgs = args;
@@ -149,6 +167,10 @@ public class ShellViewModel : ViewModel, IShell
         BeginStartup();
     }
 
+    /// <summary>
+    ///     Registers a callback to be invoked when the shell has started.
+    /// </summary>
+    /// <param name="callback">Action to invoke with startup arguments.</param>
     public void WhenStarted(Action<string[]> callback)
     {
         if (_hasStarted)
@@ -157,6 +179,10 @@ public class ShellViewModel : ViewModel, IShell
             _startupCallbacks.Add(callback);
     }
 
+    /// <summary>
+    ///     Registers a callback to be invoked when the shell is fully ready (all async initialization complete).
+    /// </summary>
+    /// <param name="callback">Action to invoke with startup arguments.</param>
     public void WhenReady(Action<string[]> callback)
     {
         if (_isReady)
@@ -165,6 +191,7 @@ public class ShellViewModel : ViewModel, IShell
             _readyCallbacks.Add(callback);
     }
 
+    /// <inheritdoc />
     public void AddOverlay(OverlayModel model)
     {
         void onDismissed(object? sender, EventArgs e)
@@ -179,18 +206,21 @@ public class ShellViewModel : ViewModel, IShell
         OverlayViews.Add(model);
     }
 
+    /// <inheritdoc />
     public void Shutdown()
     {
         _logger.Info("Shutdown requested");
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <inheritdoc />
     public void BringToFront()
     {
         _logger.Info("Bringing window to front");
         BringToFrontRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <inheritdoc />
     public void ShowToast(string message, int durationMs = 3000)
     {
         var toast = new ToastMessage { Message = message };
@@ -203,6 +233,7 @@ public class ShellViewModel : ViewModel, IShell
         Task.Delay(durationMs).ContinueWith(_ => { ToastMessages.Remove(toast); }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
+    /// <inheritdoc />
     public UnsavedChangesHandle RegisterUnsavedChanges(string description, Action navigateToChanges)
     {
         var registration = new UnsavedChangesRegistration
@@ -216,6 +247,7 @@ public class ShellViewModel : ViewModel, IShell
         return new UnsavedChangesHandle(() => _unsavedChangesRegistrations.Remove(registration));
     }
 
+    /// <inheritdoc />
     public bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info)
     {
         if (_unsavedChangesRegistrations.Count == 0)
@@ -247,13 +279,14 @@ public class ShellViewModel : ViewModel, IShell
         return true;
     }
 
+    /// <inheritdoc />
     public void RequestRefresh()
     {
         RefreshRequested?.Invoke(this, EventArgs.Empty);
         ShowToast("Refreshing...", 1500);
     }
 
-    // Dialog methods
+    /// <inheritdoc />
     public Task ShowOverlayAsync(OverlayModel model)
     {
         var tcs = new TaskCompletionSource();
@@ -269,6 +302,7 @@ public class ShellViewModel : ViewModel, IShell
         return tcs.Task;
     }
 
+    /// <inheritdoc />
     public async Task<bool> ShowOverlayAsync(ConfirmationMessage message)
     {
         var model = new MessageBoxViewModel
@@ -294,6 +328,7 @@ public class ShellViewModel : ViewModel, IShell
         return (bool)(model.SelectedValue ?? false);
     }
 
+    /// <inheritdoc />
     public async Task ShowOverlayAsync(InformationMessage message)
     {
         var model = new MessageBoxViewModel
@@ -314,6 +349,7 @@ public class ShellViewModel : ViewModel, IShell
         await ShowOverlayAsync(model);
     }
 
+    /// <inheritdoc />
     public async Task<bool> ShowOverlayAsync(KeyPhraseValidationMessage message)
     {
         var model = new DangerBoxViewModel
@@ -343,8 +379,12 @@ public class ShellViewModel : ViewModel, IShell
         return (bool)(model.SelectedValue ?? false);
     }
 
+    /// <inheritdoc />
     public async Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay) => await ShowOverlayAsync(busyOverlay);
 
+    /// <summary>
+    ///     Begins asynchronous startup process without blocking initialization.
+    /// </summary>
     async void BeginStartup()
     {
         try
@@ -358,6 +398,9 @@ public class ShellViewModel : ViewModel, IShell
         }
     }
 
+    /// <summary>
+    ///     Performs asynchronous startup initialization including first-run setup and Linux path configuration.
+    /// </summary>
     async Task StartupAsync()
     {
         // Invoke queued callbacks
@@ -422,6 +465,9 @@ public class ShellViewModel : ViewModel, IShell
         return false;
     }
 
+    /// <summary>
+    ///     Handles changes to the overlay views collection to update HasOverlays property.
+    /// </summary>
     void OnOverlayViewsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => OnPropertyChanged(nameof(HasOverlays));
 
     /// <summary>
@@ -455,6 +501,10 @@ public class ShellViewModel : ViewModel, IShell
         return model;
     }
 
+    /// <summary>
+    ///     Checks if this is the first run and performs initial setup including .NET SDK and template installation.
+    /// </summary>
+    /// <param name="updateManager">The update manager service.</param>
     async Task CheckFirstRunSetupAsync(IUpdateManager updateManager)
     {
         try
@@ -530,6 +580,9 @@ public class ShellViewModel : ViewModel, IShell
         }
     }
 
+    /// <summary>
+    ///     Handles project navigation requests to coordinate post-selection actions like opening the options drawer.
+    /// </summary>
     void OnProjectNavigationRequested(object? sender, ProjectNavigationRequestedEventArgs e)
     {
         // ProjectService has already updated State.SelectedProject
@@ -538,6 +591,9 @@ public class ShellViewModel : ViewModel, IShell
             _projectActionsViewModel.Value.OpenOptionsDrawer();
     }
 
+    /// <summary>
+    ///     Called when the shell is fully ready to initialize child view models and start background services.
+    /// </summary>
     void OnReady()
     {
         _isReady = true;
@@ -560,6 +616,9 @@ public class ShellViewModel : ViewModel, IShell
         Task.Delay(1000).ContinueWith(_ => CheckPrereleasePrompt());
     }
 
+    /// <summary>
+    ///     Checks if Linux path configuration is required (any path set to "auto").
+    /// </summary>
     bool RequiresLinuxPathConfiguration()
     {
         var hubSettings = Settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
@@ -570,6 +629,10 @@ public class ShellViewModel : ViewModel, IShell
         return binPath == "auto" || scriptOutputPath == "auto" || modOutputPath == "auto";
     }
 
+    /// <summary>
+    ///     Opens the global settings dialog for Linux path configuration and waits for completion.
+    /// </summary>
+    /// <returns>True if configuration is now valid; otherwise, false.</returns>
     async Task<bool> ConfigureGlobalOptionsForLinuxAsync()
     {
         var viewModel = App.Container.Resolve<GlobalSettingsViewModel>();
@@ -584,8 +647,14 @@ public class ShellViewModel : ViewModel, IShell
         return !RequiresLinuxPathConfiguration();
     }
 
+    /// <summary>
+    ///     Raises the WindowFocusGained event to notify subscribers that the window has gained focus.
+    /// </summary>
     public void RaiseWindowFocusGained() => WindowFocusGained?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>
+    ///     Writes the Hub executable path to a file for MDK CLI to discover.
+    /// </summary>
     void WriteHubPath()
     {
         try
@@ -617,6 +686,10 @@ public class ShellViewModel : ViewModel, IShell
         }
     }
 
+    /// <summary>
+    ///     Checks if Linux path configuration is valid and prompts for configuration if needed.
+    /// </summary>
+    /// <returns>True if configuration is valid or user completed configuration; false if user cancelled.</returns>
     async Task<bool> CheckLinuxPathConfigurationAsync()
     {
         if (!App.IsLinux)
@@ -639,6 +712,11 @@ public class ShellViewModel : ViewModel, IShell
         return true;
     }
 
+    /// <summary>
+    ///     Resolves a symbolic link to its target path.
+    /// </summary>
+    /// <param name="path">The path to resolve.</param>
+    /// <returns>The target path if it's a valid symlink; otherwise, the original path.</returns>
     static string ResolveSymlink(string path)
     {
         try
@@ -658,6 +736,9 @@ public class ShellViewModel : ViewModel, IShell
         }
     }
 
+    /// <summary>
+    ///     Checks if the user should be prompted to enable prerelease updates when running a prerelease version.
+    /// </summary>
     async void CheckPrereleasePrompt()
     {
         try
@@ -712,9 +793,19 @@ public class ShellViewModel : ViewModel, IShell
         }
     }
 
+    /// <summary>
+    ///     Represents a registration for tracking unsaved changes with a description and navigation action.
+    /// </summary>
     class UnsavedChangesRegistration
     {
+        /// <summary>
+        ///     Gets or initializes the description of the unsaved changes.
+        /// </summary>
         public string Description { get; init; } = string.Empty;
+
+        /// <summary>
+        ///     Gets or initializes the action to navigate to the location of the unsaved changes.
+        /// </summary>
         public Action NavigateAction { get; init; } = () => { };
     }
 }

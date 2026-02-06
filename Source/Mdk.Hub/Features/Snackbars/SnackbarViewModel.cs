@@ -17,19 +17,40 @@ public class SnackbarViewModel : ViewModel
     readonly RelayCommand _closeCommand;
     CancellationTokenSource? _timeoutCts;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SnackbarViewModel"/> class.
+    /// </summary>
     public SnackbarViewModel()
     {
         _closeCommand = new RelayCommand(Close);
     }
 
+    /// <summary>
+    /// Gets or sets the message text to display in the snackbar.
+    /// </summary>
     public string Message { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets the collection of actions available in the snackbar.
+    /// </summary>
     public IReadOnlyList<SnackbarActionViewModel> Actions { get; set; } = Array.Empty<SnackbarActionViewModel>();
+    /// <summary>
+    /// Gets or sets the timeout duration in milliseconds before the snackbar auto-closes.
+    /// </summary>
     public int Timeout { get; set; }
 
+    /// <summary>
+    /// Gets the command to close the snackbar.
+    /// </summary>
     public ICommand CloseCommand => _closeCommand;
 
+    /// <summary>
+    /// Event raised when the snackbar should be closed.
+    /// </summary>
     public event EventHandler? CloseRequested;
 
+    /// <summary>
+    /// Sets the available actions for the snackbar.
+    /// </summary>
     public void SetActions(IEnumerable<SnackbarAction> actions) => Actions = actions.Select(a => new SnackbarActionViewModel(a, CloseIfRequested)).ToList();
 
     void CloseIfRequested()
@@ -38,6 +59,9 @@ public class SnackbarViewModel : ViewModel
         CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Starts the auto-close timeout if a timeout is configured.
+    /// </summary>
     public void StartTimeout()
     {
         if (Timeout > 0)
@@ -59,6 +83,9 @@ public class SnackbarViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    /// Cancels the auto-close timeout.
+    /// </summary>
     public void CancelTimeout()
     {
         _timeoutCts?.Cancel();

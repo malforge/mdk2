@@ -35,6 +35,12 @@ public class ProjectInfoAction : ActionItem
     string? _outputPath;
     int? _scriptSizeCharacters;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ProjectInfoAction"/> class.
+    /// </summary>
+    /// <param name="projectService">The service for managing projects.</param>
+    /// <param name="shell">The shell interface for UI interactions.</param>
+    /// <param name="actionsViewModel">The view model for project actions.</param>
     public ProjectInfoAction(IProjectService projectService, IShell shell, ProjectActionsViewModel actionsViewModel)
     {
         _projectService = projectService;
@@ -48,30 +54,48 @@ public class ProjectInfoAction : ActionItem
         ShowOptionsCommand = new RelayCommand(ShowOptions, CanShowOptions);
     }
 
+    /// <summary>
+    ///     Gets whether the selected project is a script (programmable block).
+    /// </summary>
     public bool IsScript => Project?.Type == ProjectType.ProgrammableBlock;
 
+    /// <summary>
+    ///     Gets the display name for the project type.
+    /// </summary>
     public string ProjectTypeName => Project?.Type == ProjectType.ProgrammableBlock
         ? "Programmable Block Script"
         : "Mod";
 
+    /// <summary>
+    ///     Gets or sets whether project data is currently loading.
+    /// </summary>
     public bool IsLoading
     {
         get => _isLoading;
         private set => SetProperty(ref _isLoading, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the last time the project file was modified.
+    /// </summary>
     public DateTimeOffset? LastChanged
     {
         get => _lastChanged;
         private set => SetProperty(ref _lastChanged, value);
     }
 
+    /// <summary>
+    ///     Gets or sets any error that occurred while reading the last changed time.
+    /// </summary>
     public string? LastChangedError
     {
         get => _lastChangedError;
         private set => SetProperty(ref _lastChangedError, value);
     }
 
+    /// <summary>
+    ///     Gets or sets whether the project has been deployed to the output folder.
+    /// </summary>
     public bool IsDeployed
     {
         get => _isDeployed;
@@ -85,18 +109,27 @@ public class ProjectInfoAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets or sets any error that occurred while checking deployment status.
+    /// </summary>
     public string? DeploymentError
     {
         get => _deploymentError;
         private set => SetProperty(ref _deploymentError, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the last time the project was deployed.
+    /// </summary>
     public DateTimeOffset? LastDeployed
     {
         get => _lastDeployed;
         private set => SetProperty(ref _lastDeployed, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the size of the deployed script in characters.
+    /// </summary>
     public int? ScriptSizeCharacters
     {
         get => _scriptSizeCharacters;
@@ -107,22 +140,53 @@ public class ProjectInfoAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets or sets any configuration warning for the project.
+    /// </summary>
     public string? ConfigurationWarning
     {
         get => _configurationWarning;
         private set => SetProperty(ref _configurationWarning, value);
     }
 
+    /// <summary>
+    ///     Gets whether the script exceeds the Space Engineers character limit.
+    /// </summary>
     public bool IsScriptTooLarge => ScriptSizeCharacters is > 100_000;
 
+    /// <summary>
+    ///     Gets the command to open the project folder in explorer.
+    /// </summary>
     public ICommand OpenProjectFolderCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to open the output/deployment folder.
+    /// </summary>
     public ICommand OpenOutputFolderCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to open the project in an IDE.
+    /// </summary>
     public ICommand OpenInIdeCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to copy the script to clipboard.
+    /// </summary>
     public ICommand CopyScriptCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to show project options.
+    /// </summary>
     public ICommand ShowOptionsCommand { get; }
 
+    /// <summary>
+    ///     Gets the action category.
+    /// </summary>
     public override string Category => "Project";
 
+    /// <summary>
+    ///     Called when the selected project changes to update project-specific UI elements.
+    /// </summary>
     protected override void OnSelectedProjectChanged()
     {
         base.OnSelectedProjectChanged();
@@ -136,6 +200,9 @@ public class ProjectInfoAction : ActionItem
             _ = LoadProjectDataAsync(_projectService);
     }
 
+    /// <summary>
+    ///     Determines whether this action should be shown in the UI.
+    /// </summary>
     public override bool ShouldShow() => !_projectService.State.SelectedProject.IsEmpty();
 
     bool CanOpenProjectFolder() => Project is not null && File.Exists(Project.ProjectPath.Value);

@@ -1,37 +1,40 @@
 using System;
-using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Mdk.Hub.Features.Diagnostics;
 
+/// <summary>
+///     Provides diagnostic logging capabilities with caller context tracking.
+/// </summary>
 public interface ILogger
 {
+    /// <summary>
+    ///     Logs a debug-level message with caller context information.
+    /// </summary>
     void Debug(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
+    
+    /// <summary>
+    ///     Logs an informational message with caller context information.
+    /// </summary>
     void Info(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
+    
+    /// <summary>
+    ///     Logs a warning message with caller context information.
+    /// </summary>
     void Warning(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
+    
+    /// <summary>
+    ///     Logs an error message with caller context information.
+    /// </summary>
     void Error(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
+    
+    /// <summary>
+    ///     Logs an error message with exception details and caller context information.
+    /// </summary>
     void Error(string message, Exception exception, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
 
+    /// <summary>
+    ///     Gets the full file path to the log file.
+    /// </summary>
     string GetLogFilePath();
-}
-
-public enum LogLevel
-{
-    Debug,
-    Info,
-    Warning,
-    Error
-}
-
-public readonly struct LogEntry
-{
-    public DateTimeOffset Timestamp { get; init; }
-    public LogLevel Level { get; init; }
-    public string Message { get; init; }
-    public string FilePath { get; init; }
-    public int LineNumber { get; init; }
-    public string MemberName { get; init; }
-    public Exception? Exception { get; init; }
-
-    public string FileName => Path.GetFileName(FilePath);
 }

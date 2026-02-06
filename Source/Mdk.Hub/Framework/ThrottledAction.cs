@@ -16,6 +16,10 @@ public class ThrottledAction<T>(Action<T> action, TimeSpan delay)
     T? _lastParam;
     Timer? _timer;
 
+    /// <summary>
+    ///     Invokes the action with the specified parameter after the throttle delay. Repeated calls will reset the timer.
+    /// </summary>
+    /// <param name="param">The parameter to pass to the action.</param>
     public void Invoke(T param)
     {
         _lastParam = param;
@@ -49,6 +53,9 @@ public class ThrottledAction(Action action, TimeSpan delay)
     readonly TimeSpan _delay = delay;
     Timer? _timer;
 
+    /// <summary>
+    ///     Invokes the action after the throttle delay. Repeated calls will reset the timer.
+    /// </summary>
     public void Invoke()
     {
         if (_timer == null)

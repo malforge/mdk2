@@ -25,6 +25,11 @@ public class UpdatePackagesAction : ActionItem, IDisposable
     readonly AsyncRelayCommand _updateAllProjectsCommand;
     readonly AsyncRelayCommand _updateThisProjectCommand;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="UpdatePackagesAction"/> class.
+    /// </summary>
+    /// <param name="shell">The shell interface for UI interactions.</param>
+    /// <param name="projectService">The service for managing projects.</param>
     public UpdatePackagesAction(IShell shell, IProjectService projectService)
     {
         _shell = shell;
@@ -33,17 +38,33 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         _updateAllProjectsCommand = new AsyncRelayCommand(UpdateAllProjectsAsync);
     }
 
+    /// <summary>
+    ///     Gets the action category.
+    /// </summary>
     public override string Category => "Updates";
 
+    /// <summary>
+    ///     Gets the command to update packages in the current project.
+    /// </summary>
     public ICommand UpdateThisProjectCommand => _updateThisProjectCommand;
+    
+    /// <summary>
+    ///     Gets the command to update packages in all projects.
+    /// </summary>
     public ICommand UpdateAllProjectsCommand => _updateAllProjectsCommand;
 
+    /// <summary>
+    ///     Disposes resources used by this action.
+    /// </summary>
     public void Dispose()
     {
         if (Project != null)
             Project.PropertyChanged -= OnProjectPropertyChanged;
     }
 
+    /// <summary>
+    ///     Called when the selected project changes to subscribe to property change notifications.
+    /// </summary>
     protected override void OnSelectedProjectChanged()
     {
         base.OnSelectedProjectChanged();
@@ -53,6 +74,9 @@ public class UpdatePackagesAction : ActionItem, IDisposable
             Project.PropertyChanged += OnProjectPropertyChanged;
     }
 
+    /// <summary>
+    ///     Determines whether this action should be shown in the UI.
+    /// </summary>
     public override bool ShouldShow() =>
         // Show when project is selected and it needs updates
         Project != null && Project.NeedsUpdate;

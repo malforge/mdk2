@@ -8,6 +8,9 @@ namespace Mdk.Hub.Features.Settings;
 /// </summary>
 public struct HubSettings
 {
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="HubSettings"/> struct.
+    /// </summary>
     public HubSettings()
     {
     }

@@ -6,7 +6,14 @@ namespace Mdk.Hub.Features.Settings;
 /// </summary>
 public static class SettingsKeys
 {
+    /// <summary>
+    ///     Settings key for hub-wide settings.
+    /// </summary>
     public const string HubSettings = nameof(HubSettings);
+    
+    /// <summary>
+    ///     Settings key for main window state and preferences.
+    /// </summary>
     public const string MainWindowSettings = nameof(MainWindowSettings);
 }
 

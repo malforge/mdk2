@@ -10,10 +10,16 @@ using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
+/// <summary>
+///     Main view displaying the list of registered MDK projects.
+/// </summary>
 [Singleton]
 [UsedImplicitly]
 public partial class ProjectOverviewView : UserControl
 {
+    /// <summary>
+    ///     Initializes a new instance of the ProjectOverviewView class.
+    /// </summary>
     public ProjectOverviewView()
     {
         InitializeComponent();

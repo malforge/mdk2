@@ -26,6 +26,10 @@ public class InterProcessCommunication : IInterProcessCommunication
     readonly Mutex _mutex;
     readonly CancellationTokenSource? _serverCancellation;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="InterProcessCommunication"/> class.
+    /// </summary>
+    /// <param name="logger">The logger instance.</param>
     public InterProcessCommunication(ILogger logger)
     {
         _logger = logger;
@@ -41,10 +45,21 @@ public class InterProcessCommunication : IInterProcessCommunication
             _logger.Info("Hub is already running - will forward messages to existing instance");
     }
 
+    /// <summary>
+    /// Gets a value indicating whether another instance of the Hub is already running.
+    /// </summary>
+    /// <returns><c>true</c> if another instance is running; otherwise, <c>false</c>.</returns>
     public bool IsAlreadyRunning() => !_createdNew;
 
+    /// <summary>
+    /// Occurs when an IPC message is received from a client.
+    /// </summary>
     public event EventHandler<MessageReceivedEventArgs>? MessageReceived;
 
+    /// <summary>
+    /// Submits a message to the IPC system, either handling it locally or forwarding to the running instance.
+    /// </summary>
+    /// <param name="message">The message to submit.</param>
     public async Task SubmitAsync(InterConnectMessage message)
     {
         if (_createdNew)
@@ -97,6 +112,9 @@ public class InterProcessCommunication : IInterProcessCommunication
         }
     }
 
+    /// <summary>
+    /// Releases all resources used by the <see cref="InterProcessCommunication"/> instance.
+    /// </summary>
     public void Dispose()
     {
         _serverCancellation?.Cancel();
@@ -202,12 +220,18 @@ public class InterProcessCommunication : IInterProcessCommunication
         readonly ILogger _logger;
         readonly Mutex _mutex;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Standalone"/> class.
+        /// </summary>
         public Standalone()
         {
             _logger = new FileLogger();
             _mutex = new Mutex(true, MutexName, out _isFirstInstance);
         }
 
+        /// <summary>
+        /// Releases all resources used by the <see cref="Standalone"/> instance.
+        /// </summary>
         public void Dispose()
         {
             if (_isFirstInstance)
@@ -216,8 +240,16 @@ public class InterProcessCommunication : IInterProcessCommunication
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Gets a value indicating whether another instance of the Hub is already running.
+        /// </summary>
+        /// <returns><c>true</c> if another instance is running; otherwise, <c>false</c>.</returns>
         public bool IsAlreadyRunning() => !_isFirstInstance;
 
+        /// <summary>
+        /// Sends an IPC message to the running Hub instance based on command-line arguments.
+        /// </summary>
+        /// <param name="args">The command-line arguments containing the message type and data.</param>
         public void SendMessage(string[] args)
         {
             try

@@ -4,6 +4,9 @@ using Mdk.Hub.Features.Settings;
 
 namespace Mdk.Hub.Features.Shell;
 
+/// <summary>
+/// Manages the state and visibility of easter egg features based on date and user preferences.
+/// </summary>
 [Singleton<IEasterEggService>]
 public class EasterEggService : IEasterEggService
 {
@@ -11,6 +14,10 @@ public class EasterEggService : IEasterEggService
     bool _disabledForever;
     DateTime? _disabledUntil;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EasterEggService"/> class.
+    /// </summary>
+    /// <param name="settings">The settings service to persist easter egg preferences.</param>
     public EasterEggService(ISettings settings)
     {
         _settings = settings;
@@ -43,8 +50,14 @@ public class EasterEggService : IEasterEggService
             _disabledUntil = null;
     }
 
+    /// <summary>
+    /// Occurs when the activation state of the easter egg changes.
+    /// </summary>
     public event EventHandler? ActiveChanged;
 
+    /// <summary>
+    /// Gets a value indicating whether the easter egg is currently active.
+    /// </summary>
     public bool IsActive
     {
         get
@@ -61,6 +74,10 @@ public class EasterEggService : IEasterEggService
         }
     }
 
+    /// <summary>
+    /// Disables the easter egg for the specified duration.
+    /// </summary>
+    /// <param name="duration">The time span for which the easter egg should be disabled.</param>
     public void DisableFor(TimeSpan duration)
     {
         _disabledUntil = DateTime.Now + duration;
@@ -70,6 +87,9 @@ public class EasterEggService : IEasterEggService
         ActiveChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Disables the easter egg permanently.
+    /// </summary>
     public void DisableForever()
     {
         _disabledForever = true;

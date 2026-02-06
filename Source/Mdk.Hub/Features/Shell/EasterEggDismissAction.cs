@@ -8,6 +8,9 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
 
+/// <summary>
+/// Provides action commands to dismiss or disable the easter egg feature.
+/// </summary>
 [Singleton]
 [ViewModelFor<EasterEggDismissActionView>]
 public class EasterEggDismissAction : ActionItem
@@ -17,6 +20,11 @@ public class EasterEggDismissAction : ActionItem
     readonly IEasterEggService _easterEggService;
     readonly IShell _shell;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EasterEggDismissAction"/> class.
+    /// </summary>
+    /// <param name="shell">The shell to display confirmation dialogs.</param>
+    /// <param name="easterEggService">The easter egg service to control visibility.</param>
     public EasterEggDismissAction(IShell shell, IEasterEggService easterEggService)
     {
         _shell = shell;
@@ -25,11 +33,25 @@ public class EasterEggDismissAction : ActionItem
         _disableForeverCommand = new AsyncRelayCommand(DisableForever);
     }
 
+    /// <summary>
+    /// Gets the command to disable the easter egg for today.
+    /// </summary>
     public ICommand DisableForTodayCommand => _disableForTodayCommand;
+
+    /// <summary>
+    /// Gets the command to disable the easter egg permanently.
+    /// </summary>
     public ICommand DisableForeverCommand => _disableForeverCommand;
 
+    /// <summary>
+    /// Gets the category of this action item.
+    /// </summary>
     public override string Category => "EasterEgg";
 
+    /// <summary>
+    /// Determines whether this action should be shown based on easter egg activation status.
+    /// </summary>
+    /// <returns>True if the easter egg is currently active; otherwise, false.</returns>
     public override bool ShouldShow() => _easterEggService.IsActive;
 
     async Task DisableForToday()

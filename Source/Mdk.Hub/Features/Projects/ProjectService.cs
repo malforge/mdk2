@@ -24,6 +24,9 @@ using NuGet.Versioning;
 
 namespace Mdk.Hub.Features.Projects;
 
+/// <summary>
+///     Core service for managing MDK projects, including creation, configuration, and updates.
+/// </summary>
 [Singleton<IProjectService>]
 public class ProjectService : IProjectService
 {
@@ -39,6 +42,17 @@ public class ProjectService : IProjectService
 
     ProjectStateData _state;
 
+    /// <summary>
+    ///     Initializes a new instance of the ProjectService class.
+    /// </summary>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="registry">Project registry for persistence.</param>
+    /// <param name="ipc">Inter-process communication for build notifications.</param>
+    /// <param name="shell">Shell service for UI interactions.</param>
+    /// <param name="snackbarService">Service for displaying snackbar notifications.</param>
+    /// <param name="settings">Settings service.</param>
+    /// <param name="updateManager">Update manager for checking package updates.</param>
+    /// <param name="nugetService">NuGet service for package operations.</param>
     public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateManager updateManager, INuGetService nugetService)
     {
         _registry = registry;

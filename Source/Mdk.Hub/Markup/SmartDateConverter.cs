@@ -1,17 +1,22 @@
-using System;
+﻿using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
-using Avalonia.Markup.Xaml;
 
 namespace Mdk.Hub.Markup;
 
-public class SmartDateExtension : MarkupExtension
-{
-    public override object ProvideValue(IServiceProvider serviceProvider) => new SmartDateConverter();
-}
-
+/// <summary>
+///     Converts DateTime values to human-readable relative time strings.
+/// </summary>
 public class SmartDateConverter : IValueConverter
 {
+    /// <summary>
+    ///     Converts a DateTime or DateTimeOffset value to a smart date string.
+    /// </summary>
+    /// <param name="value">The DateTime or DateTimeOffset value to convert.</param>
+    /// <param name="targetType">The target type (unused).</param>
+    /// <param name="parameter">Converter parameter (unused).</param>
+    /// <param name="culture">Culture to use for formatting.</param>
+    /// <returns>A human-readable date/time string.</returns>
     object? IValueConverter.Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is DateTime dateTime) return Convert(dateTime, culture);
@@ -19,10 +24,25 @@ public class SmartDateConverter : IValueConverter
         return value;
     }
 
+    /// <summary>
+    ///     Not supported. This converter is one-way only.
+    /// </summary>
     object? IValueConverter.ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 
+    /// <summary>
+    ///     Converts a DateTime to a smart date string.
+    /// </summary>
+    /// <param name="dateTime">The DateTime to convert.</param>
+    /// <param name="culture">Culture to use for formatting.</param>
+    /// <returns>A human-readable date/time string.</returns>
     public string Convert(DateTime dateTime, CultureInfo culture) => Convert(new DateTimeOffset(dateTime), culture);
 
+    /// <summary>
+    ///     Converts a DateTimeOffset to a smart date string.
+    /// </summary>
+    /// <param name="dateTimeOffset">The DateTimeOffset to convert.</param>
+    /// <param name="culture">Culture to use for formatting.</param>
+    /// <returns>A human-readable date/time string.</returns>
     public string Convert(DateTimeOffset dateTimeOffset, CultureInfo culture)
     {
         // Rules:

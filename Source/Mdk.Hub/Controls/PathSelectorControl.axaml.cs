@@ -9,61 +9,100 @@ using Avalonia.Platform.Storage;
 
 namespace Mdk.Hub.Controls;
 
+/// <summary>
+/// A control that allows users to select a path using either "auto" mode, a folder picker, or a custom path.
+/// </summary>
 public partial class PathSelectorControl : UserControl
 {
+    /// <summary>
+    /// Defines the Path property.
+    /// </summary>
     public static readonly StyledProperty<string?> PathProperty =
         AvaloniaProperty.Register<PathSelectorControl, string?>(nameof(Path), "auto", defaultBindingMode: BindingMode.TwoWay);
 
+    /// <summary>
+    /// Defines the DefaultPath property.
+    /// </summary>
     public static readonly StyledProperty<string?> DefaultPathProperty =
         AvaloniaProperty.Register<PathSelectorControl, string?>(nameof(DefaultPath));
 
+    /// <summary>
+    /// Defines the Watermark property.
+    /// </summary>
     public static readonly StyledProperty<string?> WatermarkProperty =
         AvaloniaProperty.Register<PathSelectorControl, string?>(nameof(Watermark));
 
+    /// <summary>
+    /// Defines the DefaultText property.
+    /// </summary>
     public static readonly StyledProperty<string> DefaultTextProperty =
         AvaloniaProperty.Register<PathSelectorControl, string>(nameof(DefaultText), "Default");
 
+    /// <summary>
+    /// Defines the SelectedIndex property.
+    /// </summary>
     public static readonly StyledProperty<int> SelectedIndexProperty =
         AvaloniaProperty.Register<PathSelectorControl, int>(nameof(SelectedIndex));
 
     private ComboBox? _comboBox;
     private bool _updatingSelection;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PathSelectorControl"/> class.
+    /// </summary>
     public PathSelectorControl()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Gets or sets the selected path value ("auto", a folder path, or empty).
+    /// </summary>
     public string? Path
     {
         get => GetValue(PathProperty);
         set => SetValue(PathProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the default path used as a suggested start location when browsing.
+    /// </summary>
     public string? DefaultPath
     {
         get => GetValue(DefaultPathProperty);
         set => SetValue(DefaultPathProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the watermark text displayed when no path is selected.
+    /// </summary>
     public string? Watermark
     {
         get => GetValue(WatermarkProperty);
         set => SetValue(WatermarkProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the text displayed for the default/auto option.
+    /// </summary>
     public string DefaultText
     {
         get => GetValue(DefaultTextProperty);
         set => SetValue(DefaultTextProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the currently selected index in the ComboBox.
+    /// </summary>
     public int SelectedIndex
     {
         get => GetValue(SelectedIndexProperty);
         set => SetValue(SelectedIndexProperty, value);
     }
 
+    /// <summary>
+    /// Called when the control's template is applied, initializes the ComboBox.
+    /// </summary>
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
@@ -86,6 +125,9 @@ public partial class PathSelectorControl : UserControl
         }
     }
 
+    /// <summary>
+    /// Called when a property value changes, handles Path and DefaultText property updates.
+    /// </summary>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

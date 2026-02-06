@@ -7,6 +7,11 @@ namespace Mdk.Hub.Features.Projects.Configuration;
 /// <typeparam name="T">The type of the configuration value.</typeparam>
 public readonly struct ConfigurationValue<T>
 {
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ConfigurationValue{T}"/> struct.
+    /// </summary>
+    /// <param name="value">The configuration value.</param>
+    /// <param name="source">The source layer from which the value came.</param>
     public ConfigurationValue(T value, SourceLayer source)
     {
         Value = value;
@@ -28,5 +33,9 @@ public readonly struct ConfigurationValue<T>
     /// </summary>
     public bool IsExplicit => Source != SourceLayer.Default;
 
+    /// <summary>
+    ///     Returns a string representation of this configuration value.
+    /// </summary>
+    /// <returns>A string containing the value and its source.</returns>
     public override string ToString() => $"{Value} ({Source})";
 }

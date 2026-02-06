@@ -29,6 +29,11 @@ public class ProjectManagementAction : ActionItem
     readonly IProjectService _projectService;
     readonly IShell _shell;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ProjectManagementAction"/> class.
+    /// </summary>
+    /// <param name="shell">The shell interface for UI interactions.</param>
+    /// <param name="projectService">The service for managing projects.</param>
     public ProjectManagementAction(
         IShell shell,
         IProjectService projectService)
@@ -43,15 +48,39 @@ public class ProjectManagementAction : ActionItem
         _projectService.StateChanged += OnProjectServiceStateChanged;
     }
 
+    /// <summary>
+    ///     Gets whether a new Programmable Block Script can be created.
+    /// </summary>
     public bool CanMakeScript => _projectService.State.CanMakeScript;
+
+    /// <summary>
+    ///     Gets whether a new Mod can be created.
+    /// </summary>
     public bool CanMakeMod => _projectService.State.CanMakeMod;
 
+    /// <summary>
+    ///     Gets the command to create a new Programmable Block Script.
+    /// </summary>
     public ICommand CreateScriptCommand => _createScriptCommand;
+
+    /// <summary>
+    ///     Gets the command to create a new Mod.
+    /// </summary>
     public ICommand CreateModCommand => _createModCommand;
+
+    /// <summary>
+    ///     Gets the command to add an existing project to the Hub.
+    /// </summary>
     public ICommand AddExistingCommand => _addExistingCommand;
 
+    /// <summary>
+    ///     Gets the action category (null for uncategorized).
+    /// </summary>
     public override string? Category => null;
 
+    /// <summary>
+    ///     Gets whether this action is globally available.
+    /// </summary>
     public override bool IsGlobal => true;
 
     void OnProjectServiceStateChanged(object? sender, EventArgs e)
@@ -63,6 +92,10 @@ public class ProjectManagementAction : ActionItem
         RaiseShouldShowChanged();
     }
 
+    /// <summary>
+    ///     Determines whether this action should be visible.
+    /// </summary>
+    /// <returns>True if at least one project type can be created.</returns>
     public override bool ShouldShow() =>
         // Show if we can create any project type
         CanMakeScript || CanMakeMod;

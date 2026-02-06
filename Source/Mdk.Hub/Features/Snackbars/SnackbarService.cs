@@ -21,10 +21,25 @@ public class SnackbarService : ISnackbarService
 
     Window? _mainWindow;
 
+    /// <summary>
+    ///     Displays a snackbar notification with the specified message.
+    /// </summary>
+    /// <param name="message">The message to display.</param>
+    /// <param name="timeout">How long to display the snackbar in milliseconds (default: 15000).</param>
     public void Show(string message, int timeout = 15000) => Show(message, Array.Empty<SnackbarAction>(), timeout);
 
+    /// <summary>
+    ///     Displays a snackbar notification with the specified message and actions.
+    /// </summary>
+    /// <param name="message">The message to display.</param>
+    /// <param name="actions">Action buttons to display on the snackbar.</param>
+    /// <param name="timeout">How long to display the snackbar in milliseconds (default: 15000).</param>
     public void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout = 15000) => _ = Dispatcher.UIThread.InvokeAsync(() => ShowAsync(message, actions, timeout));
 
+    /// <summary>
+    ///     Sets the main application window for positioning snackbars.
+    /// </summary>
+    /// <param name="mainWindow">The main application window.</param>
     public void SetMainWindow(Window mainWindow) => _mainWindow = mainWindow;
 
     async Task ShowAsync(string message, IReadOnlyList<SnackbarAction> actions, int timeout)

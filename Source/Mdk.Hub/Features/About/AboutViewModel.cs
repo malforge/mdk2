@@ -8,9 +8,15 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.About;
 
+/// <summary>
+/// View model for the About dialog that shows version and links to logs/data/GitHub.
+/// </summary>
 [ViewModelFor<AboutView>]
 public class AboutViewModel : OverlayModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AboutViewModel"/> class.
+    /// </summary>
     public AboutViewModel()
     {
         CloseCommand = new RelayCommand(Close);
@@ -19,11 +25,26 @@ public class AboutViewModel : OverlayModel
         OpenGitHubCommand = new RelayCommand(OpenGitHub);
     }
 
+    /// <summary>
+    /// Gets the version string for the application.
+    /// </summary>
     public string Version { get; } = GetVersion();
 
+    /// <summary>
+    /// Gets the command to close the About dialog.
+    /// </summary>
     public ICommand CloseCommand { get; }
+    /// <summary>
+    /// Gets the command to open the logs folder.
+    /// </summary>
     public ICommand OpenLogsCommand { get; }
+    /// <summary>
+    /// Gets the command to open the application data folder.
+    /// </summary>
     public ICommand OpenDataCommand { get; }
+    /// <summary>
+    /// Gets the command to open the GitHub repository in a browser.
+    /// </summary>
     public ICommand OpenGitHubCommand { get; }
 
     static string GetVersion()

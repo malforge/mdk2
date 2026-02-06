@@ -9,15 +9,25 @@ using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Shell;
 
+/// <summary>
+/// The main application shell window.
+/// </summary>
 [Singleton]
 [UsedImplicitly]
 public partial class ShellWindow : Window
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ShellWindow"/> class.
+    /// </summary>
     public ShellWindow()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Called when the window receives focus.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
     protected override void OnGotFocus(GotFocusEventArgs e)
     {
         base.OnGotFocus(e);
@@ -26,6 +36,10 @@ public partial class ShellWindow : Window
             viewModel.WindowFocusWasGained();
     }
 
+    /// <summary>
+    /// Called when the data context of the window changes.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
@@ -85,6 +99,10 @@ public partial class ShellWindow : Window
         }
     }
 
+    /// <summary>
+    /// Called when the window is closing.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         if (DataContext is ShellViewModel viewModel && !e.IsProgrammatic)
@@ -142,10 +160,17 @@ public partial class ShellWindow : Window
         }
     }
 
+    /// <summary>
+    /// Stores window position, size, and state for persistence.
+    /// </summary>
     struct WindowSettings
     {
         readonly bool _isNew;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WindowSettings"/> struct from an existing window.
+        /// </summary>
+        /// <param name="window">The window to capture settings from.</param>
         public WindowSettings(Window window)
         {
             Width = window.Width;
@@ -168,6 +193,15 @@ public partial class ShellWindow : Window
             _isNew = true;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WindowSettings"/> struct from individual values.
+        /// </summary>
+        /// <param name="width">The window width.</param>
+        /// <param name="height">The window height.</param>
+        /// <param name="top">The window top position.</param>
+        /// <param name="left">The window left position.</param>
+        /// <param name="windowState">The window state.</param>
+        /// <param name="leftPanelWidth">The left panel width.</param>
         [JsonConstructor]
         [Obsolete("For serialization only", true)]
         public WindowSettings(double width, double height, double top, double left, WindowState windowState, double leftPanelWidth = 0)
@@ -181,15 +215,46 @@ public partial class ShellWindow : Window
             _isNew = false;
         }
 
+        /// <summary>
+        /// Gets the window width.
+        /// </summary>
         public double Width { get; }
+
+        /// <summary>
+        /// Gets the window height.
+        /// </summary>
         public double Height { get; }
+
+        /// <summary>
+        /// Gets the window top position.
+        /// </summary>
         public double Top { get; }
+
+        /// <summary>
+        /// Gets the window left position.
+        /// </summary>
         public double Left { get; }
+
+        /// <summary>
+        /// Gets the window state (normal, minimized, maximized).
+        /// </summary>
         public WindowState WindowState { get; }
+
+        /// <summary>
+        /// Gets the left panel width.
+        /// </summary>
         public double LeftPanelWidth { get; }
 
+        /// <summary>
+        /// Determines whether this is a newly created settings instance.
+        /// </summary>
+        /// <returns>True if this settings instance is new; otherwise, false.</returns>
         public bool IsNew() => _isNew;
 
+        /// <summary>
+        /// Restores the window state from these settings.
+        /// </summary>
+        /// <param name="window">The window to restore.</param>
         public void Restore(Window window)
         {
             // Restores the window, while also making sure it hasn't gone completely off-screen

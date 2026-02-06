@@ -7,6 +7,9 @@ using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Settings;
 
+/// <summary>
+/// JSON-based settings store with caching support for application configuration.
+/// </summary>
 [Singleton<ISettings>]
 public class Settings : ISettings
 {
@@ -14,8 +17,14 @@ public class Settings : ISettings
     readonly Dictionary<string, object> _cache = new();
     readonly string _settingsFileName;
 
+    /// <summary>
+    /// Occurs when a setting value is changed.
+    /// </summary>
     public event EventHandler<SettingsChangedEventArgs>? SettingsChanged;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Settings"/> class and loads settings from disk.
+    /// </summary>
     public Settings()
     {
         _settingsFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2/Hub/settings.json");
@@ -33,6 +42,13 @@ public class Settings : ISettings
         }
     }
 
+    /// <summary>
+    /// Attempts to get a setting value of the specified type.
+    /// </summary>
+    /// <typeparam name="T">The type of the setting value.</typeparam>
+    /// <param name="key">The setting key.</param>
+    /// <param name="value">When this method returns, contains the setting value if found; otherwise, the default value.</param>
+    /// <returns><c>true</c> if the setting was found; otherwise, <c>false</c>.</returns>
     public bool TryGetValue<T>(string key, out T value) where T : struct
     {
         // Check cache first - only use if type matches exactly (struct is copied by value)
@@ -55,6 +71,12 @@ public class Settings : ISettings
         return false;
     }
     
+    /// <summary>
+    /// Gets a setting value of the specified type, or the default value if not found.
+    /// </summary>
+    /// <typeparam name="T">The type of the setting value.</typeparam>
+    /// <param name="key">The setting key.</param>
+    /// <returns>The setting value if found; otherwise, the default value for the type.</returns>
     public T GetValue<T>(string key) where T : struct
     {
         // Check cache first - only use if type matches exactly (struct is copied by value)
@@ -72,6 +94,13 @@ public class Settings : ISettings
         return default;
     }
 
+    /// <summary>
+    /// Gets a setting value of the specified type, or a custom default value if not found.
+    /// </summary>
+    /// <typeparam name="T">The type of the setting value.</typeparam>
+    /// <param name="key">The setting key.</param>
+    /// <param name="defaultValue">The default value to return if the setting is not found.</param>
+    /// <returns>The setting value if found; otherwise, <paramref name="defaultValue"/>.</returns>
     public T GetValue<T>(string key, T defaultValue) where T : struct
     {
         // Check cache first - only use if type matches exactly (struct is copied by value)
@@ -91,6 +120,12 @@ public class Settings : ISettings
         return defaultValue;
     }
 
+    /// <summary>
+    /// Sets a setting value and persists it to disk.
+    /// </summary>
+    /// <typeparam name="T">The type of the setting value.</typeparam>
+    /// <param name="key">The setting key.</param>
+    /// <param name="value">The value to set.</param>
     public void SetValue<T>(string key, T value) where T : struct
     {
         var jsonValue = JsonSerializer.SerializeToNode(value);

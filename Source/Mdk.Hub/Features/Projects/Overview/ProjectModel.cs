@@ -145,8 +145,15 @@ public class ProjectModel : ViewModel
     /// </summary>
     public ICommand RemoveFromHubCommand => _removeFromHubCommand;
 
+    /// <summary>
+    ///     Determines whether the project can be deleted.
+    /// </summary>
+    /// <returns>Always returns true.</returns>
     public bool CanDelete() => true;
 
+    /// <summary>
+    ///     Removes the project from Hub without deleting files from disk.
+    /// </summary>
     public async Task RemoveFromHubAsync()
     {
         if (!CanDelete())
@@ -180,6 +187,9 @@ public class ProjectModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Permanently deletes the project directory and files from disk.
+    /// </summary>
     public async Task DeleteAsync()
     {
         if (!CanDelete())
@@ -219,6 +229,13 @@ public class ProjectModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Determines whether this project matches the specified search and type filters.
+    /// </summary>
+    /// <param name="searchText">Text to search in the project name.</param>
+    /// <param name="mustBeMod">If true, only Mod projects pass the filter.</param>
+    /// <param name="mustBeScript">If true, only ProgrammableBlock projects pass the filter.</param>
+    /// <returns>True if the project matches all specified filters.</returns>
     public bool MatchesFilter(string searchText, bool mustBeMod, bool mustBeScript)
     {
         if (mustBeMod && Type != ProjectType.Mod)
@@ -233,6 +250,7 @@ public class ProjectModel : ViewModel
     /// <summary>
     ///     Updates this model's properties from a ProjectInfo without losing UI state.
     /// </summary>
+    /// <param name="projectInfo">The source ProjectInfo containing updated values.</param>
     public void UpdateFromProjectInfo(ProjectInfo projectInfo)
     {
         Name = projectInfo.Name;

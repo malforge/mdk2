@@ -7,6 +7,9 @@ using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Diagnostics;
 
+/// <summary>
+/// File-based logger that writes log entries to disk and maintains log rotation.
+/// </summary>
 [Singleton<ILogger>]
 public class FileLogger : ILogger
 {
@@ -15,6 +18,9 @@ public class FileLogger : ILogger
     readonly string _logFilePath;
     readonly int _maxLogFiles = 7; // Keep last 7 days
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileLogger"/> class and sets up log file rotation.
+    /// </summary>
     public FileLogger()
     {
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -80,24 +86,64 @@ public class FileLogger : ILogger
         });
     }
 
+    /// <summary>
+    /// Logs a debug message.
+    /// </summary>
+    /// <param name="message">The message to log.</param>
+    /// <param name="filePath">The source file path (automatically captured).</param>
+    /// <param name="lineNumber">The source line number (automatically captured).</param>
+    /// <param name="memberName">The calling member name (automatically captured).</param>
     public void Debug(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Debug, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
+    /// <summary>
+    /// Logs an informational message.
+    /// </summary>
+    /// <param name="message">The message to log.</param>
+    /// <param name="filePath">The source file path (automatically captured).</param>
+    /// <param name="lineNumber">The source line number (automatically captured).</param>
+    /// <param name="memberName">The calling member name (automatically captured).</param>
     public void Info(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Info, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
+    /// <summary>
+    /// Logs a warning message.
+    /// </summary>
+    /// <param name="message">The message to log.</param>
+    /// <param name="filePath">The source file path (automatically captured).</param>
+    /// <param name="lineNumber">The source line number (automatically captured).</param>
+    /// <param name="memberName">The calling member name (automatically captured).</param>
     public void Warning(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Warning, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
+    /// <summary>
+    /// Logs an error message.
+    /// </summary>
+    /// <param name="message">The message to log.</param>
+    /// <param name="filePath">The source file path (automatically captured).</param>
+    /// <param name="lineNumber">The source line number (automatically captured).</param>
+    /// <param name="memberName">The calling member name (automatically captured).</param>
     public void Error(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Error, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
+    /// <summary>
+    /// Logs an error message with an associated exception.
+    /// </summary>
+    /// <param name="message">The message to log.</param>
+    /// <param name="exception">The exception to log.</param>
+    /// <param name="filePath">The source file path (automatically captured).</param>
+    /// <param name="lineNumber">The source line number (automatically captured).</param>
+    /// <param name="memberName">The calling member name (automatically captured).</param>
     public void Error(string message, Exception exception, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         var fullMessage = $"{message}\nException: {exception.GetType().Name}: {exception.Message}\nStack Trace:\n{exception.StackTrace}";
         WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Error, Message = fullMessage, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName, Exception = exception });
     }
 
+    /// <summary>
+    /// Gets the full path to the current log file.
+    /// </summary>
+    /// <returns>The log file path.</returns>
     public string GetLogFilePath() => _logFilePath;
 
     void WriteLog(LogEntry entry)

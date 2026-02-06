@@ -33,6 +33,14 @@ public class UpdateManager : IUpdateManager
     readonly TemplateUpdater _templateUpdater;
     int _isChecking; // 0 = not checking, 1 = checking
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="UpdateManager"/> class.
+    /// </summary>
+    /// <param name="logger">The logger for diagnostic output.</param>
+    /// <param name="nuGetService">The service for interacting with NuGet repositories.</param>
+    /// <param name="gitHubService">The service for interacting with GitHub.</param>
+    /// <param name="settings">The settings manager for user preferences.</param>
+    /// <param name="shell">The shell interface for UI interactions.</param>
     public UpdateManager(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings, IShell shell)
     {
         _logger = logger;
@@ -53,8 +61,15 @@ public class UpdateManager : IUpdateManager
         _shell.RefreshRequested += OnRefreshRequested;
     }
 
+    /// <summary>
+    ///     Gets the most recent version check results, or null if no check has completed yet.
+    /// </summary>
     public VersionCheckCompletedEventArgs? LastKnownVersions { get; private set; }
 
+    /// <summary>
+    ///     Registers a callback to be invoked when version check completes.
+    ///     If a check has already completed, invokes immediately with cached results.
+    /// </summary>
     public void WhenVersionCheckUpdates(Action<VersionCheckCompletedEventArgs> callback)
     {
         if (LastKnownVersions != null)
@@ -62,6 +77,10 @@ public class UpdateManager : IUpdateManager
         _completionCallbacks.Add(callback);
     }
 
+    /// <summary>
+    ///     Checks for updates to Hub, templates, and NuGet packages.
+    ///     Returns true if the check completed successfully, false if already checking or if an error occurred.
+    /// </summary>
     public async Task<bool> CheckForUpdatesAsync()
     {
         // Reentry guard
@@ -108,6 +127,9 @@ public class UpdateManager : IUpdateManager
         }
     }
 
+    /// <summary>
+    ///     Checks whether the MDK² template package is currently installed.
+    /// </summary>
     public async Task<bool> IsTemplateInstalledAsync()
     {
         try
@@ -147,6 +169,10 @@ public class UpdateManager : IUpdateManager
         }
     }
 
+    /// <summary>
+    ///     Installs the MDK² template package using the dotnet CLI.
+    ///     Respects the user's prerelease preference from settings.
+    /// </summary>
     public async Task InstallTemplateAsync()
     {
         try
@@ -194,6 +220,9 @@ public class UpdateManager : IUpdateManager
         }
     }
 
+    /// <summary>
+    ///     Checks whether the .NET SDK is installed and returns its version.
+    /// </summary>
     public async Task<(bool IsInstalled, string? Version)> CheckDotNetSdkAsync()
     {
         try
@@ -237,6 +266,9 @@ public class UpdateManager : IUpdateManager
         }
     }
 
+    /// <summary>
+    ///     Installs the .NET 9 SDK for the current platform (Windows or Linux).
+    /// </summary>
     public async Task InstallDotNetSdkAsync()
     {
         try
@@ -565,6 +597,9 @@ public class UpdateManager : IUpdateManager
 
     // IUpdateManager update execution methods
 
+    /// <summary>
+    ///     Executes a Hub update using the latest version information from the last successful check.
+    /// </summary>
     public Task<UpdateResult> UpdateHubAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         if (LastKnownVersions?.HubVersion == null)
@@ -579,6 +614,9 @@ public class UpdateManager : IUpdateManager
         return _hubUpdater.UpdateAsync(LastKnownVersions.HubVersion, progress, cancellationToken);
     }
 
+    /// <summary>
+    ///     Executes a template package update using the latest version information from the last successful check.
+    /// </summary>
     public Task<UpdateResult> UpdateTemplatesAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         if (LastKnownVersions?.TemplatePackage == null)
@@ -593,16 +631,25 @@ public class UpdateManager : IUpdateManager
         return _templateUpdater.UpdateAsync(LastKnownVersions.TemplatePackage, progress, cancellationToken);
     }
 
+    /// <summary>
+    ///     Updates all MDK² NuGet packages in the specified project to the latest available versions.
+    /// </summary>
     public Task<UpdateResult> UpdateProjectPackagesAsync(CanonicalPath projectPath, IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
     {
         return _packageUpdater.UpdateProjectAsync(projectPath, progress, cancellationToken);
     }
 
+    /// <summary>
+    ///     Checks whether the specified project has a package backup available for rollback.
+    /// </summary>
     public Task<bool> CanRollbackProjectAsync(CanonicalPath projectPath)
     {
         return _packageUpdater.CanRollbackAsync(projectPath);
     }
 
+    /// <summary>
+    ///     Rolls back NuGet package updates in the specified project to their previous versions.
+    /// </summary>
     public Task<UpdateResult> RollbackProjectPackagesAsync(CanonicalPath projectPath)
     {
         return _packageUpdater.RollbackProjectAsync(projectPath);

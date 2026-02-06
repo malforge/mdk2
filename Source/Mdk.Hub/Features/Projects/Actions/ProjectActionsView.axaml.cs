@@ -9,11 +9,17 @@ using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
+/// <summary>
+///     Main view for the project actions panel with sliding options drawer.
+/// </summary>
 [Singleton]
 public partial class ProjectActionsView : UserControl
 {
     ProjectActionsViewModel? _currentViewModel;
 
+    /// <summary>
+    ///     Initializes a new instance of the ProjectActionsView class.
+    /// </summary>
     public ProjectActionsView()
     {
         InitializeComponent();

@@ -17,6 +17,9 @@ public partial class DangerBoxView : UserControl
     ShakingBehavior? _shakingBehavior;
     DangerBoxViewModel? _trackedDataContext;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="DangerBoxView"/> class.
+    /// </summary>
     public DangerBoxView()
     {
         InitializeComponent();
@@ -24,6 +27,9 @@ public partial class DangerBoxView : UserControl
         _focusBehavior = new InitialFocusBehavior(this);
     }
 
+    /// <summary>
+    ///     Called when the control's DataContext changes. Updates event subscriptions.
+    /// </summary>
     protected override void OnDataContextChanged(EventArgs e)
     {
         if (_trackedDataContext is not null)
@@ -38,6 +44,9 @@ public partial class DangerBoxView : UserControl
 
     void OnBadVerificationPhrase(object? sender, EventArgs e) => _ = _shakingBehavior?.ShakeAsync() ?? Task.CompletedTask;
 
+    /// <summary>
+    ///     Called when the control is unloaded. Cleans up resources.
+    /// </summary>
     protected override void OnUnloaded(RoutedEventArgs e)
     {
         _shakingBehavior?.Dispose();

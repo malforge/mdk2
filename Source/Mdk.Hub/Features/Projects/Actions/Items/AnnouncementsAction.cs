@@ -22,6 +22,12 @@ public class AnnouncementsAction : ActionItem
     readonly IShell _shell;
     Announcement? _currentAnnouncement;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="AnnouncementsAction"/> class.
+    /// </summary>
+    /// <param name="shell">The shell interface for UI interactions.</param>
+    /// <param name="announcementService">The service for managing announcements.</param>
+    /// <param name="logger">The logger for diagnostic output.</param>
     public AnnouncementsAction(IShell shell, IAnnouncementService announcementService, ILogger logger)
     {
         _shell = shell;
@@ -54,11 +60,24 @@ public class AnnouncementsAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets the action category (null = no category, appears at top).
+    /// </summary>
     public override string? Category => null; // No category - appears at top
+    
+    /// <summary>
+    ///     Gets whether this is a global action (not project-specific).
+    /// </summary>
     public override bool IsGlobal => true; // Global action, not project-specific
 
+    /// <summary>
+    ///     Determines whether this action should be shown in the UI.
+    /// </summary>
     public override bool ShouldShow() => CurrentAnnouncement != null;
 
+    /// <summary>
+    ///     Gets or sets the current announcement to display.
+    /// </summary>
     public Announcement? CurrentAnnouncement
     {
         get => _currentAnnouncement;
@@ -73,7 +92,14 @@ public class AnnouncementsAction : ActionItem
         }
     }
 
+    /// <summary>
+    ///     Gets the command to dismiss the current announcement.
+    /// </summary>
     public ICommand DismissCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to open the announcement link in a browser.
+    /// </summary>
     public ICommand OpenLinkCommand { get; }
 
     void OnAnnouncementAvailable(Announcement announcement)

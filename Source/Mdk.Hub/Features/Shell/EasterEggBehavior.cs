@@ -14,14 +14,27 @@ namespace Mdk.Hub.Features.Shell;
 /// </summary>
 public static class EasterEggBehavior
 {
+    /// <summary>
+    ///     Attached property to enable or disable the easter egg behavior on a control.
+    /// </summary>
     public static readonly AttachedProperty<bool> IsEnabledProperty =
         AvaloniaProperty.RegisterAttached<Control, bool>("IsEnabled", typeof(EasterEggBehavior));
 
     static readonly AttachedProperty<EasterEggAttachment?> AttachmentProperty =
         AvaloniaProperty.RegisterAttached<Control, EasterEggAttachment?>("Attachment", typeof(EasterEggBehavior));
 
+    /// <summary>
+    ///     Gets the value of the IsEnabled attached property for the specified control.
+    /// </summary>
+    /// <param name="control">The control to get the property value from.</param>
+    /// <returns>True if the easter egg behavior is enabled on the control.</returns>
     public static bool GetIsEnabled(Control control) => control.GetValue(IsEnabledProperty);
 
+    /// <summary>
+    ///     Sets the value of the IsEnabled attached property for the specified control.
+    /// </summary>
+    /// <param name="control">The control to set the property value on.</param>
+    /// <param name="value">True to enable the easter egg behavior.</param>
     public static void SetIsEnabled(Control control, bool value) => control.SetValue(IsEnabledProperty, value);
 
     static EasterEggBehavior()

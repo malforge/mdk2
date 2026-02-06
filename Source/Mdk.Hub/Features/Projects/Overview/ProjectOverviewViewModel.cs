@@ -14,18 +14,6 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects.Overview;
 
 /// <summary>
-///     Event arguments for when a project should be displayed in the Hub.
-/// </summary>
-/// <param name="project">The project to show.</param>
-public class ShowProjectEventArgs(ProjectModel project) : EventArgs
-{
-    /// <summary>
-    ///     Gets the project that should be displayed.
-    /// </summary>
-    public ProjectModel Project { get; } = project;
-}
-
-/// <summary>
 ///     View model for the project overview page that displays all registered projects.
 /// </summary>
 [Singleton]
@@ -228,12 +216,12 @@ public class ProjectOverviewViewModel : ViewModel
     }
 
     /// <summary>
-    ///     Raised when a request is made to show a specific project in the hub.
+    ///     Event arguments for requesting a project to be shown in the UI.
     /// </summary>
     public event EventHandler<ShowProjectEventArgs>? ShowProjectRequested;
 
     /// <summary>
-    ///     Clears the search filter.
+    ///     Clears the current search filter text.
     /// </summary>
     public void ClearSearch()
     {
@@ -457,6 +445,10 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Navigates to and selects a specific project in the overview.
+    /// </summary>
+    /// <param name="projectPath">Path to the project to navigate to.</param>
     public void NavigateToProject(CanonicalPath projectPath)
     {
         // Find the project in the ALL projects list

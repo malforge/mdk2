@@ -207,19 +207,3 @@ public class NewProjectDialogViewModel : OverlayModel
         Dismiss();
     }
 }
-
-public readonly struct NewProjectDialogMessage
-{
-    public required string Title { get; init; }
-    public required string Message { get; init; }
-    public required ProjectType ProjectType { get; init; }
-    public string DefaultLocation { get; init; }
-    public string OkText { get; init; }
-    public string CancelText { get; init; }
-}
-
-public readonly struct NewProjectDialogResult
-{
-    public required string ProjectName { get; init; }
-    public required string Location { get; init; }
-}

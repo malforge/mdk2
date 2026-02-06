@@ -14,6 +14,9 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Settings;
 
+/// <summary>
+/// View model for the global settings overlay dialog.
+/// </summary>
 [Instance]
 [ViewModelFor<GlobalSettingsView>]
 public class GlobalSettingsViewModel : OverlayModel
@@ -31,6 +34,9 @@ public class GlobalSettingsViewModel : OverlayModel
     bool _includePrereleaseUpdates;
     bool _openedForLinuxValidation;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GlobalSettingsViewModel"/> class.
+    /// </summary>
     public GlobalSettingsViewModel(ISettings settings, IUpdateManager updateManager, IShell shell, ILogger logger)
     {
         _settings = settings;
@@ -73,12 +79,27 @@ public class GlobalSettingsViewModel : OverlayModel
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
     }
 
+    /// <summary>
+    /// Gets the command to save settings changes.
+    /// </summary>
     public ICommand SaveCommand => _saveCommand;
+    /// <summary>
+    /// Gets the command to cancel settings changes.
+    /// </summary>
     public ICommand CancelCommand => _cancelCommand;
+    /// <summary>
+    /// Gets the command to check prerequisites (SDK, templates).
+    /// </summary>
     public ICommand CheckPrerequisitesCommand => _checkPrerequisitesCommand;
     
+    /// <summary>
+    /// Event raised when the first invalid field should be focused.
+    /// </summary>
     public event EventHandler? FocusFirstInvalidField;
     
+    /// <summary>
+    /// Marks the dialog as having been opened for Linux validation purposes.
+    /// </summary>
     public void MarkAsOpenedForLinuxValidation()
     {
         _openedForLinuxValidation = true;
@@ -93,6 +114,9 @@ public class GlobalSettingsViewModel : OverlayModel
         });
     }
 
+    /// <summary>
+    /// Gets or sets the custom script output path. Required on Linux.
+    /// </summary>
     public string CustomAutoScriptOutputPath
     {
         get => _customAutoScriptOutputPath;
@@ -106,6 +130,9 @@ public class GlobalSettingsViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the custom mod output path. Required on Linux.
+    /// </summary>
     public string CustomAutoModOutputPath
     {
         get => _customAutoModOutputPath;
@@ -119,6 +146,9 @@ public class GlobalSettingsViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the custom Space Engineers binary path. Required on Linux.
+    /// </summary>
     public string CustomAutoBinaryPath
     {
         get => _customAutoBinaryPath;
@@ -132,29 +162,53 @@ public class GlobalSettingsViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether to include prerelease updates when checking for updates.
+    /// </summary>
     public bool IncludePrereleaseUpdates
     {
         get => _includePrereleaseUpdates;
         set => SetProperty(ref _includePrereleaseUpdates, value);
     }
     
+    /// <summary>
+    /// Gets whether the application is running on Linux.
+    /// </summary>
     public bool IsLinux => App.IsLinux;
     
+    /// <summary>
+    /// Gets whether the script path has a validation error.
+    /// </summary>
     public bool HasScriptPathError => !string.IsNullOrWhiteSpace(ScriptPathValidationError);
+    /// <summary>
+    /// Gets whether the mod path has a validation error.
+    /// </summary>
     public bool HasModPathError => !string.IsNullOrWhiteSpace(ModPathValidationError);
+    /// <summary>
+    /// Gets whether the binary path has a validation error.
+    /// </summary>
     public bool HasBinaryPathError => !string.IsNullOrWhiteSpace(BinaryPathValidationError);
     
+    /// <summary>
+    /// Gets the validation error message for the script path, if any.
+    /// </summary>
     public string? ScriptPathValidationError =>
         App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoScriptOutputPath) || _customAutoScriptOutputPath == "auto")
             ? "⚠ Please set a valid path" 
             : null;
     
-    public string? ModPathValidationError => 
+    /// <summary>
+    /// Gets the validation error message for the mod path, if any.
+    /// </summary>
+    public string? ModPathValidationError =>
         App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoModOutputPath) || _customAutoModOutputPath == "auto")
             ? "⚠ Please set a valid path" 
             : null;
     
-    public string? BinaryPathValidationError => 
+    /// <summary>
+    /// Gets the validation error message for the binary path, if any.
+    /// </summary>
+    public string? BinaryPathValidationError =>
         App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoBinaryPath) || _customAutoBinaryPath == "auto")
             ? "⚠ Please set a valid path" 
             : App.IsLinux && !string.IsNullOrWhiteSpace(_customAutoBinaryPath) && !IsValidBinaryPath(_customAutoBinaryPath)

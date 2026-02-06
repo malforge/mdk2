@@ -8,8 +8,14 @@ using Avalonia.Threading;
 
 namespace Mdk.Hub.Features.Snackbars;
 
+/// <summary>
+///     Window displaying temporary notification messages (snackbars/toasts).
+/// </summary>
 public partial class SnackbarWindow : Window
 {
+    /// <summary>
+    ///     Initializes a new instance of the SnackbarWindow class.
+    /// </summary>
     public SnackbarWindow()
     {
         InitializeComponent();

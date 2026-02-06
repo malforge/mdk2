@@ -11,27 +11,6 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
-///     Interface for managing the registry of known MDK projects.
-/// </summary>
-public interface IProjectRegistry
-{
-    /// <summary>
-    ///     Gets all registered projects.
-    /// </summary>
-    IReadOnlyList<ProjectInfo> GetProjects();
-
-    /// <summary>
-    ///     Adds or updates a project in the registry.
-    /// </summary>
-    void AddOrUpdateProject(ProjectInfo project);
-
-    /// <summary>
-    ///     Removes a project from the registry.
-    /// </summary>
-    void RemoveProject(string projectPath);
-}
-
-/// <summary>
 ///     Stores and manages the registry of known MDK projects.
 ///     Projects are persisted to %appdata%\MDK2\Hub\projects.json
 /// </summary>
@@ -43,6 +22,10 @@ public class ProjectRegistry : IProjectRegistry
     readonly string _versionFilesPath;
     List<ProjectInfo> _projects = new();
 
+    /// <summary>
+    ///     Initializes a new instance of the ProjectRegistry class.
+    /// </summary>
+    /// <param name="logger">Logger for diagnostic output.</param>
     public ProjectRegistry(ILogger logger)
     {
         _logger = logger;

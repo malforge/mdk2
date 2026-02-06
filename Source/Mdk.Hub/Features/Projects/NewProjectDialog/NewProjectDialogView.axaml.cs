@@ -7,9 +7,15 @@ using Mdk.Hub.Features.Projects.Overview;
 
 namespace Mdk.Hub.Features.Projects.NewProjectDialog;
 
+/// <summary>
+///     User control for creating new projects with name and location input.
+/// </summary>
 [Instance]
 public partial class NewProjectDialogView : UserControl
 {
+    /// <summary>
+    ///     Initializes a new instance of the NewProjectDialogView class.
+    /// </summary>
     public NewProjectDialogView()
     {
         InitializeComponent();
@@ -17,6 +23,9 @@ public partial class NewProjectDialogView : UserControl
         Loaded += OnLoaded;
     }
 
+    /// <summary>
+    ///     Gets design-time sample data for visual preview.
+    /// </summary>
     public static NewProjectDialogMessage DesignMessage => new()
     {
         Title = "Create New Project",

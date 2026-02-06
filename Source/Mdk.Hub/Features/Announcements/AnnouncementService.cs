@@ -13,6 +13,9 @@ using Mdk.Hub.Features.Settings;
 
 namespace Mdk.Hub.Features.Announcements;
 
+/// <summary>
+/// Service that checks for and manages announcements from the MDK² project.
+/// </summary>
 [Singleton<IAnnouncementService>]
 public class AnnouncementService : IAnnouncementService
 {
@@ -25,6 +28,9 @@ public class AnnouncementService : IAnnouncementService
     readonly ILogger _logger;
     int _isChecking; // 0 = not checking, 1 = checking
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AnnouncementService"/> class.
+    /// </summary>
     public AnnouncementService(ILogger logger, ISettings settings)
     {
         _logger = logger;
@@ -38,10 +44,19 @@ public class AnnouncementService : IAnnouncementService
             AutoCheckInterval);
     }
 
+    /// <summary>
+    /// Gets the last known announcement that was fetched from the server.
+    /// </summary>
     public Announcement? LastKnownAnnouncement { get; private set; }
 
+    /// <summary>
+    /// Event raised when a new announcement is available.
+    /// </summary>
     public event EventHandler<Announcement>? AnnouncementChanged;
 
+    /// <summary>
+    /// Registers a callback to be invoked when an announcement is available.
+    /// </summary>
     public void WhenAnnouncementAvailable(Action<Announcement> callback)
     {
         _logger.Info($"WhenAnnouncementAvailable called. LastKnownAnnouncement: {(LastKnownAnnouncement != null ? LastKnownAnnouncement.Id : "null")}");
@@ -57,6 +72,9 @@ public class AnnouncementService : IAnnouncementService
         }
     }
 
+    /// <summary>
+    /// Checks for announcements, respecting the cache expiry time.
+    /// </summary>
     public async Task<bool> CheckForAnnouncementsAsync()
     {
         // Check cache expiry
@@ -69,12 +87,18 @@ public class AnnouncementService : IAnnouncementService
         return await PerformCheckAsync();
     }
 
+    /// <summary>
+    /// Forces an immediate check for announcements, bypassing the cache.
+    /// </summary>
     public async Task<bool> ForceCheckAsync()
     {
         _logger.Info("Force checking for announcements");
         return await PerformCheckAsync();
     }
 
+    /// <summary>
+    /// Dismisses an announcement by its ID so it won't be shown again.
+    /// </summary>
     public void DismissAnnouncement(string announcementId)
     {
         if (string.IsNullOrEmpty(announcementId))
@@ -89,6 +113,9 @@ public class AnnouncementService : IAnnouncementService
         }
     }
 
+    /// <summary>
+    /// Checks whether an announcement has been dismissed.
+    /// </summary>
     public bool IsAnnouncementDismissed(string announcementId) => _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).DismissedAnnouncementIds.Contains(announcementId);
 
     async Task<bool> PerformCheckAsync()

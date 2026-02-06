@@ -24,6 +24,11 @@ public class ApiDocsAction : ActionItem
     string? _icon;
     string? _title;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ApiDocsAction"/> class.
+    /// </summary>
+    /// <param name="projectService">The service for managing projects.</param>
+    /// <param name="logger">The logger for diagnostic output.</param>
     public ApiDocsAction(IProjectService projectService, ILogger logger)
     {
         _projectService = projectService;
@@ -40,26 +45,41 @@ public class ApiDocsAction : ActionItem
         UpdateDescription();
     }
 
+    /// <summary>
+    ///     Gets the action category.
+    /// </summary>
     public override string Category => "Project";
 
+    /// <summary>
+    ///     Gets or sets the action title.
+    /// </summary>
     public string? Title
     {
         get => _title;
         set => SetProperty(ref _title, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the action description.
+    /// </summary>
     public string? Description
     {
         get => _description;
         set => SetProperty(ref _description, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the action icon.
+    /// </summary>
     public string? Icon
     {
         get => _icon;
         set => SetProperty(ref _icon, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the command to execute when the action is invoked.
+    /// </summary>
     public ICommand? ExecuteCommand
     {
         get => _executeCommand;
@@ -89,6 +109,9 @@ public class ApiDocsAction : ActionItem
             : "Open the API documentation for mods";
     }
 
+    /// <summary>
+    ///     Determines whether this action should be shown in the UI.
+    /// </summary>
     public override bool ShouldShow() =>
         // Show when a project is selected
         !_projectService.State.SelectedProject.IsEmpty();

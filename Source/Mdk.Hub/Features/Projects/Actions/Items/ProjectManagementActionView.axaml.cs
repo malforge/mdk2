@@ -4,9 +4,15 @@ using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+/// <summary>
+///     View for project management actions (create, add existing).
+/// </summary>
 [Instance]
 public partial class ProjectManagementActionView : UserControl
 {
+    /// <summary>
+    ///     Initializes a new instance of the ProjectManagementActionView class.
+    /// </summary>
     public ProjectManagementActionView()
     {
         InitializeComponent();
