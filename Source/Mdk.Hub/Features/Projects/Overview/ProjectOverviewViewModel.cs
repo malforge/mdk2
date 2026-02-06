@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;

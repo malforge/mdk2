@@ -1,5 +1,5 @@
 using System;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Settings;
 
 namespace Mdk.Hub.Features.Shell;

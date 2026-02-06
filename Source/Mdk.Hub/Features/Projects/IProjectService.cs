@@ -118,6 +118,15 @@ public interface IProjectService
     Task<ProjectData?> LoadProjectDataAsync(CanonicalPath projectPath);
 
     /// <summary>
+    /// Normalizes the project configuration by making sure the key properties are stored in the
+    /// appropriate layers, where things that logically should be machine-specific (e.g. output paths) are in the Local layer,
+    /// and things that should be shared (e.g. script class name) are in the Main layer.
+    /// </summary>
+    /// <param name="projectData"></param>
+    /// <returns></returns>
+    Task<ProjectData> NormalizeConfigurationAsync(ProjectData projectData);    
+    
+    /// <summary>
     ///     Saves project configuration data back to INI files, preserving comments and custom keys.
     /// </summary>
     /// <param name="projectData">The project data to save.</param>

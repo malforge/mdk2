@@ -136,8 +136,6 @@ public class Ini
             return start < text.Length;
         }
 
-        var addNewline = false;
-
         var index = 0;
         var lineNumber = 0;
         while (tryReadLine(ini, ref index, out var line))

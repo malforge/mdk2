@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Projects.Overview;
 
 namespace Mdk.Hub.Features.Projects.NewProjectDialog;

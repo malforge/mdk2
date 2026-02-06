@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.About;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Actions.Items;

@@ -38,9 +38,9 @@ public class ProjectOptionsViewModel : ViewModel
 
     readonly AsyncRelayCommand _saveCommand;
     readonly IShell _shell;
-    ProjectData? _projectData;
     string? _defaultBinaryPath;
     bool _defaultBinaryPathLoaded;
+    ProjectData? _projectData;
 
     public ProjectOptionsViewModel(string projectPath, IProjectService projectService, IShell dialogShell, IShell shell, ILogger logger, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
@@ -54,7 +54,7 @@ public class ProjectOptionsViewModel : ViewModel
 
         _saveCommand = new AsyncRelayCommand(Save);
         _cancelCommand = new RelayCommand(Cancel);
-        _normalizeConfigurationCommand = new AsyncRelayCommand(NormalizeConfiguration);
+        _normalizeConfigurationCommand = new AsyncRelayCommand(NormalizeConfigurationAsync);
         _clearLocalInteractiveCommand = new RelayCommand(ClearLocalInteractive);
         _clearLocalOutputPathCommand = new RelayCommand(ClearLocalOutputPath);
         _clearLocalBinaryPathCommand = new RelayCommand(ClearLocalBinaryPath);
@@ -130,32 +130,32 @@ public class ProjectOptionsViewModel : ViewModel
             {
                 if (local.Type != null)
                 {
-                    _logger.Info($"Configuration non-standard: Local has Type");
+                    _logger.Info("Configuration non-standard: Local has Type");
                     return false;
                 }
                 if (local.Namespaces != null)
                 {
-                    _logger.Info($"Configuration non-standard: Local has Namespaces");
+                    _logger.Info("Configuration non-standard: Local has Namespaces");
                     return false;
                 }
                 if (local.Ignores != null)
                 {
-                    _logger.Info($"Configuration non-standard: Local has Ignores");
+                    _logger.Info("Configuration non-standard: Local has Ignores");
                     return false;
                 }
                 if (local.Minify != null)
                 {
-                    _logger.Info($"Configuration non-standard: Local has Minify");
+                    _logger.Info("Configuration non-standard: Local has Minify");
                     return false;
                 }
                 if (local.MinifyExtraOptions != null)
                 {
-                    _logger.Info($"Configuration non-standard: Local has MinifyExtraOptions");
+                    _logger.Info("Configuration non-standard: Local has MinifyExtraOptions");
                     return false;
                 }
                 if (local.Trace != null)
                 {
-                    _logger.Info($"Configuration non-standard: Local has Trace");
+                    _logger.Info("Configuration non-standard: Local has Trace");
                     return false;
                 }
             }
@@ -262,9 +262,60 @@ public class ProjectOptionsViewModel : ViewModel
     public bool IsIgnoresOverridden => !string.IsNullOrWhiteSpace(LocalConfig.Ignores);
     public bool IsNamespacesOverridden => !string.IsNullOrWhiteSpace(LocalConfig.Namespaces);
 
+    async Task NormalizeConfigurationAsync()
+    {
+        // Show confirmation dialog
+        var result = await _dialogShell.ShowOverlayAsync(new ConfirmationMessage
+        {
+            Title = "Normalize Configuration?",
+            Message = "This will reorganize your configuration files to the standard layout:\n\n" + "• Output, Binary Path, and Interactive → mdk.local.ini\n" + "• All other settings → mdk.ini\n\n" + "Backup files will be created before making changes.\n\n" + "Continue?",
+            OkText = "Fix it",
+            CancelText = "Cancel"
+        });
+
+        if (!result)
+            return;
+
+        try
+        {
+            var migratedData = await _projectService.NormalizeConfigurationAsync(_projectData!);
+            // Save the normalized configuration
+            await _projectService.SaveProjectDataAsync(migratedData);
+
+            _shell.ShowToast("Configuration normalized successfully");
+
+            _onClose(true); // Close the dialog after normalization
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Configuration normalization failed for {ProjectName}", ex);
+            await _dialogShell.ShowOverlayAsync(new InformationMessage
+            {
+                Title = "Normalization Failed",
+                Message = $"Failed to normalize configuration:\n\n{ex.Message}\n\n" + "Your original files have not been modified.",
+                OkText = "OK"
+            });
+        }
+    }
+
     async void LoadConfiguration()
     {
-        await LoadConfigurationAsync();
+        try
+        {
+            await Task.Yield(); // Ensure this runs asynchronously to avoid blocking the UI on load
+            await LoadConfigurationAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.Error($"Failed to load configuration for project: {ProjectName}", e);
+            await _dialogShell.ShowOverlayAsync(new InformationMessage
+            {
+                Title = "Load Failed",
+                Message = "Failed to load project configuration.\n\nPlease check the configuration files for errors.",
+                OkText = "OK"
+            });
+            _onClose(false); // Close the dialog if we can't load the configuration
+        }
     }
 
     async Task LoadConfigurationAsync()
@@ -281,7 +332,7 @@ public class ProjectOptionsViewModel : ViewModel
         var effective = _projectData.Config.GetEffective();
 
         // Load all effective values into MainConfig (single plane editor)
-        MainConfig.Interactive = effective.Interactive.HasValue 
+        MainConfig.Interactive = effective.Interactive.HasValue
             ? ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value.Equals(effective.Interactive.ToString(), StringComparison.OrdinalIgnoreCase))
             : ConfigurationSectionViewModel.InteractiveOptionsList[0]; // Default: OpenHub
         MainConfig.OutputPath = effective.Output?.Value ?? "auto";
@@ -341,6 +392,7 @@ public class ProjectOptionsViewModel : ViewModel
             // Create updated ProjectData
             var updatedProjectData = new ProjectData
             {
+                Name = _projectData.Name,
                 MainIni = _projectData.MainIni,
                 LocalIni = _projectData.LocalIni,
                 MainIniPath = _projectData.MainIniPath,
@@ -383,139 +435,6 @@ public class ProjectOptionsViewModel : ViewModel
 
     void NotifyDirtyStateChanged() => _onDirtyStateChanged?.Invoke();
 
-    async Task NormalizeConfiguration()
-    {
-        if (_projectData == null)
-            return;
-
-        // Show confirmation dialog
-        var result = await _dialogShell.ShowOverlayAsync(new ConfirmationMessage
-        {
-            Title = "Normalize Configuration?",
-            Message = "This will reorganize your configuration files to the standard layout:\n\n" +
-                     "• Output, Binary Path, and Interactive → mdk.local.ini\n" +
-                     "• All other settings → mdk.ini\n\n" +
-                     "Backup files will be created before making changes.\n\n" +
-                     "Continue?",
-            OkText = "Fix it",
-            CancelText = "Cancel"
-        });
-
-        if (result == false)
-            return;
-
-        try
-        {
-            _logger.Info($"Starting configuration normalization for {ProjectName}");
-
-            // Create backup files
-            if (_projectData.MainIniPath != null && File.Exists(_projectData.MainIniPath))
-            {
-                var backupPath = _projectData.MainIniPath + ".backup";
-                File.Copy(_projectData.MainIniPath, backupPath, overwrite: true);
-                _logger.Info($"Created backup: {backupPath}");
-            }
-
-            if (_projectData.LocalIniPath != null && File.Exists(_projectData.LocalIniPath))
-            {
-                var backupPath = _projectData.LocalIniPath + ".backup";
-                File.Copy(_projectData.LocalIniPath, backupPath, overwrite: true);
-                _logger.Info($"Created backup: {backupPath}");
-            }
-
-            // Build correctly structured layers
-            var newMain = new ProjectConfigLayer
-            {
-                // Main should have: Type, Namespaces, Ignores, Minify, MinifyExtraOptions, Trace
-                Type = _projectData.Config.Main?.Type ?? _projectData.Config.Local?.Type,
-                Namespaces = _projectData.Config.Main?.Namespaces ?? _projectData.Config.Local?.Namespaces,
-                Ignores = _projectData.Config.Main?.Ignores ?? _projectData.Config.Local?.Ignores,
-                Minify = _projectData.Config.Main?.Minify ?? _projectData.Config.Local?.Minify,
-                MinifyExtraOptions = _projectData.Config.Main?.MinifyExtraOptions ?? _projectData.Config.Local?.MinifyExtraOptions,
-                Trace = _projectData.Config.Main?.Trace ?? _projectData.Config.Local?.Trace,
-                // Main should NOT have these:
-                Output = null,
-                BinaryPath = null,
-                Interactive = null
-            };
-
-            var newLocal = new ProjectConfigLayer
-            {
-                // Local should have: Output, BinaryPath, Interactive
-                Output = _projectData.Config.Local?.Output ?? _projectData.Config.Main?.Output,
-                BinaryPath = _projectData.Config.Local?.BinaryPath ?? _projectData.Config.Main?.BinaryPath,
-                Interactive = _projectData.Config.Local?.Interactive ?? _projectData.Config.Main?.Interactive,
-                // Local should NOT have these:
-                Type = null,
-                Namespaces = null,
-                Ignores = null,
-                Minify = null,
-                MinifyExtraOptions = null,
-                Trace = null
-            };
-
-            // Build migrated INIs: start with existing, remove misplaced known keys, update correct keys
-            var mainIni = _projectData.MainIni ?? new Ini();
-            // Remove known "local" keys from main
-            mainIni = mainIni.WithoutKey("mdk", "output");
-            mainIni = mainIni.WithoutKey("mdk", "binarypath");
-            mainIni = mainIni.WithoutKey("mdk", "interactive");
-            // Update known "main" keys
-            mainIni = ProjectConfigIniConverter.UpdateIniFromLayer(mainIni, "mdk", newMain, removeNulls: false);
-            
-            var localIni = _projectData.LocalIni ?? new Ini();
-            // Remove known "main" keys from local
-            localIni = localIni.WithoutKey("mdk", "type");
-            localIni = localIni.WithoutKey("mdk", "namespaces");
-            localIni = localIni.WithoutKey("mdk", "ignores");
-            localIni = localIni.WithoutKey("mdk", "minify");
-            localIni = localIni.WithoutKey("mdk", "minifyextraoptions");
-            localIni = localIni.WithoutKey("mdk", "trace");
-            // Update known "local" keys
-            localIni = ProjectConfigIniConverter.UpdateIniFromLayer(localIni, "mdk", newLocal, removeNulls: false);
-
-            // Normalization is complete - keys are in the right files with their existing comments preserved
-
-            // Create normalized ProjectData
-            var migratedData = new ProjectData
-            {
-                MainIni = mainIni,
-                LocalIni = localIni,
-                MainIniPath = _projectData.MainIniPath,
-                LocalIniPath = _projectData.LocalIniPath,
-                ProjectPath = _projectData.ProjectPath,
-                Config = new ProjectConfig
-                {
-                    Default = _projectData.Config.Default,
-                    Main = newMain,
-                    Local = newLocal
-                }
-            };
-
-            // Save the normalized configuration
-            await _projectService.SaveProjectDataAsync(migratedData);
-
-            _logger.Info($"Configuration normalization complete for {ProjectName}");
-
-            _shell.ShowToast("Configuration normalized successfully");
-            
-            // Close the drawer - operation is complete
-            // Configuration will reload automatically when drawer is opened again
-            _onClose(true);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Configuration normalization failed for {ProjectName}", ex);
-            await _dialogShell.ShowOverlayAsync(new InformationMessage
-            {
-                Title = "Normalization Failed",
-                Message = $"Failed to normalize configuration:\n\n{ex.Message}\n\n" +
-                         "Your original files have not been modified.",
-                OkText = "OK"
-            });
-        }
-    }
-
     void Cancel() => _onClose(false); // Cancelled
 
     void ClearLocalInteractive() => LocalConfig.Interactive = null;
@@ -538,21 +457,21 @@ public class ProjectOptionsViewModel : ViewModel
     {
         if (string.IsNullOrWhiteSpace(value))
             return null;
-        return Enum.TryParse<InteractiveMode>(value, ignoreCase: true, out var result) ? result : null;
+        return Enum.TryParse<InteractiveMode>(value, true, out var result) ? result : null;
     }
 
     MinifierLevel? ToMinifierLevel(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
             return null;
-        return Enum.TryParse<MinifierLevel>(value, ignoreCase: true, out var result) ? result : null;
+        return Enum.TryParse<MinifierLevel>(value, true, out var result) ? result : null;
     }
 
     MinifierExtraOptions? ToMinifierExtraOptions(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
             return null;
-        return Enum.TryParse<MinifierExtraOptions>(value, ignoreCase: true, out var result) ? result : null;
+        return Enum.TryParse<MinifierExtraOptions>(value, true, out var result) ? result : null;
     }
 
     bool? ToBool(string? value)

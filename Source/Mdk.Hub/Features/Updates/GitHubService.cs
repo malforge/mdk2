@@ -6,7 +6,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
 using NuGet.Versioning;
 

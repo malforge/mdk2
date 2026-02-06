@@ -1,5 +1,5 @@
 using Avalonia.Controls;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Shell;
 

@@ -6,7 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using JetBrains.Annotations;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 

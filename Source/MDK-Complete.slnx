@@ -21,11 +21,6 @@
       <Platform Project="x64" />
     </Project>
   </Folder>
-  <Folder Name="/SourceGenerators/">
-    <Project Path="DISourceGenerator\DISourceGenerator.csproj" Type="Classic C#">
-        <Platform Project="x64" />
-    </Project>
-  </Folder>
   <Folder Name="/Templates/">
     <Project Path="ScriptTemplates\content\0_Script\PbScript.csproj">
       <Platform Project="x64" />
@@ -53,7 +48,7 @@
   <Project Path="Mdk.Extractor\Mdk.Extractor.csproj">
     <Platform Project="x64" />
   </Project>
-  <Project Path="Mdk.Hub\Mdk.Hub.csproj" Type="Classic C#">
+  <Project Path="Mdk.Hub\Mdk.Hub.csproj" Type="C#">
       <Platform Project="x64" />
   </Project>
   <Project Path="Mdk.Notification\Mdk.Notification.csproj">

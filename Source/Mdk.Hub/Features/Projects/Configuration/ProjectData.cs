@@ -8,6 +8,11 @@ namespace Mdk.Hub.Features.Projects.Configuration;
 public class ProjectData
 {
     /// <summary>
+    /// The name of the project. This is not necessarily the same as the name of the .csproj file, and is not guaranteed to be unique. It is intended for display purposes only.
+    /// </summary>
+    public required string Name { get; init; }
+    
+    /// <summary>
     ///     The raw INI data from mdk.ini (null if file doesn't exist).
     /// </summary>
     public Ini? MainIni { get; init; }

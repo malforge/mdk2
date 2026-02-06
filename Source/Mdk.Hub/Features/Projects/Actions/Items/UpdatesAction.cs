@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;

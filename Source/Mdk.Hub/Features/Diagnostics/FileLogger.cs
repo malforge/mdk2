@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Diagnostics;
 

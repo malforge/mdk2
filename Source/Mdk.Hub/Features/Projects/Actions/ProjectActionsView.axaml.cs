@@ -5,7 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 

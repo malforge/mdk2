@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.LogicalTree;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Settings;
 

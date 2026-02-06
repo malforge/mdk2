@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.CommonDialogs;

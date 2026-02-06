@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Windows.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Actions;

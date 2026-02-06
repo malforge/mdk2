@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 

@@ -5,7 +5,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Actions;
 using Mdk.Hub.Framework;

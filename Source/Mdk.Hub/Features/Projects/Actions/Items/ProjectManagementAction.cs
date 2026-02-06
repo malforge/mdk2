@@ -5,7 +5,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Overview;

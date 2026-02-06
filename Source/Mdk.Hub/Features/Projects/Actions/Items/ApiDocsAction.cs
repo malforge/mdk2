@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Framework;

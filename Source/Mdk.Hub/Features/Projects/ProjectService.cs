@@ -10,7 +10,7 @@ using System.Xml.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Mal.DependencyInjection;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects.Configuration;
@@ -143,8 +143,8 @@ public class ProjectService : IProjectService
         var mainIni = projectData.MainIni ?? new Ini();
         if (projectData.Config.Main != null)
         {
-            mainIni = ProjectConfigIniConverter.UpdateIniFromLayer(mainIni, mdkSection, projectData.Config.Main, removeNulls: true, forceAutoForNullPaths: false);
-            
+            mainIni = UpdateIniFromLayer(mainIni, mdkSection, projectData.Config.Main, true);
+
             var mainIniPath = projectData.MainIniPath;
             if (string.IsNullOrEmpty(mainIniPath))
             {
@@ -163,11 +163,11 @@ public class ProjectService : IProjectService
         {
             // Special behavior: Output and BinaryPath are machine-specific and should be in local
             // If both Main and Local are null, explicitly write "auto" to local to make it visible
-            bool forceAutoForNullPaths = projectData.Config.Main?.Output == null && projectData.Config.Local.Output == null
-                                      || projectData.Config.Main?.BinaryPath == null && projectData.Config.Local.BinaryPath == null;
-            
-            localIni = ProjectConfigIniConverter.UpdateIniFromLayer(localIni, mdkSection, projectData.Config.Local, removeNulls: true, forceAutoForNullPaths: forceAutoForNullPaths);
-            
+            var forceAutoForNullPaths = (projectData.Config.Main?.Output == null && projectData.Config.Local.Output == null)
+                                        || (projectData.Config.Main?.BinaryPath == null && projectData.Config.Local.BinaryPath == null);
+
+            localIni = UpdateIniFromLayer(localIni, mdkSection, projectData.Config.Local, true, forceAutoForNullPaths);
+
             var localIniPath = projectData.LocalIniPath;
             if (string.IsNullOrEmpty(localIniPath))
             {
@@ -181,6 +181,103 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc/>
+    public async Task<ProjectData> NormalizeConfigurationAsync(ProjectData projectData)
+    {
+        if (projectData == null) throw new ArgumentNullException(nameof(projectData));
+        
+        _logger.Info($"Starting configuration normalization for {projectData.Name}");
+
+        // Create backup files
+        if (projectData.MainIniPath != null && File.Exists(projectData.MainIniPath))
+        {
+            var backupPath = projectData.MainIniPath + ".backup";
+            File.Copy(projectData.MainIniPath, backupPath, overwrite: true);
+            _logger.Info($"Created backup: {backupPath}");
+        }
+
+        if (projectData.LocalIniPath != null && File.Exists(projectData.LocalIniPath))
+        {
+            var backupPath = projectData.LocalIniPath + ".backup";
+            File.Copy(projectData.LocalIniPath, backupPath, overwrite: true);
+            _logger.Info($"Created backup: {backupPath}");
+        }
+
+        // Build correctly structured layers
+        var newMain = new ProjectConfigLayer
+        {
+            // Main should have: Type, Namespaces, Ignores, Minify, MinifyExtraOptions, Trace
+            Type = projectData.Config.Main?.Type ?? projectData.Config.Local?.Type,
+            Namespaces = projectData.Config.Main?.Namespaces ?? projectData.Config.Local?.Namespaces,
+            Ignores = projectData.Config.Main?.Ignores ?? projectData.Config.Local?.Ignores,
+            Minify = projectData.Config.Main?.Minify ?? projectData.Config.Local?.Minify,
+            MinifyExtraOptions = projectData.Config.Main?.MinifyExtraOptions ?? projectData.Config.Local?.MinifyExtraOptions,
+            Trace = projectData.Config.Main?.Trace ?? projectData.Config.Local?.Trace,
+            // Main should NOT have these:
+            Output = null,
+            BinaryPath = null,
+            Interactive = null
+        };
+
+        var newLocal = new ProjectConfigLayer
+        {
+            // Local should have: Output, BinaryPath, Interactive
+            Output = projectData.Config.Local?.Output ?? projectData.Config.Main?.Output,
+            BinaryPath = projectData.Config.Local?.BinaryPath ?? projectData.Config.Main?.BinaryPath,
+            Interactive = projectData.Config.Local?.Interactive ?? projectData.Config.Main?.Interactive,
+            // Local should NOT have these:
+            Type = null,
+            Namespaces = null,
+            Ignores = null,
+            Minify = null,
+            MinifyExtraOptions = null,
+            Trace = null
+        };
+
+        // Build migrated INIs: start with existing, remove misplaced known keys, update correct keys
+        var mainIni = projectData.MainIni ?? new Ini();
+        // Remove known "local" keys from main
+        mainIni = mainIni.WithoutKey("mdk", "output");
+        mainIni = mainIni.WithoutKey("mdk", "binarypath");
+        mainIni = mainIni.WithoutKey("mdk", "interactive");
+        // Update known "main" keys
+        mainIni = UpdateIniFromLayer(mainIni, "mdk", newMain, removeNulls: false);
+        
+        var localIni = projectData.LocalIni ?? new Ini();
+        // Remove known "main" keys from local
+        localIni = localIni.WithoutKey("mdk", "type");
+        localIni = localIni.WithoutKey("mdk", "namespaces");
+        localIni = localIni.WithoutKey("mdk", "ignores");
+        localIni = localIni.WithoutKey("mdk", "minify");
+        localIni = localIni.WithoutKey("mdk", "minifyextraoptions");
+        localIni = localIni.WithoutKey("mdk", "trace");
+        // Update known "local" keys
+        localIni = UpdateIniFromLayer(localIni, "mdk", newLocal, removeNulls: false);
+
+        // Normalization is complete - keys are in the right files with their existing comments preserved
+
+        // Create normalized ProjectData
+        var migratedData = new ProjectData
+        {
+            Name = projectData.Name,
+            MainIni = mainIni,
+            LocalIni = localIni,
+            MainIniPath = projectData.MainIniPath,
+            LocalIniPath = projectData.LocalIniPath,
+            ProjectPath = projectData.ProjectPath,
+            Config = new ProjectConfig
+            {
+                Default = projectData.Config.Default,
+                Main = newMain,
+                Local = newLocal
+            }
+        };
+        
+        _logger.Info($"Configuration normalization complete for {projectData.Name}");
+        
+        return migratedData;
+    }
+    
     /// <summary>
     ///     Loads project configuration into the new ProjectData model with typed layers.
     /// </summary>
@@ -240,6 +337,7 @@ public class ProjectService : IProjectService
 
         return new ProjectData
         {
+            Name = Path.GetFileNameWithoutExtension(projectPath.Value),
             MainIni = mainIni,
             LocalIni = localIni,
             MainIniPath = mainIniPath,
@@ -252,103 +350,6 @@ public class ProjectService : IProjectService
                 Local = localLayer
             }
         };
-    }
-
-    static ProjectConfigLayer ParseLayer(Ini? ini)
-    {
-        if (ini == null)
-            return new ProjectConfigLayer();
-
-        var section = ini["mdk"];
-
-        return new ProjectConfigLayer
-        {
-            Type = ParseProjectType(section.TryGet("type", out string? type) ? type : null),
-            Interactive = ParseInteractiveMode(section.TryGet("interactive", out string? interactive) ? interactive : null),
-            Trace = ParseBool(section.TryGet("trace", out string? trace) ? trace : null),
-            Minify = ParseMinifierLevel(section.TryGet("minify", out string? minify) ? minify : null),
-            MinifyExtraOptions = ParseMinifierExtraOptions(section.TryGet("minifyextraoptions", out string? minifyExtra) ? minifyExtra : null),
-            Ignores = ParseStringList(section.TryGet("ignores", out string? ignores) ? ignores : null),
-            Namespaces = ParseStringList(section.TryGet("namespaces", out string? namespaces) ? namespaces : null),
-            Output = ParsePath(section.TryGet("output", out string? output) ? output : null),
-            BinaryPath = ParsePath(section.TryGet("binarypath", out string? binaryPath) ? binaryPath : null)
-        };
-    }
-
-    static CanonicalPath? ParsePath(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-
-        value = value.Trim();
-
-        // "auto" keyword means null (auto-detect)
-        if (value.Equals("auto", StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        // Real path
-        try
-        {
-            return new CanonicalPath(value);
-        }
-        catch
-        {
-            // Invalid path, treat as null
-            return null;
-        }
-    }
-
-    static ProjectType? ParseProjectType(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        return Enum.TryParse<ProjectType>(value, ignoreCase: true, out var result) ? result : null;
-    }
-
-    static InteractiveMode? ParseInteractiveMode(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        return Enum.TryParse<InteractiveMode>(value, ignoreCase: true, out var result) ? result : null;
-    }
-
-    static bool? ParseBool(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        return value.Trim().ToLowerInvariant() switch
-        {
-            "on" or "true" or "yes" or "1" => true,
-            "off" or "false" or "no" or "0" => false,
-            _ => null
-        };
-    }
-
-    static MinifierLevel? ParseMinifierLevel(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        return Enum.TryParse<MinifierLevel>(value, ignoreCase: true, out var result) ? result : null;
-    }
-
-    static MinifierExtraOptions? ParseMinifierExtraOptions(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-        return Enum.TryParse<MinifierExtraOptions>(value, ignoreCase: true, out var result) ? result : null;
-    }
-
-    static ImmutableArray<string>? ParseStringList(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return null;
-
-        var items = value.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(item => item.Trim())
-            .Where(item => !string.IsNullOrWhiteSpace(item))
-            .ToArray();
-
-        return items.Length > 0 ? ImmutableArray.Create(items) : null;
     }
 
     public async Task<bool> CopyScriptToClipboardAsync(CanonicalPath projectPath)
@@ -364,14 +365,14 @@ public class ProjectService : IProjectService
 
             var config = projectData.Config.GetEffective();
             var outputPath = config.Output?.Value;
-            
+
             // Resolve "auto" to actual path
             if (string.Equals(outputPath, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPath))
             {
                 var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
                 if (string.IsNullOrEmpty(projectName))
                     return false;
-                    
+
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 outputPath = config.Type == ProjectType.ProgrammableBlock
                     ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
@@ -458,14 +459,14 @@ public class ProjectService : IProjectService
 
             var config = projectData.Config.GetEffective();
             var outputPath = config.Output?.Value;
-            
+
             // Resolve "auto" to actual path
             if (string.Equals(outputPath, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPath))
             {
                 var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
                 if (string.IsNullOrEmpty(projectName))
                     return false;
-                    
+
                 var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 outputPath = config.Type == ProjectType.ProgrammableBlock
                     ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
@@ -752,6 +753,103 @@ public class ProjectService : IProjectService
 
     public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateModProjectAsync(string projectName, string location) => await CreateProjectInternalAsync(projectName, location, "mdk2mod");
 
+    static ProjectConfigLayer ParseLayer(Ini? ini)
+    {
+        if (ini == null)
+            return new ProjectConfigLayer();
+
+        var section = ini["mdk"];
+
+        return new ProjectConfigLayer
+        {
+            Type = ParseProjectType(section.TryGet("type", out string? type) ? type : null),
+            Interactive = ParseInteractiveMode(section.TryGet("interactive", out string? interactive) ? interactive : null),
+            Trace = ParseBool(section.TryGet("trace", out string? trace) ? trace : null),
+            Minify = ParseMinifierLevel(section.TryGet("minify", out string? minify) ? minify : null),
+            MinifyExtraOptions = ParseMinifierExtraOptions(section.TryGet("minifyextraoptions", out string? minifyExtra) ? minifyExtra : null),
+            Ignores = ParseStringList(section.TryGet("ignores", out string? ignores) ? ignores : null),
+            Namespaces = ParseStringList(section.TryGet("namespaces", out string? namespaces) ? namespaces : null),
+            Output = ParsePath(section.TryGet("output", out string? output) ? output : null),
+            BinaryPath = ParsePath(section.TryGet("binarypath", out string? binaryPath) ? binaryPath : null)
+        };
+    }
+
+    static CanonicalPath? ParsePath(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        value = value.Trim();
+
+        // "auto" keyword means null (auto-detect)
+        if (value.Equals("auto", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        // Real path
+        try
+        {
+            return new CanonicalPath(value);
+        }
+        catch
+        {
+            // Invalid path, treat as null
+            return null;
+        }
+    }
+
+    static ProjectType? ParseProjectType(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<ProjectType>(value, true, out var result) ? result : null;
+    }
+
+    static InteractiveMode? ParseInteractiveMode(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<InteractiveMode>(value, true, out var result) ? result : null;
+    }
+
+    static bool? ParseBool(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "on" or "true" or "yes" or "1" => true,
+            "off" or "false" or "no" or "0" => false,
+            _ => null
+        };
+    }
+
+    static MinifierLevel? ParseMinifierLevel(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<MinifierLevel>(value, true, out var result) ? result : null;
+    }
+
+    static MinifierExtraOptions? ParseMinifierExtraOptions(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return Enum.TryParse<MinifierExtraOptions>(value, true, out var result) ? result : null;
+    }
+
+    static ImmutableArray<string>? ParseStringList(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var items = value.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(item => item.Trim())
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .ToArray();
+
+        return items.Length > 0 ? ImmutableArray.Create(items) : null;
+    }
+
     void OnProjectUpdateAvailable(object? sender, ProjectUpdateAvailableEventArgs e)
     {
         lock (_updateStatesLock)
@@ -772,7 +870,7 @@ public class ProjectService : IProjectService
             return true;
         }
 
-        errorMessage = $"The selected project is not a valid MDK² project. MDK² projects must have a mdk.ini or mdk.local.ini configuration file.";
+        errorMessage = "The selected project is not a valid MDK² project. MDK² projects must have a mdk.ini or mdk.local.ini configuration file.";
         return false;
     }
 
@@ -961,6 +1059,18 @@ public class ProjectService : IProjectService
 
     async void HandleBuildNotification(string projectName, string projectPath, bool isNewProject)
     {
+        try
+        {
+            await HandleBuildNotificationAsync(projectName, projectPath, isNewProject);
+        }
+        catch (Exception e)
+        {
+            _logger.Error($"Error handling build notification for {projectPath}", e);
+        }
+    }
+
+    async Task HandleBuildNotificationAsync(string projectName, string projectPath, bool isNewProject)
+    {
         // Load configuration to check notification preference
         var projectData = await LoadProjectDataAsync(new CanonicalPath(projectPath));
         var preference = projectData?.Config.GetEffective().Interactive?.ToString() ?? "";
@@ -1040,10 +1150,17 @@ public class ProjectService : IProjectService
         _snackbarService.Show(message, actions);
     }
 
-    void OnShowMe(object? ctx)
+    async void OnShowMe(object? ctx)
     {
-        if (ctx is string path)
-            OpenOutputFolderAsync(new CanonicalPath(path));
+        try
+        {
+            if (ctx is string path)
+                await OpenOutputFolderAsync(new CanonicalPath(path));
+        }
+        catch (Exception e)
+        {
+            _logger.Error("Failed to open output folder", e);
+        }
     }
 
     async void OnCopyToClipboard(object? ctx)
@@ -1120,5 +1237,52 @@ public class ProjectService : IProjectService
             _logger.Error($"Exception while creating project: {ex}");
             return (null, $"Unexpected error: {ex.Message}");
         }
+    }
+
+    static Ini UpdateIniFromLayer(Ini ini, string section, ProjectConfigLayer layer, bool removeNulls = false, bool forceAutoForNullPaths = false)
+    {
+        // Type - convert enum to lowercase string
+        ini = UpdateIniValue(ini, section, "type", layer.Type?.ToString().ToLowerInvariant(), removeNulls);
+
+        // Interactive - convert enum to PascalCase string (OpenHub, ShowNotification, DoNothing)
+        ini = UpdateIniValue(ini, section, "interactive", layer.Interactive?.ToString(), removeNulls);
+
+        // Trace - convert bool to "on"/"off"
+        ini = UpdateIniValue(ini, section, "trace", layer.Trace.HasValue ? layer.Trace.Value ? "on" : "off" : null, removeNulls);
+
+        // Minify - convert enum to lowercase string
+        ini = UpdateIniValue(ini, section, "minify", layer.Minify?.ToString().ToLowerInvariant(), removeNulls);
+
+        // MinifyExtraOptions - convert enum to lowercase string
+        ini = UpdateIniValue(ini, section, "minifyextraoptions", layer.MinifyExtraOptions?.ToString().ToLowerInvariant(), removeNulls);
+
+        // Ignores - convert array to comma-separated string
+        ini = UpdateIniValue(ini, section, "ignores", layer.Ignores.HasValue ? string.Join(",", layer.Ignores.Value) : null, removeNulls);
+
+        // Namespaces - convert array to comma-separated string
+        ini = UpdateIniValue(ini, section, "namespaces", layer.Namespaces.HasValue ? string.Join(",", layer.Namespaces.Value) : null, removeNulls);
+
+        // Output - CanonicalPath? (null = "auto" in INI)
+        var outputValue = layer.Output?.Value;
+        if (forceAutoForNullPaths && outputValue == null)
+            outputValue = "auto";
+        ini = UpdateIniValue(ini, section, "output", outputValue, removeNulls);
+
+        // BinaryPath - CanonicalPath? (null = "auto" in INI)  
+        var binaryPathValue = layer.BinaryPath?.Value;
+        if (forceAutoForNullPaths && binaryPathValue == null)
+            binaryPathValue = "auto";
+        ini = UpdateIniValue(ini, section, "binarypath", binaryPathValue, removeNulls);
+
+        return ini;
+    }
+
+    static Ini UpdateIniValue(Ini ini, string section, string key, string? value, bool removeNulls)
+    {
+        if (value == null && removeNulls)
+            return ini.WithoutKey(section, key);
+        if (value != null)
+            return ini.WithKey(section, key, value);
+        return ini;
     }
 }

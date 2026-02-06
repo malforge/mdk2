@@ -61,12 +61,12 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
+        <PackageReference Include="Mal.SourceGeneratedDI" Version="1.0.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2"/>
         <PackageReference Include="Velopack" Version="0.0.1298"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\DISourceGenerator\DISourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
     <ItemGroup>
