@@ -450,7 +450,7 @@ public class ProjectOptionsViewModel : ViewModel
         // Load all effective values into MainConfig (single plane editor)
         MainConfig.Interactive = effective.Interactive.HasValue
             ? ConfigurationSectionViewModel.InteractiveOptionsList.FirstOrDefault(o => o.Value.Equals(effective.Interactive.ToString(), StringComparison.OrdinalIgnoreCase))
-            : ConfigurationSectionViewModel.InteractiveOptionsList[0]; // Default: OpenHub
+            : ConfigurationSectionViewModel.InteractiveOptionsList[1]; // Default: ShowNotification
         MainConfig.OutputPath = effective.Output?.Value ?? "auto";
         MainConfig.BinaryPath = effective.BinaryPath?.Value ?? "auto";
         MainConfig.Minify = effective.Minify.HasValue

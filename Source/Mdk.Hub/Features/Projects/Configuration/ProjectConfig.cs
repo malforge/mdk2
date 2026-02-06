@@ -16,7 +16,7 @@ public class ProjectConfig
     public ProjectConfigLayer Default { get; init; } = new()
     {
         Type = null, // Type must be set explicitly in INI
-        Interactive = InteractiveMode.OpenHub,
+        Interactive = InteractiveMode.ShowNotification,
         Trace = false,
         Minify = MinifierLevel.None,
         MinifyExtraOptions = MinifierExtraOptions.None,

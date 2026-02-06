@@ -150,7 +150,7 @@ public class UpdatesAction : ActionItem
             if (SetProperty(ref _hubVersionInfo, value))
             {
                 UpdateStatusMessage();
-                OnPropertyChanged(nameof(UpdateHubButtonText));
+                UpdateHubButtonText = value?.IsPrerelease == true ? "Update Hub (prerelease)" : "Update Hub";
             }
         }
     }
@@ -164,10 +164,16 @@ public class UpdatesAction : ActionItem
         set => SetProperty(ref _statusMessage, value);
     }
 
+    string _updateHubButtonText = "Update Hub";
+
     /// <summary>
     ///     Gets the text for the Update Hub button.
     /// </summary>
-    public string UpdateHubButtonText => HubVersionInfo?.IsPrerelease == true ? "Update Hub (prerelease)" : "Update Hub";
+    public string UpdateHubButtonText
+    {
+        get => _updateHubButtonText;
+        private set => SetProperty(ref _updateHubButtonText, value);
+    }
 
     /// <summary>
     ///     Gets the command to update templates.

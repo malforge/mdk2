@@ -54,6 +54,9 @@ public class ProjectInfoAction : ActionItem
         ShowOptionsCommand = new RelayCommand(ShowOptions, CanShowOptions);
     }
 
+    bool _isScript;
+    string _projectTypeName = string.Empty;
+
     /// <summary>
     ///     Gets the single selected project, or null if zero or multiple projects are selected.
     ///     Compatibility property for single-select actions.
@@ -63,14 +66,20 @@ public class ProjectInfoAction : ActionItem
     /// <summary>
     ///     Gets whether the selected project is a script (programmable block).
     /// </summary>
-    public bool IsScript => Project?.Type == ProjectType.ProgrammableBlock;
+    public bool IsScript
+    {
+        get => _isScript;
+        private set => SetProperty(ref _isScript, value);
+    }
 
     /// <summary>
     ///     Gets the display name for the project type.
     /// </summary>
-    public string ProjectTypeName => Project?.Type == ProjectType.ProgrammableBlock
-        ? "Programmable Block Script"
-        : "Mod";
+    public string ProjectTypeName
+    {
+        get => _projectTypeName;
+        private set => SetProperty(ref _projectTypeName, value);
+    }
 
     /// <summary>
     ///     Gets or sets whether project data is currently loading.
@@ -142,7 +151,7 @@ public class ProjectInfoAction : ActionItem
         private set
         {
             if (SetProperty(ref _scriptSizeCharacters, value))
-                OnPropertyChanged(nameof(IsScriptTooLarge));
+                IsScriptTooLarge = value is > 100_000;
         }
     }
 
@@ -155,10 +164,16 @@ public class ProjectInfoAction : ActionItem
         private set => SetProperty(ref _configurationWarning, value);
     }
 
+    bool _isScriptTooLarge;
+
     /// <summary>
     ///     Gets whether the script exceeds the Space Engineers character limit.
     /// </summary>
-    public bool IsScriptTooLarge => ScriptSizeCharacters is > 100_000;
+    public bool IsScriptTooLarge
+    {
+        get => _isScriptTooLarge;
+        private set => SetProperty(ref _isScriptTooLarge, value);
+    }
 
     /// <summary>
     ///     Gets the command to open the project folder in explorer.
@@ -199,11 +214,15 @@ public class ProjectInfoAction : ActionItem
 
         // Update computed properties
         OnPropertyChanged(nameof(Project));
-        OnPropertyChanged(nameof(IsScript));
-        OnPropertyChanged(nameof(ProjectTypeName));
+        
+        var project = Project;
+        IsScript = project?.Type == ProjectType.ProgrammableBlock;
+        ProjectTypeName = project?.Type == ProjectType.ProgrammableBlock 
+            ? "Programmable Block Script" 
+            : "Mod";
 
         // Reload project data for new project
-        if (Project != null)
+        if (project != null)
             _ = LoadProjectDataAsync(_projectService);
     }
 

@@ -601,7 +601,7 @@ public class ShellViewModel : ViewModel, IShell
 
         // Initialize child VMs when ready
         _projectOverviewViewModel.Value.Initialize(this);
-        _projectActionsViewModel.Value.Initialize(this);
+        _projectActionsViewModel.Value.Initialize(this, _projectOverviewViewModel.Value);
 
         // Listen for navigation requests to coordinate OpenOptions flag
         _lazyProjectService.Value.ProjectNavigationRequested += OnProjectNavigationRequested;

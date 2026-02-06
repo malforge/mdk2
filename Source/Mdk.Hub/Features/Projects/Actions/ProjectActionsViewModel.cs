@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -27,14 +28,25 @@ namespace Mdk.Hub.Features.Projects.Actions;
 [ViewModelFor<ProjectActionsView>]
 public partial class ProjectActionsViewModel : ViewModel
 {
-    readonly Dictionary<string, ActionItem> _globalActionCache = new(); // Shared action instances
+    // Registry of action types to resolve
+    static readonly Type[] ActionTypes =
+    [
+        typeof(UpdatesAction),
+        typeof(AnnouncementsAction),
+        typeof(ProjectManagementAction),
+        typeof(ProjectInfoAction),
+        typeof(ApiDocsAction),
+        typeof(UpdatePackagesAction),
+        typeof(EasterEggDismissAction)
+    ];
+
+    readonly List<ActionItem> _allActions = new();
     readonly ILogger _logger;
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
     readonly IProjectService _projectService;
     readonly IShell _shell;
-    ProjectContext? _globalContext; // Context for when no project is selected (created lazily)
     ObservableCollection<ActionItem> _actions = new();
-    ProjectContext? _currentContext;
+    ProjectOverviewViewModel? _projectOverviewViewModel;
 
     bool _isOptionsDrawerOpen;
 
@@ -122,9 +134,16 @@ public partial class ProjectActionsViewModel : ViewModel
     /// <summary>
     ///     Initializes the ViewModel with the shell instance and handles initial state.
     /// </summary>
-    public void Initialize(ShellViewModel shell)
+    public void Initialize(ShellViewModel shell, ProjectOverviewViewModel overviewViewModel)
     {
         _shellViewModel = shell;
+        _projectOverviewViewModel = overviewViewModel;
+
+        // Subscribe to selection changes
+        _projectOverviewViewModel.PropertyChanged += OnOverviewPropertyChanged;
+        
+        // Build all actions once
+        BuildAllActions();
 
         // Handle initial state now that shell is initialized
         OnProjectStateChanged(null, EventArgs.Empty);
@@ -162,8 +181,7 @@ public partial class ProjectActionsViewModel : ViewModel
 
         var canonicalPath = new CanonicalPath(projectPath);
 
-        // Get or create context
-        ProjectContext? context = null;
+        // Get or create context for options/cache only
         var selectedProjectPath = _projectService.State.SelectedProject;
         if (!selectedProjectPath.IsEmpty() && selectedProjectPath == canonicalPath && _shellViewModel != null)
         {
@@ -172,21 +190,18 @@ public partial class ProjectActionsViewModel : ViewModel
             if (projectInfo != null)
             {
                 var projectModel = _shellViewModel.GetOrCreateProjectModel(projectInfo);
-                if (!_projectContexts.TryGetValue(canonicalPath, out context))
+                if (!_projectContexts.TryGetValue(canonicalPath, out var context))
                 {
-                    context = new ProjectContext(projectModel, this, _globalActionCache);
+                    context = new ProjectContext();
                     _projectContexts[canonicalPath] = context;
                 }
+
+                // Reuse cached ViewModel if it exists, otherwise create new
+                context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, _logger, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
+
+                OptionsViewModel = context.OptionsViewModel;
+                IsOptionsDrawerOpen = true;
             }
-        }
-
-        // Reuse cached ViewModel if it exists, otherwise create new
-        if (context != null)
-        {
-            context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, _logger, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
-
-            OptionsViewModel = context.OptionsViewModel;
-            IsOptionsDrawerOpen = true;
         }
     }
 
@@ -289,7 +304,7 @@ public partial class ProjectActionsViewModel : ViewModel
 
     void OnProjectStateChanged(object? sender, EventArgs e)
     {
-        // Get or create context for the selected project
+        // Get or create context for the selected project (only for options/cache management)
         var selectedProjectPath = _projectService.State.SelectedProject;
         if (!selectedProjectPath.IsEmpty() && _shellViewModel != null)
         {
@@ -298,17 +313,6 @@ public partial class ProjectActionsViewModel : ViewModel
             if (projectInfo != null)
             {
                 var selectedProject = _shellViewModel.GetOrCreateProjectModel(projectInfo);
-
-                if (!_projectContexts.TryGetValue(selectedProjectPath, out var context))
-                {
-                    context = new ProjectContext(selectedProject, this, _globalActionCache);
-                    _projectContexts[selectedProjectPath] = context;
-                }
-                
-                _currentContext = context;
-
-                // Notify context that it's now active (for cached contexts)
-                context.OnContextBecameActive();
 
                 // Handle drawer logic
                 if (IsOptionsDrawerOpen)
@@ -320,25 +324,48 @@ public partial class ProjectActionsViewModel : ViewModel
                     ShowOptionsDrawer(selectedProject.ProjectPath.Value!);
             }
         }
-        else
-        {
-            _currentContext = null;
-        }
-
-        UpdateDisplayedActions();
     }
 
     void OnEasterEggActiveChanged(object? sender, EventArgs e) => UpdateDisplayedActions();
 
-    /// <summary>
-    ///     Called by ProjectContext when its filtered actions change to refresh the display.
-    /// </summary>
-    public void OnContextActionsChanged()
+    void BuildAllActions()
     {
-        // Called by ProjectContext when its filtered actions change
-        // Context has already updated its filtered list, just refresh display
-        if (!_isUpdatingDisplayedActions)
-            UpdateDisplayedActions(false);
+        // Clear and dispose old actions
+        foreach (var action in _allActions)
+        {
+            action.ShouldShowChanged -= OnActionShouldShowChanged;
+            if (action is IDisposable disposable)
+                disposable.Dispose();
+        }
+        
+        _allActions.Clear();
+
+        // Resolve all actions from the registry
+        foreach (var actionType in ActionTypes)
+        {
+            var action = (ActionItem)App.Container.Resolve(actionType);
+            action.ShouldShowChanged += OnActionShouldShowChanged;
+            _allActions.Add(action);
+        }
+    }
+
+    void OnActionShouldShowChanged(object? sender, EventArgs e)
+    {
+        // An action's visibility state changed - update filtered list
+        UpdateDisplayedActions();
+    }
+
+    void OnOverviewPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProjectOverviewViewModel.SelectedProjects))
+        {
+            // Selection changed - update all actions
+            var selection = _projectOverviewViewModel?.SelectedProjects ?? ImmutableArray<ProjectModel>.Empty;
+            foreach (var action in _allActions)
+                action.SelectedProjects = selection;
+            
+            UpdateDisplayedActions();
+        }
     }
 
     void UpdateDisplayedActions(bool refreshFilters = true)
@@ -372,18 +399,8 @@ public partial class ProjectActionsViewModel : ViewModel
         _isUpdatingDisplayedActions = true;
         try
         {
-            // Use global context when no project selected, otherwise use project context
-            // Create global context lazily to avoid circular dependency during DI initialization
-            if (_currentContext == null && _globalContext == null)
-                _globalContext = new ProjectContext(null, this, _globalActionCache);
-            
-            var context = _currentContext ?? _globalContext!;
-            
-            // Optionally refresh the filtered actions first
-            if (refreshFilters)
-                context.UpdateFilteredActions();
-            
-            var desiredActions = context.FilteredActions.ToList();
+            // Filter actions that should show
+            var desiredActions = _allActions.Where(a => a.ShouldShow()).ToList();
 
             // Sync Actions collection by walking through desired actions and handling category transitions
             int currentIndex = 0;

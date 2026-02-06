@@ -29,6 +29,9 @@ public class ProjectManagementAction : ActionItem
     readonly IProjectService _projectService;
     readonly IShell _shell;
 
+    bool _canMakeScript;
+    bool _canMakeMod;
+
     /// <summary>
     ///     Initializes a new instance of the <see cref="ProjectManagementAction"/> class.
     /// </summary>
@@ -46,17 +49,28 @@ public class ProjectManagementAction : ActionItem
         _addExistingCommand = new AsyncRelayCommand(AddExistingProjectAsync);
 
         _projectService.StateChanged += OnProjectServiceStateChanged;
+        
+        // Initialize from current state
+        UpdateCanMakeProperties();
     }
 
     /// <summary>
     ///     Gets whether a new Programmable Block Script can be created.
     /// </summary>
-    public bool CanMakeScript => _projectService.State.CanMakeScript;
+    public bool CanMakeScript
+    {
+        get => _canMakeScript;
+        private set => SetProperty(ref _canMakeScript, value);
+    }
 
     /// <summary>
     ///     Gets whether a new Mod can be created.
     /// </summary>
-    public bool CanMakeMod => _projectService.State.CanMakeMod;
+    public bool CanMakeMod
+    {
+        get => _canMakeMod;
+        private set => SetProperty(ref _canMakeMod, value);
+    }
 
     /// <summary>
     ///     Gets the command to create a new Programmable Block Script.
@@ -85,11 +99,16 @@ public class ProjectManagementAction : ActionItem
 
     void OnProjectServiceStateChanged(object? sender, EventArgs e)
     {
-        OnPropertyChanged(nameof(CanMakeScript));
-        OnPropertyChanged(nameof(CanMakeMod));
+        UpdateCanMakeProperties();
         _createScriptCommand.NotifyCanExecuteChanged();
         _createModCommand.NotifyCanExecuteChanged();
         RaiseShouldShowChanged();
+    }
+
+    void UpdateCanMakeProperties()
+    {
+        CanMakeScript = _projectService.State.CanMakeScript;
+        CanMakeMod = _projectService.State.CanMakeMod;
     }
 
     /// <summary>

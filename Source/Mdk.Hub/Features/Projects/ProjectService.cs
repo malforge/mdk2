@@ -345,7 +345,7 @@ public class ProjectService : IProjectService
         var defaultLayer = new ProjectConfigLayer
         {
             Type = null, // Type must be set explicitly in INI
-            Interactive = InteractiveMode.OpenHub,
+            Interactive = InteractiveMode.ShowNotification,
             Trace = false,
             Minify = MinifierLevel.None,
             MinifyExtraOptions = MinifierExtraOptions.None,
@@ -1112,12 +1112,11 @@ public class ProjectService : IProjectService
         var projectData = await LoadProjectDataAsync(new CanonicalPath(projectPath));
         var preference = projectData?.Config.GetEffective().Interactive?.ToString() ?? "";
 
-        // If not set in INI, default to "OpenHub" (teaches new users about Hub)
-        // But UI will show "ShowNotification" as the default choice when they open settings
+        // If not set in INI, default to "ShowNotification" (less intrusive)
         if (string.IsNullOrWhiteSpace(preference))
         {
-            preference = "OpenHub";
-            _logger.Info($"Build notification preference not set for {projectName}, using OpenHub");
+            preference = "ShowNotification";
+            _logger.Info($"Build notification preference not set for {projectName}, using ShowNotification");
         }
         else
             _logger.Info($"Build notification preference for {projectName}: {preference}");
