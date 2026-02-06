@@ -9,6 +9,9 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
+/// <summary>
+///     View model for a project displayed in the Hub UI.
+/// </summary>
 public class ProjectModel : ViewModel
 {
     readonly IShell _shell;
@@ -25,6 +28,15 @@ public class ProjectModel : ViewModel
     ProjectType _type;
     int _updateCount;
 
+    /// <summary>
+    ///     Initializes a new instance of the ProjectModel class.
+    /// </summary>
+    /// <param name="type">The type of project.</param>
+    /// <param name="name">The display name.</param>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <param name="lastReferenced">When the project was last accessed.</param>
+    /// <param name="shell">Shell service for dialogs.</param>
+    /// <param name="projectService">Project service for operations (optional for design mode).</param>
     public ProjectModel(ProjectType type, string name, CanonicalPath projectPath, DateTimeOffset lastReferenced, IShell shell, IProjectService? projectService = null)
     {
         ProjectPath = projectPath;
@@ -37,64 +49,100 @@ public class ProjectModel : ViewModel
         _removeFromHubCommand = new AsyncRelayCommand(RemoveFromHubAsync, CanDelete);
     }
 
+    /// <summary>
+    ///     Gets the canonical path to the .csproj file.
+    /// </summary>
     public CanonicalPath ProjectPath { get; }
 
+    /// <summary>
+    ///     Gets or sets whether this project is currently selected in the UI.
+    /// </summary>
     public bool IsSelected
     {
         get => _isSelected;
         set => SetProperty(ref _isSelected, value);
     }
 
+    /// <summary>
+    ///     Gets or sets whether this project requires user attention (e.g., configuration issues).
+    /// </summary>
     public bool NeedsAttention
     {
         get => _needsAttention;
         set => SetProperty(ref _needsAttention, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the command to execute when this project is selected.
+    /// </summary>
     public ICommand? SelectCommand
     {
         get => _selectCommand;
         set => SetProperty(ref _selectCommand, value);
     }
 
+    /// <summary>
+    ///     Gets the type of project (Programmable Block or Mod).
+    /// </summary>
     public ProjectType Type
     {
         get => _type;
         private set => SetProperty(ref _type, value);
     }
 
+    /// <summary>
+    ///     Gets the display name of the project.
+    /// </summary>
     public string Name
     {
         get => _name;
         private set => SetProperty(ref _name, value);
     }
 
+    /// <summary>
+    ///     Gets the timestamp when the project was last opened or modified.
+    /// </summary>
     public DateTimeOffset LastReferenced
     {
         get => _lastReferenced;
         private set => SetProperty(ref _lastReferenced, value);
     }
 
+    /// <summary>
+    ///     Gets or sets whether this project has unsaved configuration changes.
+    /// </summary>
     public bool HasUnsavedChanges
     {
         get => _hasUnsavedChanges;
         set => SetProperty(ref _hasUnsavedChanges, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the number of outdated MDK packages in this project.
+    /// </summary>
     public int UpdateCount
     {
         get => _updateCount;
         set => SetProperty(ref _updateCount, value);
     }
 
+    /// <summary>
+    ///     Gets or sets whether MDK package updates are available for this project.
+    /// </summary>
     public bool NeedsUpdate
     {
         get => _needsUpdate;
         set => SetProperty(ref _needsUpdate, value);
     }
 
+    /// <summary>
+    ///     Gets the command to permanently delete this project from disk.
+    /// </summary>
     public ICommand DeleteCommand => _deleteCommand;
     
+    /// <summary>
+    ///     Gets the command to remove this project from Hub (but keep files on disk).
+    /// </summary>
     public ICommand RemoveFromHubCommand => _removeFromHubCommand;
 
     public bool CanDelete() => true;

@@ -15,6 +15,9 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+/// <summary>
+///     Action displaying project information and providing quick access to project operations.
+/// </summary>
 [Singleton]
 [ViewModelFor<ProjectInfoActionView>]
 public class ProjectInfoAction : ActionItem

@@ -15,6 +15,9 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Options;
 
+/// <summary>
+///     View model for the project options/configuration editor drawer.
+/// </summary>
 [ViewModelFor<ProjectOptionsView>]
 public class ProjectOptionsViewModel : ViewModel
 {
@@ -42,6 +45,16 @@ public class ProjectOptionsViewModel : ViewModel
     bool _defaultBinaryPathLoaded;
     ProjectData? _projectData;
 
+    /// <summary>
+    ///     Initializes a new instance of the ProjectOptionsViewModel class.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <param name="projectService">Service for loading/saving configuration.</param>
+    /// <param name="dialogShell">Shell for showing dialogs.</param>
+    /// <param name="shell">Main shell service.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="onClose">Callback invoked when closing (true if saved, false if cancelled).</param>
+    /// <param name="onDirtyStateChanged">Optional callback when dirty state changes.</param>
     public ProjectOptionsViewModel(string projectPath, IProjectService projectService, IShell dialogShell, IShell shell, ILogger logger, Action<bool> onClose, Action? onDirtyStateChanged = null)
     {
         _projectPath = new CanonicalPath(projectPath);
@@ -98,26 +111,89 @@ public class ProjectOptionsViewModel : ViewModel
         LoadConfiguration();
     }
 
+    /// <summary>
+    ///     Gets the view model for main (shared) configuration settings.
+    /// </summary>
     public ConfigurationSectionViewModel MainConfig { get; } = new();
+    
+    /// <summary>
+    ///     Gets the view model for local (machine-specific) configuration settings.
+    /// </summary>
     public ConfigurationSectionViewModel LocalConfig { get; } = new();
 
+    /// <summary>
+    ///     Gets the command to save configuration changes.
+    /// </summary>
     public ICommand SaveCommand => _saveCommand;
+    
+    /// <summary>
+    ///     Gets the command to cancel editing and discard changes.
+    /// </summary>
     public ICommand CancelCommand => _cancelCommand;
+    
+    /// <summary>
+    ///     Gets the command to reorganize configuration settings into standard layers.
+    /// </summary>
     public ICommand NormalizeConfigurationCommand => _normalizeConfigurationCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local Interactive setting override.
+    /// </summary>
     public ICommand ClearLocalInteractiveCommand => _clearLocalInteractiveCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local OutputPath setting override.
+    /// </summary>
     public ICommand ClearLocalOutputPathCommand => _clearLocalOutputPathCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local BinaryPath setting override.
+    /// </summary>
     public ICommand ClearLocalBinaryPathCommand => _clearLocalBinaryPathCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local Minify setting override.
+    /// </summary>
     public ICommand ClearLocalMinifyCommand => _clearLocalMinifyCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local MinifyExtraOptions setting override.
+    /// </summary>
     public ICommand ClearLocalMinifyExtraOptionsCommand => _clearLocalMinifyExtraOptionsCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local Trace setting override.
+    /// </summary>
     public ICommand ClearLocalTraceCommand => _clearLocalTraceCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local Ignores setting override.
+    /// </summary>
     public ICommand ClearLocalIgnoresCommand => _clearLocalIgnoresCommand;
+    
+    /// <summary>
+    ///     Gets the command to clear the local Namespaces setting override.
+    /// </summary>
     public ICommand ClearLocalNamespacesCommand => _clearLocalNamespacesCommand;
+    
+    /// <summary>
+    ///     Gets the command to open global Hub settings.
+    /// </summary>
     public ICommand OpenGlobalSettingsCommand => _openGlobalSettingsCommand;
 
+    /// <summary>
+    ///     Gets the project name (filename without extension).
+    /// </summary>
     public string ProjectName => _projectPath.IsEmpty() ? string.Empty : Path.GetFileNameWithoutExtension(_projectPath.Value!);
 
+    /// <summary>
+    ///     Gets whether this is a Programmable Block script project.
+    /// </summary>
     public bool IsProgrammableBlock => _projectData?.Config.GetEffective().Type == ProjectType.ProgrammableBlock;
 
+    /// <summary>
+    ///     Gets whether configuration settings are in their standard layers (machine-specific in Local, shared in Main).
+    /// </summary>
     public bool IsStandardConfiguration
     {
         get
@@ -186,6 +262,9 @@ public class ProjectOptionsViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets whether there are unsaved configuration changes.
+    /// </summary>
     public bool HasUnsavedChanges
     {
         get
@@ -222,8 +301,14 @@ public class ProjectOptionsViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets the default output path (currently unused).
+    /// </summary>
     public string? DefaultOutputPath => null; // TODO: Calculate from ProjectData if needed
 
+    /// <summary>
+    ///     Gets the default binary path from Space Engineers installation.
+    /// </summary>
     public string? DefaultBinaryPath
     {
         get
@@ -253,13 +338,44 @@ public class ProjectOptionsViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets whether the Interactive setting is overridden in the local configuration.
+    /// </summary>
     public bool IsInteractiveOverridden => LocalConfig.Interactive != null;
+    
+    /// <summary>
+    ///     Gets whether the OutputPath setting is overridden in the local configuration.
+    /// </summary>
     public bool IsOutputOverridden => !string.IsNullOrWhiteSpace(LocalConfig.OutputPath);
+    
+    /// <summary>
+    ///     Gets whether the BinaryPath setting is overridden in the local configuration.
+    /// </summary>
     public bool IsBinaryPathOverridden => !string.IsNullOrWhiteSpace(LocalConfig.BinaryPath);
+    
+    /// <summary>
+    ///     Gets whether the Minify setting is overridden in the local configuration.
+    /// </summary>
     public bool IsMinifyOverridden => LocalConfig.Minify != null;
+    
+    /// <summary>
+    ///     Gets whether the MinifyExtraOptions setting is overridden in the local configuration.
+    /// </summary>
     public bool IsMinifyExtraOptionsOverridden => LocalConfig.MinifyExtraOptions != null;
+    
+    /// <summary>
+    ///     Gets whether the Trace setting is overridden in the local configuration.
+    /// </summary>
     public bool IsTraceOverridden => LocalConfig.Trace != null;
+    
+    /// <summary>
+    ///     Gets whether the Ignores setting is overridden in the local configuration.
+    /// </summary>
     public bool IsIgnoresOverridden => !string.IsNullOrWhiteSpace(LocalConfig.Ignores);
+    
+    /// <summary>
+    ///     Gets whether the Namespaces setting is overridden in the local configuration.
+    /// </summary>
     public bool IsNamespacesOverridden => !string.IsNullOrWhiteSpace(LocalConfig.Namespaces);
 
     async Task NormalizeConfigurationAsync()

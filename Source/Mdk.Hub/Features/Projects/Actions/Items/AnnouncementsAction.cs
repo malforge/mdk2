@@ -10,6 +10,9 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+/// <summary>
+///     Action displaying announcements from the MDK team.
+/// </summary>
 [Singleton]
 [ViewModelFor<AnnouncementsActionView>]
 public class AnnouncementsAction : ActionItem

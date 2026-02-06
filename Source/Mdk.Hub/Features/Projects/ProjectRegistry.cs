@@ -53,9 +53,7 @@ public class ProjectRegistry : IProjectRegistry
         Load();
     }
 
-    /// <summary>
-    ///     Gets all registered projects.
-    /// </summary>
+    /// <inheritdoc />
     public IReadOnlyList<ProjectInfo> GetProjects()
     {
         // Update last referenced time based on file access
@@ -63,9 +61,7 @@ public class ProjectRegistry : IProjectRegistry
         return _projects.OrderByDescending(p => p.LastReferenced).ToList();
     }
 
-    /// <summary>
-    ///     Adds or updates a project in the registry.
-    /// </summary>
+    /// <inheritdoc />
     public void AddOrUpdateProject(ProjectInfo project)
     {
         var existing = _projects.FirstOrDefault(p => p.ProjectPath == project.ProjectPath);
@@ -82,9 +78,7 @@ public class ProjectRegistry : IProjectRegistry
         Save();
     }
 
-    /// <summary>
-    ///     Removes a project from the registry.
-    /// </summary>
+    /// <inheritdoc />
     public void RemoveProject(string projectPath)
     {
         var canonicalPath = new CanonicalPath(projectPath);

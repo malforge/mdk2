@@ -7,6 +7,9 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.NewProjectDialog;
 
+/// <summary>
+///     View model for the new project creation dialog.
+/// </summary>
 [ViewModelFor<NewProjectDialogView>]
 public class NewProjectDialogViewModel : OverlayModel
 {
@@ -18,6 +21,10 @@ public class NewProjectDialogViewModel : OverlayModel
     string _validationError = "";
     string _validationWarning = "";
 
+    /// <summary>
+    ///     Initializes a new instance of the NewProjectDialogViewModel class.
+    /// </summary>
+    /// <param name="message">Message containing project type and default location.</param>
     public NewProjectDialogViewModel(NewProjectDialogMessage message)
     {
         Message = message;
@@ -35,10 +42,19 @@ public class NewProjectDialogViewModel : OverlayModel
         Location = message.DefaultLocation;
     }
 
+    /// <summary>
+    ///     Gets the message containing project creation parameters.
+    /// </summary>
     public NewProjectDialogMessage Message { get; }
 
+    /// <summary>
+    ///     Gets the result of the dialog after user action.
+    /// </summary>
     public NewProjectDialogResult? Result { get; private set; }
 
+    /// <summary>
+    ///     Gets or sets the name of the project to create.
+    /// </summary>
     public string ProjectName
     {
         get => _projectName;
@@ -53,6 +69,9 @@ public class NewProjectDialogViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    ///     Gets or sets the parent directory where the project folder will be created.
+    /// </summary>
     public string Location
     {
         get => _location;
@@ -67,6 +86,9 @@ public class NewProjectDialogViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    ///     Gets the full path where the project will be created (Location + ProjectName).
+    /// </summary>
     public string FinalPath
     {
         get
@@ -85,19 +107,32 @@ public class NewProjectDialogViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    ///     Gets the validation error message (empty if valid).
+    /// </summary>
     public string ValidationError
     {
         get => _validationError;
         private set => SetProperty(ref _validationError, value);
     }
 
+    /// <summary>
+    ///     Gets the validation warning message (informational, doesn't block creation).
+    /// </summary>
     public string ValidationWarning
     {
         get => _validationWarning;
         private set => SetProperty(ref _validationWarning, value);
     }
 
+    /// <summary>
+    ///     Gets the command to create the project.
+    /// </summary>
     public ICommand OkCommand => _okCommand;
+    
+    /// <summary>
+    ///     Gets the command to cancel project creation.
+    /// </summary>
     public ICommand CancelCommand => _cancelCommand;
 
     void ValidateInput()

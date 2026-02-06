@@ -16,6 +16,9 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+/// <summary>
+///     Action for creating new projects and adding existing projects to the Hub.
+/// </summary>
 [Singleton]
 [ViewModelFor<ProjectManagementActionView>]
 public class ProjectManagementAction : ActionItem

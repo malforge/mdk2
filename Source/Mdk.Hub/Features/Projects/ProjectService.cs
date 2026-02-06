@@ -60,14 +60,21 @@ public class ProjectService : IProjectService
         shell.WhenReady(HandleStartupArguments);
     }
 
+    /// <inheritdoc />
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
+    /// <inheritdoc />
     public event EventHandler<CanonicalPath>? ProjectRemoved;
+    /// <inheritdoc />
     public event EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
+    /// <inheritdoc />
     public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
+    /// <inheritdoc />
     public event EventHandler? StateChanged;
 
+    /// <inheritdoc />
     public ISettings Settings { get; }
 
+    /// <inheritdoc />
     public ProjectStateData State
     {
         get => _state;
@@ -81,6 +88,7 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<ProjectInfo> GetProjects()
     {
         var projects = _registry.GetProjects();
@@ -100,6 +108,7 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc />
     public bool TryAddProject(CanonicalPath projectPath, out string? errorMessage)
     {
         if (projectPath.IsEmpty())
@@ -122,6 +131,7 @@ public class ProjectService : IProjectService
         return false;
     }
 
+    /// <inheritdoc />
     public void RemoveProject(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
@@ -135,6 +145,7 @@ public class ProjectService : IProjectService
     /// <summary>
     ///     Saves project configuration back to INI files, preserving comments and custom keys.
     /// </summary>
+    /// <inheritdoc />
     public async Task SaveProjectDataAsync(ProjectData projectData)
     {
         const string mdkSection = "mdk";
@@ -281,6 +292,7 @@ public class ProjectService : IProjectService
     /// <summary>
     ///     Loads project configuration into the new ProjectData model with typed layers.
     /// </summary>
+    /// <inheritdoc />
     public async Task<ProjectData?> LoadProjectDataAsync(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
@@ -352,6 +364,7 @@ public class ProjectService : IProjectService
         };
     }
 
+    /// <inheritdoc />
     public async Task<bool> CopyScriptToClipboardAsync(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
@@ -416,6 +429,7 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc />
     public bool OpenProjectFolder(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
@@ -446,6 +460,7 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc />
     public async Task<bool> OpenOutputFolderAsync(CanonicalPath projectPath)
     {
         if (projectPath.IsEmpty())
@@ -501,6 +516,7 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc />
     public bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false)
     {
         if (projectPath.IsEmpty())
@@ -530,6 +546,7 @@ public class ProjectService : IProjectService
         return true;
     }
 
+    /// <inheritdoc />
     public void ClearProjectUpdateState(CanonicalPath projectPath)
     {
         lock (_updateStatesLock)
@@ -545,6 +562,7 @@ public class ProjectService : IProjectService
             });
     }
 
+    /// <inheritdoc />
     public IReadOnlyDictionary<string, string> GetMdkPackageVersions(CanonicalPath projectPath)
     {
         var result = new Dictionary<string, string>();
@@ -580,6 +598,7 @@ public class ProjectService : IProjectService
         return result;
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<PackageUpdateInfo>? GetCachedUpdates(CanonicalPath projectPath)
     {
         lock (_updateStatesLock)
@@ -590,6 +609,7 @@ public class ProjectService : IProjectService
         return null;
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<PackageUpdateInfo>> CheckForPackageUpdatesAsync(CanonicalPath projectPath, CancellationToken cancellationToken = default)
     {
         var updates = new List<PackageUpdateInfo>();
@@ -667,6 +687,7 @@ public class ProjectService : IProjectService
         return updates;
     }
 
+    /// <inheritdoc />
     public async Task<bool> UpdatePackagesAsync(CanonicalPath projectPath, IReadOnlyList<PackageUpdateInfo> packagesToUpdate, CancellationToken cancellationToken = default)
     {
         if (projectPath.IsEmpty() || !File.Exists(projectPath.Value))
@@ -749,8 +770,10 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc />
     public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProgrammableBlockProjectAsync(string projectName, string location) => await CreateProjectInternalAsync(projectName, location, "mdk2pbscript");
 
+    /// <inheritdoc />
     public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateModProjectAsync(string projectName, string location) => await CreateProjectInternalAsync(projectName, location, "mdk2mod");
 
     static ProjectConfigLayer ParseLayer(Ini? ini)

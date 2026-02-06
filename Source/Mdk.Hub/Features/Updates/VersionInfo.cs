@@ -8,8 +8,19 @@ namespace Mdk.Hub.Features.Updates;
 /// </summary>
 public record PackageVersionInfo
 {
+    /// <summary>
+    ///     Gets the package identifier.
+    /// </summary>
     public required string PackageId { get; init; }
+    
+    /// <summary>
+    ///     Gets the latest available version.
+    /// </summary>
     public required string LatestVersion { get; init; }
+    
+    /// <summary>
+    ///     Gets when the version information was retrieved.
+    /// </summary>
     public DateTime CheckedAt { get; init; } = DateTime.UtcNow;
 }
 
@@ -18,7 +29,14 @@ public record PackageVersionInfo
 /// </summary>
 public record TemplateVersionInfo
 {
+    /// <summary>
+    ///     Gets the latest available template version.
+    /// </summary>
     public required string LatestVersion { get; init; }
+    
+    /// <summary>
+    ///     Gets when the version information was retrieved.
+    /// </summary>
     public DateTime CheckedAt { get; init; } = DateTime.UtcNow;
 }
 
@@ -27,10 +45,29 @@ public record TemplateVersionInfo
 /// </summary>
 public record HubVersionInfo
 {
+    /// <summary>
+    ///     Gets the latest available Hub version.
+    /// </summary>
     public required string LatestVersion { get; init; }
+    
+    /// <summary>
+    ///     Gets the download URL for the latest version.
+    /// </summary>
     public required string DownloadUrl { get; init; }
+    
+    /// <summary>
+    ///     Gets whether the latest version is a prerelease.
+    /// </summary>
     public bool IsPrerelease { get; init; }
+    
+    /// <summary>
+    ///     Gets the release notes for the latest version, if available.
+    /// </summary>
     public string? ReleaseNotes { get; init; }
+    
+    /// <summary>
+    ///     Gets when the version information was retrieved.
+    /// </summary>
     public DateTime CheckedAt { get; init; } = DateTime.UtcNow;
 }
 
@@ -39,7 +76,18 @@ public record HubVersionInfo
 /// </summary>
 public class VersionCheckCompletedEventArgs : EventArgs
 {
+    /// <summary>
+    ///     Gets the list of available package versions.
+    /// </summary>
     public required IReadOnlyList<PackageVersionInfo> Packages { get; init; }
+    
+    /// <summary>
+    ///     Gets the available template version information, if any.
+    /// </summary>
     public TemplateVersionInfo? TemplatePackage { get; init; }
+    
+    /// <summary>
+    ///     Gets the available Hub version information, if any.
+    /// </summary>
     public HubVersionInfo? HubVersion { get; init; }
 }

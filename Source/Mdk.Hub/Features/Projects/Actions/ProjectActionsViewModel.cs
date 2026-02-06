@@ -19,6 +19,10 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
+/// <summary>
+///     ViewModel managing the actions panel in the Hub, coordinating action display,
+///     project options drawer, and context switching between projects.
+/// </summary>
 [Singleton]
 [ViewModelFor<ProjectActionsView>]
 public partial class ProjectActionsViewModel : ViewModel
@@ -44,6 +48,9 @@ public partial class ProjectActionsViewModel : ViewModel
     ShellViewModel? _shellViewModel;
     UnsavedChangesHandle? _unsavedChangesHandle;
 
+    /// <summary>
+    ///     Initializes a new instance of <see cref="ProjectActionsViewModel"/>.
+    /// </summary>
     public ProjectActionsViewModel(IShell shell, IProjectService projectService, IEasterEggService easterEggService, ILogger logger)
     {
         _shell = shell;
@@ -56,36 +63,65 @@ public partial class ProjectActionsViewModel : ViewModel
         OpenGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);
     }
 
+    /// <summary>
+    ///     Gets whether a script can be created in the current state.
+    /// </summary>
     public bool CanMakeScript => _projectService.State.CanMakeScript;
+    
+    /// <summary>
+    ///     Gets whether a mod can be created in the current state.
+    /// </summary>
     public bool CanMakeMod => _projectService.State.CanMakeMod;
 
+    /// <summary>
+    ///     Gets or sets whether the project options drawer is currently open.
+    /// </summary>
     public bool IsOptionsDrawerOpen
     {
         get => _isOptionsDrawerOpen;
         set => SetProperty(ref _isOptionsDrawerOpen, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the path of the project whose options are currently displayed.
+    /// </summary>
     public CanonicalPath? OptionsProjectPath
     {
         get => _optionsProjectPath;
         set => SetProperty(ref _optionsProjectPath, value);
     }
 
+    /// <summary>
+    ///     Gets or sets the currently displayed project options ViewModel.
+    /// </summary>
     public ProjectOptionsViewModel? OptionsViewModel
     {
         get => _optionsViewModel;
         set => SetProperty(ref _optionsViewModel, value);
     }
 
+    /// <summary>
+    ///     Gets the collection of currently displayed actions (including separators).
+    /// </summary>
     public ObservableCollection<ActionItem> Actions
     {
         get => _actions;
         private set => SetProperty(ref _actions, value);
     }
 
+    /// <summary>
+    ///     Gets the command to show the About dialog.
+    /// </summary>
     public ICommand ShowAboutCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to open global settings.
+    /// </summary>
     public ICommand OpenGlobalSettingsCommand { get; }
 
+    /// <summary>
+    ///     Initializes the ViewModel with the shell instance and handles initial state.
+    /// </summary>
     public void Initialize(ShellViewModel shell)
     {
         _shellViewModel = shell;
@@ -106,6 +142,9 @@ public partial class ProjectActionsViewModel : ViewModel
         _shell.AddOverlay(viewModel);
     }
 
+    /// <summary>
+    ///     Checks whether the specified project has unsaved option changes.
+    /// </summary>
     public bool HasUnsavedChanges(string projectPath)
     {
         var canonicalPath = new CanonicalPath(projectPath);
@@ -114,6 +153,9 @@ public partial class ProjectActionsViewModel : ViewModel
         return false;
     }
 
+    /// <summary>
+    ///     Opens the project options drawer for the specified project.
+    /// </summary>
     public void ShowOptionsDrawer(string projectPath)
     {
         OptionsProjectPath = new CanonicalPath(projectPath);
@@ -234,6 +276,9 @@ public partial class ProjectActionsViewModel : ViewModel
         OptionsProjectPath = null;
     }
 
+    /// <summary>
+    ///     Closes the options drawer without clearing cached data.
+    /// </summary>
     public void CloseOptionsDrawer()
     {
         // Just close the drawer without clearing any cache (ESC or X button)
@@ -285,6 +330,9 @@ public partial class ProjectActionsViewModel : ViewModel
 
     void OnEasterEggActiveChanged(object? sender, EventArgs e) => UpdateDisplayedActions();
 
+    /// <summary>
+    ///     Called by ProjectContext when its filtered actions change to refresh the display.
+    /// </summary>
     public void OnContextActionsChanged()
     {
         // Called by ProjectContext when its filtered actions change
@@ -423,6 +471,9 @@ public partial class ProjectActionsViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Opens the options drawer for the currently selected project.
+    /// </summary>
     public void OpenOptionsDrawer()
     {
         var selectedPath = _projectService.State.SelectedProject;

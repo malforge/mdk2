@@ -13,6 +13,9 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
+/// <summary>
+///     Action for updating MDK packages in the current or all projects.
+/// </summary>
 [Singleton]
 [ViewModelFor<UpdatePackagesActionView>]
 public class UpdatePackagesAction : ActionItem, IDisposable

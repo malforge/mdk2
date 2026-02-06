@@ -13,11 +13,21 @@ using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects.Overview;
 
+/// <summary>
+///     Event arguments for when a project should be displayed in the Hub.
+/// </summary>
+/// <param name="project">The project to show.</param>
 public class ShowProjectEventArgs(ProjectModel project) : EventArgs
 {
+    /// <summary>
+    ///     Gets the project that should be displayed.
+    /// </summary>
     public ProjectModel Project { get; } = project;
 }
 
+/// <summary>
+///     View model for the project overview page that displays all registered projects.
+/// </summary>
 [Singleton]
 [ViewModelFor<ProjectOverviewView>]
 public class ProjectOverviewViewModel : ViewModel
@@ -39,11 +49,21 @@ public class ProjectOverviewViewModel : ViewModel
     ShellViewModel? _shellViewModel;
     bool _showAll = true;
 
+    /// <summary>
+    ///     Initializes a new instance for design-time use.
+    /// </summary>
     public ProjectOverviewViewModel() : this(null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
 
+    /// <summary>
+    ///     Initializes a new instance of the ProjectOverviewViewModel class.
+    /// </summary>
+    /// <param name="shell">Shell service for UI interactions.</param>
+    /// <param name="projectService">Service for project operations.</param>
+    /// <param name="settings">Settings service.</param>
+    /// <param name="logger">Logger for diagnostic output.</param>
     public ProjectOverviewViewModel(IShell shell, IProjectService projectService, ISettings settings, ILogger logger)
     {
         _projectService = projectService;
@@ -70,8 +90,14 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets whether this instance is running in design mode.
+    /// </summary>
     public bool IsDesignMode { get; }
 
+    /// <summary>
+    ///     Gets or sets all loaded projects before filtering.
+    /// </summary>
     public ImmutableArray<ProjectModel> AllProjects
     {
         get => _allProjects;
@@ -84,9 +110,15 @@ public class ProjectOverviewViewModel : ViewModel
 
     private ShellViewModel ShellViewModel => _shellViewModel ?? throw new InvalidOperationException("ProjectOverviewViewModel is not initialized with ShellViewModel");
 
+    /// <summary>
+    ///     Gets the collection of projects after applying search and filter criteria.
+    /// </summary>
     public ReadOnlyObservableCollection<ProjectModel> FilteredProjects { get; }
 
 
+    /// <summary>
+    ///     Gets or sets the search text for filtering projects (throttled to reduce UI updates).
+    /// </summary>
     public string SearchText
     {
         get => _searchText;
@@ -98,6 +130,9 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets or sets whether to show all project types (disables other filters).
+    /// </summary>
     public bool ShowAll
     {
         get => _showAll;
@@ -113,6 +148,9 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets or sets whether to show only Mod projects.
+    /// </summary>
     public bool FilterModsOnly
     {
         get => _filterModsOnly;
@@ -129,6 +167,9 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets or sets whether to show only Programmable Block script projects.
+    /// </summary>
     public bool FilterScriptsOnly
     {
         get => _filterScriptsOnly;
@@ -145,8 +186,14 @@ public class ProjectOverviewViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    ///     Gets the command to clear the search text.
+    /// </summary>
     public ICommand ClearSearchCommand { get; }
 
+    /// <summary>
+    ///     Gets the command to select a project.
+    /// </summary>
     public ICommand SelectProjectCommand { get; }
 
     /// <summary>
@@ -158,6 +205,10 @@ public class ProjectOverviewViewModel : ViewModel
             LoadProjects();
     }
 
+    /// <summary>
+    ///     Initializes the view model with the shell instance.
+    /// </summary>
+    /// <param name="shell">The shell view model.</param>
     public void Initialize(ShellViewModel shell)
     {
         _shellViewModel = shell;
@@ -181,6 +232,9 @@ public class ProjectOverviewViewModel : ViewModel
     /// </summary>
     public event EventHandler<ShowProjectEventArgs>? ShowProjectRequested;
 
+    /// <summary>
+    ///     Clears the search filter.
+    /// </summary>
     public void ClearSearch()
     {
         using var handle = BeginFilterUpdate();

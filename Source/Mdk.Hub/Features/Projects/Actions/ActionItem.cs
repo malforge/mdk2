@@ -4,10 +4,18 @@ using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions;
 
+/// <summary>
+///     Base class for all action items displayed in the Hub's actions panel.
+///     Actions can be global (shared across all projects) or per-project.
+/// </summary>
 public abstract class ActionItem : ViewModel
 {
     ProjectModel? _project;
 
+    /// <summary>
+    ///     The category this action belongs to, or null for top-level actions.
+    ///     Actions with the same category are grouped together with a separator.
+    /// </summary>
     public abstract string? Category { get; }
 
     /// <summary>
@@ -58,5 +66,8 @@ public abstract class ActionItem : ViewModel
         // Default: no-op
     }
 
+    /// <summary>
+    ///     Raises the <see cref="ShouldShowChanged"/> event to indicate visibility state has changed.
+    /// </summary>
     protected void RaiseShouldShowChanged() => ShouldShowChanged?.Invoke(this, EventArgs.Empty);
 }
