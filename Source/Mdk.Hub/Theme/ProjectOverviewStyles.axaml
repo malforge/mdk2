@@ -8,11 +8,10 @@
         </Border>
     </Design.PreviewWith>
 
-    <Style Selector="ItemsControl.project-list">
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="0,4,0,4" />
-        <Setter Property="Margin" Value="0" />
-
+    <!-- ListBox-based project list styles -->
+    <Style Selector="ListBox.project-list">
+        <Setter Property="Background" Value="Transparent" />
+        
         <Style Selector="^ .project-icon icons|Symbol">
             <Setter Property="Width" Value="48" />
             <Setter Property="Height" Value="48" />
@@ -21,41 +20,56 @@
             <Setter Property="Margin" Value="4" />
         </Style>
 
+        <Style Selector="^ TextBlock.title">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="16,0,0,2" />
+            <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
 
-        <Style Selector="^ controls|SelectableCard.project-item">
-            <Setter Property="Margin" Value="8,4,8,4" />
+        <Style Selector="^ TextBlock.last-referenced">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}" />
+            <Setter Property="Margin" Value="16,2,0,0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
 
-            <Style Selector="^.left">
-                <Setter Property="Margin" Value="8,4,4,4" />
-            </Style>
-            <Style Selector="^.right">
-                <Setter Property="Margin" Value="4,4,8,4" />
-            </Style>
+        <!-- ListBoxItem container styles -->
+        <Style Selector="^ > ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
 
-            <Style Selector="^ TextBlock.title">
-                <Setter Property="FontSize" Value="16" />
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="Margin" Value="16,0,0,2" />
-                <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
-                <Setter Property="TextWrapping" Value="Wrap" />
-            </Style>
+        <!-- Default state - transparent border reserves space -->
+        <Style Selector="^ > ListBoxItem /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+        </Style>
 
-            <Style Selector="^:pointerover TextBlock.title">
-                <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
-            </Style>
+        <!-- Hover state -->
+        <Style Selector="^ > ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource OverlayLightBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+        </Style>
 
-            <Style Selector="^:selected TextBlock.title">
-                <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
-            </Style>
+        <!-- Selected state - accent left border + background -->
+        <Style Selector="^ > ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource OverlayLightSubtleBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderAccentBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+        </Style>
 
-            <Style Selector="^ TextBlock.last-referenced">
-                <Setter Property="FontSize" Value="10" />
-                <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}" />
-                <Setter Property="Margin" Value="16,2,0,0" />
-                <Setter Property="HorizontalAlignment" Value="Right" />
-                <Setter Property="VerticalAlignment" Value="Bottom" />
-                <Setter Property="TextWrapping" Value="Wrap" />
-            </Style>
+        <!-- Selected + Hover -->
+        <Style Selector="^ > ListBoxItem:selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource OverlayLightBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderAccentBrush}" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
         </Style>
     </Style>
 </Styles>

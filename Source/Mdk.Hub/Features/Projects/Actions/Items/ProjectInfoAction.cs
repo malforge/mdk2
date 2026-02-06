@@ -55,6 +55,12 @@ public class ProjectInfoAction : ActionItem
     }
 
     /// <summary>
+    ///     Gets the single selected project, or null if zero or multiple projects are selected.
+    ///     Compatibility property for single-select actions.
+    /// </summary>
+    public ProjectModel? Project => SelectedProjects.Length == 1 ? SelectedProjects[0] : null;
+
+    /// <summary>
     ///     Gets whether the selected project is a script (programmable block).
     /// </summary>
     public bool IsScript => Project?.Type == ProjectType.ProgrammableBlock;
@@ -185,13 +191,14 @@ public class ProjectInfoAction : ActionItem
     public override string Category => "Project";
 
     /// <summary>
-    ///     Called when the selected project changes to update project-specific UI elements.
+    ///     Called when the selected projects change to update project-specific UI elements.
     /// </summary>
-    protected override void OnSelectedProjectChanged()
+    protected override void OnSelectedProjectsChanged()
     {
-        base.OnSelectedProjectChanged();
+        base.OnSelectedProjectsChanged();
 
         // Update computed properties
+        OnPropertyChanged(nameof(Project));
         OnPropertyChanged(nameof(IsScript));
         OnPropertyChanged(nameof(ProjectTypeName));
 
@@ -203,7 +210,14 @@ public class ProjectInfoAction : ActionItem
     /// <summary>
     ///     Determines whether this action should be shown in the UI.
     /// </summary>
-    public override bool ShouldShow() => !_projectService.State.SelectedProject.IsEmpty();
+    public override bool ShouldShow()
+    {
+        // Only show for single selection
+        if (!base.ShouldShow())
+            return false;
+            
+        return !_projectService.State.SelectedProject.IsEmpty();
+    }
 
     bool CanOpenProjectFolder() => Project is not null && File.Exists(Project.ProjectPath.Value);
 
@@ -240,10 +254,9 @@ public class ProjectInfoAction : ActionItem
                 UseShellExecute = true
             });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Silently fail - user's system might not have a default handler for .csproj
-            Debug.WriteLine($"Failed to open project in IDE: {ex.Message}");
         }
     }
 
@@ -251,44 +264,31 @@ public class ProjectInfoAction : ActionItem
 
     async Task CopyScriptAsync()
     {
-        Debug.WriteLine($"CopyScriptAsync called. IsScript={IsScript}, IsDeployed={IsDeployed}, _outputPath={_outputPath}");
-
         if (!CanCopyScript())
-        {
-            Debug.WriteLine("CanCopyScript returned false, exiting early");
             return;
-        }
 
         try
         {
             var scriptFile = Path.Combine(_outputPath!, "Script.cs");
-            Debug.WriteLine($"Looking for script at: {scriptFile}");
 
             if (File.Exists(scriptFile))
             {
                 var content = await File.ReadAllTextAsync(scriptFile);
-                Debug.WriteLine($"Script loaded, length={content.Length}");
 
                 // Use TopLevel to get clipboard
                 var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
                     ? TopLevel.GetTopLevel(desktop.MainWindow)
                     : null;
 
-                Debug.WriteLine($"TopLevel: {topLevel != null}, Clipboard: {topLevel?.Clipboard != null}");
-
                 if (topLevel?.Clipboard != null)
                 {
                     await topLevel.Clipboard.SetTextAsync(content);
-                    Debug.WriteLine("Clipboard set successfully");
                     _shell.ShowToast($"Script copied ({content.Length:N0} characters)");
                 }
             }
-            else
-                Debug.WriteLine("Script file does not exist");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Exception: {ex}");
             await _shell.ShowOverlayAsync(new ConfirmationMessage
             {
                 Title = "Copy Failed",
@@ -331,6 +331,7 @@ public class ProjectInfoAction : ActionItem
                 var project = Project;
                 if (project == null)
                     return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath, configWarning);
+                    
                 var projectPath = project.ProjectPath;
                 if (string.IsNullOrEmpty(projectPath.Value))
                     return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath, configWarning);

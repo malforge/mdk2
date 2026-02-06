@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Immutable;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Framework;
 
@@ -10,7 +11,7 @@ namespace Mdk.Hub.Features.Projects.Actions;
 /// </summary>
 public abstract class ActionItem : ViewModel
 {
-    ProjectModel? _project;
+    ImmutableArray<ProjectModel> _selectedProjects = ImmutableArray<ProjectModel>.Empty;
 
     /// <summary>
     ///     The category this action belongs to, or null for top-level actions.
@@ -20,20 +21,21 @@ public abstract class ActionItem : ViewModel
 
     /// <summary>
     ///     Whether this action should be shared across all project contexts (true)
-    ///     or created per-project (false). Global actions cannot receive a project instance.
+    ///     or created per-project (false). Global actions cannot receive project instances.
     /// </summary>
     public virtual bool IsGlobal => false;
 
     /// <summary>
-    ///     The currently selected project. Per-project actions use this to know which project they're operating on.
+    ///     The currently selected projects. Per-project actions use this to know which project(s) they're operating on.
+    ///     Single-select: array contains 0-1 items. Multi-select: array contains 0-N items.
     /// </summary>
-    public ProjectModel? Project
+    public ImmutableArray<ProjectModel> SelectedProjects
     {
-        get => _project;
+        get => _selectedProjects;
         set
         {
-            if (SetProperty(ref _project, value))
-                OnSelectedProjectChanged();
+            if (SetProperty(ref _selectedProjects, value))
+                OnSelectedProjectsChanged();
         }
     }
 
@@ -45,13 +47,18 @@ public abstract class ActionItem : ViewModel
     /// <summary>
     ///     Whether this action should be visible in the current state.
     ///     Each action determines its own visibility using injected services.
+    ///     Default implementation hides the action if more than 1 project is selected (not yet supported).
     /// </summary>
-    public abstract bool ShouldShow();
+    public virtual bool ShouldShow()
+    {
+        // Default: hide if multiple projects selected (no actions support multi-select yet)
+        return SelectedProjects.Length <= 1;
+    }
 
     /// <summary>
-    ///     Called when the SelectedProject changes. Override to react to project selection changes.
+    ///     Called when SelectedProjects changes. Override to react to selection changes.
     /// </summary>
-    protected virtual void OnSelectedProjectChanged()
+    protected virtual void OnSelectedProjectsChanged()
     {
         // Default: trigger visibility check
         RaiseShouldShowChanged();

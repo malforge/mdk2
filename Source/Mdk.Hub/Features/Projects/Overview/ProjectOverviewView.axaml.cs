@@ -1,10 +1,9 @@
 using System;
-using System.Collections;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
-using Avalonia;
+using System.Linq;
 using Avalonia.Controls;
-using Avalonia.VisualTree;
 using JetBrains.Annotations;
 using Mal.SourceGeneratedDI;
 
@@ -17,6 +16,8 @@ namespace Mdk.Hub.Features.Projects.Overview;
 [UsedImplicitly]
 public partial class ProjectOverviewView : UserControl
 {
+    bool _updatingSelection;
+
     /// <summary>
     ///     Initializes a new instance of the ProjectOverviewView class.
     /// </summary>
@@ -33,66 +34,74 @@ public partial class ProjectOverviewView : UserControl
         {
             viewModel.PropertyChanged += OnViewModelPropertyChanged;
             viewModel.ShowProjectRequested += OnShowProjectRequested;
+            
+            // Sync initial selection if one exists
+            if (viewModel.SelectedProjects.Length > 0)
+                SyncListBoxSelection();
+        }
+    }
+    
+    void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProjectOverviewViewModel.SelectedProjects))
+        {
+            SyncListBoxSelection();
+        }
+    }
+    
+    void OnSelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+    {
+        if (_updatingSelection || DataContext is not ProjectOverviewViewModel viewModel)
+            return;
+            
+        _updatingSelection = true;
+        try
+        {
+            var selected = ProjectListBox.SelectedItems?.Cast<ProjectModel>() ?? Enumerable.Empty<ProjectModel>();
+            viewModel.SelectedProjects = selected.ToImmutableArray();
+        }
+        finally
+        {
+            _updatingSelection = false;
+        }
+    }
+    
+    void SyncListBoxSelection()
+    {
+        if (_updatingSelection || DataContext is not ProjectOverviewViewModel viewModel || ProjectListBox == null)
+            return;
+            
+        _updatingSelection = true;
+        try
+        {
+            var selected = viewModel.SelectedProjects;
+            
+            // Single-select mode: set SelectedItem
+            if (ProjectListBox.SelectionMode == SelectionMode.Single)
+            {
+                ProjectListBox.SelectedItem = selected.Length > 0 ? selected[0] : null;
+            }
+            // Multi-select mode: sync SelectedItems
+            else
+            {
+                ProjectListBox.SelectedItems?.Clear();
+                foreach (var item in selected)
+                    ProjectListBox.SelectedItems?.Add(item);
+            }
+        }
+        finally
+        {
+            _updatingSelection = false;
         }
     }
 
     void OnShowProjectRequested(object? sender, ShowProjectEventArgs e) => ScrollToItem(e.Project);
 
-    void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // Scrolling now handled via ShowProjectRequested event
-    }
-
     void ScrollToItem(ProjectModel item)
     {
-        if (ProjectScrollViewer == null || ProjectItemsControl == null)
-        {
-            Debug.WriteLine("ScrollToItem: ScrollViewer or ItemsControl is null");
+        if (ProjectListBox == null)
             return;
-        }
 
-        Debug.WriteLine($"ScrollToItem: Looking for item {item}");
-
-        // Get the index of the item
-        var items = ProjectItemsControl.ItemsSource as IList;
-        if (items == null)
-        {
-            Debug.WriteLine("ScrollToItem: ItemsSource is not IList");
-            return;
-        }
-
-        var index = items.IndexOf(item);
-        if (index < 0)
-        {
-            Debug.WriteLine("ScrollToItem: Item not found in ItemsSource");
-            return;
-        }
-
-        Debug.WriteLine($"ScrollToItem: Item is at index {index}");
-
-        // Calculate approximate scroll position
-        // Assuming each item is roughly the same height, estimate position
-        const double estimatedItemHeight = 60.0; // Adjust based on actual item height
-        var targetOffset = index * estimatedItemHeight;
-
-        Debug.WriteLine($"ScrollToItem: Scrolling to offset {targetOffset}");
-        ProjectScrollViewer.Offset = new Vector(0, targetOffset);
-    }
-
-    static T? FindVisualChild<T>(Control parent, Func<T, bool> predicate) where T : Control
-    {
-        foreach (var child in parent.GetVisualChildren())
-        {
-            if (child is T typedChild && predicate(typedChild))
-                return typedChild;
-
-            if (child is Control childControl)
-            {
-                var result = FindVisualChild(childControl, predicate);
-                if (result != null)
-                    return result;
-            }
-        }
-        return null;
+        ProjectListBox.ScrollIntoView(item);
     }
 }

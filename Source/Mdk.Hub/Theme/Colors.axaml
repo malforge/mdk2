@@ -45,9 +45,9 @@
     <!-- Overlay Colors (for hover effects and modal overlays) -->
     <Color x:Key="OverlayHoverColor">#18ffffff</Color>           <!-- Subtle hover overlay (10% white) -->
     <Color x:Key="OverlayDarkColor">#33000000</Color>            <!-- Dark overlay (20% black) -->
-    <Color x:Key="OverlayLightSubtleColor">#44ffffff</Color>     <!-- Light overlay subtle (27% white) -->
-    <Color x:Key="OverlayLightColor">#55ffffff</Color>           <!-- Light overlay medium (33% white) -->
-    <Color x:Key="OverlayLightStrongColor">#66ffffff</Color>     <!-- Light overlay strong (40% white) -->
+    <Color x:Key="OverlayLightSubtleColor">#22ffffff</Color>     <!-- Light overlay subtle (13% white) - reduced from 27% -->
+    <Color x:Key="OverlayLightColor">#33ffffff</Color>           <!-- Light overlay medium (20% white) - reduced from 33% -->
+    <Color x:Key="OverlayLightStrongColor">#44ffffff</Color>     <!-- Light overlay strong (27% white) - reduced from 40% -->
 
     <!-- Button State Colors (semantic names - what they ARE, not where they GO) -->
     <Color x:Key="AccentPrimaryColor">#FF0056b3</Color>               <!-- Primary action color (darker) -->

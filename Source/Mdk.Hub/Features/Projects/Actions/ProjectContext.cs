@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Mdk.Hub.Features.Diagnostics;
@@ -54,11 +55,11 @@ class ProjectContext
     public void OnContextBecameActive()
     {
         // Notify all per-project actions that they should refresh
-        // Actions are shared singletons - reassign Project to trigger OnSelectedProjectChanged()
+        // Actions are shared singletons - reassign SelectedProjects to trigger OnSelectedProjectsChanged()
         foreach (var action in _allActions)
         {
             if (!action.IsGlobal && _project != null)
-                action.Project = _project;
+                action.SelectedProjects = ImmutableArray.Create(_project);
         }
     }
 
@@ -102,7 +103,7 @@ class ProjectContext
 
             // Set project for per-project actions (only if we have a project)
             if (!action.IsGlobal && _project != null)
-                action.Project = _project;
+                action.SelectedProjects = ImmutableArray.Create(_project);
 
             // Subscribe to should show changes
             action.ShouldShowChanged += OnActionShouldShowChanged;

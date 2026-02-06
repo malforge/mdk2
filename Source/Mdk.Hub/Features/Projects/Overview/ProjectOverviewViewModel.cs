@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
 using Mal.SourceGeneratedDI;
@@ -102,7 +103,39 @@ public class ProjectOverviewViewModel : ViewModel
     ///     Gets the collection of projects after applying search and filter criteria.
     /// </summary>
     public ReadOnlyObservableCollection<ProjectModel> FilteredProjects { get; }
-
+    
+    ImmutableArray<ProjectModel> _selectedProjects = ImmutableArray<ProjectModel>.Empty;
+    
+    /// <summary>
+    ///     Gets or sets the currently selected projects. Contains 0-1 items in single-select mode, 0-N in multi-select mode.
+    /// </summary>
+    public ImmutableArray<ProjectModel> SelectedProjects
+    {
+        get => _selectedProjects;
+        set
+        {
+            if (SetProperty(ref _selectedProjects, value) && value.Length == 1)
+            {
+                // Handle single selection for current behaviors (navigation, save preference, etc.)
+                var project = value[0];
+                
+                // Update IsSelected flags for legacy code
+                foreach (var item in _projects)
+                    item.IsSelected = (item == project);
+                
+                // Clear needs attention flag
+                project.NeedsAttention = false;
+                _lastProjectSelectionTime = DateTimeOffset.Now;
+                
+                // Save selected project path
+                var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+                hubSettings.LastSelectedProject = project.ProjectPath.ToString();
+                _settings.SetValue(SettingsKeys.HubSettings, hubSettings);
+                
+                UpdateState();
+            }
+        }
+    }
 
     /// <summary>
     ///     Gets or sets the search text for filtering projects (throttled to reduce UI updates).
@@ -255,6 +288,9 @@ public class ProjectOverviewViewModel : ViewModel
 
         // Select the project (don't toggle when called from state sync)
         project.IsSelected = true;
+        
+        // Update SelectedProjects - code-behind will sync ListBox
+        SelectedProjects = ImmutableArray.Create(project);
 
         // Clear needs attention flag when selected
         project.NeedsAttention = false;

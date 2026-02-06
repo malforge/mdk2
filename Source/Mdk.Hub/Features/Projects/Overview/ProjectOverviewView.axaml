@@ -31,83 +31,77 @@
         </icons:SymbolSelector>
 
         <DataTemplate DataType="overview:ProjectModel">
-            <controls:SelectableCard Classes="project-item"
-                                     HorizontalAlignment="Stretch"
-                                     IsSelected="{Binding IsSelected}"
-                                     NeedsAttention="{Binding NeedsAttention}"
-                                     Command="{Binding SelectCommand}"
-                                     CommandParameter="{Binding}">
-                <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="12,8">
+                <Grid ColumnDefinitions="Auto,*">
                     <ContentControl Classes="project-icon"
                                     Content="{Binding Type}"
                                     Grid.RowSpan="2" />
 
-                    <Grid Grid.Column="1" RowDefinitions="Auto,*">
-                        <TextBlock
-                            Classes="title"
-                            Grid.Row="0"
-                            Text="{Binding Name}" />
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalAlignment="Center">
+                        <!-- Title row with indicators on the right -->
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                            <TextBlock
+                                Grid.Column="0"
+                                Classes="title"
+                                Text="{Binding Name}" />
+                            
+                            <!-- Indicator dots horizontally aligned on right -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0">
+                                <Ellipse Width="8"
+                                         Height="8"
+                                         Classes="warning-indicator"
+                                         IsVisible="{Binding HasUnsavedChanges}"
+                                         ToolTip.Tip="Unsaved changes" />
+                                
+                                <Ellipse Width="10"
+                                         Height="10"
+                                         Fill="{StaticResource ForegroundWarningBrush}"
+                                         IsVisible="{Binding NeedsAttention}"
+                                         ToolTip.Tip="New build notification">
+                                    <Ellipse.Styles>
+                                        <Style Selector="Ellipse">
+                                            <Style.Animations>
+                                                <Animation Duration="0:0:1.5" IterationCount="Infinite">
+                                                    <KeyFrame Cue="0%">
+                                                        <Setter Property="Opacity" Value="1.0" />
+                                                    </KeyFrame>
+                                                    <KeyFrame Cue="50%">
+                                                        <Setter Property="Opacity" Value="0.3" />
+                                                    </KeyFrame>
+                                                    <KeyFrame Cue="100%">
+                                                        <Setter Property="Opacity" Value="1.0" />
+                                                    </KeyFrame>
+                                                </Animation>
+                                            </Style.Animations>
+                                        </Style>
+                                    </Ellipse.Styles>
+                                </Ellipse>
+                            </StackPanel>
+                        </Grid>
 
+                        <!-- Time row -->
                         <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
-                            <!-- Update indicator text -->
                             <TextBlock
                                 Grid.Column="0"
                                 Classes="last-referenced"
                                 Text="MDK updates available"
                                 Foreground="{StaticResource ForegroundWarningBrush}"
-                                Margin="16,2,0,0"
+                                Margin="16,0,8,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Bottom"
                                 IsVisible="{Binding NeedsUpdate}" />
 
-                            <!-- Last referenced date -->
                             <TextBlock
                                 Grid.Column="1"
                                 Classes="last-referenced"
                                 Text="{Binding LastReferenced, Converter={m:SmartDate}}"
-                                Margin="0,2,0,0" />
+                                Margin="0,0,0,0" />
                         </Grid>
                     </Grid>
-
-                    <!-- Needs Attention Badge with Pulse Animation -->
-                    <Ellipse Grid.Column="2"
-                             Width="10"
-                             Height="10"
-                             Fill="{StaticResource ForegroundWarningBrush}"
-                             VerticalAlignment="Center"
-                             Margin="8,0,4,0"
-                             IsVisible="{Binding NeedsAttention}"
-                             ToolTip.Tip="New build notification">
-                        <Ellipse.Styles>
-                            <Style Selector="Ellipse">
-                                <Style.Animations>
-                                    <Animation Duration="0:0:1.5" IterationCount="Infinite">
-                                        <KeyFrame Cue="0%">
-                                            <Setter Property="Opacity" Value="1.0" />
-                                        </KeyFrame>
-                                        <KeyFrame Cue="50%">
-                                            <Setter Property="Opacity" Value="0.3" />
-                                        </KeyFrame>
-                                        <KeyFrame Cue="100%">
-                                            <Setter Property="Opacity" Value="1.0" />
-                                        </KeyFrame>
-                                    </Animation>
-                                </Style.Animations>
-                            </Style>
-                        </Ellipse.Styles>
-                    </Ellipse>
-
-                    <!-- Unsaved Changes Indicator -->
-                    <Ellipse Grid.Column="2"
-                             Width="8"
-                             Height="8"
-                             Classes="warning-indicator"
-                             VerticalAlignment="Center"
-                             Margin="8,0,0,0"
-                             IsVisible="{Binding HasUnsavedChanges}"
-                             ToolTip.Tip="Unsaved changes" />
                 </Grid>
-            </controls:SelectableCard>
+            </Border>
         </DataTemplate>
     </UserControl.DataTemplates>
 
@@ -152,23 +146,21 @@
             GroupName="FilterGroup"
             IsChecked="{Binding FilterModsOnly }" />
 
-        <ScrollViewer
-            x:Name="ProjectScrollViewer"
+        <ListBox
+            x:Name="ProjectListBox"
             Grid.ColumnSpan="4"
             Grid.Column="0"
             Grid.Row="1"
+            SelectionMode="Single"
+            ItemsSource="{Binding FilteredProjects}"
+            SelectionChanged="OnSelectionChanged"
             HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch">
-            <ItemsControl
-                x:Name="ProjectItemsControl"
-                Classes="project-list"
-                ItemsSource="{Binding FilteredProjects}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel Orientation="Vertical" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
-        </ScrollViewer>
+            Classes="project-list">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+        </ListBox>
     </Grid>
 </UserControl>

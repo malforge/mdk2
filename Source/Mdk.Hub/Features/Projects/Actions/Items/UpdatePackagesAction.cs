@@ -58,28 +58,45 @@ public class UpdatePackagesAction : ActionItem, IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (Project != null)
-            Project.PropertyChanged -= OnProjectPropertyChanged;
+        var project = Project;
+        if (project != null)
+            project.PropertyChanged -= OnProjectPropertyChanged;
     }
 
     /// <summary>
-    ///     Called when the selected project changes to subscribe to property change notifications.
+    ///     Gets the single selected project, or null if zero or multiple projects are selected.
+    ///     Compatibility property for single-select actions.
     /// </summary>
-    protected override void OnSelectedProjectChanged()
+    ProjectModel? Project => SelectedProjects.Length == 1 ? SelectedProjects[0] : null;
+
+    /// <summary>
+    ///     Called when the selected projects change to subscribe to property change notifications.
+    /// </summary>
+    protected override void OnSelectedProjectsChanged()
     {
-        base.OnSelectedProjectChanged();
+        base.OnSelectedProjectsChanged();
+        
+        OnPropertyChanged(nameof(Project));
 
         // Subscribe/unsubscribe to project property changes
-        if (Project != null)
-            Project.PropertyChanged += OnProjectPropertyChanged;
+        var project = Project;
+        if (project != null)
+            project.PropertyChanged += OnProjectPropertyChanged;
     }
 
     /// <summary>
     ///     Determines whether this action should be shown in the UI.
     /// </summary>
-    public override bool ShouldShow() =>
+    public override bool ShouldShow()
+    {
+        // Only show for single selection
+        if (!base.ShouldShow())
+            return false;
+            
         // Show when project is selected and it needs updates
-        Project != null && Project.NeedsUpdate;
+        var project = Project;
+        return project != null && project.NeedsUpdate;
+    }
 
     void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -89,7 +106,8 @@ public class UpdatePackagesAction : ActionItem, IDisposable
 
     async Task UpdateThisProjectAsync()
     {
-        if (Project == null)
+        var project = Project;
+        if (project == null)
             return;
 
         var busyOverlay = new BusyOverlayViewModel("Checking for updates...");
@@ -98,11 +116,11 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         try
         {
             // Try to use cached updates first (from background checker)
-            var updates = _projectService.GetCachedUpdates(Project.ProjectPath);
+            var updates = _projectService.GetCachedUpdates(project.ProjectPath);
 
             // If not cached, query NuGet
             if (updates == null)
-                updates = await _projectService.CheckForPackageUpdatesAsync(Project.ProjectPath);
+                updates = await _projectService.CheckForPackageUpdatesAsync(project.ProjectPath);
 
             if (updates.Count == 0)
             {
@@ -114,7 +132,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
             busyOverlay.Message = $"Updating {updates.Count} package(s)...";
 
             // Update packages
-            var success = await _projectService.UpdatePackagesAsync(Project.ProjectPath, updates);
+            var success = await _projectService.UpdatePackagesAsync(project.ProjectPath, updates);
 
             if (success)
             {
