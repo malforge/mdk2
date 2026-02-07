@@ -145,24 +145,33 @@ jobs:
         with:
           dotnet-version: 9.x
 
-      - name: Build tool project
+      - name: Build tool project for Windows
         run: |
-          dotnet publish ${{ matrix.project }} -c Release -o ../output -r win-x64 -p:DebugType=None
+          dotnet publish ${{ matrix.project }} -c Release -o ../output/win-x64 -r win-x64 -p:DebugType=None
 
-      - name: Prepare artifact name
+      - name: Build tool project for Linux
         run: |
-          $outputDir = "../output"
-          $exePath = Get-ChildItem $outputDir -Filter *.exe | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          
-          if (-not $exePath) {
-            Write-Error "No executable found in output directory!"
+          dotnet publish ${{ matrix.project }} -c Release -o ../output/linux-x64 -r linux-x64 -p:DebugType=None
+
+      - name: Verify cross-platform binaries
+        run: |
+          # Verify both binaries exist
+          if (-not (Test-Path ../output/win-x64/mdk.exe)) {
+            Write-Error "Windows binary (mdk.exe) not found!"
+            exit 1
+          }
+          if (-not (Test-Path ../output/linux-x64/mdk)) {
+            Write-Error "Linux binary (mdk) not found!"
             exit 1
           }
           
-          Write-Host "Generated executable: $exePath"
-          $artifactName = $exePath.BaseName
-          Write-Host "Artifact name: $artifactName"
-          echo "ARTIFACT_NAME=$artifactName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+          Write-Host "✓ Windows binary: mdk.exe + $((Get-ChildItem ../output/win-x64).Count) files"
+          Write-Host "✓ Linux binary: mdk + $((Get-ChildItem ../output/linux-x64).Count) files"
+          Write-Host "Cross-platform CLI package ready"
+
+      - name: Prepare artifact name
+        run: |
+          echo "ARTIFACT_NAME=mdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
       - name: Debug artifact name
         run: |
@@ -174,7 +183,9 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}-artifact
           if-no-files-found: error
           retention-days: 7
-          path: ./output/**/*
+          path: |
+            ./output/win-x64/**/*
+            ./output/linux-x64/**/*
 
   build-primary:
     runs-on: ubuntu-latest
@@ -200,13 +211,13 @@ jobs:
         with:
           dotnet-version: 9.x
 
-      - name: Download tool artifacts
+      - name: Download tool artifacts for PbPackager
         uses: actions/download-artifact@v4
         with:
           name: mdk-artifact
           path: ./Source/Mdk.PbPackager/tools
 
-      - name: Download tool artifacts
+      - name: Download tool artifacts for ModPackager
         uses: actions/download-artifact@v4
         with:
           name: mdk-artifact
@@ -278,48 +289,48 @@ jobs:
           retention-days: 7
           path: ./Source/Releases/*
 
-  # build-hub-linux:
-  #   runs-on: ubuntu-latest
-  #   needs: update-templates
-  #   
-  #   defaults:
-  #     run:
-  #       working-directory: ./Source
-  #       shell: bash
-  #   
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #
-  #     - name: Setup .NET
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: 9.x
-  #
-  #     - name: Install Velopack
-  #       run: dotnet tool install -g vpk
-  #
-  #     - name: Get version from PackageVersion.txt
-  #       id: get-version
-  #       run: |
-  #         VERSION=$(cat Mdk.Hub/PackageVersion.txt | tr -d '\r' | tr -d '\n' | xargs)
-  #         echo "VERSION=$VERSION" >> $GITHUB_ENV
-  #         echo "Version: $VERSION"
-  #
-  #     - name: Publish Mdk.Hub for Linux
-  #       run: |
-  #         dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net9.0 -r linux-x64 --self-contained -o publish/linux
-  #
-  #     - name: Build Velopack AppImage
-  #       run: |
-  #         vpk pack --packId Malforge.MdkHub --packVersion $VERSION --packDir publish/linux --mainExe Mdk.Hub --packTitle "MDK Hub" --icon Mdk.Hub/Assets/malware256.png
-  #
-  #     - name: Upload Linux installer artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: mdk-hub-linux-installer
-  #         if-no-files-found: error
-  #         retention-days: 7
-  #         path: ./Source/Releases/*
+  build-hub-linux:
+    runs-on: ubuntu-latest
+    needs: update-templates
+    
+    defaults:
+      run:
+        working-directory: ./Source
+        shell: bash
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.x
+
+      - name: Install Velopack
+        run: dotnet tool install -g vpk
+
+      - name: Get version from PackageVersion.txt
+        id: get-version
+        run: |
+          VERSION=$(cat Mdk.Hub/PackageVersion.txt | tr -d '\r' | tr -d '\n' | xargs)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Version: $VERSION"
+
+      - name: Publish Mdk.Hub for Linux
+        run: |
+          dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net9.0 -r linux-x64 --self-contained -o publish/linux
+
+      - name: Build Velopack AppImage
+        run: |
+          vpk pack --packId Malforge.MdkHub --packVersion $VERSION --packDir publish/linux --mainExe Mdk.Hub --packTitle "MDK Hub" --icon Mdk.Hub/Assets/malware256.png
+
+      - name: Upload Linux installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdk-hub-linux-installer
+          if-no-files-found: error
+          retention-days: 7
+          path: ./Source/Releases/*
 
   deploy:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
@@ -351,7 +362,7 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && 'Deploy' || 'Prerelease' }}
     needs:
       - build-hub-windows
-      # - build-hub-linux
+      - build-hub-linux
     
     steps:
       - uses: actions/checkout@v4
@@ -420,11 +431,11 @@ jobs:
           name: mdk-hub-windows-installer
           path: ./releases
       
-      # - name: Download Linux installer
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: mdk-hub-linux-installer
-      #     path: ./releases
+      - name: Download Linux installer
+        uses: actions/download-artifact@v4
+        with:
+          name: mdk-hub-linux-installer
+          path: ./releases
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

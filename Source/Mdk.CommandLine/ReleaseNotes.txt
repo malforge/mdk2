@@ -1,4 +1,9 @@
-﻿v.2.2.0-pre.2
+﻿v.2.2.0-pre.3
+   - Linux support: MDK2 CLI and packagers now fully support Linux.
+   - Packagers automatically detect your platform and use the correct binary.
+   - Both Windows and Linux binaries included in the package.
+
+v.2.2.0-pre.2
    - Linux compatibility: CLI now reads Hub's global path settings for auto-detection on Linux.
    - Interactive mode fully integrated with Hub for cross-platform build notifications.
    - Improved path handling for cross-platform reliability.

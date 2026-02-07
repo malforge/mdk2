@@ -1,3 +1,7 @@
+v.1.0.0-pre.29
+   - Linux support: MDK2 Hub now available for Linux.
+   - Cross-platform improvements for Hub/CLI communication.
+
 v.1.0.0-pre.28
    - Simplified MDK2 folder structure (settings now at MDK2\settings.json instead of MDK2\Hub\settings.json).
    - Legacy .version files from previous MDK2 versions are now automatically cleaned up after import.
