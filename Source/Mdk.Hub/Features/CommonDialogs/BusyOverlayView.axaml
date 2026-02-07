@@ -18,7 +18,7 @@
                 Padding="32,24"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                MinWidth="200">
+                Width="400">
             <StackPanel Spacing="16" HorizontalAlignment="Center">
                 <!-- Progress indicator -->
                 <ProgressBar IsIndeterminate="{Binding IsIndeterminate}"
@@ -29,6 +29,8 @@
                 <TextBlock Text="{Binding Message}"
                            Classes="body"
                            TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="336"
                            HorizontalAlignment="Center" />
 
                 <!-- Cancel button -->

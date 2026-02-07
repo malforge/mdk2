@@ -233,8 +233,10 @@ public class UpdatePackagesAction : ActionItem, IDisposable
                 failures.Add((projectInfo.Name, error!));
 
             // Phase 2: Update projects sequentially (to avoid overwhelming the system)
+            // Sort by LastReferenced (oldest first) to preserve relative order when files are touched
             var projectsWithUpdates = checkResults
                 .Where(r => r.error == null && r.updates.Count > 0)
+                .OrderBy(r => r.projectInfo.LastReferenced)
                 .ToList();
 
             if (projectsWithUpdates.Count == 0)
