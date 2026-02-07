@@ -59,7 +59,12 @@ class ProjectUpdateChecker
         QueueProjectsCheck(projects.Select(p => p.ProjectPath));
     }
 
-    void QueueProjectCheck(CanonicalPath projectPath, bool priority = false)
+    /// <summary>
+    ///     Queues a project for update checking, optionally with priority to check it next.
+    /// </summary>
+    /// <param name="projectPath">The path to the project.</param>
+    /// <param name="priority">If true, the project will be checked next (moved to front of queue).</param>
+    public void QueueProjectCheck(CanonicalPath projectPath, bool priority = false)
     {
         lock (_lock)
         {

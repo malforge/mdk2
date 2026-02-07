@@ -62,11 +62,13 @@ public struct HubSettings
     /// <summary>
     ///     Gets or sets whether the Easter egg is disabled forever.
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool EasterEggDisabledForever { get; set; }
 
     /// <summary>
     ///     Gets or sets the ticks value until which the Easter egg is disabled.
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public long EasterEggDisabledUntilTicks { get; set; }
 
     /// <summary>

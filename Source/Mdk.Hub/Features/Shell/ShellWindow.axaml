@@ -4,7 +4,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Mdk.Hub.Features.Shell"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        Width="800" Height="450"
         MinWidth="850" MinHeight="450"
         x:Class="Mdk.Hub.Features.Shell.ShellWindow"
         x:DataType="vm:ShellViewModel"

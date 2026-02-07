@@ -12,7 +12,7 @@ namespace Mdk.Hub.Features.Projects;
 
 /// <summary>
 ///     Stores and manages the registry of known MDK projects.
-///     Projects are persisted to %appdata%\MDK2\Hub\projects.json
+///     Projects are persisted to %appdata%\MDK2\projects.json
 /// </summary>
 [Singleton<IProjectRegistry>]
 public class ProjectRegistry : IProjectRegistry
@@ -30,8 +30,7 @@ public class ProjectRegistry : IProjectRegistry
     {
         _logger = logger;
         var appDataMdk2 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2");
-        var hubFolder = Path.Combine(appDataMdk2, "Hub");
-        _registryPath = Path.Combine(hubFolder, "projects.json");
+        _registryPath = Path.Combine(appDataMdk2, "projects.json");
         _versionFilesPath = appDataMdk2;
         Load();
     }
@@ -105,6 +104,9 @@ public class ProjectRegistry : IProjectRegistry
         try
         {
             var versionFiles = Directory.GetFiles(_versionFilesPath, "*.version");
+            if (versionFiles.Length == 0)
+                return;
+
             var importedCount = 0;
 
             foreach (var versionFile in versionFiles)
@@ -137,11 +139,34 @@ public class ProjectRegistry : IProjectRegistry
                 _logger.Info($"Imported {importedCount} projects from .version files");
                 Save();
             }
+
+            // Clean up legacy .version files now that import is complete
+            DeleteVersionFiles(versionFiles);
         }
         catch (Exception ex)
         {
             _logger.Error("Failed to import from .version files", ex);
         }
+    }
+
+    void DeleteVersionFiles(string[] versionFiles)
+    {
+        var deletedCount = 0;
+        foreach (var versionFile in versionFiles)
+        {
+            try
+            {
+                File.Delete(versionFile);
+                deletedCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning($"Failed to delete legacy version file: {versionFile} - {ex.Message}");
+            }
+        }
+
+        if (deletedCount > 0)
+            _logger.Info($"Cleaned up {deletedCount} legacy .version files");
     }
 
     string? ExtractProjectPathFromVersionFile(string versionFilePath)

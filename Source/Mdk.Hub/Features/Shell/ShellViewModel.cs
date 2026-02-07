@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.CommonDialogs;
@@ -45,6 +46,8 @@ public class ShellViewModel : ViewModel, IShell
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
     ViewModel? _currentView;
     bool _hasStarted;
+    WindowState? _initialWindowState;
+    bool _isInBackground;
     bool _isReady;
     ViewModel? _navigationView;
     string[]? _startupArgs;
@@ -151,6 +154,26 @@ public class ShellViewModel : ViewModel, IShell
     public ObservableCollection<OverlayModel> OverlayViews { get; } = new();
 
     /// <summary>
+    ///     Gets the initial window state to use when launching with notification arguments.
+    ///     Null means use the saved window settings.
+    /// </summary>
+    public WindowState? InitialWindowState => _initialWindowState;
+
+    /// <inheritdoc />
+    public bool IsInBackground
+    {
+        get => _isInBackground;
+        private set
+        {
+            if (_isInBackground != value)
+            {
+                _isInBackground = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>
     ///     Starts the shell with the specified command-line arguments and initializes the main UI.
     /// </summary>
     /// <param name="args">Command-line arguments passed to the application.</param>
@@ -158,6 +181,12 @@ public class ShellViewModel : ViewModel, IShell
     {
         _startupArgs = args;
         _hasStarted = true;
+        
+        // Start minimized if launched with notification arguments
+        // HandleBuildNotificationAsync will call BringToFront() if InteractiveMode is OpenHub
+        if (IsNotificationCommand(args))
+            _initialWindowState = WindowState.Minimized;
+        
         NavigationView = _projectOverviewViewModel.Value;
         CurrentView = _projectActionsViewModel.Value;
 
@@ -165,6 +194,15 @@ public class ShellViewModel : ViewModel, IShell
         WriteHubPath();
 
         BeginStartup();
+    }
+    
+    static bool IsNotificationCommand(string[] args)
+    {
+        if (args.Length < 3)
+            return false;
+        
+        var command = args[0].ToLowerInvariant();
+        return command is "script" or "mod" or "custom" or "nuget";
     }
 
     /// <summary>
@@ -439,6 +477,16 @@ public class ShellViewModel : ViewModel, IShell
     public void WindowFocusWasGained() => RaiseWindowFocusGained();
 
     /// <summary>
+    ///     Updates whether the window is in the background (minimized or not focused).
+    /// </summary>
+    /// <param name="isMinimized">True if window is minimized.</param>
+    /// <param name="isFocused">True if window has focus.</param>
+    public void UpdateWindowState(bool isMinimized, bool isFocused)
+    {
+        IsInBackground = isMinimized || !isFocused;
+    }
+
+    /// <summary>
     ///     Checks if the window can close. Returns false if there are unsaved changes and user cancels.
     /// </summary>
     public async Task<bool> CanCloseAsync()
@@ -669,12 +717,12 @@ public class ShellViewModel : ViewModel, IShell
             // Resolve to actual path if it's a symlink (Velopack 'current' directory)
             var resolvedPath = ResolveSymlink(exePath);
 
-            // Write to %AppData%/MDK2/Hub/hub.path or ~/.config/MDK2/Hub/hub.path
+            // Write to %AppData%/MDK2/hub.path or ~/.config/MDK2/hub.path
             var appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var hubFolder = Path.Combine(appDataFolder, "MDK2", "Hub");
-            Directory.CreateDirectory(hubFolder);
+            var mdkFolder = Path.Combine(appDataFolder, "MDK2");
+            Directory.CreateDirectory(mdkFolder);
 
-            var pathFile = Path.Combine(hubFolder, "hub.path");
+            var pathFile = Path.Combine(mdkFolder, "hub.path");
             File.WriteAllText(pathFile, resolvedPath);
 
             _logger.Info($"Hub path written to: {pathFile}");

@@ -531,7 +531,8 @@ public class ProjectService : IProjectService
     }
 
     /// <inheritdoc />
-    public bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false)
+    /// <inheritdoc />
+    public bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false, bool bringToFront = false)
     {
         if (projectPath.IsEmpty())
             return false;
@@ -546,7 +547,14 @@ public class ProjectService : IProjectService
         // Update state directly - this raises StateChanged event
         State = new ProjectStateData(projectPath, _state.CanMakeScript, _state.CanMakeMod);
 
-        _logger.Info($"Navigated to project: {projectPath}{(openOptions ? " (with options)" : "")}");
+        _logger.Info($"Navigated to project: {projectPath}{(openOptions ? " (with options)" : "")}{(bringToFront ? " (bringing to front)" : "")}");
+        
+        // Prioritize update check for selected project
+        _updateChecker.QueueProjectCheck(projectPath, priority: true);
+        
+        // Bring window to front if requested
+        if (bringToFront)
+            _shell.BringToFront();
 
         // Raise event for additional navigation actions (e.g., opening options drawer)
         // Note: ProjectNavigationRequested is for actions AFTER selection, not FOR selection
@@ -892,6 +900,26 @@ public class ProjectService : IProjectService
         lock (_updateStatesLock)
             _updateStates[e.ProjectPath] = (true, e.AvailableUpdates.Count, e.AvailableUpdates);
 
+        // If this is the currently selected project, has updates, and hub is in background, show a snackbar
+        if (e.AvailableUpdates.Count > 0 && 
+            _state.SelectedProject == e.ProjectPath && 
+            _shell.IsInBackground)
+        {
+            var projectName = _registry.GetProjects().FirstOrDefault(p => p.ProjectPath == e.ProjectPath)?.Name ?? "Project";
+            var updateCount = e.AvailableUpdates.Count;
+            
+            _logger.Info($"Showing update notification for selected project {projectName}: {updateCount} update(s) available (hub in background)");
+            
+            _snackbarService.Show(
+                $"{updateCount} package update{(updateCount > 1 ? "s" : "")} available for {projectName}",
+                new[] { new SnackbarAction
+                {
+                    Text = "Show Me",
+                    Action = _ => NavigateToProject(e.ProjectPath, bringToFront: true)
+                }},
+                timeout: 8000);
+        }
+
         // Forward event to subscribers (view models, etc.)
         ProjectUpdateAvailable?.Invoke(this, e);
     }
@@ -1121,6 +1149,12 @@ public class ProjectService : IProjectService
         else
             _logger.Info($"Build notification preference for {projectName}: {preference}");
 
+        // Determine if we should bring hub to front
+        var bringToFront = preference.Equals("OpenHub", StringComparison.OrdinalIgnoreCase);
+        
+        // Always navigate to the project (select it) to trigger update check prioritization
+        NavigateToProject(new CanonicalPath(projectPath), bringToFront: bringToFront);
+
         switch (preference.ToLowerInvariant())
         {
             case "shownotification":
@@ -1130,14 +1164,7 @@ public class ProjectService : IProjectService
                 break;
 
             case "openhub":
-                // Bring window to front
-                _shell.BringToFront();
-                
-                // For new projects, ProjectAdded event already handles selection with cooldown logic
-                // For existing projects, navigate explicitly
-                if (!isNewProject)
-                    NavigateToProject(new CanonicalPath(projectPath));
-                // else: let OnProjectAdded handle it (respects user activity cooldown)
+                // Window already brought to front by NavigateToProject call above
                 break;
 
             case "donothing":
@@ -1146,7 +1173,7 @@ public class ProjectService : IProjectService
                 break;
 
             default:
-                // Unknown preference - default to OpenHub for new projects, ShowNotification for existing
+                // Unknown preference - default to ShowNotification
                 _logger.Warning($"Unknown notification preference '{preference}', using default");
                 ShowScriptDeployedSnackbar(projectName, projectPath);
                 break;

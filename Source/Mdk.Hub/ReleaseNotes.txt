@@ -1,3 +1,8 @@
+v.1.0.0-pre.28
+   - Simplified MDK2 folder structure (settings now at MDK2\settings.json instead of MDK2\Hub\settings.json).
+   - Legacy .version files from previous MDK2 versions are now automatically cleaned up after import.
+   - Hub window position and size are now properly managed by the OS on first run.
+
 v.1.0.0-pre.27
    - Hub window now activates and comes to front when OpenHub build notification is triggered.
    - Now using the Mal.SourceGeneratedDI package.

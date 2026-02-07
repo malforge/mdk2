@@ -12,7 +12,7 @@ public static class GlobalSettings
 {
     static string SettingsFilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "MDK2", "Hub", "settings.json");
+        "MDK2", "settings.json");
 
     /// <summary>
     /// Gets the custom auto output path for scripts from global settings, or null if not set

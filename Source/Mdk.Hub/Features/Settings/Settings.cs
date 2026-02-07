@@ -27,7 +27,7 @@ public class Settings : ISettings
     /// </summary>
     public Settings()
     {
-        _settingsFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2/Hub/settings.json");
+        _settingsFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2/settings.json");
         if (File.Exists(_settingsFileName))
         {
             try

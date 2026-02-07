@@ -13,6 +13,15 @@ public interface ISettings
     event EventHandler<SettingsChangedEventArgs>? SettingsChanged;
     
     /// <summary>
+    /// Attempts to get a setting value for the specified key.
+    /// </summary>
+    /// <typeparam name="T">The value type of the setting.</typeparam>
+    /// <param name="key">The setting key.</param>
+    /// <param name="value">When this method returns, contains the setting value if found; otherwise, the default value.</param>
+    /// <returns>True if the setting was found; otherwise, false.</returns>
+    bool TryGetValue<T>(string key, out T value) where T : struct;
+    
+    /// <summary>
     /// Gets a setting value for the specified key.
     /// </summary>
     /// <typeparam name="T">The value type of the setting.</typeparam>

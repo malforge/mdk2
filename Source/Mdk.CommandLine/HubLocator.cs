@@ -20,7 +20,7 @@ public static class HubLocator
         try
         {
             var appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var pathFile = Path.Combine(appDataFolder, "MDK2", "Hub", "hub.path");
+            var pathFile = Path.Combine(appDataFolder, "MDK2", "hub.path");
             
             if (!File.Exists(pathFile))
             {

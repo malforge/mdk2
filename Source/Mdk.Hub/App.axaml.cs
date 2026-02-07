@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
@@ -72,14 +73,6 @@ public class App : Application
             var shellViewModel = Container.Resolve<ShellViewModel>();
             var shellWindow = Container.Resolve<ShellWindow>();
             shellWindow.DataContext = shellViewModel;
-            desktop.MainWindow = shellWindow;
-
-            // Initialize snackbar service with main window for screen detection
-            var snackbarService = Container.Resolve<ISnackbarService>();
-            if (snackbarService is SnackbarService ss)
-                ss.SetMainWindow(shellWindow);
-
-            var shell = Container.Resolve<IShell>();
             
             // Parse command line arguments
             var args = desktop.Args ?? Array.Empty<string>();
@@ -88,6 +81,14 @@ public class App : Application
             if (SimulateLinux)
                 logger.Info("Running in Linux simulation mode");
             
+            desktop.MainWindow = shellWindow;
+
+            // Initialize snackbar service with main window for screen detection
+            var snackbarService = Container.Resolve<ISnackbarService>();
+            if (snackbarService is SnackbarService ss)
+                ss.SetMainWindow(shellWindow);
+
+            var shell = Container.Resolve<IShell>();
             shell.Start(args);
 
             logger.Info("MDK Hub application started successfully");

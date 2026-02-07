@@ -87,6 +87,11 @@ public interface IShell
     bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info);
 
     /// <summary>
+    ///     Gets whether the main window is currently in the background (minimized or not active).
+    /// </summary>
+    bool IsInBackground { get; }
+    
+    /// <summary>
     ///     Requests the application to shut down gracefully.
     /// </summary>
     void Shutdown();

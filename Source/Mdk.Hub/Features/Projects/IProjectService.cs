@@ -119,7 +119,8 @@ public interface IProjectService
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>
     /// <param name="openOptions">Whether to open the options drawer after navigation.</param>
-    bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false);
+    /// <param name="bringToFront">Whether to bring the Hub window to front and activate it.</param>
+    bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false, bool bringToFront = false);
 
     /// <summary>
     ///     Clears the update state for a project after packages have been successfully updated.
