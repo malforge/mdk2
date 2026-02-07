@@ -1,3 +1,7 @@
+v.1.0.0-pre.30
+   - Double-click projects in overview to open in IDE.
+   - Fixed copy script button remaining disabled after deployment.
+
 v.1.0.0-pre.29
    - Linux support: MDK2 Hub now available for Linux.
    - Cross-platform improvements for Hub/CLI communication.

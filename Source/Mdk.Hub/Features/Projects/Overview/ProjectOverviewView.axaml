@@ -154,6 +154,7 @@
             SelectionMode="Single"
             ItemsSource="{Binding FilteredProjects}"
             SelectionChanged="OnSelectionChanged"
+            DoubleTapped="OnProjectListBoxDoubleTapped"
             HorizontalAlignment="Stretch"
             Classes="project-list">
             <ListBox.ItemsPanel>

@@ -115,6 +115,13 @@ public interface IProjectService
     Task<bool> OpenOutputFolderAsync(CanonicalPath projectPath);
 
     /// <summary>
+    ///     Opens the project in the default IDE by launching the .csproj file.
+    /// </summary>
+    /// <param name="projectPath">Path to the .csproj file.</param>
+    /// <returns>True if the project was opened successfully.</returns>
+    bool OpenProjectInIde(CanonicalPath projectPath);
+
+    /// <summary>
     ///     Navigates to and selects the specified project in the Hub UI.
     /// </summary>
     /// <param name="projectPath">Path to the .csproj file.</param>

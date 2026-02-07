@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows.Input;
 using Mal.SourceGeneratedDI;
@@ -26,6 +25,7 @@ public class ProjectOverviewViewModel : ViewModel
     readonly ObservableCollection<ProjectModel> _projects = new();
     readonly IProjectService _projectService;
     readonly ISettings _settings;
+    readonly IShell _shell;
     readonly ThrottledAction<string> _throttledSearch;
     ImmutableArray<ProjectModel> _allProjects;
     bool _filterModsOnly;
@@ -55,6 +55,7 @@ public class ProjectOverviewViewModel : ViewModel
     /// <param name="logger">Logger for diagnostic output.</param>
     public ProjectOverviewViewModel(IShell shell, IProjectService projectService, ISettings settings, ILogger logger)
     {
+        _shell = shell;
         _projectService = projectService;
         _settings = settings;
         _logger = logger;
@@ -62,6 +63,7 @@ public class ProjectOverviewViewModel : ViewModel
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
         ClearSearchCommand = new RelayCommand(ClearSearch);
         SelectProjectCommand = new RelayCommand<ProjectModel>(p => SelectProject(p));
+        OpenProjectInIdeCommand = new RelayCommand<ProjectModel>(OpenProjectInIde);
 
         // Subscribe to refresh requests
         shell.RefreshRequested += (_, _) => Refresh();
@@ -216,6 +218,11 @@ public class ProjectOverviewViewModel : ViewModel
     ///     Gets the command to select a project.
     /// </summary>
     public ICommand SelectProjectCommand { get; }
+    
+    /// <summary>
+    ///     Gets the command to open a project in IDE.
+    /// </summary>
+    public ICommand OpenProjectInIdeCommand { get; }
 
     /// <summary>
     ///     Refreshes the project list from disk.
@@ -578,5 +585,14 @@ public class ProjectOverviewViewModel : ViewModel
         }
         else
             _logger.Warning($"Could not find project model for {e.ProjectPath}");
+    }
+    
+    void OpenProjectInIde(ProjectModel? project)
+    {
+        if (project == null || project.ProjectPath.IsEmpty())
+            return;
+
+        if (_projectService.OpenProjectInIde(project.ProjectPath))
+            _shell.ShowToast($"Opening {project.Name} in IDE...");
     }
 }

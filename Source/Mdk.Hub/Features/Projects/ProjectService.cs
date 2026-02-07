@@ -531,6 +531,33 @@ public class ProjectService : IProjectService
     }
 
     /// <inheritdoc />
+    public bool OpenProjectInIde(CanonicalPath projectPath)
+    {
+        if (projectPath.IsEmpty())
+            return false;
+
+        try
+        {
+            if (!File.Exists(projectPath.Value))
+                return false;
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = projectPath.Value,
+                UseShellExecute = true
+            });
+
+            _logger.Info($"Opened project in IDE: {projectPath}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to open project in IDE: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
     /// <inheritdoc />
     public bool NavigateToProject(CanonicalPath projectPath, bool openOptions = false, bool bringToFront = false)
     {

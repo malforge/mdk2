@@ -265,18 +265,8 @@ public class ProjectInfoAction : ActionItem
         if (!CanOpenInIde())
             return;
 
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = Project?.ProjectPath.Value,
-                UseShellExecute = true
-            });
-        }
-        catch (Exception)
-        {
-            // Silently fail - user's system might not have a default handler for .csproj
-        }
+        if (_projectService.OpenProjectInIde(Project!.ProjectPath))
+            _shell.ShowToast($"Opening {Project.Name} in IDE...");
     }
 
     bool CanCopyScript() => IsScript && IsDeployed && !string.IsNullOrEmpty(_outputPath);
@@ -461,12 +451,19 @@ public class ProjectInfoAction : ActionItem
             // Update properties on UI thread
             LastChanged = result.lastChanged;
             LastChangedError = result.lastChangedError;
+            
+            var outputPathChanged = _outputPath != result.outputPath;
             _outputPath = result.outputPath;
+            
             IsDeployed = result.isDeployed;
             DeploymentError = result.deploymentError;
             LastDeployed = result.lastDeployed;
             ScriptSizeCharacters = result.scriptSize;
             ConfigurationWarning = result.configWarning;
+            
+            // Notify command if output path changed
+            if (outputPathChanged)
+                ((AsyncRelayCommand)CopyScriptCommand).NotifyCanExecuteChanged();
         }
         finally
         {

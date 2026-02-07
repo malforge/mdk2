@@ -104,4 +104,20 @@ public partial class ProjectOverviewView : UserControl
 
         ProjectListBox.ScrollIntoView(item);
     }
+    
+    void OnProjectListBoxDoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
+    {
+        if (DataContext is not ProjectOverviewViewModel viewModel)
+            return;
+            
+        // Get the project that was double-tapped
+        if (e.Source is Control control)
+        {
+            var project = control.DataContext as ProjectModel ?? ProjectListBox.SelectedItem as ProjectModel;
+            if (project != null && viewModel.OpenProjectInIdeCommand.CanExecute(project))
+            {
+                viewModel.OpenProjectInIdeCommand.Execute(project);
+            }
+        }
+    }
 }
