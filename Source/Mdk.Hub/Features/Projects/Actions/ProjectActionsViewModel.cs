@@ -277,9 +277,6 @@ public partial class ProjectActionsViewModel : ViewModel
         if (_projectContexts.TryGetValue(canonicalPath, out var context) && context.CachedModel != null)
             context.CachedModel.HasUnsavedChanges = false;
 
-        // Update unsaved changes registration
-        UpdateUnsavedChangesRegistration();
-
         // Remove the current project's cached viewmodels (whether saved or cancelled)
         if (context != null)
         {
@@ -289,6 +286,9 @@ public partial class ProjectActionsViewModel : ViewModel
 
         OptionsViewModel = null;
         OptionsProjectPath = null;
+
+        // Update unsaved changes registration after clearing the OptionsViewModel
+        UpdateUnsavedChangesRegistration();
     }
 
     /// <summary>

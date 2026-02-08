@@ -123,7 +123,7 @@ public partial class ShellWindow : Window
     void OnKeyDown(object? sender, KeyEventArgs e)
     {
         // Ctrl+R to refresh
-        if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
+        if (e is { Key: Key.R, KeyModifiers: KeyModifiers.Control })
         {
             if (DataContext is ShellViewModel viewModel)
                 viewModel.RequestRefresh();
@@ -203,30 +203,11 @@ public partial class ShellWindow : Window
         }
     }
 
-    void CenterWindow()
-    {
-        // Center the window on the primary screen
-        var screen = Screens.Primary;
-        if (screen != null)
-        {
-            var workingArea = screen.WorkingArea;
-            var scaling = screen.Scaling;
-            
-            // Convert logical size to physical pixels
-            var physicalWidth = Width * scaling;
-            var physicalHeight = Height * scaling;
-            
-            var left = workingArea.X + (workingArea.Width - physicalWidth) / 2;
-            var top = workingArea.Y + (workingArea.Height - physicalHeight) / 2;
-            Position = new PixelPoint((int)left, (int)top);
-        }
-    }
-
     /// <summary>
     /// Stores window position, size, and state for persistence.
     /// Position and size are nullable - only stored when window is in Normal state.
     /// </summary>
-    struct WindowSettings
+    readonly struct WindowSettings
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WindowSettings"/> struct from an existing window.

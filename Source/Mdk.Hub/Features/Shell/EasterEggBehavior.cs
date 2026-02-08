@@ -20,7 +20,7 @@ public static class EasterEggBehavior
     public static readonly AttachedProperty<bool> IsEnabledProperty =
         AvaloniaProperty.RegisterAttached<Control, bool>("IsEnabled", typeof(EasterEggBehavior));
 
-    static readonly AttachedProperty<EasterEggAttachment?> AttachmentProperty =
+    static readonly AttachedProperty<EasterEggAttachment?> _attachmentProperty =
         AvaloniaProperty.RegisterAttached<Control, EasterEggAttachment?>("Attachment", typeof(EasterEggBehavior));
 
     /// <summary>
@@ -48,19 +48,19 @@ public static class EasterEggBehavior
             return;
 
         var isEnabled = (bool)args.NewValue!;
-        var attachment = control.GetValue(AttachmentProperty);
+        var attachment = control.GetValue(_attachmentProperty);
 
         if (isEnabled && attachment == null)
         {
             // Attach
             attachment = new EasterEggAttachment(control);
-            control.SetValue(AttachmentProperty, attachment);
+            control.SetValue(_attachmentProperty, attachment);
         }
         else if (!isEnabled && attachment != null)
         {
             // Detach
             attachment.Dispose();
-            control.SetValue(AttachmentProperty, null);
+            control.SetValue(_attachmentProperty, null);
         }
     }
 
@@ -115,7 +115,7 @@ public static class EasterEggBehavior
                     // Add to the beginning so it's behind other content
                     panel.Children.Insert(0, _easterEgg);
                 }
-                else if (_host is ContentControl contentControl && contentControl.Content == null)
+                else if (_host is ContentControl { Content: null } contentControl)
                 {
                     contentControl.Content = _easterEgg;
                 }
@@ -165,12 +165,12 @@ public static class EasterEggBehavior
                                 new KeyFrame
                                 {
                                     Cue = new Cue(0),
-                                    Setters = { new Setter(EasterEgg.OpacityProperty, 0.0) }
+                                    Setters = { new Setter(Visual.OpacityProperty, 0.0) }
                                 },
                                 new KeyFrame
                                 {
                                     Cue = new Cue(1),
-                                    Setters = { new Setter(EasterEgg.OpacityProperty, 1.0) }
+                                    Setters = { new Setter(Visual.OpacityProperty, 1.0) }
                                 }
                             }
                         };
@@ -192,12 +192,12 @@ public static class EasterEggBehavior
                                 new KeyFrame
                                 {
                                     Cue = new Cue(0),
-                                    Setters = { new Setter(EasterEgg.OpacityProperty, 1.0) }
+                                    Setters = { new Setter(Visual.OpacityProperty, 1.0) }
                                 },
                                 new KeyFrame
                                 {
                                     Cue = new Cue(1),
-                                    Setters = { new Setter(EasterEgg.OpacityProperty, 0.0) }
+                                    Setters = { new Setter(Visual.OpacityProperty, 0.0) }
                                 }
                             }
                         };
@@ -236,11 +236,11 @@ public static class EasterEggBehavior
             {
                 panel.Children.Remove(_easterEgg);
             }
-            else if (_host is ContentControl contentControl && contentControl.Content == _easterEgg)
+            else if (_host is ContentControl contentControl && Equals(contentControl.Content, _easterEgg))
             {
                 contentControl.Content = null;
             }
-            else if (_host is Decorator decorator && decorator.Child is Grid grid)
+            else if (_host is Decorator { Child: Grid grid } decorator)
             {
                 // Restore original structure
                 Control? originalChild = null;
@@ -248,7 +248,7 @@ public static class EasterEggBehavior
                 {
                     if (child != _easterEgg)
                     {
-                        originalChild = child as Control;
+                        originalChild = child;
                         break;
                     }
                 }

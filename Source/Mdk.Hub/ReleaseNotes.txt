@@ -1,3 +1,6 @@
+v.1.0.0-pre.32
+   - Fixed unsaved changes warning appearing after saving project options.
+
 v.1.0.0-pre.31
    - Fixed mass update dialog resizing when processing long project names.
    - Improved project ordering during mass updates to maintain consistency.
