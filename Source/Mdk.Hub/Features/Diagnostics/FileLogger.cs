@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Mal.SourceGeneratedDI;
+using Mdk.Hub.Features.Storage;
 
 namespace Mdk.Hub.Features.Diagnostics;
 
@@ -14,6 +15,7 @@ namespace Mdk.Hub.Features.Diagnostics;
 public class FileLogger : ILogger
 {
     readonly Lock _lock = new();
+    readonly IFileStorageService _fileStorage;
     readonly string _logDirectory;
     readonly string _logFilePath;
     readonly int _maxLogFiles = 7; // Keep last 7 days
@@ -21,13 +23,13 @@ public class FileLogger : ILogger
     /// <summary>
     /// Initializes a new instance of the <see cref="FileLogger"/> class and sets up log file rotation.
     /// </summary>
-    public FileLogger()
+    public FileLogger(IFileStorageService fileStorage)
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        _logDirectory = Path.Combine(appData, "MDK2", "Hub", "Logs");
+        _fileStorage = fileStorage;
+        _logDirectory = Path.Combine(_fileStorage.GetLocalApplicationDataPath(), "Hub", "Logs");
 
         // Create directory if it doesn't exist
-        Directory.CreateDirectory(_logDirectory);
+        _fileStorage.CreateDirectory(_logDirectory);
 
         // Log file name with date
         var logFileName = $"mdk-hub-{DateTime.Now:yyyy-MM-dd}.log";
@@ -43,7 +45,7 @@ public class FileLogger : ILogger
         try
         {
             var executablePath = Environment.ProcessPath ?? AppContext.BaseDirectory;
-            if (!string.IsNullOrEmpty(executablePath) && File.Exists(executablePath))
+            if (!string.IsNullOrEmpty(executablePath) && _fileStorage.FileExists(executablePath))
             {
                 productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(executablePath).ProductVersion ?? version;
             }
@@ -157,7 +159,7 @@ public class FileLogger : ILogger
                     ? $" [{entry.FileName}:{entry.LineNumber} {entry.MemberName}]"
                     : "";
                 var logLine = $"[{timestamp}] [{entry.Level}]{location} {entry.Message}";
-                File.AppendAllText(_logFilePath, logLine + Environment.NewLine);
+                _fileStorage.AppendAllText(_logFilePath, logLine + Environment.NewLine);
 
                 // Also write to debug output for development
                 System.Diagnostics.Debug.WriteLine(logLine);
@@ -173,9 +175,9 @@ public class FileLogger : ILogger
     {
         try
         {
-            var logFiles = Directory.GetFiles(_logDirectory, "mdk-hub-*.log")
-                .Select(f => new FileInfo(f))
-                .OrderByDescending(f => f.LastWriteTime)
+            var logFiles = _fileStorage.GetFiles(_logDirectory, "mdk-hub-*.log")
+                .Select(f => new { Path = f, LastWrite = _fileStorage.GetLastWriteTimeUtc(f) })
+                .OrderByDescending(f => f.LastWrite)
                 .ToList();
 
             // Keep only the most recent files
@@ -183,7 +185,7 @@ public class FileLogger : ILogger
             {
                 try
                 {
-                    file.Delete();
+                    _fileStorage.DeleteFile(file.Path);
                 }
                 catch
                 {

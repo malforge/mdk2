@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Mal.SourceGeneratedDI;
+using Mdk.Hub.Features.Storage;
 
 namespace Mdk.Hub.Features.Settings;
 
@@ -16,6 +17,7 @@ public class Settings : ISettings
     readonly JsonObject _settings = new();
     readonly Dictionary<string, object> _cache = new();
     readonly string _settingsFileName;
+    readonly IFileStorageService _fileStorage;
 
     /// <summary>
     /// Occurs when a setting value is changed.
@@ -25,14 +27,15 @@ public class Settings : ISettings
     /// <summary>
     /// Initializes a new instance of the <see cref="Settings"/> class and loads settings from disk.
     /// </summary>
-    public Settings()
+    public Settings(IFileStorageService fileStorage)
     {
-        _settingsFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2/settings.json");
-        if (File.Exists(_settingsFileName))
+        _fileStorage = fileStorage;
+        _settingsFileName = _fileStorage.GetApplicationDataPath("settings.json");
+        if (_fileStorage.FileExists(_settingsFileName))
         {
             try
             {
-                var json = File.ReadAllText(_settingsFileName);
+                var json = _fileStorage.ReadAllText(_settingsFileName);
                 _settings = JsonNode.Parse(json)?.AsObject() ?? new JsonObject();
             }
             catch (JsonException)
@@ -139,9 +142,9 @@ public class Settings : ISettings
     void SaveSettings()
     {
         var directory = Path.GetDirectoryName(_settingsFileName);
-        if (!Directory.Exists(directory))
-            Directory.CreateDirectory(directory!);
+        if (!string.IsNullOrEmpty(directory) && !_fileStorage.DirectoryExists(directory))
+            _fileStorage.CreateDirectory(directory);
         var json = _settings.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_settingsFileName, json);
+        _fileStorage.WriteAllText(_settingsFileName, json);
     }
 }

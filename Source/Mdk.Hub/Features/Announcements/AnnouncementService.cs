@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
+using Mdk.Hub.Features.Storage;
 
 namespace Mdk.Hub.Features.Announcements;
 
@@ -24,6 +25,7 @@ public class AnnouncementService : IAnnouncementService
     static readonly TimeSpan AutoCheckInterval = TimeSpan.FromHours(1);
     readonly Timer _autoCheckTimer;
     readonly List<Action<Announcement>> _callbacks = new();
+    readonly IFileStorageService _fileStorage;
     readonly ISettings _settings;
     readonly ILogger _logger;
     int _isChecking; // 0 = not checking, 1 = checking
@@ -31,10 +33,11 @@ public class AnnouncementService : IAnnouncementService
     /// <summary>
     /// Initializes a new instance of the <see cref="AnnouncementService"/> class.
     /// </summary>
-    public AnnouncementService(ILogger logger, ISettings settings)
+    public AnnouncementService(ILogger logger, ISettings settings, IFileStorageService fileStorage)
     {
         _logger = logger;
         _settings = settings;
+        _fileStorage = fileStorage;
 
         // Start auto-check timer (runs every hour)
         _autoCheckTimer = new Timer(
@@ -132,10 +135,10 @@ public class AnnouncementService : IAnnouncementService
             _logger.Info("═══ Checking for announcements ═══");
 
             // Try local file first (for testing)
-            var localPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2", "Hub", "announcements.json");
+            var localPath = Path.Combine(_fileStorage.GetApplicationDataPath(), "Hub", "announcements.json");
             Announcement? announcement = null;
 
-            if (File.Exists(localPath))
+            if (_fileStorage.FileExists(localPath))
             {
                 _logger.Info($"  Checking local file: {localPath}");
                 announcement = await LoadFromFileAsync(localPath);
@@ -197,7 +200,7 @@ public class AnnouncementService : IAnnouncementService
     {
         try
         {
-            var json = await File.ReadAllTextAsync(path);
+            var json = await _fileStorage.ReadAllTextAsync(path);
             var result = ParseAnnouncement(json);
             if (result == null)
                 _logger.Info("  → File exists but contains no valid announcement");

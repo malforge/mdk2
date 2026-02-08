@@ -14,6 +14,7 @@ using Mdk.Hub.Features.Projects;
 using Mdk.Hub.Features.Projects.Actions;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
+using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
@@ -37,6 +38,7 @@ public class ShellViewModel : ViewModel, IShell
     readonly Lazy<IAnnouncementService> _lazyAnnouncementService;
     readonly Lazy<IProjectService> _lazyProjectService;
     readonly Lazy<IUpdateManager> _lazyUpdateManager;
+    readonly IFileStorageService _fileStorage;
     readonly ILogger _logger;
     readonly Lazy<ProjectActionsViewModel> _projectActionsViewModel;
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
@@ -44,6 +46,7 @@ public class ShellViewModel : ViewModel, IShell
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
+    readonly Func<GlobalSettingsViewModel> _globalSettingsViewModelFactory;
     ViewModel? _currentView;
     bool _hasStarted;
     WindowState? _initialWindowState;
@@ -55,7 +58,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -70,6 +73,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <param name="projectOverviewViewModel">Initial content view model displayed in the shell.</param>
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
     /// <param name="lazyUpdateManager">Update manager service for monitoring MDK versions.</param>
+    /// <param name="fileStorage">File storage service for filesystem operations.</param>
     public ShellViewModel(
         ISettings settings,
         Lazy<IProjectService> lazyProjectService,
@@ -77,14 +81,18 @@ public class ShellViewModel : ViewModel, IShell
         Lazy<IAnnouncementService> lazyAnnouncementService,
         ILogger logger,
         Lazy<ProjectOverviewViewModel> projectOverviewViewModel,
-        Lazy<ProjectActionsViewModel> projectActionsViewModel)
+        Lazy<ProjectActionsViewModel> projectActionsViewModel,
+        IFileStorageService fileStorage,
+        Func<GlobalSettingsViewModel> globalSettingsViewModelFactory)
     {
         _lazyProjectService = lazyProjectService;
         _lazyUpdateManager = lazyUpdateManager;
         _lazyAnnouncementService = lazyAnnouncementService;
+        _fileStorage = fileStorage;
         _logger = logger;
         _projectOverviewViewModel = projectOverviewViewModel;
         _projectActionsViewModel = projectActionsViewModel;
+        _globalSettingsViewModelFactory = globalSettingsViewModelFactory;
         Settings = settings;
         // NavigationView = projectOverviewViewModel;
         // CurrentView = projectActionsViewModel;
@@ -683,7 +691,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <returns>True if configuration is now valid; otherwise, false.</returns>
     async Task<bool> ConfigureGlobalOptionsForLinuxAsync()
     {
-        var viewModel = App.Container.Resolve<GlobalSettingsViewModel>();
+        var viewModel = _globalSettingsViewModelFactory();
         TaskCompletionSource tcs = new();
         viewModel.MarkAsOpenedForLinuxValidation();
 
@@ -718,12 +726,8 @@ public class ShellViewModel : ViewModel, IShell
             var resolvedPath = ResolveSymlink(exePath);
 
             // Write to %AppData%/MDK2/hub.path or ~/.config/MDK2/hub.path
-            var appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var mdkFolder = Path.Combine(appDataFolder, "MDK2");
-            Directory.CreateDirectory(mdkFolder);
-
-            var pathFile = Path.Combine(mdkFolder, "hub.path");
-            File.WriteAllText(pathFile, resolvedPath);
+            var pathFile = Path.Combine(_fileStorage.GetApplicationDataPath(), "hub.path");
+            _fileStorage.WriteAllText(pathFile, resolvedPath);
 
             _logger.Info($"Hub path written to: {pathFile}");
             _logger.Debug($"Hub executable: {resolvedPath}");

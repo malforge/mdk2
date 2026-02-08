@@ -48,7 +48,9 @@
   <Project Path="Mdk.Extractor\Mdk.Extractor.csproj">
     <Platform Project="x64" />
   </Project>
-  <Project Path="Mdk.Hub\Mdk.Hub.csproj" Type="C#">
+  <Project Path="Mdk.Hub.Tests/Mdk.Hub.Tests.csproj" />
+  <Project Path="Mdk.Hub.UITests/Mdk.Hub.UITests.csproj" />
+  <Project Path="Mdk.Hub\Mdk.Hub.csproj">
       <Platform Project="x64" />
   </Project>
   <Project Path="Mdk.Notification\Mdk.Notification.csproj">

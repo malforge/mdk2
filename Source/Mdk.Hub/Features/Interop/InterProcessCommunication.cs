@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Storage;
 
 namespace Mdk.Hub.Features.Interop;
 
@@ -22,6 +23,7 @@ public class InterProcessCommunication : IInterProcessCommunication
     const string PortFileName = "hub-ipc.port";
     readonly bool _createdNew;
 
+    readonly IFileStorageService _fileStorage;
     readonly ILogger _logger;
     readonly Mutex _mutex;
     readonly CancellationTokenSource? _serverCancellation;
@@ -30,9 +32,11 @@ public class InterProcessCommunication : IInterProcessCommunication
     ///     Initializes a new instance of the <see cref="InterProcessCommunication"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
-    public InterProcessCommunication(ILogger logger)
+    /// <param name="fileStorage">The file storage service.</param>
+    public InterProcessCommunication(ILogger logger, IFileStorageService fileStorage)
     {
         _logger = logger;
+        _fileStorage = fileStorage;
         _mutex = new Mutex(true, MutexName, out _createdNew);
 
         if (_createdNew)
@@ -138,8 +142,10 @@ public class InterProcessCommunication : IInterProcessCommunication
 
             // Save port to file for clients to discover
             var portFilePath = GetPortFilePath();
-            Directory.CreateDirectory(Path.GetDirectoryName(portFilePath)!);
-            await File.WriteAllTextAsync(portFilePath, port.ToString(), cancellationToken);
+            var portDir = Path.GetDirectoryName(portFilePath);
+            if (!string.IsNullOrEmpty(portDir))
+                _fileStorage.CreateDirectory(portDir);
+            await _fileStorage.WriteAllTextAsync(portFilePath, port.ToString(), cancellationToken);
 
             // Accept connections
             while (!cancellationToken.IsCancellationRequested)
@@ -165,8 +171,8 @@ public class InterProcessCommunication : IInterProcessCommunication
             try
             {
                 var portFilePath = GetPortFilePath();
-                if (File.Exists(portFilePath))
-                    File.Delete(portFilePath);
+                if (_fileStorage.FileExists(portFilePath))
+                    _fileStorage.DeleteFile(portFilePath);
             }
             catch
             {
@@ -205,7 +211,9 @@ public class InterProcessCommunication : IInterProcessCommunication
 
     void OnMessageReceived(InterConnectMessage message) => MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
 
-    static string GetPortFilePath()
+    string GetPortFilePath() => Path.Combine(_fileStorage.GetLocalApplicationDataPath(), "Hub", PortFileName);
+    
+    static string GetStandalonePortFilePath()
     {
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         return Path.Combine(appDataPath, "MDK2", "Hub", PortFileName);
@@ -225,7 +233,8 @@ public class InterProcessCommunication : IInterProcessCommunication
         /// </summary>
         public Standalone()
         {
-            _logger = new FileLogger();
+            var fileStorage = new FileStorageService(); // Use production implementation for startup
+            _logger = new FileLogger(fileStorage);
             _mutex = new Mutex(true, MutexName, out _isFirstInstance);
         }
 
@@ -266,8 +275,8 @@ public class InterProcessCommunication : IInterProcessCommunication
                 var messageArgs = args.Skip(1).ToArray();
                 var message = new InterConnectMessage(type, messageArgs);
 
-                // Read port from file (synchronous)
-                var portFilePath = GetPortFilePath();
+                // Read port from file (synchronous) - use static helper for standalone
+                var portFilePath = GetStandalonePortFilePath();
                 if (!File.Exists(portFilePath))
                 {
                     _logger.Error($"Port file not found: {portFilePath}");

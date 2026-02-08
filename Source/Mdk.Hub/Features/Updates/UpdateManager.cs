@@ -11,6 +11,7 @@ using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Utility;
 using NuGet.Versioning;
 
@@ -23,6 +24,7 @@ namespace Mdk.Hub.Features.Updates;
 public class UpdateManager : IUpdateManager
 {
     readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();
+    readonly IFileStorageService _fileStorage;
     readonly IGitHubService _gitHubService;
     readonly HubUpdater _hubUpdater;
     readonly ILogger _logger;
@@ -41,13 +43,15 @@ public class UpdateManager : IUpdateManager
     /// <param name="gitHubService">The service for interacting with GitHub.</param>
     /// <param name="settings">The settings manager for user preferences.</param>
     /// <param name="shell">The shell interface for UI interactions.</param>
-    public UpdateManager(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings, IShell shell)
+    /// <param name="fileStorage">The file storage service for filesystem operations.</param>
+    public UpdateManager(ILogger logger, INuGetService nuGetService, IGitHubService gitHubService, ISettings settings, IShell shell, IFileStorageService fileStorage)
     {
         _logger = logger;
         _nuGetService = nuGetService;
         _gitHubService = gitHubService;
         _settings = settings;
         _shell = shell;
+        _fileStorage = fileStorage;
 
         // Initialize internal updaters
         _hubUpdater = new HubUpdater(settings, logger);
@@ -279,13 +283,13 @@ public class UpdateManager : IUpdateManager
             {
                 // Windows: Download and run the installer
                 var installerUrl = "https://download.visualstudio.microsoft.com/download/pr/23e32323-5a2b-48c2-86fa-58f5e72c6e98/19e09b4411d771867c0c9c30a8d7062c/dotnet-sdk-9.0.101-win-x64.exe";
-                var installerPath = Path.Combine(Path.GetTempPath(), "dotnet-sdk-9-installer.exe");
+                var installerPath = Path.Combine(_fileStorage.GetTempPath(), "dotnet-sdk-9-installer.exe");
 
                 _logger.Info("Downloading .NET 9 SDK installer");
 
                 using var httpClient = new HttpClient();
                 var installerBytes = await httpClient.GetByteArrayAsync(installerUrl);
-                await File.WriteAllBytesAsync(installerPath, installerBytes);
+                await _fileStorage.WriteAllBytesAsync(installerPath, installerBytes);
 
                 _logger.Info($"Running installer at {installerPath}");
 
@@ -311,7 +315,7 @@ public class UpdateManager : IUpdateManager
                 // Clean up installer
                 try
                 {
-                    File.Delete(installerPath);
+                    _fileStorage.DeleteFile(installerPath);
                 }
                 catch
                 {
@@ -322,13 +326,13 @@ public class UpdateManager : IUpdateManager
             {
                 // Linux: Use the dotnet-install.sh script
                 var scriptUrl = "https://dot.net/v1/dotnet-install.sh";
-                var scriptPath = Path.Combine(Path.GetTempPath(), "dotnet-install.sh");
+                var scriptPath = Path.Combine(_fileStorage.GetTempPath(), "dotnet-install.sh");
 
                 _logger.Info("Downloading .NET install script");
 
                 using var httpClient = new HttpClient();
                 var scriptBytes = await httpClient.GetByteArrayAsync(scriptUrl);
-                await File.WriteAllBytesAsync(scriptPath, scriptBytes);
+                await _fileStorage.WriteAllBytesAsync(scriptPath, scriptBytes);
 
                 _logger.Info("Making script executable");
 

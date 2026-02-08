@@ -11,6 +11,7 @@ using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Framework;
 using Mdk.Hub.Utility;
 
@@ -26,6 +27,7 @@ public class ProjectManagementAction : ActionItem
     readonly AsyncRelayCommand _addExistingCommand;
     readonly AsyncRelayCommand _createModCommand;
     readonly AsyncRelayCommand _createScriptCommand;
+    readonly IFileStorageService _fileStorage;
     readonly IProjectService _projectService;
     readonly IShell _shell;
 
@@ -37,12 +39,15 @@ public class ProjectManagementAction : ActionItem
     /// </summary>
     /// <param name="shell">The shell interface for UI interactions.</param>
     /// <param name="projectService">The service for managing projects.</param>
+    /// <param name="fileStorage">The file storage service.</param>
     public ProjectManagementAction(
         IShell shell,
-        IProjectService projectService)
+        IProjectService projectService,
+        IFileStorageService fileStorage)
     {
         _shell = shell;
         _projectService = projectService;
+        _fileStorage = fileStorage;
 
         _createScriptCommand = new AsyncRelayCommand(CreateScriptAsync, () => CanMakeScript);
         _createModCommand = new AsyncRelayCommand(CreateModAsync, () => CanMakeMod);
@@ -131,7 +136,7 @@ public class ProjectManagementAction : ActionItem
 
     async Task CreateProjectAsync(ProjectType projectType, string title, string description)
     {
-        var defaultLocation = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        var defaultLocation = _fileStorage.GetDocumentsPath();
 
         // Get the last used location for this project type
         var hubSettings = _projectService.Settings.GetValue(SettingsKeys.HubSettings, new HubSettings());

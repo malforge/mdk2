@@ -1,0 +1,43 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
+        xmlns:i="https://github.com/projektanker/icons.avalonia">
+
+    <!-- PathInput - Unified path input with browse and optional reset -->
+    <Style Selector="controls|PathInput">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBox Grid.Column="0"
+                             Name="PART_TextBox"
+                             Watermark="{TemplateBinding ResolvedWatermark}"
+                             Margin="0,0,8,0" />
+                    <Button Grid.Column="1"
+                            Name="PART_BrowseButton"
+                            Padding="8"
+                            VerticalAlignment="Stretch"
+                            ToolTip.Tip="Browse for folder"
+                            Margin="0,0,8,0">
+                        <i:Icon Value="fa-solid fa-folder-open" FontSize="14" />
+                    </Button>
+                    <Button Grid.Column="2"
+                            Name="PART_ResetButton"
+                            Padding="8"
+                            VerticalAlignment="Stretch"
+                            ToolTip.Tip="{TemplateBinding ResolvedResetTooltip}"
+                            IsVisible="{TemplateBinding CanReset}"
+                            IsEnabled="{TemplateBinding CanResetToDefault}">
+                        <i:Icon Value="fa-solid fa-rotate-left" FontSize="12" />
+                    </Button>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- Error state for PathInput -->
+    <Style Selector="controls|PathInput:error TextBox">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
+</Styles>

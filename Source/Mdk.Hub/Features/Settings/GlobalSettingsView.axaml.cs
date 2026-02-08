@@ -31,9 +31,9 @@ public partial class GlobalSettingsView : UserControl
 
     void OnFocusFirstInvalidField(object? sender, EventArgs e)
     {
-        // Find the first FolderBrowserControl with HasError=true
+        // Find the first PathInput with HasError=true
         var invalidControls = this.GetLogicalDescendants()
-            .OfType<Controls.FolderBrowserControl>()
+            .OfType<Framework.Controls.PathInput>()
             .Where(c => c.HasError)
             .ToList();
 

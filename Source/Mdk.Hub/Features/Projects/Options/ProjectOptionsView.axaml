@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:options="clr-namespace:Mdk.Hub.Features.Projects.Options"
-             xmlns:controls="clr-namespace:Mdk.Hub.Controls"
+             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Mdk.Hub.Features.Projects.Options.ProjectOptionsView"
              x:DataType="options:ProjectOptionsViewModel"
@@ -143,17 +143,19 @@
                         <!-- Output Path -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Output Path" Classes="label muted" />
-                            <controls:PathSelectorControl Path="{Binding MainConfig.OutputPath}"
-                                                          DefaultPath="{Binding DefaultOutputPath}"
-                                                          DefaultText="Auto" />
+                            <controls:PathInput Path="{Binding MainConfig.OutputPath}"
+                                               DefaultPath="auto"
+                                               CanReset="True"
+                                               ResetTooltip="Reset to Auto-detect" />
                         </StackPanel>
 
                         <!-- Binary Path -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Binary Path" Classes="label muted" />
-                            <controls:PathSelectorControl Path="{Binding MainConfig.BinaryPath}"
-                                                          DefaultPath="{Binding DefaultBinaryPath}"
-                                                          DefaultText="Auto" />
+                            <controls:PathInput Path="{Binding MainConfig.BinaryPath}"
+                                               DefaultPath="auto"
+                                               CanReset="True"
+                                               ResetTooltip="Reset to Auto-detect" />
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>

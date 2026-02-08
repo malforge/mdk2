@@ -40,8 +40,8 @@
         <StyleInclude Source="avares://Mdk.Hub/Theme/BaseStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/Typography.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/SemanticStyles.axaml" />
-        <StyleInclude Source="avares://Mdk.Hub/Theme/SelectableCardStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/DateTimeDisplayStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Theme/PathInputStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/ProjectOverviewStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/ProjectActionsStyles.axaml" />
     </Application.Styles>

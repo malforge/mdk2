@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Input;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.About;
@@ -14,11 +15,14 @@ namespace Mdk.Hub.Features.About;
 [ViewModelFor<AboutView>]
 public class AboutViewModel : OverlayModel
 {
+    readonly IFileStorageService _fileStorage;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="AboutViewModel"/> class.
     /// </summary>
-    public AboutViewModel()
+    public AboutViewModel(IFileStorageService fileStorage)
     {
+        _fileStorage = fileStorage;
         CloseCommand = new RelayCommand(Close);
         OpenLogsCommand = new RelayCommand(OpenLogs);
         OpenDataCommand = new RelayCommand(OpenData);
@@ -67,9 +71,9 @@ public class AboutViewModel : OverlayModel
 
     void OpenLogs()
     {
-        var logsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MDK2", "Hub", "Logs");
-        if (!Directory.Exists(logsPath))
-            Directory.CreateDirectory(logsPath);
+        var logsPath = Path.Combine(_fileStorage.GetLocalApplicationDataPath(), "Hub", "Logs");
+        if (!_fileStorage.DirectoryExists(logsPath))
+            _fileStorage.CreateDirectory(logsPath);
 
         Process.Start(new ProcessStartInfo
         {
@@ -80,9 +84,9 @@ public class AboutViewModel : OverlayModel
 
     void OpenData()
     {
-        var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2", "Hub");
-        if (!Directory.Exists(dataPath))
-            Directory.CreateDirectory(dataPath);
+        var dataPath = Path.Combine(_fileStorage.GetApplicationDataPath(), "Hub");
+        if (!_fileStorage.DirectoryExists(dataPath))
+            _fileStorage.CreateDirectory(dataPath);
 
         Process.Start(new ProcessStartInfo
         {

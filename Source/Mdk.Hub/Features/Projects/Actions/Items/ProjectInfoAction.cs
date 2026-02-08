@@ -11,6 +11,7 @@ using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
@@ -23,6 +24,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 public class ProjectInfoAction : ActionItem
 {
     readonly ProjectActionsViewModel _actionsViewModel;
+    readonly IFileStorageService _fileStorage;
     readonly IProjectService _projectService;
     readonly IShell _shell;
     string? _configurationWarning;
@@ -41,11 +43,13 @@ public class ProjectInfoAction : ActionItem
     /// <param name="projectService">The service for managing projects.</param>
     /// <param name="shell">The shell interface for UI interactions.</param>
     /// <param name="actionsViewModel">The view model for project actions.</param>
-    public ProjectInfoAction(IProjectService projectService, IShell shell, ProjectActionsViewModel actionsViewModel)
+    /// <param name="fileStorage">The file storage service.</param>
+    public ProjectInfoAction(IProjectService projectService, IShell shell, ProjectActionsViewModel actionsViewModel, IFileStorageService fileStorage)
     {
         _projectService = projectService;
         _shell = shell;
         _actionsViewModel = actionsViewModel;
+        _fileStorage = fileStorage;
 
         OpenProjectFolderCommand = new RelayCommand(OpenProjectFolder, CanOpenProjectFolder);
         OpenOutputFolderCommand = new RelayCommand(OpenOutputFolder, CanOpenOutputFolder);
@@ -373,12 +377,12 @@ public class ProjectInfoAction : ActionItem
                     if (string.Equals(outputPathValue, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPathValue))
                     {
                         var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
-                        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                        outputPath = config.Type == ProjectType.ProgrammableBlock
-                            ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
+                        var seDataPath = config.Type == ProjectType.ProgrammableBlock
+                            ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
                             : config.Type == ProjectType.Mod
-                                ? Path.Combine(appData, "SpaceEngineers", "Mods", projectName)
+                                ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "Mods", projectName)
                                 : null;
+                        outputPath = seDataPath;
                     }
                     else if (!string.IsNullOrEmpty(outputPathValue))
                     {

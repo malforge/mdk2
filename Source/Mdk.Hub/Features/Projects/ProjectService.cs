@@ -18,6 +18,7 @@ using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Snackbars;
+using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Utility;
 using NuGet.Versioning;
@@ -30,6 +31,7 @@ namespace Mdk.Hub.Features.Projects;
 [Singleton<IProjectService>]
 public class ProjectService : IProjectService
 {
+    readonly IFileStorageService _fileStorage;
     readonly ILogger _logger;
     readonly INuGetService _nugetService;
     readonly IProjectRegistry _registry;
@@ -53,13 +55,15 @@ public class ProjectService : IProjectService
     /// <param name="settings">Settings service.</param>
     /// <param name="updateManager">Update manager for checking package updates.</param>
     /// <param name="nugetService">NuGet service for package operations.</param>
-    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateManager updateManager, INuGetService nugetService)
+    /// <param name="fileStorage">File storage service for filesystem operations.</param>
+    public ProjectService(ILogger logger, IProjectRegistry registry, IInterProcessCommunication ipc, IShell shell, ISnackbarService snackbarService, ISettings settings, IUpdateManager updateManager, INuGetService nugetService, IFileStorageService fileStorage)
     {
         _registry = registry;
         _logger = logger;
         _shell = shell;
         _snackbarService = snackbarService;
         _settings = settings;
+        _fileStorage = fileStorage;
         Settings = settings;
         _nugetService = nugetService;
         _updateChecker = new ProjectUpdateChecker(logger, this, updateManager, registry);
@@ -400,9 +404,8 @@ public class ProjectService : IProjectService
                 if (string.IsNullOrEmpty(projectName))
                     return false;
 
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 outputPath = config.Type == ProjectType.ProgrammableBlock
-                    ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
+                    ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
                     : null;
             }
             else if (!string.IsNullOrEmpty(outputPath))
@@ -496,11 +499,10 @@ public class ProjectService : IProjectService
                 if (string.IsNullOrEmpty(projectName))
                     return false;
 
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 outputPath = config.Type == ProjectType.ProgrammableBlock
-                    ? Path.Combine(appData, "SpaceEngineers", "IngameScripts", "local", projectName)
+                    ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
                     : config.Type == ProjectType.Mod
-                        ? Path.Combine(appData, "SpaceEngineers", "Mods", projectName)
+                        ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "Mods", projectName)
                         : null;
             }
             else if (!string.IsNullOrEmpty(outputPath))

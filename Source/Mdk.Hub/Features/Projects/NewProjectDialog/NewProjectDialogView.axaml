@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:dialog="clr-namespace:Mdk.Hub.Features.Projects.NewProjectDialog"
-             xmlns:controls="clr-namespace:Mdk.Hub.Controls"
+             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
              x:Class="Mdk.Hub.Features.Projects.NewProjectDialog.NewProjectDialogView"
@@ -69,8 +69,8 @@
                     <StackPanel Spacing="4">
                         <TextBlock Text="Location"
                                    Classes="body" />
-                        <controls:FolderBrowserControl Path="{Binding Location}"
-                                                       Watermark="Select a folder..." />
+                        <controls:PathInput Path="{Binding Location}"
+                                           Watermark="Select a folder..." />
                     </StackPanel>
 
                     <!-- Preview of final path -->

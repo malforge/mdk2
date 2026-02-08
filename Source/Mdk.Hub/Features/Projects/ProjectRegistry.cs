@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Utility;
 
 namespace Mdk.Hub.Features.Projects;
@@ -18,6 +19,7 @@ namespace Mdk.Hub.Features.Projects;
 public class ProjectRegistry : IProjectRegistry
 {
     readonly ILogger _logger;
+    readonly IFileStorageService _fileStorage;
     readonly string _registryPath;
     readonly string _versionFilesPath;
     List<ProjectInfo> _projects = new();
@@ -26,12 +28,25 @@ public class ProjectRegistry : IProjectRegistry
     ///     Initializes a new instance of the ProjectRegistry class.
     /// </summary>
     /// <param name="logger">Logger for diagnostic output.</param>
-    public ProjectRegistry(ILogger logger)
+    /// <param name="fileStorage">File storage service for filesystem operations.</param>
+    public ProjectRegistry(ILogger logger, IFileStorageService fileStorage)
     {
         _logger = logger;
-        var appDataMdk2 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MDK2");
-        _registryPath = Path.Combine(appDataMdk2, "projects.json");
-        _versionFilesPath = appDataMdk2;
+        _fileStorage = fileStorage;
+        _registryPath = fileStorage.GetApplicationDataPath("projects.json");
+        _versionFilesPath = fileStorage.GetApplicationDataPath();
+        Load();
+    }
+
+    /// <summary>
+    ///     Internal constructor for testing that allows custom registry path.
+    /// </summary>
+    internal ProjectRegistry(ILogger logger, IFileStorageService fileStorage, string registryPath, string versionFilesPath)
+    {
+        _logger = logger;
+        _fileStorage = fileStorage;
+        _registryPath = registryPath;
+        _versionFilesPath = versionFilesPath;
         Load();
     }
 
@@ -74,11 +89,11 @@ public class ProjectRegistry : IProjectRegistry
 
     void Load()
     {
-        if (File.Exists(_registryPath))
+        if (_fileStorage.FileExists(_registryPath))
         {
             try
             {
-                var json = File.ReadAllText(_registryPath);
+                var json = _fileStorage.ReadAllText(_registryPath);
                 _projects = JsonSerializer.Deserialize<List<ProjectInfo>>(json) ?? new List<ProjectInfo>();
                 _logger.Info($"Loaded {_projects.Count} projects from registry");
             }
@@ -98,12 +113,12 @@ public class ProjectRegistry : IProjectRegistry
 
     void ImportFromVersionFiles()
     {
-        if (!Directory.Exists(_versionFilesPath))
+        if (!_fileStorage.DirectoryExists(_versionFilesPath))
             return;
 
         try
         {
-            var versionFiles = Directory.GetFiles(_versionFilesPath, "*.version");
+            var versionFiles = _fileStorage.GetFiles(_versionFilesPath, "*.version");
             if (versionFiles.Length == 0)
                 return;
 
@@ -156,7 +171,7 @@ public class ProjectRegistry : IProjectRegistry
         {
             try
             {
-                File.Delete(versionFile);
+                _fileStorage.DeleteFile(versionFile);
                 deletedCount++;
             }
             catch (Exception ex)
@@ -173,7 +188,7 @@ public class ProjectRegistry : IProjectRegistry
     {
         try
         {
-            var content = File.ReadAllText(versionFilePath);
+            var content = _fileStorage.ReadAllText(versionFilePath);
             if (!Ini.TryParse(content, out var ini))
                 return null;
 
@@ -195,8 +210,8 @@ public class ProjectRegistry : IProjectRegistry
             try
             {
                 var directory = Path.GetDirectoryName(_registryPath);
-                if (!Directory.Exists(directory))
-                    Directory.CreateDirectory(directory!);
+                if (!string.IsNullOrEmpty(directory) && !_fileStorage.DirectoryExists(directory))
+                    _fileStorage.CreateDirectory(directory);
 
                 // Filter out simulated projects before saving
                 var projectsToSave = _projects.Where(p => !p.Flags.HasFlag(ProjectFlags.Simulated)).ToList();
@@ -204,12 +219,12 @@ public class ProjectRegistry : IProjectRegistry
 
                 // Use temp file + rename for atomic write
                 var tempPath = _registryPath + ".tmp";
-                File.WriteAllText(tempPath, json);
+                _fileStorage.WriteAllText(tempPath, json);
 
                 // Atomic replace
-                if (File.Exists(_registryPath))
-                    File.Delete(_registryPath);
-                File.Move(tempPath, _registryPath);
+                if (_fileStorage.FileExists(_registryPath))
+                    _fileStorage.DeleteFile(_registryPath);
+                _fileStorage.MoveFile(tempPath, _registryPath);
 
                 return; // Success
             }
@@ -239,9 +254,9 @@ public class ProjectRegistry : IProjectRegistry
         for (var i = 0; i < _projects.Count; i++)
         {
             var project = _projects[i];
-            if (File.Exists(project.ProjectPath.Value))
+            if (project.ProjectPath.Value != null && _fileStorage.FileExists(project.ProjectPath.Value))
             {
-                var lastWrite = File.GetLastWriteTimeUtc(project.ProjectPath.Value);
+                var lastWrite = _fileStorage.GetLastWriteTimeUtc(project.ProjectPath.Value);
                 if (lastWrite > project.LastReferenced.UtcDateTime)
                 {
                     _projects[i] = project with { LastReferenced = new DateTimeOffset(lastWrite) };

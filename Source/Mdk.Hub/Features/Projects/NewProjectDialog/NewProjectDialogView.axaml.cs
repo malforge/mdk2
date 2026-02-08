@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Storage;
 
 namespace Mdk.Hub.Features.Projects.NewProjectDialog;
 
@@ -26,15 +27,22 @@ public partial class NewProjectDialogView : UserControl
     /// <summary>
     ///     Gets design-time sample data for visual preview.
     /// </summary>
-    public static NewProjectDialogMessage DesignMessage => new()
+    public static NewProjectDialogMessage DesignMessage
     {
-        Title = "Create New Project",
-        Message = "Enter a name and location for your new project.",
-        ProjectType = ProjectType.ProgrammableBlock,
-        DefaultLocation = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Projects"),
-        OkText = "Create",
-        CancelText = "Cancel"
-    };
+        get
+        {
+            var fileStorage = new FileStorageService();
+            return new()
+            {
+                Title = "Create New Project",
+                Message = "Enter a name and location for your new project.",
+                ProjectType = ProjectType.ProgrammableBlock,
+                DefaultLocation = Path.Combine(fileStorage.GetDocumentsPath(), "Projects"),
+                OkText = "Create",
+                CancelText = "Cancel"
+            };
+        }
+    }
 
     void OnLoaded(object? sender, RoutedEventArgs e)
     {

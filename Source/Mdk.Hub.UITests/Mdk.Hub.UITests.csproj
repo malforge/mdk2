@@ -6,14 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless.NUnit" Version="11.3.11" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
-    <PackageReference Include="FakeItEasy" Version="8.3.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
     <PackageReference Include="NUnit" Version="4.3.2" />
     <PackageReference Include="NUnit.Analyzers" Version="4.7.0" />
@@ -26,7 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Mdk.Hub\Mdk.Hub.csproj" />
-    <ProjectReference Include="..\Mdk.CommandLine\Mdk.CommandLine.csproj" />
   </ItemGroup>
 
 </Project>

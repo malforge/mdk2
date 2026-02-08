@@ -1,0 +1,53 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Mdk.Hub.Framework.Controls"
+        xmlns:testControls="clr-namespace:Mdk.Hub.UITests.Framework.Controls">
+    
+    <!-- Minimal PathInput control theme for testing -->
+    <Style Selector="controls|PathInput">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBox Name="PART_TextBox"
+                             Grid.Column="0"
+                             Watermark="{TemplateBinding ResolvedWatermark}" />
+                    
+                    <Button Name="PART_BrowseButton"
+                            Grid.Column="1"
+                            Margin="4,0,0,0"
+                            Content="Browse" />
+                    
+                    <Button Name="PART_ResetButton"
+                            Grid.Column="2"
+                            Margin="4,0,0,0"
+                            Content="Reset"
+                            IsVisible="{TemplateBinding CanResetToDefault}" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    
+    <!-- Apply same template to TestablePathInput -->
+    <Style Selector="testControls|TestablePathInput">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBox Name="PART_TextBox"
+                             Grid.Column="0"
+                             Watermark="{TemplateBinding ResolvedWatermark}" />
+                    
+                    <Button Name="PART_BrowseButton"
+                            Grid.Column="1"
+                            Margin="4,0,0,0"
+                            Content="Browse" />
+                    
+                    <Button Name="PART_ResetButton"
+                            Grid.Column="2"
+                            Margin="4,0,0,0"
+                            Content="Reset"
+                            IsVisible="{TemplateBinding CanResetToDefault}" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+</Styles>
