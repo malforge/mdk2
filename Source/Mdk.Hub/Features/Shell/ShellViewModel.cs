@@ -46,7 +46,7 @@ public class ShellViewModel : ViewModel, IShell
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
-    readonly Func<GlobalSettingsViewModel> _globalSettingsViewModelFactory;
+    readonly IDependencyContainer _container;
     ViewModel? _currentView;
     bool _hasStarted;
     WindowState? _initialWindowState;
@@ -74,6 +74,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <param name="projectActionsViewModel">navigation view model displayed alongside the content.</param>
     /// <param name="lazyUpdateManager">Update manager service for monitoring MDK versions.</param>
     /// <param name="fileStorage">File storage service for filesystem operations.</param>
+    /// <param name="container">Dependency container for resolving additional services as needed.</param>
     public ShellViewModel(
         ISettings settings,
         Lazy<IProjectService> lazyProjectService,
@@ -83,7 +84,7 @@ public class ShellViewModel : ViewModel, IShell
         Lazy<ProjectOverviewViewModel> projectOverviewViewModel,
         Lazy<ProjectActionsViewModel> projectActionsViewModel,
         IFileStorageService fileStorage,
-        Func<GlobalSettingsViewModel> globalSettingsViewModelFactory)
+        IDependencyContainer container)
     {
         _lazyProjectService = lazyProjectService;
         _lazyUpdateManager = lazyUpdateManager;
@@ -92,7 +93,7 @@ public class ShellViewModel : ViewModel, IShell
         _logger = logger;
         _projectOverviewViewModel = projectOverviewViewModel;
         _projectActionsViewModel = projectActionsViewModel;
-        _globalSettingsViewModelFactory = globalSettingsViewModelFactory;
+        _container = container;
         Settings = settings;
         // NavigationView = projectOverviewViewModel;
         // CurrentView = projectActionsViewModel;
@@ -691,7 +692,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <returns>True if configuration is now valid; otherwise, false.</returns>
     async Task<bool> ConfigureGlobalOptionsForLinuxAsync()
     {
-        var viewModel = _globalSettingsViewModelFactory();
+        var viewModel = _container.Resolve<GlobalSettingsViewModel>();
         TaskCompletionSource tcs = new();
         viewModel.MarkAsOpenedForLinuxValidation();
 

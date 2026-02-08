@@ -37,19 +37,7 @@ public class ProjectRegistry : IProjectRegistry
         _versionFilesPath = fileStorage.GetApplicationDataPath();
         Load();
     }
-
-    /// <summary>
-    ///     Internal constructor for testing that allows custom registry path.
-    /// </summary>
-    internal ProjectRegistry(ILogger logger, IFileStorageService fileStorage, string registryPath, string versionFilesPath)
-    {
-        _logger = logger;
-        _fileStorage = fileStorage;
-        _registryPath = registryPath;
-        _versionFilesPath = versionFilesPath;
-        Load();
-    }
-
+    
     /// <inheritdoc />
     public IReadOnlyList<ProjectInfo> GetProjects()
     {

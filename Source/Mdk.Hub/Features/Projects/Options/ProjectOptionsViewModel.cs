@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Configuration;
@@ -41,7 +42,7 @@ public class ProjectOptionsViewModel : ViewModel
 
     readonly AsyncRelayCommand _saveCommand;
     readonly IShell _shell;
-    readonly Func<GlobalSettingsViewModel> _globalSettingsViewModelFactory;
+    readonly IDependencyContainer _container;
     string? _defaultBinaryPath;
     bool _defaultBinaryPathLoaded;
     ProjectData? _projectData;
@@ -56,7 +57,7 @@ public class ProjectOptionsViewModel : ViewModel
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="onClose">Callback invoked when closing (true if saved, false if cancelled).</param>
     /// <param name="onDirtyStateChanged">Optional callback when dirty state changes.</param>
-    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, IShell dialogShell, IShell shell, ILogger logger, Action<bool> onClose, Func<GlobalSettingsViewModel> globalSettingsViewModelFactory, Action? onDirtyStateChanged = null)
+    public ProjectOptionsViewModel(string projectPath, IProjectService projectService, IShell dialogShell, IShell shell, ILogger logger, Action<bool> onClose, IDependencyContainer container, Action? onDirtyStateChanged = null)
     {
         _projectPath = new CanonicalPath(projectPath);
         _projectService = projectService;
@@ -65,7 +66,7 @@ public class ProjectOptionsViewModel : ViewModel
         _logger = logger;
         _onClose = onClose;
         _onDirtyStateChanged = onDirtyStateChanged;
-        _globalSettingsViewModelFactory = globalSettingsViewModelFactory;
+        _container = container;
 
         _saveCommand = new AsyncRelayCommand(Save);
         _cancelCommand = new RelayCommand(Cancel);
@@ -643,7 +644,7 @@ public class ProjectOptionsViewModel : ViewModel
 
     void OpenGlobalSettings()
     {
-        var viewModel = _globalSettingsViewModelFactory();
+        var viewModel = _container.Resolve<GlobalSettingsViewModel>();
         _shell.AddOverlay(viewModel);
     }
 }

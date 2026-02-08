@@ -28,13 +28,23 @@ namespace Mdk.Hub.Features.Projects.Actions;
 [ViewModelFor<ProjectActionsView>]
 public partial class ProjectActionsViewModel : ViewModel
 {
-    readonly List<ActionItem> _allActions;
+    // Registry of action types to resolve
+    static readonly Type[] ActionTypes =
+    [
+        typeof(UpdatesAction),
+        typeof(AnnouncementsAction),
+        typeof(ProjectManagementAction),
+        typeof(ProjectInfoAction),
+        typeof(ApiDocsAction),
+        typeof(UpdatePackagesAction)
+    ];
+
+    readonly List<ActionItem> _allActions = new();
     readonly ILogger _logger;
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
     readonly IProjectService _projectService;
     readonly IShell _shell;
-    readonly Func<AboutViewModel> _aboutViewModelFactory;
-    readonly Func<GlobalSettingsViewModel> _globalSettingsViewModelFactory;
+    readonly IDependencyContainer _container;
     ObservableCollection<ActionItem> _actions = new();
     ProjectOverviewViewModel? _projectOverviewViewModel;
 
@@ -57,32 +67,13 @@ public partial class ProjectActionsViewModel : ViewModel
         IShell shell, 
         IProjectService projectService, 
         IEasterEggService easterEggService, 
-        ILogger logger, 
-        Func<AboutViewModel> aboutViewModelFactory, 
-        Func<GlobalSettingsViewModel> globalSettingsViewModelFactory,
-        UpdatesAction updatesAction,
-        AnnouncementsAction announcementsAction,
-        ProjectManagementAction projectManagementAction,
-        ProjectInfoAction projectInfoAction,
-        ApiDocsAction apiDocsAction,
-        UpdatePackagesAction updatePackagesAction,
-        EasterEggDismissAction easterEggDismissAction)
+        ILogger logger,
+        IDependencyContainer container)
     {
         _shell = shell;
         _projectService = projectService;
         _logger = logger;
-        _aboutViewModelFactory = aboutViewModelFactory;
-        _globalSettingsViewModelFactory = globalSettingsViewModelFactory;
-        _allActions = 
-        [
-            updatesAction,
-            announcementsAction,
-            projectManagementAction,
-            projectInfoAction,
-            apiDocsAction,
-            updatePackagesAction,
-            easterEggDismissAction
-        ];
+        _container = container;
         
         _projectService.StateChanged += OnProjectStateChanged;
         easterEggService.ActiveChanged += OnEasterEggActiveChanged;
@@ -167,13 +158,13 @@ public partial class ProjectActionsViewModel : ViewModel
 
     void ShowAbout()
     {
-        var aboutViewModel = _aboutViewModelFactory();
+        var aboutViewModel = _container.Resolve<AboutViewModel>();
         _shell.AddOverlay(aboutViewModel);
     }
 
     void OpenGlobalSettings()
     {
-        var viewModel = _globalSettingsViewModelFactory();
+        var viewModel = _container.Resolve<GlobalSettingsViewModel>();
         _shell.AddOverlay(viewModel);
     }
 
@@ -213,7 +204,7 @@ public partial class ProjectActionsViewModel : ViewModel
                 }
 
                 // Reuse cached ViewModel if it exists, otherwise create new
-                context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, _logger, saved => CloseOptionsDrawer(projectPath, saved), _globalSettingsViewModelFactory, () => UpdateProjectDirtyState(projectPath));
+                context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, _logger, saved => CloseOptionsDrawer(projectPath, saved), _container, () => UpdateProjectDirtyState(projectPath));
 
                 OptionsViewModel = context.OptionsViewModel;
                 IsOptionsDrawerOpen = true;
@@ -346,9 +337,23 @@ public partial class ProjectActionsViewModel : ViewModel
 
     void BuildAllActions()
     {
-        // Subscribe to action visibility changes
+        // Clear and dispose old actions
         foreach (var action in _allActions)
+        {
+            action.ShouldShowChanged -= OnActionShouldShowChanged;
+            if (action is IDisposable disposable)
+                disposable.Dispose();
+        }
+        
+        _allActions.Clear();
+
+        // Resolve all actions from the registry
+        foreach (var actionType in ActionTypes)
+        {
+            var action = (ActionItem)_container.Resolve(actionType);
             action.ShouldShowChanged += OnActionShouldShowChanged;
+            _allActions.Add(action);
+        }
     }
 
     void OnActionShouldShowChanged(object? sender, EventArgs e)
