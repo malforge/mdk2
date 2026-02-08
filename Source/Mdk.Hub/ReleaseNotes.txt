@@ -2,6 +2,7 @@ v.1.0.0-pre.33
    - Added unified PathInput control for consistent path editing across settings.
    - Added UI testing infrastructure and expanded unit test coverage.
    - Improved test infrastructure with comprehensive filesystem abstraction.
+   - Attempt to fix path resolution on Linux
 
 v.1.0.0-pre.32
    - Fixed unsaved changes warning appearing after saving project options.

@@ -711,27 +711,92 @@ public class ShellViewModel : ViewModel, IShell
 
     /// <summary>
     ///     Writes the Hub executable path to a file for MDK CLI to discover.
+    ///     Updates the file only if the path has changed to avoid unnecessary I/O.
     /// </summary>
     void WriteHubPath()
     {
         try
         {
-            var exePath = Environment.ProcessPath;
-            if (exePath == null)
+            string? exePath;
+            
+            // On Linux AppImages, check environment variables in order of preference:
+            // 1. APPIMAGE - absolute path to .AppImage file (normal launch)
+            // 2. ARGV0 - path used to execute (works for extract-and-run mode)
+            // 3. ProcessPath - fallback for non-AppImage installs
+            if (App.IsLinux)
             {
-                _logger.Warning("Could not determine Hub executable path");
-                return;
+                exePath = Environment.GetEnvironmentVariable("APPIMAGE");
+                
+                if (string.IsNullOrEmpty(exePath))
+                {
+                    // Try ARGV0 (works even in extract-and-run mode)
+                    exePath = Environment.GetEnvironmentVariable("ARGV0");
+                    
+                    if (string.IsNullOrEmpty(exePath))
+                    {
+                        // Fall back to process path
+                        exePath = Environment.ProcessPath;
+                        if (exePath == null)
+                        {
+                            _logger.Warning("Could not determine Hub executable path");
+                            return;
+                        }
+
+                        // Check if this is an extracted AppImage (runs from /tmp/.mount_*)
+                        if (exePath.Contains("/tmp/.mount_"))
+                        {
+                            _logger.Warning("Hub is running from extracted AppImage but cannot determine original .AppImage path.");
+                            _logger.Warning("Auto-launch from CLI may not work. Please ensure FUSE is enabled or launch Hub manually.");
+                        }
+                    }
+                    else
+                    {
+                        _logger.Debug($"Using ARGV0 for AppImage path: {exePath}");
+                        // Make it absolute if it's relative
+                        if (!Path.IsPathRooted(exePath))
+                        {
+                            var owd = Environment.GetEnvironmentVariable("OWD"); // Original working directory
+                            if (!string.IsNullOrEmpty(owd))
+                                exePath = Path.GetFullPath(Path.Combine(owd, exePath));
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.Debug($"Detected AppImage via APPIMAGE env var: {exePath}");
+                }
+            }
+            else
+            {
+                // Windows/macOS: use process path
+                exePath = Environment.ProcessPath;
+                if (exePath == null)
+                {
+                    _logger.Warning("Could not determine Hub executable path");
+                    return;
+                }
+
+                // Resolve to actual path if it's a symlink (Velopack 'current' directory)
+                exePath = ResolveSymlink(exePath);
             }
 
-            // Resolve to actual path if it's a symlink (Velopack 'current' directory)
-            var resolvedPath = ResolveSymlink(exePath);
-
             // Write to %AppData%/MDK2/hub.path or ~/.config/MDK2/hub.path
-            var pathFile = Path.Combine(_fileStorage.GetApplicationDataPath(), "hub.path");
-            _fileStorage.WriteAllText(pathFile, resolvedPath);
+            var pathFile = _fileStorage.GetApplicationDataPath("hub.path");
+            
+            // Only write if path has changed to avoid unnecessary I/O
+            if (_fileStorage.FileExists(pathFile))
+            {
+                var existingPath = _fileStorage.ReadAllText(pathFile);
+                if (existingPath == exePath)
+                    return;
+                
+                _logger.Info($"Hub path changed from {existingPath} to {exePath}");
+            }
+            
+            _fileStorage.WriteAllText(pathFile, exePath);
 
             _logger.Info($"Hub path written to: {pathFile}");
-            _logger.Debug($"Hub executable: {resolvedPath}");
+            _logger.Debug($"Hub executable: {exePath}");
         }
         catch (Exception ex)
         {
