@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows.Input;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Framework;
@@ -12,6 +13,7 @@ namespace Mdk.Hub.Features.About;
 /// <summary>
 /// View model for the About dialog that shows version and links to logs/data/GitHub.
 /// </summary>
+[Instance]
 [ViewModelFor<AboutView>]
 public class AboutViewModel : OverlayModel
 {
