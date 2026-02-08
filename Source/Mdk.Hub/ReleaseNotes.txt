@@ -1,3 +1,6 @@
+v.1.0.0-pre.35
+   - Update "Clear" button on Textboxes
+
 v.1.0.0-pre.34
    - Fixed a crash when opening the About view
 
