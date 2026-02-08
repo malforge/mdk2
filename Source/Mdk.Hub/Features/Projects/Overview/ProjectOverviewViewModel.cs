@@ -61,7 +61,6 @@ public class ProjectOverviewViewModel : ViewModel
         _logger = logger;
         FilteredProjects = new ReadOnlyObservableCollection<ProjectModel>(_projects);
         _throttledSearch = new ThrottledAction<string>(SetSearchTerm, TimeSpan.FromMilliseconds(300));
-        ClearSearchCommand = new RelayCommand(ClearSearch);
         SelectProjectCommand = new RelayCommand<ProjectModel>(p => SelectProject(p));
         OpenProjectInIdeCommand = new RelayCommand<ProjectModel>(OpenProjectInIde);
 
@@ -210,11 +209,6 @@ public class ProjectOverviewViewModel : ViewModel
     }
 
     /// <summary>
-    ///     Gets the command to clear the search text.
-    /// </summary>
-    public ICommand ClearSearchCommand { get; }
-
-    /// <summary>
     ///     Gets the command to select a project.
     /// </summary>
     public ICommand SelectProjectCommand { get; }
@@ -259,15 +253,6 @@ public class ProjectOverviewViewModel : ViewModel
     ///     Event arguments for requesting a project to be shown in the UI.
     /// </summary>
     public event EventHandler<ShowProjectEventArgs>? ShowProjectRequested;
-
-    /// <summary>
-    ///     Clears the current search filter text.
-    /// </summary>
-    public void ClearSearch()
-    {
-        using var handle = BeginFilterUpdate();
-        SearchText = string.Empty;
-    }
 
     void SelectProject(ProjectModel? project, bool scrollToItem = false)
     {
