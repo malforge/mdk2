@@ -96,6 +96,7 @@ jobs:
     steps:
       - name: Generate token
         id: generate-token
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.APP_ID }}
@@ -103,7 +104,7 @@ jobs:
       
       - uses: actions/checkout@v4
         with:
-          token: ${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token || secrets.GITHUB_TOKEN }}
 
       - name: Update package references in templates
         run: |
@@ -111,7 +112,7 @@ jobs:
           pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1
 
       - name: Commit template updates
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -120,7 +121,7 @@ jobs:
             Write-Host "No changes to commit"
           } else {
             git commit -m "Auto-update template package references"
-            git pull --rebase origin main
+            git pull --rebase
             git push
           }
 

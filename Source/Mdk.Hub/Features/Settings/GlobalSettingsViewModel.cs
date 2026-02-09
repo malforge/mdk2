@@ -31,6 +31,8 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoBinaryPath = "";
     string _customAutoModOutputPath = "";
     string _customAutoScriptOutputPath = "";
+    string _ipcPort = "";
+    string _originalIpcPort = "";
     bool _includePrereleaseUpdates;
     bool _openedForLinuxValidation;
 
@@ -77,6 +79,8 @@ public class GlobalSettingsViewModel : OverlayModel
         CustomAutoModOutputPath = (App.IsLinux && modPath == "auto") ? "" : modPath;
         CustomAutoBinaryPath = (App.IsLinux && binPath == "auto") ? "" : binPath;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
+        IpcPort = settings.IpcPort?.ToString() ?? "";
+        _originalIpcPort = IpcPort; // Track original for change detection
     }
 
     /// <summary>
@@ -125,7 +129,6 @@ public class GlobalSettingsViewModel : OverlayModel
             if (SetProperty(ref _customAutoScriptOutputPath, value))
             {
                 OnPropertyChanged(nameof(ScriptPathValidationError));
-                OnPropertyChanged(nameof(HasScriptPathError));
             }
         }
     }
@@ -141,7 +144,6 @@ public class GlobalSettingsViewModel : OverlayModel
             if (SetProperty(ref _customAutoModOutputPath, value))
             {
                 OnPropertyChanged(nameof(ModPathValidationError));
-                OnPropertyChanged(nameof(HasModPathError));
             }
         }
     }
@@ -157,7 +159,6 @@ public class GlobalSettingsViewModel : OverlayModel
             if (SetProperty(ref _customAutoBinaryPath, value))
             {
                 OnPropertyChanged(nameof(BinaryPathValidationError));
-                OnPropertyChanged(nameof(HasBinaryPathError));
             }
         }
     }
@@ -170,6 +171,19 @@ public class GlobalSettingsViewModel : OverlayModel
         get => _includePrereleaseUpdates;
         set => SetProperty(ref _includePrereleaseUpdates, value);
     }
+
+    /// <summary>
+    /// Gets or sets the custom IPC port. Leave empty for auto-assign.
+    /// </summary>
+    public string IpcPort
+    {
+        get => _ipcPort;
+        set
+        {
+            if (SetProperty(ref _ipcPort, value))
+                OnPropertyChanged(nameof(IpcPortValidationError));
+        }
+    }
     
     /// <summary>
     /// Gets whether the application is running on Linux.
@@ -177,24 +191,11 @@ public class GlobalSettingsViewModel : OverlayModel
     public bool IsLinux => App.IsLinux;
     
     /// <summary>
-    /// Gets whether the script path has a validation error.
-    /// </summary>
-    public bool HasScriptPathError => !string.IsNullOrWhiteSpace(ScriptPathValidationError);
-    /// <summary>
-    /// Gets whether the mod path has a validation error.
-    /// </summary>
-    public bool HasModPathError => !string.IsNullOrWhiteSpace(ModPathValidationError);
-    /// <summary>
-    /// Gets whether the binary path has a validation error.
-    /// </summary>
-    public bool HasBinaryPathError => !string.IsNullOrWhiteSpace(BinaryPathValidationError);
-    
-    /// <summary>
     /// Gets the validation error message for the script path, if any.
     /// </summary>
     public string? ScriptPathValidationError =>
         App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoScriptOutputPath) || _customAutoScriptOutputPath == "auto")
-            ? "⚠ Please set a valid path" 
+            ? "Please set a valid path" 
             : null;
     
     /// <summary>
@@ -202,7 +203,7 @@ public class GlobalSettingsViewModel : OverlayModel
     /// </summary>
     public string? ModPathValidationError =>
         App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoModOutputPath) || _customAutoModOutputPath == "auto")
-            ? "⚠ Please set a valid path" 
+            ? "Please set a valid path" 
             : null;
     
     /// <summary>
@@ -210,10 +211,33 @@ public class GlobalSettingsViewModel : OverlayModel
     /// </summary>
     public string? BinaryPathValidationError =>
         App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoBinaryPath) || _customAutoBinaryPath == "auto")
-            ? "⚠ Please set a valid path" 
+            ? "Please set a valid path" 
             : App.IsLinux && !string.IsNullOrWhiteSpace(_customAutoBinaryPath) && !IsValidBinaryPath(_customAutoBinaryPath)
-            ? "⚠ Path does not contain Space Engineers binaries"
+            ? "Path does not contain Space Engineers binaries"
             : null;
+
+    /// <summary>
+    /// Gets the validation error message for the IPC port, if any.
+    /// </summary>
+    public string? IpcPortValidationError
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_ipcPort))
+                return null; // Empty is valid (auto-assign)
+
+            if (!int.TryParse(_ipcPort, out var port))
+                return "Port must be a number";
+
+            if (port < 1 || port > 65535)
+                return "Port must be between 1 and 65535";
+
+            if (port < 1024)
+                return "Ports below 1024 may require admin rights";
+
+            return null;
+        }
+    }
     
     static bool IsValidBinaryPath(string path)
     {
@@ -264,15 +288,30 @@ public class GlobalSettingsViewModel : OverlayModel
                 return;
             }
         }
+
+        // Validate IPC port
+        if (!string.IsNullOrWhiteSpace(IpcPortValidationError))
+        {
+            _shell.ShowToast(IpcPortValidationError);
+            return;
+        }
         
         var updatedSettings = _hubSettings with
         {
             CustomAutoScriptOutputPath = _customAutoScriptOutputPath,
             CustomAutoModOutputPath = _customAutoModOutputPath,
             CustomAutoBinaryPath = _customAutoBinaryPath,
-            IncludePrereleaseUpdates = _includePrereleaseUpdates
+            IncludePrereleaseUpdates = _includePrereleaseUpdates,
+            IpcPort = string.IsNullOrWhiteSpace(_ipcPort) || !int.TryParse(_ipcPort, out var port) ? null : port
         };
         _settings.SetValue(SettingsKeys.HubSettings, updatedSettings);
+        
+        // Notify if IPC port changed
+        if (_ipcPort != _originalIpcPort)
+        {
+            _shell.ShowToast("IPC Port changed. Restart MDK Hub for this change to take effect.");
+        }
+        
         Dismiss();
     }
 

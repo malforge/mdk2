@@ -16,7 +16,7 @@ namespace Mdk.Hub.Framework.Controls;
 ///     A templated control for path input with browse and optional reset functionality.
 ///     Supports manual entry, folder picker, and reset to default value.
 /// </summary>
-public class PathInput : TemplatedControl
+public class PathInput : TemplatedControl, ISupportValidation
 {
     /// <summary>
     ///     Defines the <see cref="Path" /> property.
@@ -56,6 +56,12 @@ public class PathInput : TemplatedControl
     /// </summary>
     public static readonly StyledProperty<bool> HasErrorProperty =
         AvaloniaProperty.Register<PathInput, bool>(nameof(HasError), false);
+
+    /// <summary>
+    ///     Defines the <see cref="ValidationError" /> property.
+    /// </summary>
+    public static readonly StyledProperty<string?> ValidationErrorProperty =
+        AvaloniaProperty.Register<PathInput, string?>(nameof(ValidationError));
 
     /// <summary>
     ///     Defines the <see cref="ResolvedResetTooltip" /> property.
@@ -131,6 +137,15 @@ public class PathInput : TemplatedControl
     {
         get => GetValue(HasErrorProperty);
         set => SetValue(HasErrorProperty, value);
+    }
+
+    /// <summary>
+    ///     Gets or sets the validation error message, or null if validation passes.
+    /// </summary>
+    public string? ValidationError
+    {
+        get => GetValue(ValidationErrorProperty);
+        set => SetValue(ValidationErrorProperty, value);
     }
 
     /// <summary>
@@ -288,12 +303,15 @@ public class PathInput : TemplatedControl
         if (text == DefaultPath)
         {
             HasError = false;
+            ValidationError = null;
             return;
         }
 
         // Validate the normalized version
         var normalized = NormalizePath(text);
-        HasError = !IsValidPathFormat(normalized);
+        var isValid = IsValidPathFormat(normalized);
+        HasError = !isValid;
+        ValidationError = isValid ? null : "Invalid path format";
     }
 
     void OnTextBoxLostFocus(object? sender, RoutedEventArgs e)
@@ -319,6 +337,7 @@ public class PathInput : TemplatedControl
         {
             Path = text;
             HasError = false;
+            ValidationError = null;
             return;
         }
 
@@ -329,11 +348,13 @@ public class PathInput : TemplatedControl
             Path = normalized;
             _textBox.Text = normalized; // Update TextBox with cleaned version
             HasError = false;
+            ValidationError = null;
         }
         else
         {
             // Invalid path - don't commit but keep error state
             HasError = true;
+            ValidationError = "Invalid path format";
         }
     }
 

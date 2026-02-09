@@ -9,7 +9,7 @@ namespace Mdk.Hub.Features.Settings;
 /// <summary>
 ///     View for configuring global application settings.
 /// </summary>
-[Singleton]
+[Instance]
 public partial class GlobalSettingsView : UserControl
 {
     /// <summary>

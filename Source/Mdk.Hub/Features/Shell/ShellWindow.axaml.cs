@@ -86,12 +86,12 @@ public partial class ShellWindow : Window
             {
                 if (viewModel.Settings.TryGetValue("MainWindowSettings", out WindowSettings windowSettings) && !windowSettings.IsEmpty())
                 {
-                    windowSettings.Restore(this);
+                    windowSettings.Restore(this, viewModel.InitialWindowState);
                 }
                 // else: Let OS/Avalonia use default size and placement
                 
-                // Override window state if launched with notification arguments
-                if (viewModel.InitialWindowState.HasValue)
+                // Override window state if launched with notification arguments (if Restore didn't already handle it)
+                if (viewModel.InitialWindowState.HasValue && WindowState != viewModel.InitialWindowState.Value)
                     WindowState = viewModel.InitialWindowState.Value;
             }
             catch
@@ -311,7 +311,8 @@ public partial class ShellWindow : Window
         /// Only applies values that are present (not null).
         /// </summary>
         /// <param name="window">The window to restore.</param>
-        public void Restore(Window window)
+        /// <param name="overrideWindowState">Optional window state that takes precedence over saved state.</param>
+        public void Restore(Window window, WindowState? overrideWindowState = null)
         {
             // Restore position and size if available
             if (Width.HasValue && Height.HasValue && Left.HasValue && Top.HasValue)
@@ -337,8 +338,8 @@ public partial class ShellWindow : Window
                 window.Position = new PixelPoint((int)left, (int)top);
             }
 
-            // Always restore window state (maximized or normal)
-            window.WindowState = IsMaximized ? WindowState.Maximized : WindowState.Normal;
+            // Always restore window state (maximized or normal), unless overridden
+            window.WindowState = overrideWindowState ?? (IsMaximized ? WindowState.Maximized : WindowState.Normal);
 
             // Restore panel width if available
             if (LeftPanelWidth.HasValue && window is ShellWindow shellWindow)

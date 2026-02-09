@@ -64,26 +64,26 @@
                                         </TextBlock>
 
                                         <!-- Windows: PathInput with reset to default -->
-                                        <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
-                                                           DefaultPath=""
-                                                           CanReset="True"
-                                                           ResetTooltip="Reset to Default"
-                                                           Watermark="Leave empty to use default location"
-                                                           HorizontalAlignment="Stretch"
-                                                           IsVisible="{Binding !IsLinux}" />
+                                        <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
+                                            <controls:ValidatedControl.Content>
+                                                <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
+                                                                   DefaultPath=""
+                                                                   CanReset="True"
+                                                                   ResetTooltip="Reset to Default"
+                                                                   Watermark="Leave empty to use default location"
+                                                                   HorizontalAlignment="Stretch" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
                                         
                                         <!-- Linux: PathInput (required path, no reset) -->
-                                        <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
-                                                           Watermark="Select script output folder (required)"
-                                                           HorizontalAlignment="Stretch"
-                                                           HasError="{Binding HasScriptPathError}"
-                                                           IsVisible="{Binding IsLinux}" />
-                                        
-                                        <TextBlock Text="{Binding ScriptPathValidationError}"
-                                                   IsVisible="{Binding ScriptPathValidationError, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                   Foreground="{DynamicResource DangerBrush}"
-                                                   Classes="caption"
-                                                   Margin="0,4,0,0" />
+                                        <controls:ValidatedControl ValidationMessage="{Binding ScriptPathValidationError}"
+                                                                   IsVisible="{Binding IsLinux}">
+                                            <controls:ValidatedControl.Content>
+                                                <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
+                                                                   Watermark="Select script output folder (required)"
+                                                                   HorizontalAlignment="Stretch" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
                                     </StackPanel>
 
                                     <!-- Custom Auto Mod Output Path -->
@@ -97,25 +97,25 @@
                                             When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
                                         </TextBlock>
 
-                                        <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
-                                                           DefaultPath=""
-                                                           CanReset="True"
-                                                           ResetTooltip="Reset to Default"
-                                                           Watermark="Leave empty to use default location"
-                                                           HorizontalAlignment="Stretch"
-                                                           IsVisible="{Binding !IsLinux}" />
+                                        <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
+                                            <controls:ValidatedControl.Content>
+                                                <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
+                                                                   DefaultPath=""
+                                                                   CanReset="True"
+                                                                   ResetTooltip="Reset to Default"
+                                                                   Watermark="Leave empty to use default location"
+                                                                   HorizontalAlignment="Stretch" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
                                         
-                                        <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
-                                                           Watermark="Select mod output folder (required)"
-                                                           HorizontalAlignment="Stretch"
-                                                           HasError="{Binding HasModPathError}"
-                                                           IsVisible="{Binding IsLinux}" />
-                                        
-                                        <TextBlock Text="{Binding ModPathValidationError}"
-                                                   IsVisible="{Binding ModPathValidationError, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                   Foreground="{DynamicResource DangerBrush}"
-                                                   Classes="caption"
-                                                   Margin="0,4,0,0" />
+                                        <controls:ValidatedControl ValidationMessage="{Binding ModPathValidationError}"
+                                                                   IsVisible="{Binding IsLinux}">
+                                            <controls:ValidatedControl.Content>
+                                                <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
+                                                                   Watermark="Select mod output folder (required)"
+                                                                   HorizontalAlignment="Stretch" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
                                     </StackPanel>
 
                                     <!-- Custom Auto Binary Path -->
@@ -129,25 +129,25 @@
                                             When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
                                         </TextBlock>
 
-                                        <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
-                                                           DefaultPath=""
-                                                           CanReset="True"
-                                                           ResetTooltip="Reset to Default"
-                                                           Watermark="Leave empty to use default location"
-                                                           HorizontalAlignment="Stretch"
-                                                           IsVisible="{Binding !IsLinux}" />
+                                        <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
+                                            <controls:ValidatedControl.Content>
+                                                <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
+                                                                   DefaultPath=""
+                                                                   CanReset="True"
+                                                                   ResetTooltip="Reset to Default"
+                                                                   Watermark="Leave empty to use default location"
+                                                                   HorizontalAlignment="Stretch" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
                                         
-                                        <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
-                                                           Watermark="Select Space Engineers binary folder (required)"
-                                                           HorizontalAlignment="Stretch"
-                                                           HasError="{Binding HasBinaryPathError}"
-                                                           IsVisible="{Binding IsLinux}" />
-                                        
-                                        <TextBlock Text="{Binding BinaryPathValidationError}"
-                                                   IsVisible="{Binding BinaryPathValidationError, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                   Foreground="{DynamicResource DangerBrush}"
-                                                   Classes="caption"
-                                                   Margin="0,4,0,0" />
+                                        <controls:ValidatedControl ValidationMessage="{Binding BinaryPathValidationError}"
+                                                                   IsVisible="{Binding IsLinux}">
+                                            <controls:ValidatedControl.Content>
+                                                <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
+                                                                   Watermark="Select Space Engineers binary folder (required)"
+                                                                   HorizontalAlignment="Stretch" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
                                     </StackPanel>
                                 </StackPanel>
                             </ScrollViewer>
@@ -162,9 +162,13 @@
                                         <TextBlock Text="Hub Updates"
                                                    Classes="h3 heading" />
 
-                                        <CheckBox IsChecked="{Binding IncludePrereleaseUpdates}"
-                                                  Content="Include prerelease versions"
-                                                  Margin="0,4,0,0" />
+                                        <controls:ValidatedControl>
+                                            <controls:ValidatedControl.Content>
+                                                <CheckBox IsChecked="{Binding IncludePrereleaseUpdates}"
+                                                          Content="Include prerelease versions"
+                                                          Margin="0,4,0,0" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
 
                                         <TextBlock TextWrapping="Wrap"
                                                    Classes="caption muted"
@@ -184,10 +188,42 @@
                                             Check if .NET SDK 9.0 and MDK² template package are installed.
                                         </TextBlock>
 
-                                        <Button Content="Check Prerequisites"
-                                                Command="{Binding CheckPrerequisitesCommand}"
-                                                HorizontalAlignment="Left"
-                                                MinWidth="150" />
+                                        <controls:ValidatedControl>
+                                            <controls:ValidatedControl.Content>
+                                                <Button Content="Check Prerequisites"
+                                                        Command="{Binding CheckPrerequisitesCommand}"
+                                                        HorizontalAlignment="Left"
+                                                        MinWidth="150" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- Advanced Tab -->
+                        <TabItem Header="Advanced">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="16" Margin="16">
+                                    <!-- IPC Port -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Inter-Process Communication Port"
+                                                   Classes="h3 heading" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,0,0,4">
+                                            Customize the port used for communication between MDK Hub and build tools. Leave empty to automatically assign and reuse a port. Only change this if you experience port conflicts.
+                                        </TextBlock>
+
+                                        <controls:ValidatedControl ValidationMessage="{Binding IpcPortValidationError}">
+                                            <controls:ValidatedControl.Content>
+                                                <TextBox Text="{Binding IpcPort}"
+                                                         Watermark="Auto-assign"
+                                                         Width="150"
+                                                         HorizontalAlignment="Left" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
                                     </StackPanel>
                                 </StackPanel>
                             </ScrollViewer>

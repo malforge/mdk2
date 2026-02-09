@@ -37,7 +37,14 @@
     <!-- Error state for PathInput -->
     <Style Selector="controls|PathInput:error TextBox">
         <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
-        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    
+    <Style Selector="controls|PathInput:error TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
+    </Style>
+    
+    <Style Selector="controls|PathInput:error TextBox:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
     </Style>
 
 </Styles>

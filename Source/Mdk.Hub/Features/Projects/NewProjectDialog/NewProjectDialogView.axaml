@@ -61,16 +61,24 @@
                     <StackPanel Spacing="4">
                         <TextBlock Text="Project Name"
                                    Classes="body" />
-                        <TextBox Text="{Binding ProjectName}"
-                                 Watermark="MyProject"
-                                 Name="ProjectNameTextBox" />
+                        <controls:ValidatedControl>
+                            <controls:ValidatedControl.Content>
+                                <TextBox Text="{Binding ProjectName}"
+                                         Watermark="MyProject"
+                                         Name="ProjectNameTextBox" />
+                            </controls:ValidatedControl.Content>
+                        </controls:ValidatedControl>
                     </StackPanel>
 
                     <StackPanel Spacing="4">
                         <TextBlock Text="Location"
                                    Classes="body" />
-                        <controls:PathInput Path="{Binding Location}"
-                                           Watermark="Select a folder..." />
+                        <controls:ValidatedControl>
+                            <controls:ValidatedControl.Content>
+                                <controls:PathInput Path="{Binding Location}"
+                                                   Watermark="Select a folder..." />
+                            </controls:ValidatedControl.Content>
+                        </controls:ValidatedControl>
                     </StackPanel>
 
                     <!-- Preview of final path -->

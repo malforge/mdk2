@@ -278,24 +278,28 @@ public partial class ProjectActionsViewModel : ViewModel
     {
         IsOptionsDrawerOpen = false;
 
-        var canonicalPath = new CanonicalPath(projectPath);
-
-        // Clear HasUnsavedChanges flag for the current project
-        if (_projectContexts.TryGetValue(canonicalPath, out var context) && context.CachedModel != null)
-            context.CachedModel.HasUnsavedChanges = false;
-
-        // Remove the current project's cached viewmodels (whether saved or cancelled)
-        if (context != null)
+        // Delay cleanup to allow drawer close animation to complete
+        Task.Delay(300).ContinueWith(_ =>
         {
-            context.OptionsViewModel = null;
-            context.CachedModel = null;
-        }
+            var canonicalPath = new CanonicalPath(projectPath);
 
-        OptionsViewModel = null;
-        OptionsProjectPath = null;
+            // Clear HasUnsavedChanges flag for the current project
+            if (_projectContexts.TryGetValue(canonicalPath, out var context) && context.CachedModel != null)
+                context.CachedModel.HasUnsavedChanges = false;
 
-        // Update unsaved changes registration after clearing the OptionsViewModel
-        UpdateUnsavedChangesRegistration();
+            // Remove the current project's cached viewmodels (whether saved or cancelled)
+            if (context != null)
+            {
+                context.OptionsViewModel = null;
+                context.CachedModel = null;
+            }
+
+            OptionsViewModel = null;
+            OptionsProjectPath = null;
+
+            // Update unsaved changes registration after clearing the OptionsViewModel
+            UpdateUnsavedChangesRegistration();
+        }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
     /// <summary>

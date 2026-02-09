@@ -65,54 +65,74 @@
                         <Grid ColumnDefinitions="*,8,*" IsVisible="{Binding IsProgrammableBlock}">
                             <StackPanel Grid.Column="0" Spacing="4">
                                 <TextBlock Text="Minify" Classes="label muted" />
-                                <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyOptionsList}"
-                                          SelectedItem="{Binding MainConfig.Minify}"
-                                          HorizontalAlignment="Stretch">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Display}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <controls:ValidatedControl>
+                                    <controls:ValidatedControl.Content>
+                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyOptionsList}"
+                                                  SelectedItem="{Binding MainConfig.Minify}"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </controls:ValidatedControl.Content>
+                                </controls:ValidatedControl>
                             </StackPanel>
                             <StackPanel Grid.Column="2" Spacing="4">
                                 <TextBlock Text="Minify Extra Options" Classes="label muted" />
-                                <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyExtraOptionsList}"
-                                          SelectedItem="{Binding MainConfig.MinifyExtraOptions}"
-                                          HorizontalAlignment="Stretch">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Display}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <controls:ValidatedControl>
+                                    <controls:ValidatedControl.Content>
+                                        <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.MinifyExtraOptionsList}"
+                                                  SelectedItem="{Binding MainConfig.MinifyExtraOptions}"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Display}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </controls:ValidatedControl.Content>
+                                </controls:ValidatedControl>
                             </StackPanel>
                         </Grid>
 
                         <!-- Namespaces (ProgrammableBlock only) -->
                         <StackPanel Spacing="4" IsVisible="{Binding IsProgrammableBlock}">
                             <TextBlock Text="Namespaces" Classes="label muted" />
-                            <TextBox Text="{Binding MainConfig.Namespaces}" />
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <TextBox Text="{Binding MainConfig.Namespaces}" />
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
                         </StackPanel>
 
                         <!-- Ignores -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Ignores" Classes="label muted" />
-                            <TextBox Text="{Binding MainConfig.Ignores}" />
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <TextBox Text="{Binding MainConfig.Ignores}" />
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
                         </StackPanel>
 
                         <!-- Trace -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Trace" Classes="label muted" />
-                            <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.TraceOptionsList}"
-                                      SelectedItem="{Binding MainConfig.Trace}"
-                                      HorizontalAlignment="Stretch">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Display}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.TraceOptionsList}"
+                                              SelectedItem="{Binding MainConfig.Trace}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Display}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
                         </StackPanel>
                     </StackPanel>
 
@@ -129,33 +149,45 @@
                         <!-- When Build Completes -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="When Build Completes" Classes="label muted" />
-                            <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.InteractiveOptionsList}"
-                                      SelectedItem="{Binding MainConfig.Interactive}"
-                                      HorizontalAlignment="Stretch">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Display}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <ComboBox ItemsSource="{x:Static options:ConfigurationSectionViewModel.InteractiveOptionsList}"
+                                              SelectedItem="{Binding MainConfig.Interactive}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Display}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
                         </StackPanel>
 
                         <!-- Output Path -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Output Path" Classes="label muted" />
-                            <controls:PathInput Path="{Binding MainConfig.OutputPath}"
-                                               DefaultPath="auto"
-                                               CanReset="True"
-                                               ResetTooltip="Reset to Auto-detect" />
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <controls:PathInput Path="{Binding MainConfig.OutputPath}"
+                                                       DefaultPath="auto"
+                                                       CanReset="True"
+                                                       ResetTooltip="Reset to Auto-detect" />
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
                         </StackPanel>
 
                         <!-- Binary Path -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Binary Path" Classes="label muted" />
-                            <controls:PathInput Path="{Binding MainConfig.BinaryPath}"
-                                               DefaultPath="auto"
-                                               CanReset="True"
-                                               ResetTooltip="Reset to Auto-detect" />
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <controls:PathInput Path="{Binding MainConfig.BinaryPath}"
+                                                       DefaultPath="auto"
+                                                       CanReset="True"
+                                                       ResetTooltip="Reset to Auto-detect" />
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>

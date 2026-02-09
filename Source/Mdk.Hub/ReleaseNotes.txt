@@ -1,3 +1,9 @@
+v.1.0.0-pre.36
+   - Unified validation message styling across all dialogs.
+   - Fixed validation error borders persisting in focus and hover states.
+   - Fixed app not starting minimized when launched with build notifications.
+   - Fix template updates for pull requests
+
 v.1.0.0-pre.35
    - Update "Clear" button on Textboxes
 

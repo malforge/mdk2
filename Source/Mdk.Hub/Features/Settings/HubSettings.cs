@@ -75,5 +75,11 @@ public struct HubSettings
     ///     Gets or sets the last selected project path.
     /// </summary>
     public string LastSelectedProject { get; set; } = string.Empty;
+
+    /// <summary>
+    ///     Gets or sets the custom IPC port for Hub communication.
+    ///     When null or 0, a port is automatically selected and reused.
+    /// </summary>
+    public int? IpcPort { get; set; }
 }
 
