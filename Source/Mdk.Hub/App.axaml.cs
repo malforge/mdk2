@@ -72,7 +72,6 @@ public class App : Application
             DisableAvaloniaDataAnnotationValidation();
             var shellViewModel = Container.Resolve<ShellViewModel>();
             var shellWindow = Container.Resolve<ShellWindow>();
-            shellWindow.DataContext = shellViewModel;
             
             // Parse command line arguments
             var args = desktop.Args ?? Array.Empty<string>();
@@ -80,6 +79,13 @@ public class App : Application
             
             if (SimulateLinux)
                 logger.Info("Running in Linux simulation mode");
+            
+            // Set window to minimized BEFORE setting DataContext if launching with notification arguments
+            // This prevents the window from flashing visible before being minimized
+            if (NotificationCommand.IsNotificationCommand(args))
+                shellWindow.WindowState = WindowState.Minimized;
+            
+            shellWindow.DataContext = shellViewModel;
             
             desktop.MainWindow = shellWindow;
 

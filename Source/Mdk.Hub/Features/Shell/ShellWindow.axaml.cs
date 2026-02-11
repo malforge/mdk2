@@ -339,7 +339,9 @@ public partial class ShellWindow : Window
             }
 
             // Always restore window state (maximized or normal), unless overridden
-            window.WindowState = overrideWindowState ?? (IsMaximized ? WindowState.Maximized : WindowState.Normal);
+            // But don't override if window is already Minimized (set by App.axaml.cs for notification startup)
+            if (window.WindowState != WindowState.Minimized)
+                window.WindowState = overrideWindowState ?? (IsMaximized ? WindowState.Maximized : WindowState.Normal);
 
             // Restore panel width if available
             if (LeftPanelWidth.HasValue && window is ShellWindow shellWindow)

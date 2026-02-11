@@ -1,3 +1,6 @@
+v.1.0.0-pre.37
+   - Fixed app not starting minimized with notification arguments (third time's the charm).
+
 v.1.0.0-pre.36
    - Unified validation message styling across all dialogs.
    - Fixed validation error borders persisting in focus and hover states.

@@ -10,6 +10,7 @@ using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects;
 using Mdk.Hub.Features.Projects.Actions;
 using Mdk.Hub.Features.Projects.Overview;
@@ -193,7 +194,7 @@ public class ShellViewModel : ViewModel, IShell
         
         // Start minimized if launched with notification arguments
         // HandleBuildNotificationAsync will call BringToFront() if InteractiveMode is OpenHub
-        if (IsNotificationCommand(args))
+        if (NotificationCommand.IsNotificationCommand(args))
             _initialWindowState = WindowState.Minimized;
         
         NavigationView = _projectOverviewViewModel.Value;
@@ -203,15 +204,6 @@ public class ShellViewModel : ViewModel, IShell
         WriteHubPath();
 
         BeginStartup();
-    }
-    
-    static bool IsNotificationCommand(string[] args)
-    {
-        if (args.Length < 3)
-            return false;
-        
-        var command = args[0].ToLowerInvariant();
-        return command is "script" or "mod" or "custom" or "nuget";
     }
 
     /// <summary>
