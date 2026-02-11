@@ -1,3 +1,8 @@
+v.1.0.0-pre.39
+   - Fixed Hub ignoring global custom auto output paths when resolving script/mod locations.
+   - Copy to clipboard, Show me, and deployment status now respect custom auto paths.
+   - Fixed excessive top margin above action items in project actions panel.
+
 v.1.0.0-pre.38
    - Fixed "Open in Hub" button in snackbar notifications not restoring the window.
 

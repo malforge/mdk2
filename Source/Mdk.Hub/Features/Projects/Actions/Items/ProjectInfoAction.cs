@@ -10,6 +10,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Framework;
@@ -26,6 +27,7 @@ public class ProjectInfoAction : ActionItem
     readonly ProjectActionsViewModel _actionsViewModel;
     readonly IFileStorageService _fileStorage;
     readonly IProjectService _projectService;
+    readonly ISettings _settings;
     readonly IShell _shell;
     string? _configurationWarning;
     string? _deploymentError;
@@ -44,12 +46,14 @@ public class ProjectInfoAction : ActionItem
     /// <param name="shell">The shell interface for UI interactions.</param>
     /// <param name="actionsViewModel">The view model for project actions.</param>
     /// <param name="fileStorage">The file storage service.</param>
-    public ProjectInfoAction(IProjectService projectService, IShell shell, ProjectActionsViewModel actionsViewModel, IFileStorageService fileStorage)
+    /// <param name="settings">The settings service.</param>
+    public ProjectInfoAction(IProjectService projectService, IShell shell, ProjectActionsViewModel actionsViewModel, IFileStorageService fileStorage, ISettings settings)
     {
         _projectService = projectService;
         _shell = shell;
         _actionsViewModel = actionsViewModel;
         _fileStorage = fileStorage;
+        _settings = settings;
 
         OpenProjectFolderCommand = new RelayCommand(OpenProjectFolder, CanOpenProjectFolder);
         OpenOutputFolderCommand = new RelayCommand(OpenOutputFolder, CanOpenOutputFolder);
@@ -376,13 +380,31 @@ public class ProjectInfoAction : ActionItem
                     // Resolve "auto" to actual path
                     if (string.Equals(outputPathValue, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPathValue))
                     {
-                        var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
-                        var seDataPath = config.Type == ProjectType.ProgrammableBlock
-                            ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
+                        // Check global custom settings first
+                        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+                        var customPath = config.Type == ProjectType.ProgrammableBlock
+                            ? hubSettings.CustomAutoScriptOutputPath
                             : config.Type == ProjectType.Mod
-                                ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "Mods", projectName)
+                                ? hubSettings.CustomAutoModOutputPath
                                 : null;
-                        outputPath = seDataPath;
+                        
+                        if (!string.IsNullOrWhiteSpace(customPath) && !string.Equals(customPath, "auto", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Use custom global path + project name
+                            var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                            outputPath = Path.Combine(customPath, projectName);
+                        }
+                        else
+                        {
+                            // Fall back to default SE path
+                            var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                            var seDataPath = config.Type == ProjectType.ProgrammableBlock
+                                ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
+                                : config.Type == ProjectType.Mod
+                                    ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "Mods", projectName)
+                                    : null;
+                            outputPath = seDataPath;
+                        }
                     }
                     else if (!string.IsNullOrEmpty(outputPathValue))
                     {

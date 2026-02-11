@@ -400,17 +400,34 @@ public class ProjectService : IProjectService
             // Resolve "auto" to actual path
             if (string.Equals(outputPath, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPath))
             {
-                var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
-                if (string.IsNullOrEmpty(projectName))
-                    return false;
+                // Check global custom settings first
+                var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+                var customPath = hubSettings.CustomAutoScriptOutputPath;
+                
+                if (!string.IsNullOrWhiteSpace(customPath) && !string.Equals(customPath, "auto", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Use custom global path
+                    outputPath = customPath;
+                }
+                else
+                {
+                    // Fall back to default SE path
+                    var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                    if (string.IsNullOrEmpty(projectName))
+                        return false;
 
-                outputPath = config.Type == ProjectType.ProgrammableBlock
-                    ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
-                    : null;
+                    outputPath = config.Type == ProjectType.ProgrammableBlock
+                        ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
+                        : null;
+                    
+                    if (string.IsNullOrEmpty(outputPath))
+                        return false;
+                }
             }
-            else if (!string.IsNullOrEmpty(outputPath))
+            
+            // For non-auto paths, append project name as subfolder
+            if (!string.IsNullOrEmpty(outputPath))
             {
-                // Custom paths should include project name subfolder
                 var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
                 if (!string.IsNullOrEmpty(projectName))
                     outputPath = Path.Combine(outputPath, projectName);
@@ -495,19 +512,40 @@ public class ProjectService : IProjectService
             // Resolve "auto" to actual path
             if (string.Equals(outputPath, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(outputPath))
             {
-                var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
-                if (string.IsNullOrEmpty(projectName))
-                    return false;
-
-                outputPath = config.Type == ProjectType.ProgrammableBlock
-                    ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
+                // Check global custom settings first
+                var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+                var customPath = config.Type == ProjectType.ProgrammableBlock
+                    ? hubSettings.CustomAutoScriptOutputPath
                     : config.Type == ProjectType.Mod
-                        ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "Mods", projectName)
+                        ? hubSettings.CustomAutoModOutputPath
                         : null;
+                
+                if (!string.IsNullOrWhiteSpace(customPath) && !string.Equals(customPath, "auto", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Use custom global path
+                    outputPath = customPath;
+                }
+                else
+                {
+                    // Fall back to default SE path
+                    var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
+                    if (string.IsNullOrEmpty(projectName))
+                        return false;
+
+                    outputPath = config.Type == ProjectType.ProgrammableBlock
+                        ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
+                        : config.Type == ProjectType.Mod
+                            ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "Mods", projectName)
+                            : null;
+                    
+                    if (string.IsNullOrEmpty(outputPath))
+                        return false;
+                }
             }
-            else if (!string.IsNullOrEmpty(outputPath))
+            
+            // For non-auto paths, append project name as subfolder
+            if (!string.IsNullOrEmpty(outputPath))
             {
-                // Custom paths should include project name subfolder
                 var projectName = Path.GetFileNameWithoutExtension(projectPath.Value);
                 if (!string.IsNullOrEmpty(projectName))
                     outputPath = Path.Combine(outputPath, projectName);

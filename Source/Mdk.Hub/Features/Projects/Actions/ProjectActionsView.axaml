@@ -56,7 +56,7 @@
 
         <!-- Main content -->
         <ScrollViewer Grid.Row="1">
-            <ItemsControl ItemsSource="{Binding Actions}" Margin="0,16">
+            <ItemsControl ItemsSource="{Binding Actions}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Spacing="8" />
