@@ -1217,7 +1217,7 @@ public class ProjectService : IProjectService
             new()
             {
                 Text = "Open in Hub",
-                Action = _ => NavigateToProject(new CanonicalPath(projectPath)),
+                Action = _ => NavigateToProject(new CanonicalPath(projectPath), bringToFront: true),
                 Context = projectPath,
                 IsClosingAction = true
             },
