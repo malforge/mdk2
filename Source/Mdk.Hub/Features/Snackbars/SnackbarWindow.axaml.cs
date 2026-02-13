@@ -22,6 +22,8 @@ public partial class SnackbarWindow : Window
 
         Opened += OnOpened;
         Closing += OnClosing;
+        PointerEntered += OnPointerEntered;
+        PointerExited += OnPointerExited;
     }
 
     async void OnOpened(object? sender, EventArgs e)
@@ -43,6 +45,18 @@ public partial class SnackbarWindow : Window
             vm.CloseRequested -= OnCloseRequested;
             vm.CancelTimeout();
         }
+    }
+
+    void OnPointerEntered(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (DataContext is SnackbarViewModel vm)
+            vm.PauseTimeout();
+    }
+
+    void OnPointerExited(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (DataContext is SnackbarViewModel vm)
+            vm.ResumeTimeout();
     }
 
     async void OnCloseRequested(object? sender, EventArgs e) =>

@@ -18,7 +18,7 @@
     <StackPanel Spacing="12" Margin="16,0">
         <!-- Project header -->
         <StackPanel Spacing="12" Orientation="Horizontal">
-            <ContentControl Content="{Binding Project.Type}" Width="48" Height="48" />
+            <ContentControl Classes="project-type-icon" Content="{Binding Project.Type}" Width="48" Height="48" />
             <StackPanel Spacing="4" VerticalAlignment="Center">
                 <TextBlock Classes="section-title" Text="{Binding Project.Name}" />
                 <TextBlock Classes="info-label" Text="{Binding ProjectTypeName}" />
