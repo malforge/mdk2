@@ -280,7 +280,7 @@ jobs:
 
       - name: Build Velopack installer
         run: |
-          vpk pack --packId Malforge.MdkHub --packVersion $env:VERSION --packDir publish/win --mainExe Mdk.Hub.exe --packTitle "MDK Hub" --icon Mdk.Hub/Assets/malware.ico
+          vpk pack --packId Malforge.MdkHub --packVersion $env:VERSION --packDir publish/win --mainExe Mdk.Hub.exe --packTitle "MDK Hub" --icon Mdk.Hub/Assets/hub.ico
 
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v4
