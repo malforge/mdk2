@@ -37,6 +37,10 @@ public class SnackbarViewModel : ViewModel
     /// Gets or sets the timeout duration in milliseconds before the snackbar auto-closes.
     /// </summary>
     public int Timeout { get; set; }
+    /// <summary>
+    /// Gets or sets whether this snackbar is in toast mode (no close button, short-lived).
+    /// </summary>
+    public bool IsToast { get; set; }
 
     /// <summary>
     /// Gets the command to close the snackbar.

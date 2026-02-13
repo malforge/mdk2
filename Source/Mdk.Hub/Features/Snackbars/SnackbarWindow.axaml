@@ -20,45 +20,58 @@
             BorderBrush="{StaticResource BorderSuccessBrush}"
             BorderThickness="2"
             CornerRadius="8"
-            Padding="16,12"
-            MinWidth="300"
-            MaxWidth="500"
+            Padding="12"
             BoxShadow="0 4 16 2 #40000000">
 
-        <Grid ColumnDefinitions="*,Auto">
-            <!-- Message and Actions -->
-            <StackPanel Grid.Column="0" Spacing="8">
-                <TextBlock Text="{Binding Message}"
-                           TextWrapping="Wrap"
-                           Classes="primary"
-                            />
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <!-- Icon -->
+            <Viewbox Grid.Column="0"
+                     Width="20"
+                     Height="20"
+                     Margin="0,0,12,0"
+                     VerticalAlignment="Center">
+                <Path Fill="{StaticResource ForegroundSuccessBrush}"
+                      Data="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
+            </Viewbox>
 
-                <ItemsControl ItemsSource="{Binding Actions}"
-                              IsVisible="{Binding Actions.Count}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="8" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="snackbars:SnackbarActionViewModel">
-                            <Button Content="{Binding Text}"
-                                    Command="{Binding Command}"
-                                    Classes="subtle success"
-                                    Padding="8,4" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+            <!-- Message -->
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Message}"
+                       TextWrapping="Wrap"
+                       TextTrimming="CharacterEllipsis"
+                       Classes="primary"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0" />
 
-            <!-- Close button -->
-            <Button Grid.Column="1"
+            <!-- Actions -->
+            <ItemsControl Grid.Column="2"
+                          ItemsSource="{Binding Actions}"
+                          IsVisible="{Binding Actions.Count}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,8,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="8" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="snackbars:SnackbarActionViewModel">
+                        <Button Content="{Binding Text}"
+                                Command="{Binding Command}"
+                                Classes="subtle success"
+                                Padding="8,4" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Close button (hidden for toast mode) -->
+            <Button Grid.Column="3"
                     Content="✕"
                     Command="{Binding CloseCommand}"
                     Classes="subtle"
-                    VerticalAlignment="Top"
+                    VerticalAlignment="Center"
                     Padding="8,4"
-                    Margin="8,0,0,0" />
+                    IsVisible="{Binding !IsToast}" />
         </Grid>
     </Border>
 </Window>

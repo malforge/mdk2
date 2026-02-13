@@ -53,9 +53,6 @@
   <Project Path="Mdk.Hub\Mdk.Hub.csproj">
       <Platform Project="x64" />
   </Project>
-  <Project Path="Mdk.Notification\Mdk.Notification.csproj">
-    <Platform Project="x64" />
-  </Project>
   <Project Path="Mdk.References\Mdk.References.csproj">
     <Platform Project="x64" />
   </Project>

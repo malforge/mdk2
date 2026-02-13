@@ -133,7 +133,7 @@ If SmartScreen continues blocking after you click "Run anyway":
 If you prefer to build MDK Hub yourself:
 
 1. Clone the repository: `git clone https://github.com/malware-dev/mdk2.git`
-2. Open `Source/MDK-Complete.sln` in Visual Studio
+2. Open `Source/MDK-Complete.slnx` in Visual Studio or Rider
 3. Build the solution
 4. Run `Mdk.Hub` project
 

@@ -26,7 +26,7 @@ public class SnackbarService : ISnackbarService
     /// </summary>
     /// <param name="message">The message to display.</param>
     /// <param name="timeout">How long to display the snackbar in milliseconds (default: 15000).</param>
-    public void Show(string message, int timeout = 15000) => Show(message, Array.Empty<SnackbarAction>(), timeout);
+    public void Show(string message, int timeout = 15000) => Show(message, Array.Empty<SnackbarAction>(), timeout, isToast: true);
 
     /// <summary>
     ///     Displays a snackbar notification with the specified message and actions.
@@ -34,7 +34,9 @@ public class SnackbarService : ISnackbarService
     /// <param name="message">The message to display.</param>
     /// <param name="actions">Action buttons to display on the snackbar.</param>
     /// <param name="timeout">How long to display the snackbar in milliseconds (default: 15000).</param>
-    public void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout = 15000) => _ = Dispatcher.UIThread.InvokeAsync(() => ShowAsync(message, actions, timeout));
+    public void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout = 15000) => Show(message, actions, timeout, isToast: false);
+
+    void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout, bool isToast) => _ = Dispatcher.UIThread.InvokeAsync(() => ShowAsync(message, actions, timeout, isToast));
 
     /// <summary>
     ///     Sets the main application window for positioning snackbars.
@@ -42,12 +44,13 @@ public class SnackbarService : ISnackbarService
     /// <param name="mainWindow">The main application window.</param>
     public void SetMainWindow(Window mainWindow) => _mainWindow = mainWindow;
 
-    async Task ShowAsync(string message, IReadOnlyList<SnackbarAction> actions, int timeout)
+    async Task ShowAsync(string message, IReadOnlyList<SnackbarAction> actions, int timeout, bool isToast)
     {
         var viewModel = new SnackbarViewModel
         {
             Message = message,
-            Timeout = timeout
+            Timeout = timeout,
+            IsToast = isToast
         };
         viewModel.SetActions(actions);
 
@@ -55,13 +58,6 @@ public class SnackbarService : ISnackbarService
         {
             DataContext = viewModel
         };
-
-        // Show the window first (invisible) so it can measure itself
-        snackbar.Opacity = 0;
-        snackbar.Show();
-
-        // Wait a frame for layout to complete
-        await Task.Delay(50);
 
         // Get the screen where the main window is (or primary if no main window)
         var screen = _mainWindow?.Screens.ScreenFromWindow(_mainWindow)
@@ -76,6 +72,16 @@ public class SnackbarService : ISnackbarService
 
         var workingArea = screen.WorkingArea;
         var scaling = screen.Scaling;
+
+        // Set MaxWidth to 50% of screen width (in logical pixels)
+        snackbar.MaxWidth = workingArea.Width / scaling * 0.5;
+
+        // Show the window first (invisible) so it can measure itself
+        snackbar.Opacity = 0;
+        snackbar.Show();
+
+        // Wait a frame for layout to complete
+        await Task.Delay(50);
 
         // Calculate position - snackbar.Bounds gives logical size, need physical for calculations
         var snackbarWidth = snackbar.Bounds.Width * scaling;

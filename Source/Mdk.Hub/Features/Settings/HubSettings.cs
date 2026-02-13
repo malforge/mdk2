@@ -81,5 +81,11 @@ public struct HubSettings
     ///     When null or 0, a port is automatically selected and reused.
     /// </summary>
     public int? IpcPort { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the timeout duration (in seconds) for deployment notification snackbars.
+    ///     Default is 10 seconds.
+    /// </summary>
+    public int DeploymentNotificationTimeoutSeconds { get; set; } = 10;
 }
 

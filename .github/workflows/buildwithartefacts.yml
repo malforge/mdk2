@@ -225,10 +225,10 @@ jobs:
           path: ./Source/Mdk.ModPackager/tools
 
       - name: Restore dependencies
-        run: dotnet restore MDK-Packages.sln
+        run: dotnet restore MDK-Packages.slnx
 
       - name: Build solution
-        run: dotnet build MDK-Packages.sln --configuration Release
+        run: dotnet build MDK-Packages.slnx --configuration Release
 
       - name: Collect NuGet packages
         run: |

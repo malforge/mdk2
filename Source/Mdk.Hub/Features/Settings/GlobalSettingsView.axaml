@@ -205,6 +205,37 @@
                         <TabItem Header="Advanced">
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel Spacing="16" Margin="16">
+                                    <!-- Deployment Notification Timeout -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Deployment Notification Timeout"
+                                                   Classes="h3 heading" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,0,0,4">
+                                            How long (in seconds) to display deployment notification snackbars before they auto-dismiss. Range: 0-300 seconds.
+                                        </TextBlock>
+
+                                        <controls:ValidatedControl ValidationMessage="{Binding DeploymentNotificationTimeoutValidationError}">
+                                            <controls:ValidatedControl.Content>
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <NumericUpDown Value="{Binding DeploymentNotificationTimeoutSeconds}"
+                                                                  Minimum="0"
+                                                                  Maximum="300"
+                                                                  Increment="1"
+                                                                  FormatString="0"
+                                                                  Width="150"
+                                                                  HorizontalAlignment="Left" />
+                                                    <TextBlock Text="Never auto-dismiss"
+                                                              Classes="caption muted"
+                                                              FontStyle="Italic"
+                                                              VerticalAlignment="Center"
+                                                              IsVisible="{Binding !DeploymentNotificationTimeoutSeconds}" />
+                                                </StackPanel>
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
+                                    </StackPanel>
+
                                     <!-- IPC Port -->
                                     <StackPanel Spacing="8">
                                         <TextBlock Text="Inter-Process Communication Port"

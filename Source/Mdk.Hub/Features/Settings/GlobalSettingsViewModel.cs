@@ -33,6 +33,7 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoScriptOutputPath = "";
     string _ipcPort = "";
     string _originalIpcPort = "";
+    int? _deploymentNotificationTimeoutSeconds;
     bool _includePrereleaseUpdates;
     bool _openedForLinuxValidation;
 
@@ -79,6 +80,7 @@ public class GlobalSettingsViewModel : OverlayModel
         CustomAutoModOutputPath = (App.IsLinux && modPath == "auto") ? "" : modPath;
         CustomAutoBinaryPath = (App.IsLinux && binPath == "auto") ? "" : binPath;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
+        DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
         IpcPort = settings.IpcPort?.ToString() ?? "";
         _originalIpcPort = IpcPort; // Track original for change detection
     }
@@ -184,6 +186,19 @@ public class GlobalSettingsViewModel : OverlayModel
                 OnPropertyChanged(nameof(IpcPortValidationError));
         }
     }
+
+    /// <summary>
+    /// Gets or sets the deployment notification timeout duration in seconds.
+    /// </summary>
+    public int? DeploymentNotificationTimeoutSeconds
+    {
+        get => _deploymentNotificationTimeoutSeconds;
+        set
+        {
+            if (SetProperty(ref _deploymentNotificationTimeoutSeconds, value))
+                OnPropertyChanged(nameof(DeploymentNotificationTimeoutValidationError));
+        }
+    }
     
     /// <summary>
     /// Gets whether the application is running on Linux.
@@ -234,6 +249,28 @@ public class GlobalSettingsViewModel : OverlayModel
 
             if (port < 1024)
                 return "Ports below 1024 may require admin rights";
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the validation error message for the deployment notification timeout, if any.
+    /// </summary>
+    public string? DeploymentNotificationTimeoutValidationError
+    {
+        get
+        {
+            if (_deploymentNotificationTimeoutSeconds == null)
+                return "Please enter a valid number";
+
+            var value = _deploymentNotificationTimeoutSeconds.Value;
+            
+            if (value < 0)
+                return "Timeout cannot be negative";
+
+            if (value > 300)
+                return "Timeout cannot exceed 300 seconds (5 minutes)";
 
             return null;
         }
@@ -295,6 +332,13 @@ public class GlobalSettingsViewModel : OverlayModel
             _shell.ShowToast(IpcPortValidationError);
             return;
         }
+
+        // Validate deployment notification timeout
+        if (!string.IsNullOrWhiteSpace(DeploymentNotificationTimeoutValidationError))
+        {
+            _shell.ShowToast(DeploymentNotificationTimeoutValidationError);
+            return;
+        }
         
         var updatedSettings = _hubSettings with
         {
@@ -302,6 +346,7 @@ public class GlobalSettingsViewModel : OverlayModel
             CustomAutoModOutputPath = _customAutoModOutputPath,
             CustomAutoBinaryPath = _customAutoBinaryPath,
             IncludePrereleaseUpdates = _includePrereleaseUpdates,
+            DeploymentNotificationTimeoutSeconds = _deploymentNotificationTimeoutSeconds ?? 0,
             IpcPort = string.IsNullOrWhiteSpace(_ipcPort) || !int.TryParse(_ipcPort, out var port) ? null : port
         };
         _settings.SetValue(SettingsKeys.HubSettings, updatedSettings);

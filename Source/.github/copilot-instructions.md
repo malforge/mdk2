@@ -32,13 +32,13 @@ Both use multi-file projects during development but are packaged into formats th
 
 ```powershell
 # Build entire solution
-dotnet build MDK-Complete.sln --configuration Release
+dotnet build MDK-Complete.slnx --configuration Release
 
 # Build specific project
 dotnet build Mdk.CommandLine\Mdk.CommandLine.csproj --configuration Release
 
 # Build for specific platform (x64 required for Space Engineers integration)
-dotnet build MDK-Complete.sln --configuration Release /p:Platform=x64
+dotnet build MDK-Complete.slnx --configuration Release /p:Platform=x64
 ```
 
 ### Testing
@@ -194,6 +194,104 @@ mdk restore <project>
 ```
 
 The CLI supports both interactive mode (default) and non-interactive (`--non-interactive`) for CI/CD.
+
+## Commit Messages and Release Notes
+
+### Commit Message Guidelines
+
+Commit messages should be concise but technical, describing **what changed** at a high level. They can mention implementation details when relevant but should stay focused and readable.
+
+**Format:**
+```
+Brief summary of change
+
+- Technical detail 1
+- Technical detail 2
+- Technical detail 3
+```
+
+**Good Examples:**
+```
+Improved notification snackbars
+
+- Redesigned with horizontal layout (icon, message, buttons)
+- Added configurable timeout in HubSettings with validation
+- Implemented toast mode for message-only notifications
+- Dynamic MaxWidth calculation at 50% screen width with text wrapping
+```
+
+```
+Fixed Hub ignoring global custom output paths
+
+- Updated CopyScriptToClipboardAsync to check HubSettings first
+- Modified OpenOutputFolderAsync to resolve custom paths
+- Added ISettings dependency to ProjectInfoAction
+```
+
+```
+Refactored solution structure
+
+- Migrated from .sln to .slnx format
+- Removed obsolete Mdk.Notification project
+- Updated GitHub Actions workflow for .slnx
+```
+
+**Bad Examples:**
+```
+Fixed stuff  // Too vague
+
+Changed line 42 in ProjectService.cs to add null check  // Too specific
+
+Implemented ISnackbarService.Show overload with isToast parameter and modified SnackbarViewModel to add IsToast property and updated SnackbarWindow.axaml to conditionally hide close button based on IsToast binding  // Too detailed
+```
+
+### Release Notes Guidelines
+
+Release notes are **user-facing only**. Include only changes that users would notice or care about. Omit:
+- Internal refactoring (unless it improves performance/stability noticeably)
+- Dependency updates (unless they fix user-visible bugs)
+- Code structure changes (.sln → .slnx migration, project removals, etc.)
+- Build/CI changes
+
+**Format:**
+```
+v.X.X.X-pre.XX
+   - User-visible change 1
+   - User-visible change 2
+   - User-visible change 3
+```
+
+**Good Examples:**
+```
+v.1.0.0-pre.41
+   - Added configurable deployment notification timeout in Global Settings > Advanced.
+   - Improved snackbar notifications with horizontal layout and compact toast messages.
+   - Fixed Hub not starting minimized when launched from build notifications.
+   - Fixed "Open in Hub" button not restoring window from tray.
+```
+
+**What to Exclude:**
+```
+❌ Migrated solution files from .sln to .slnx format
+❌ Removed obsolete Mdk.Notification project
+❌ Updated Avalonia packages to 11.3.12
+❌ Refactored ProjectService to use dependency injection
+❌ Added unit tests for path resolution logic
+```
+
+**What to Include:**
+```
+✓ Added dark mode theme
+✓ Fixed crash when opening project with missing files
+✓ Improved snackbar appearance and usability
+✓ Added option to customize notification timeout
+✓ Fixed Hub ignoring custom output paths in settings
+```
+
+### Rule of Thumb
+
+**Commit Message Test:** Would a developer reviewing the PR want to know this?
+**Release Notes Test:** Would an end user notice or benefit from this?
 
 ## Publishing
 

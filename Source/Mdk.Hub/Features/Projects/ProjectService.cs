@@ -1265,30 +1265,13 @@ public class ProjectService : IProjectService
                 Action = OnCopyToClipboard,
                 Context = projectPath,
                 IsClosingAction = true
-            },
-            new()
-            {
-                Text = "Show me",
-                Action = OnShowMe,
-                Context = projectPath,
-                IsClosingAction = true
             }
         };
 
-        _snackbarService.Show(message, actions);
-    }
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        var timeoutMs = hubSettings.DeploymentNotificationTimeoutSeconds * 1000;
 
-    async void OnShowMe(object? ctx)
-    {
-        try
-        {
-            if (ctx is string path)
-                await OpenOutputFolderAsync(new CanonicalPath(path));
-        }
-        catch (Exception e)
-        {
-            _logger.Error("Failed to open output folder", e);
-        }
+        _snackbarService.Show(message, actions, timeoutMs);
     }
 
     async void OnCopyToClipboard(object? ctx)
@@ -1297,7 +1280,18 @@ public class ProjectService : IProjectService
         {
             if (ctx is string path)
             {
-                var success = await CopyScriptToClipboardAsync(new CanonicalPath(path));
+                var projectPath = new CanonicalPath(path);
+                
+                // Check if this is a simulated project
+                var project = _registry.GetProjects().FirstOrDefault(p => p.IsPath(path));
+                if (project?.Flags.HasFlag(ProjectFlags.Simulated) == true)
+                {
+                    // For simulated projects, just show success
+                    _snackbarService.Show("Script copied to clipboard.", 2000);
+                    return;
+                }
+                
+                var success = await CopyScriptToClipboardAsync(projectPath);
                 if (success)
                     _snackbarService.Show("Script copied to clipboard.", 2000);
             }
