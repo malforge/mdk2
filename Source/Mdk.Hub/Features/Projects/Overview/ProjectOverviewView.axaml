@@ -33,22 +33,41 @@
         <DataTemplate DataType="overview:ProjectModel">
             <Border BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="0,0,0,1"
-                    Padding="12,8">
+                    Padding="4,4,12,4">
                 <Grid ColumnDefinitions="Auto,*">
-                    <ContentControl Classes="project-icon"
-                                    Content="{Binding Type}"
-                                    Grid.RowSpan="2" />
+                    <!-- Thumbnail or Icon -->
+                    <Grid Grid.Column="0" Grid.RowSpan="2" Margin="0,0,6,0" Width="85" Height="56">
+                        <!-- Thumbnail image (16:10 aspect, fills row height) -->
+                        <Image Source="{Binding Thumbnail}"
+                               Stretch="UniformToFill"
+                               IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}"
+                               Margin="2"
+                               ClipToBounds="True" />
+                        
+                        <!-- Fallback icon (shown when no thumbnail) -->
+                        <ContentControl Classes="project-icon"
+                                        Content="{Binding Type}"
+                                        IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNull}}" />
+                    </Grid>
 
-                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalAlignment="Center">
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalAlignment="Center" Margin="0,4,0,4">
                         <!-- Title row with indicators on the right -->
-                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,4">
+                            <!-- Small type icon before name -->
+                            <ContentControl Grid.Column="0"
+                                          Classes="project-icon-inline"
+                                          Content="{Binding Type}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,4,0" />
+                            
                             <TextBlock
-                                Grid.Column="0"
+                                Grid.Column="1"
                                 Classes="title"
+                                VerticalAlignment="Center"
                                 Text="{Binding Name}" />
                             
                             <!-- Indicator dots horizontally aligned on right -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0">
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0">
                                 <Ellipse Width="8"
                                          Height="8"
                                          Classes="warning-indicator"

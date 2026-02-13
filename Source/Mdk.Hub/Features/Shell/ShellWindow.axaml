@@ -7,7 +7,7 @@
         MinWidth="850" MinHeight="450"
         x:Class="Mdk.Hub.Features.Shell.ShellWindow"
         x:DataType="vm:ShellViewModel"
-        Icon="/Assets/malware.ico"
+        Icon="/Assets/hub.ico"
         Title="MDK² Hub"
         KeyDown="OnKeyDown">
 

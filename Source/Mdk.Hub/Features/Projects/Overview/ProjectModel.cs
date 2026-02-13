@@ -1,7 +1,11 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
@@ -14,10 +18,13 @@ namespace Mdk.Hub.Features.Projects.Overview;
 /// </summary>
 public class ProjectModel : ViewModel
 {
-    readonly IShell _shell;
+    // Limit concurrent thumbnail loads to avoid overwhelming the system
+    static readonly SemaphoreSlim _thumbnailLoadSemaphore = new(2, 2);
     readonly AsyncRelayCommand _deleteCommand;
-    readonly AsyncRelayCommand _removeFromHubCommand;
     readonly IProjectService? _projectService;
+    readonly AsyncRelayCommand _removeFromHubCommand;
+
+    readonly IShell _shell;
     bool _hasUnsavedChanges;
     bool _isSelected;
     DateTimeOffset _lastReferenced;
@@ -25,6 +32,7 @@ public class ProjectModel : ViewModel
     bool _needsAttention;
     bool _needsUpdate;
     ICommand? _selectCommand;
+    Bitmap? _thumbnail;
     ProjectType _type;
     int _updateCount;
 
@@ -47,6 +55,9 @@ public class ProjectModel : ViewModel
         _type = type;
         _deleteCommand = new AsyncRelayCommand(DeleteAsync, CanDelete);
         _removeFromHubCommand = new AsyncRelayCommand(RemoveFromHubAsync, CanDelete);
+
+        // Start async thumbnail loading
+        _ = LoadThumbnailAsync();
     }
 
     /// <summary>
@@ -136,10 +147,19 @@ public class ProjectModel : ViewModel
     }
 
     /// <summary>
+    ///     Gets the project thumbnail image (thumb.png or thumb.jpg) if available.
+    /// </summary>
+    public Bitmap? Thumbnail
+    {
+        get => _thumbnail;
+        private set => SetProperty(ref _thumbnail, value);
+    }
+
+    /// <summary>
     ///     Gets the command to permanently delete this project from disk.
     /// </summary>
     public ICommand DeleteCommand => _deleteCommand;
-    
+
     /// <summary>
     ///     Gets the command to remove this project from Hub (but keep files on disk).
     /// </summary>
@@ -258,5 +278,79 @@ public class ProjectModel : ViewModel
         LastReferenced = projectInfo.LastReferenced;
         // Note: ProjectPath, IsSelected, NeedsAttention, HasUnsavedChanges are NOT updated - those preserve UI state
     }
-}
 
+    async Task LoadThumbnailAsync()
+    {
+        try
+        {
+            if (ProjectPath.IsEmpty())
+                return;
+
+            var projectDir = Path.GetDirectoryName(ProjectPath.Value);
+            if (string.IsNullOrEmpty(projectDir))
+                return;
+
+            // Throttle concurrent loads
+            await _thumbnailLoadSemaphore.WaitAsync();
+            try
+            {
+                // All file I/O on background thread
+                await Task.Run(() =>
+                {
+                    // Check for thumb.png first, then thumb.jpg
+                    string? thumbPath = null;
+                    var pngPath = Path.Combine(projectDir, "thumb.png");
+                    var jpgPath = Path.Combine(projectDir, "thumb.jpg");
+
+                    if (File.Exists(pngPath))
+                        thumbPath = pngPath;
+                    else if (File.Exists(jpgPath))
+                        thumbPath = jpgPath;
+
+                    if (thumbPath == null)
+                        return;
+
+                    // Load bitmap
+                    using var stream = File.OpenRead(thumbPath);
+                    using var originalBitmap = new Bitmap(stream);
+
+                    // Resize to reasonable max (2x display size for retina) if necessary
+                    const int maxWidth = 170; // 2x display width of 85px
+                    const int maxHeight = 112; // 2x display height of 56px
+
+                    Bitmap finalBitmap;
+
+                    // Calculate if resizing is needed
+                    var scaleX = (double)maxWidth / originalBitmap.PixelSize.Width;
+                    var scaleY = (double)maxHeight / originalBitmap.PixelSize.Height;
+                    var scale = Math.Min(scaleX, scaleY);
+
+                    if (scale < 1.0)
+                    {
+                        // Resize - image is larger than needed
+                        var newWidth = (int)(originalBitmap.PixelSize.Width * scale);
+                        var newHeight = (int)(originalBitmap.PixelSize.Height * scale);
+                        finalBitmap = originalBitmap.CreateScaledBitmap(new PixelSize(newWidth, newHeight));
+                    }
+                    else
+                    {
+                        // Create copy - image is already small enough
+                        finalBitmap = new Bitmap(stream);
+                        stream.Seek(0, SeekOrigin.Begin);
+                    }
+
+                    // Update property on UI thread
+                    Dispatcher.UIThread.Post(() => Thumbnail = finalBitmap);
+                });
+            }
+            finally
+            {
+                _thumbnailLoadSemaphore.Release();
+            }
+        }
+        catch
+        {
+            // Silently fail - thumbnail is optional
+        }
+    }
+}

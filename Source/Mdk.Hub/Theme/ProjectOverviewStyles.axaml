@@ -13,17 +13,24 @@
         <Setter Property="Background" Value="Transparent" />
         
         <Style Selector="^ .project-icon icons|Symbol">
-            <Setter Property="Width" Value="48" />
-            <Setter Property="Height" Value="48" />
+            <Setter Property="Width" Value="81" />
+            <Setter Property="Height" Value="52" />
             <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}" />
             <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
-            <Setter Property="Margin" Value="4" />
+            <Setter Property="Margin" Value="2" />
+        </Style>
+        
+        <Style Selector="^ .project-icon-inline icons|Symbol">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
         </Style>
 
         <Style Selector="^ TextBlock.title">
             <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Margin" Value="16,0,0,2" />
+            <Setter Property="Margin" Value="0,0,0,2" />
             <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>

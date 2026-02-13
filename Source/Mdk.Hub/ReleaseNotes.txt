@@ -1,8 +1,10 @@
 v.1.0.0-pre.40
+   - Project thumbnails now displayed in project list (thumb.png or thumb.jpg in project directory).
    - Redesigned notification snackbars with horizontal layout for improved compactness.
    - Added configurable deployment notification timeout in Global Settings > Advanced.
    - Quick confirmation messages now display as toast-style notifications without close button.
    - Removed "Show me" button from deployment notifications.
+   - Updated Hub application icon.
 
 v.1.0.0-pre.39
    - Fixed Hub ignoring global custom auto output paths when resolving script/mod locations.
