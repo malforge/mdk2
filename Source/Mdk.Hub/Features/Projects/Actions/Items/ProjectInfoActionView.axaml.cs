@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
@@ -7,7 +6,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 ///     View for displaying project information and quick action buttons.
 /// </summary>
 [Instance]
-public partial class ProjectInfoActionView : UserControl
+public partial class ProjectInfoActionView : ActionItemControl
 {
     /// <summary>
     ///     Initializes a new instance of the ProjectInfoActionView class.

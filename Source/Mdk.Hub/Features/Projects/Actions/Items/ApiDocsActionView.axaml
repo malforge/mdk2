@@ -1,12 +1,14 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<actions:ActionItemControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
              xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="60"
              x:Class="Mdk.Hub.Features.Projects.Actions.Items.ApiDocsActionView"
-             x:DataType="items:ApiDocsAction">
+             x:DataType="items:ApiDocsAction"
+             TopEdge="Contained" BottomEdge="Contained">
 
     <Button Classes="action-button subtle"
             Command="{Binding ExecuteCommand}"
@@ -28,4 +30,4 @@
         </Grid>
     </Button>
 
-</UserControl>
+</actions:ActionItemControl>

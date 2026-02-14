@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
@@ -7,7 +6,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 ///     View for Hub and template update notifications and actions.
 /// </summary>
 [Instance]
-public partial class UpdatesActionView : UserControl
+public partial class UpdatesActionView : ActionItemControl
 {
     /// <summary>
     ///     Initializes a new instance of the UpdatesActionView class.

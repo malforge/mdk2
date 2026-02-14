@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
@@ -7,7 +6,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 ///     View for updating MDK NuGet packages in projects.
 /// </summary>
 [Instance]
-public partial class UpdatePackagesActionView : UserControl
+public partial class UpdatePackagesActionView : ActionItemControl
 {
     /// <summary>
     ///     Initializes a new instance of the UpdatePackagesActionView class.

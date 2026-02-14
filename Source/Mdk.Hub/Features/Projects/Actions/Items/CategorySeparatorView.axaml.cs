@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
@@ -7,7 +6,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 ///     Visual separator for grouping action items in the actions panel.
 /// </summary>
 [Instance]
-public partial class CategorySeparatorView : UserControl
+public partial class CategorySeparatorView : ActionItemControl
 {
     /// <summary>
     ///     Initializes a new instance of the CategorySeparatorView class.

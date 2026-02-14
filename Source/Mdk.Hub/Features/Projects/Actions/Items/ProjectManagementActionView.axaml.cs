@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Avalonia.Input;
 using Mal.SourceGeneratedDI;
 
@@ -8,7 +7,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 ///     View for project management actions (create, add existing).
 /// </summary>
 [Instance]
-public partial class ProjectManagementActionView : UserControl
+public partial class ProjectManagementActionView : ActionItemControl
 {
     /// <summary>
     ///     Initializes a new instance of the ProjectManagementActionView class.

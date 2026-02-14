@@ -56,7 +56,7 @@
             <ItemsControl ItemsSource="{Binding Actions}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Spacing="8" Margin="8,0" />
+                        <actions:ActionItemPanel BareSpacing="8" ContainedSpacing="16" Margin="8,0" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>

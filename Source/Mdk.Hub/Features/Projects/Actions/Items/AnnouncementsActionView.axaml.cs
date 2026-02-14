@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
@@ -7,7 +6,7 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 ///     View for displaying announcements from the MDK team.
 /// </summary>
 [Instance]
-public partial class AnnouncementsActionView : UserControl
+public partial class AnnouncementsActionView : ActionItemControl
 {
     /// <summary>
     ///     Initializes a new instance of the AnnouncementsActionView class.
