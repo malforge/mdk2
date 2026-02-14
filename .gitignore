@@ -409,3 +409,6 @@ test-*.ps1
 
 # Local documentation/rules files
 .hub-*.md
+
+# MDK-specific
+.issues/

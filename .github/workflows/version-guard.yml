@@ -9,7 +9,7 @@ on:
 jobs:
   check-versions:
     runs-on: ubuntu-latest
-    name: Validate Package Versions
+    name: Validate Package Versions and Templates
     
     steps:
       - name: Checkout code
@@ -17,10 +17,42 @@ jobs:
         with:
           fetch-depth: 0
       
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
       - name: Get base branch
         run: |
           git fetch origin ${{ github.base_ref }}
           echo "BASE_SHA=$(git rev-parse origin/${{ github.base_ref }})" >> $GITHUB_ENV
+      
+      - name: Check template package references
+        shell: pwsh
+        working-directory: ./Source/ScriptTemplates
+        run: |
+          Write-Host "Checking if template package references are up-to-date..."
+          
+          # Run the update script
+          pwsh -ExecutionPolicy Bypass -File ./UpdatePackageReferences.ps1
+          
+          # Check if there are any uncommitted changes
+          git diff --exit-code
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "`n`n========================================" -ForegroundColor Red
+            Write-Host "TEMPLATE PACKAGE REFERENCE CHECK FAILED" -ForegroundColor Red
+            Write-Host "========================================`n" -ForegroundColor Red
+            Write-Host "❌ Template package references are out of date`n" -ForegroundColor Red
+            Write-Host "ℹ️  To fix this:" -ForegroundColor Yellow
+            Write-Host "   1. Open either MDK-Complete.sln or MDK-Packages.sln in Visual Studio, OR" -ForegroundColor Yellow
+            Write-Host "   2. Run: cd Source/ScriptTemplates && dotnet build" -ForegroundColor Yellow
+            Write-Host "`n   Building ScriptTemplates will automatically update the template package references." -ForegroundColor Yellow
+            Write-Host "   Then commit the changes and push.`n" -ForegroundColor Yellow
+            exit 1
+          }
+          
+          Write-Host "✓ Template package references are up-to-date!" -ForegroundColor Green
       
       - name: Check version updates
         shell: pwsh

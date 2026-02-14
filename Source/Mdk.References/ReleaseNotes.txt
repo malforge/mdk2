@@ -1,3 +1,6 @@
+v.2.2.8
+ - Fixed missing System.Collections.Immutable dependency for installations with incomplete MSBuild components.
+
 v.2.2.7
  - Added a verbose output option to allow for workflow debugging.
 

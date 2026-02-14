@@ -1,4 +1,7 @@
-﻿v.2.2.0-pre.3
+﻿v.2.2.0-pre.4
+   - Bugfix: Unused field minification fix merged from main (v2.1.18)
+
+v.2.2.0-pre.3
    - Linux support: MDK2 CLI and packagers now fully support Linux.
    - Packagers automatically detect your platform and use the correct binary.
    - Both Windows and Linux binaries included in the package.
@@ -12,6 +15,9 @@ v.2.2.0-pre.1
    - Introducing MDK Hub: A visual application for managing projects, checking for updates, and configuring settings.
    - Interactive mode now integrates with the Hub for build notifications and updates.
    - Cross-platform support for Windows and Linux.
+
+v.2.1.18
+   - Bugfix on unused field minification
 
 v.2.1.17
    - Moved the "Smallifier" processor to the Trim minifying level.

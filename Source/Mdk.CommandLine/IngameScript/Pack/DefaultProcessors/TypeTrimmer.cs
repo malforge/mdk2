@@ -111,7 +111,7 @@ public class TypeTrimmer : IDocumentProcessor
                     }
                 }
 
-                // Trim unused delegates
+                // Identify unused delegates
                 var allDelegateDeclarations = rootNode.DescendantNodes().OfType<DelegateDeclarationSyntax>();
                 foreach (var delegateDeclaration in allDelegateDeclarations)
                 {
@@ -130,7 +130,7 @@ public class TypeTrimmer : IDocumentProcessor
                     context.Console.Trace($"Unused delegate: {symbol.Name}");
                 }
 
-                // Trim unused fields
+                // Identify unused fields, or partially unused field declarations (like "int used = 1, unused = 2;")
                 var allFieldDeclarations = rootNode.DescendantNodes().OfType<FieldDeclarationSyntax>();
                 foreach (var fieldDeclaration in allFieldDeclarations)
                 {
@@ -194,13 +194,15 @@ public class TypeTrimmer : IDocumentProcessor
                         continue;
                     }
 
+                    // In field declarations with multiple fields ("int a, b;"), we've found that some fields are unused.
+                    // This tracks their replacements
                     var newVariables = default(SeparatedSyntaxList<VariableDeclaratorSyntax>);
                     newVariables = newVariables.AddRange(keptVariables);
                     var newDeclaration = fieldDeclaration.WithDeclaration(declaration.WithVariables(newVariables));
                     fieldReplacements[fieldDeclaration] = newDeclaration;
                 }
 
-                // Trim unused properties
+                // Identify unused properties
                 var allPropertyDeclarations = rootNode.DescendantNodes().OfType<PropertyDeclarationSyntax>();
                 foreach (var propertyDeclaration in allPropertyDeclarations)
                 {
@@ -228,7 +230,7 @@ public class TypeTrimmer : IDocumentProcessor
                     context.Console.Trace($"Unused property: {propertySymbol.Name}");
                 }
 
-                // Trim unused methods
+                // Identify unused methods
                 var allMethodDeclarations = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
                 foreach (var methodDeclaration in allMethodDeclarations)
                 {
@@ -250,7 +252,7 @@ public class TypeTrimmer : IDocumentProcessor
                     context.Console.Trace($"Unused method: {methodSymbol.Name}");
                 }
 
-                // Trim unused constructors
+                // Identify unused constructors
                 var allConstructorDeclarations = rootNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
                 foreach (var constructorDeclaration in allConstructorDeclarations)
                 {
@@ -296,6 +298,7 @@ public class TypeTrimmer : IDocumentProcessor
             if (unusedTypes.Count == 0 && unusedDelegates.Count == 0 && unusedMembers.Count == 0 && fieldReplacements.Count == 0)
                 break;
 
+            // Rewrite partially unused field declarations
             var trackedNodes = unusedTypes.Cast<SyntaxNode>()
                 .Concat(unusedDelegates)
                 .Concat(unusedMembers)
@@ -305,9 +308,19 @@ public class TypeTrimmer : IDocumentProcessor
 
             if (fieldReplacements.Count > 0)
             {
-                trackedRoot = trackedRoot.ReplaceNodes(fieldReplacements.Keys, (original, _) => fieldReplacements[original]);
+                // Track each unused field declaration with a reference to the current code tree. Roslyn works on immutable objects and equality is by reference.
+                var currentFieldReplacements = new Dictionary<FieldDeclarationSyntax, FieldDeclarationSyntax>();
+                foreach (var replacement in fieldReplacements)
+                {
+                    if (trackedRoot.GetCurrentNode(replacement.Key) is FieldDeclarationSyntax currentField)
+                        currentFieldReplacements[currentField] = replacement.Value;
+                }
+                
+                if (currentFieldReplacements.Count > 0)
+                    trackedRoot = trackedRoot.ReplaceNodes(currentFieldReplacements.Keys, (original, _) => currentFieldReplacements[original]);
             }
 
+            // Remove unused members entirely
             if (unusedTypes.Count > 0 || unusedDelegates.Count > 0 || unusedMembers.Count > 0)
             {
                 var nodesToRemove = unusedTypes.Cast<SyntaxNode>()

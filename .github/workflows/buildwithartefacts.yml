@@ -126,7 +126,6 @@ jobs:
           }
 
   build-tools:
-    needs: update-templates
     runs-on: ubuntu-latest
 
     defaults:
@@ -194,7 +193,6 @@ jobs:
       contents: write
     
     needs:
-      - update-templates
       - build-tools
     
     defaults:
