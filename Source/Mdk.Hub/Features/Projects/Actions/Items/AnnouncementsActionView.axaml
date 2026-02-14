@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
-             xmlns:announcements="clr-namespace:Mdk.Hub.Features.Announcements"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
              x:Class="Mdk.Hub.Features.Projects.Actions.Items.AnnouncementsActionView"
              x:DataType="items:AnnouncementsAction">
@@ -33,8 +32,7 @@
             Tag="{Binding CurrentAnnouncement.Style}"
             BorderThickness="1"
             CornerRadius="6"
-            Padding="16"
-            Margin="16,8">
+            Padding="16">
         <StackPanel Spacing="12">
             <!-- Header -->
             <Grid ColumnDefinitions="Auto,*">

@@ -10,7 +10,12 @@
 
     <!-- ListBox-based project list styles -->
     <Style Selector="ListBox.project-list">
+        <Setter Property="Margin" Value="0,0,0,16" />
         <Setter Property="Background" Value="Transparent" />
+        
+        <Style Selector="^ VirtualizingStackPanel">
+            <Setter Property="Margin" Value="8,0" />
+        </Style>
         
         <Style Selector="^ .project-icon icons|Symbol">
             <Setter Property="Width" Value="81" />

@@ -8,7 +8,7 @@
              x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectManagementActionView"
              x:DataType="items:ProjectManagementAction">
 
-    <StackPanel Spacing="8" Margin="16,0">
+    <StackPanel Spacing="8">
         <TextBlock Classes="section-title" Text="Projects" />
 
         <!-- Create New Script -->

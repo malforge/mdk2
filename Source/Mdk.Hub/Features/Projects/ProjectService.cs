@@ -66,7 +66,7 @@ public class ProjectService : IProjectService
         _fileStorage = fileStorage;
         Settings = settings;
         _nugetService = nugetService;
-        _updateChecker = new ProjectUpdateChecker(logger, this, updateManager, registry);
+        _updateChecker = new ProjectUpdateChecker(logger, this, updateManager, registry, shell);
         _state = new ProjectStateData(default, true, true);
 
         _updateChecker.ProjectUpdateAvailable += OnProjectUpdateAvailable;

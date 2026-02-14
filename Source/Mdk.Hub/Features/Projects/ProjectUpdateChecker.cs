@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Utility;
 using NuGet.Versioning;
@@ -27,13 +28,15 @@ class ProjectUpdateChecker
     Dictionary<string, string>? _latestVersions;
     Task? _processingTask;
 
-    public ProjectUpdateChecker(ILogger logger, IProjectService projectService, IUpdateManager updateManager, IProjectRegistry registry)
+    public ProjectUpdateChecker(ILogger logger, IProjectService projectService, IUpdateManager updateManager, IProjectRegistry registry, IShell shell)
     {
         _logger = logger;
         _projectService = projectService;
         _registry = registry;
         // When version data is available, start checking projects
         updateManager.WhenVersionCheckUpdates(OnVersionDataUpdated);
+        // Re-check projects when user requests refresh (Ctrl+R)
+        shell.RefreshRequested += OnRefreshRequested;
     }
 
     public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
@@ -55,6 +58,29 @@ class ProjectUpdateChecker
                 StartProcessing();
         }
 
+        var projects = _registry.GetProjects();
+        QueueProjectsCheck(projects.Select(p => p.ProjectPath));
+    }
+
+    void OnRefreshRequested(object? sender, EventArgs e)
+    {
+        if (!_hasVersionData)
+        {
+            _logger.Debug("Refresh requested but no version data yet, skipping project update check");
+            return;
+        }
+
+        lock (_lock)
+        {
+            // If already processing, don't queue more work
+            if (_processingTask != null)
+            {
+                _logger.Debug("Project update check already in progress, skipping refresh");
+                return;
+            }
+        }
+
+        _logger.Info("Refresh requested, re-checking all projects for package updates");
         var projects = _registry.GetProjects();
         QueueProjectsCheck(projects.Select(p => p.ProjectPath));
     }

@@ -7,6 +7,6 @@
              x:Class="Mdk.Hub.Features.Projects.Actions.Items.CategorySeparatorView"
              x:DataType="items:CategorySeparator">
 
-    <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0,12" />
+    <Border Height="1" Background="{StaticResource BorderDefaultBrush}" Margin="0" />
 
 </UserControl>

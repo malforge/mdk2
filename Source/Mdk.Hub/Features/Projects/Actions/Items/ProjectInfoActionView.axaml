@@ -15,7 +15,7 @@
         <actions:BoolToWarningBackgroundConverter x:Key="BoolToWarningBackgroundConverter" />
     </UserControl.Resources>
 
-    <StackPanel Spacing="12" Margin="16,0">
+    <StackPanel Spacing="12">
         <!-- Project header -->
         <StackPanel Spacing="12" Orientation="Horizontal">
             <ContentControl Classes="project-type-icon" Content="{Binding Project.Type}" Width="48" Height="48" />

@@ -12,8 +12,7 @@
             BorderBrush="{StaticResource BorderAccentBrush}"
             BorderThickness="1"
             CornerRadius="6"
-            Padding="16"
-            Margin="16,8">
+            Padding="16">
         <StackPanel Spacing="12">
             <!-- Header -->
             <Grid ColumnDefinitions="Auto,*">
