@@ -2,7 +2,7 @@
 
 MDK² (Malware's Development Kit for Space Engineers) is a toolkit for developing programmable block scripts and mods for Space Engineers. It consists of NuGet packages, Roslyn analyzers, a CLI tool, and MSBuild integration.
 
-## Build, Test, and Development
+## Quick Reference
 
 ### Building
 ```bash
@@ -27,15 +27,21 @@ dotnet test Source\MDK-Complete.sln
 # Run tests for a specific project
 dotnet test Source\Mdk.CommandLine.Tests\Mdk.CommandLine.Tests.csproj
 
-# Run specific test
+# Run specific test by name
 dotnet test --filter "FullyQualifiedName~TestMethodName"
+
+# Run tests in a specific test class
+dotnet test --filter "FullyQualifiedName~ClassName"
 ```
 
 **Test Framework**: NUnit 4.3.2 with NUnit3TestAdapter 4.6.0
 
-### Project Structure
+### Linting
+No specific linters configured. Code analysis relies on built-in Roslyn analyzers and IDE warnings.
 
-#### Core Packages (distributed via NuGet)
+## Project Structure
+
+### Core Packages (distributed via NuGet)
 - **Mdk.CommandLine** - Main CLI tool (`mdk.exe`) with restore/pack commands
 - **Mdk.PbPackager** - MSBuild integration for Programmable Block projects
 - **Mdk.ModPackager** - MSBuild integration for Mod projects
@@ -44,10 +50,15 @@ dotnet test --filter "FullyQualifiedName~TestMethodName"
 - **Mdk.References** - Auto-detects Space Engineers installation and sets up assembly references
 - **ScriptTemplates** - .NET templates for creating new projects
 
-#### Support Projects
+### Support Projects
 - **Mdk.CheckDotNet** - .NET SDK availability checker
 - **Mdk.Notification.Windows** - Toast notifications for build completion
 - **Mdk.Extractor** - Extracts game data for whitelists
+
+### Hub and Document Generators
+- **Mdk.Hub** - GUI management application (Avalonia UI)
+- **Mdk.DocGen3** - Primary documentation generator
+- **Mdk.DocGen2.*** - Legacy documentation tools (ApiDocs, Sprites, Terminals, TypeDef)
 
 ## Architecture
 
@@ -164,10 +175,13 @@ Preprocessors → Combine → Postprocessors → Compose → PostComposition →
 ## Key Conventions
 
 ### Project Versioning
-- `PackageVersion.txt` - Single source of truth for version numbers
+- `PackageVersion.txt` - Single source of truth for version numbers in each package directory
 - Read via: `$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))`
-- All packages use same version
-- CI/CD watches for changes to `PackageVersion.txt` files to trigger deployments
+- All packages use same version for a release
+- **Critical**: When modifying code in a project with `PackageVersion.txt`:
+  1. Update `PackageVersion.txt` with the new version
+  2. Add an entry to `ReleaseNotes.txt` describing the change
+  3. CI/CD watches for changes to trigger deployments
 
 ### Template Structure
 Templates in `ScriptTemplates/content/` follow this pattern:
@@ -195,11 +209,15 @@ Follow rules in `.hub-commit-message-rules.md`:
 - Short subject line (<72 chars), brief body (1-3 sentences)
 - Never list files changed or describe how new features work internally
 
-### CI/CD Notes
-- `buildwithartefacts.yml` builds tools for win-x64, then uses them to build packages
-- Artifacts: `mdk.exe`, `mdknotify-win.exe`, `checkdotnet.exe`
-- Auto-publishes to NuGet on push to `main` when `PackageVersion.txt` changes
-- Uses PowerShell for cross-platform scripting
+### CI/CD Workflows
+- **buildwithartefacts.yml** - Builds tools for win-x64, then builds packages
+  - Triggers on push to `main` when `PackageVersion.txt` files change
+  - Auto-publishes to NuGet on successful build
+  - Artifacts: `mdk.exe`, `mdknotify-win.exe`, `checkdotnet.exe`
+- **version-guard.yml** - Validates version and release notes on PRs
+  - Ensures `PackageVersion.txt` is updated when code changes
+  - Checks `ReleaseNotes.txt` includes the new version
+  - Validates template package references are up-to-date
 
 ## Space Engineers Context
 
@@ -215,3 +233,13 @@ MDK2 targets the [Space Engineers](https://store.steampowered.com/app/244850/Spa
 - **IDE**: Visual Studio 2022 recommended (unconfirmed but suggested for stability)
 - **Platform**: Windows-focused (win-x64 runtime), game only runs on Windows
 - **Roslyn**: Microsoft.CodeAnalysis.CSharp.Workspaces 4.12.0
+
+## Debugging and Testing MDK
+
+For detailed information on debugging MDK itself, reproducing issues, and testing changes, see [debugging-mdk.md](debugging-mdk.md).
+
+Quick reference:
+- Build: `dotnet build Source\Mdk.CommandLine\Mdk.CommandLine.csproj -c Debug`
+- Run: `& "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "path\to\project.csproj"`
+- Test projects: `Source\Mdk.CommandLine.Tests\TestData\`
+- **Always test with working projects first** before investigating failures
