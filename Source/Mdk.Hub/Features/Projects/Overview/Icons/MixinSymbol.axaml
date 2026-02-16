@@ -1,0 +1,24 @@
+<icons:Symbol xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
+             mc:Ignorable="d" d:DesignWidth="100" d:DesignHeight="100"
+             x:Class="Mdk.Hub.Features.Projects.Overview.Icons.MixinSymbol">
+    <Border
+        Width="48"
+        Height="48"
+        CornerRadius="5"
+        Background="{Binding Background, RelativeSource={RelativeSource AncestorType=icons:Symbol}}"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+        <Grid>
+            <i:Icon Value="fa-solid fa-puzzle-piece"
+                    FontSize="32"
+                    Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=icons:Symbol}}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+        </Grid>
+    </Border>
+</icons:Symbol>

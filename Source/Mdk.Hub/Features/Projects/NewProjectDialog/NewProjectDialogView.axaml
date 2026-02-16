@@ -37,14 +37,15 @@
                 Height="400">
             <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,Auto">
                 <!-- Icon on left -->
-                <ContentControl Content="{Binding Message.ProjectType}"
+                <ContentControl Content="{Binding Message.Icon}"
                                 Width="64"
                                 Height="64"
                                 Grid.Column="0"
                                 Grid.Row="0"
                                 Margin="0,0,16,0"
-                                VerticalAlignment="Top" />
-
+                                VerticalAlignment="Top"
+                                HorizontalAlignment="Center" />
+                
                 <!-- Content on right -->
                 <StackPanel Grid.Column="1"
                             Grid.Row="0"

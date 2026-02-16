@@ -35,6 +35,15 @@ public partial class ProjectManagementActionView : ActionItemControl
         }
     }
 
+    void OnCreateMixinTapped(object? sender, TappedEventArgs e)
+    {
+        if (DataContext is ProjectManagementAction action)
+        {
+            if (action.CreateMixinCommand.CanExecute(null))
+                action.CreateMixinCommand.Execute(null);
+        }
+    }
+
     void OnAddExistingTapped(object? sender, TappedEventArgs e)
     {
         if (DataContext is ProjectManagementAction action)

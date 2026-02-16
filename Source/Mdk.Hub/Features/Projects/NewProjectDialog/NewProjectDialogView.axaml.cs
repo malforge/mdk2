@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Projects.Overview.Icons;
 using Mdk.Hub.Features.Storage;
 
 namespace Mdk.Hub.Features.Projects.NewProjectDialog;
@@ -36,7 +37,8 @@ public partial class NewProjectDialogView : UserControl
             {
                 Title = "Create New Project",
                 Message = "Enter a name and location for your new project.",
-                ProjectType = ProjectType.ProgrammableBlock,
+                Icon = new ProgrammableBlockSymbol(),
+                DefaultProjectName = "MdkScriptProject",
                 DefaultLocation = Path.Combine(fileStorage.GetDocumentsPath(), "Projects"),
                 OkText = "Create",
                 CancelText = "Cancel"

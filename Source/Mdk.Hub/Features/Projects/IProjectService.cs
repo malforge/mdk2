@@ -167,18 +167,11 @@ public interface IProjectService
     Task<bool> UpdatePackagesAsync(CanonicalPath projectPath, IReadOnlyList<PackageUpdateInfo> packagesToUpdate, CancellationToken cancellationToken = default);
 
     /// <summary>
-    ///     Creates a new Programmable Block script project.
+    ///     Creates a new project.
     /// </summary>
     /// <param name="projectName">Name of the project (will be used for folder and project file).</param>
     /// <param name="location">Parent directory where the project folder will be created.</param>
+    /// <param name="templateName">Name of the project template to use (e.g., "mdk2pbscript" or "mdk2mod").</param>
     /// <returns>Result containing path to the created .csproj file and optional error message.</returns>
-    Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProgrammableBlockProjectAsync(string projectName, string location);
-
-    /// <summary>
-    ///     Creates a new Mod project.
-    /// </summary>
-    /// <param name="projectName">Name of the project (will be used for folder and project file).</param>
-    /// <param name="location">Parent directory where the project folder will be created.</param>
-    /// <returns>Result containing path to the created .csproj file and optional error message.</returns>
-    Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateModProjectAsync(string projectName, string location);
+    Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProjectAsync(string projectName, string location, string templateName);
 }

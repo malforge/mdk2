@@ -9,6 +9,7 @@ using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Overview;
+using Mdk.Hub.Features.Projects.Overview.Icons;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Storage;
@@ -27,6 +28,7 @@ public class ProjectManagementAction : ActionItem
     readonly AsyncRelayCommand _addExistingCommand;
     readonly AsyncRelayCommand _createModCommand;
     readonly AsyncRelayCommand _createScriptCommand;
+    readonly AsyncRelayCommand _createMixinCommand;
     readonly IFileStorageService _fileStorage;
     readonly IProjectService _projectService;
     readonly IShell _shell;
@@ -51,6 +53,7 @@ public class ProjectManagementAction : ActionItem
 
         _createScriptCommand = new AsyncRelayCommand(CreateScriptAsync, () => CanMakeScript);
         _createModCommand = new AsyncRelayCommand(CreateModAsync, () => CanMakeMod);
+        _createMixinCommand = new AsyncRelayCommand(CreateMixinAsync, () => true);
         _addExistingCommand = new AsyncRelayCommand(AddExistingProjectAsync);
 
         _projectService.StateChanged += OnProjectServiceStateChanged;
@@ -86,6 +89,11 @@ public class ProjectManagementAction : ActionItem
     ///     Gets the command to create a new Mod.
     /// </summary>
     public ICommand CreateModCommand => _createModCommand;
+
+    /// <summary>
+    ///     Gets the command to create a new Mixin.
+    /// </summary>
+    public ICommand CreateMixinCommand => _createMixinCommand;
 
     /// <summary>
     ///     Gets the command to add an existing project to the Hub.
@@ -125,30 +133,42 @@ public class ProjectManagementAction : ActionItem
         CanMakeScript || CanMakeMod;
 
     async Task CreateScriptAsync() =>
-        await CreateProjectAsync(ProjectType.ProgrammableBlock,
+        await CreateProjectAsync("mdk2pbscript",
             "New Programmable Block Script",
-            "Create a new Programmable Block Script project");
+            "Create a new Programmable Block Script project",
+            "MdkScriptProject",
+            new ProgrammableBlockSymbol());
 
     async Task CreateModAsync() =>
-        await CreateProjectAsync(ProjectType.Mod,
+        await CreateProjectAsync("mdk2mod",
             "New Mod",
-            "Create a new Space Engineers mod project");
+            "Create a new Space Engineers mod project",
+            "MdkModProject",
+            new ModSymbol());
 
-    async Task CreateProjectAsync(ProjectType projectType, string title, string description)
+    async Task CreateMixinAsync() =>
+        await CreateProjectAsync("mdk2mixin",
+            "New Mixin",
+            "Create a new Space Engineers mixin project",
+            "MdkMixinProject",
+            new MixinSymbol());
+
+    async Task CreateProjectAsync(string templateName, string title, string description, string defaultProjectName, object icon)
     {
         var defaultLocation = _fileStorage.GetDocumentsPath();
 
-        // Get the last used location for this project type
+        // Get the last used location for this template
         var hubSettings = _projectService.Settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
-        var lastLocation = projectType == ProjectType.ProgrammableBlock
-            ? hubSettings.LastIngameScriptLocation ?? defaultLocation
-            : hubSettings.LastModLocation ?? defaultLocation;
+        var lastLocation = hubSettings.LastProjectLocationByTemplate.TryGetValue(templateName, out var savedLocation)
+            ? savedLocation
+            : defaultLocation;
 
         var dialogViewModel = new NewProjectDialogViewModel(new NewProjectDialogMessage
         {
             Title = title,
             Message = description,
-            ProjectType = projectType,
+            Icon = icon,
+            DefaultProjectName = defaultProjectName,
             DefaultLocation = lastLocation,
             OkText = "Create",
             CancelText = "Cancel"
@@ -161,10 +181,7 @@ public class ProjectManagementAction : ActionItem
             return; // User cancelled
 
         // Save the location for next time
-        if (projectType == ProjectType.ProgrammableBlock)
-            hubSettings.LastIngameScriptLocation = result.Value.Location;
-        else
-            hubSettings.LastModLocation = result.Value.Location;
+        hubSettings.LastProjectLocationByTemplate[templateName] = result.Value.Location;
         _projectService.Settings.SetValue(SettingsKeys.HubSettings, hubSettings);
 
         // Show busy indicator
@@ -174,9 +191,7 @@ public class ProjectManagementAction : ActionItem
         try
         {
             // Create the project
-            var createResult = projectType == ProjectType.ProgrammableBlock
-                ? await _projectService.CreateProgrammableBlockProjectAsync(result.Value.ProjectName, result.Value.Location)
-                : await _projectService.CreateModProjectAsync(result.Value.ProjectName, result.Value.Location);
+            var createResult = await _projectService.CreateProjectAsync(result.Value.ProjectName, result.Value.Location, templateName);
 
             var projectPath = createResult.ProjectPath;
             var errorMessage = createResult.ErrorMessage;

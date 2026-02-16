@@ -18,9 +18,14 @@ public readonly struct NewProjectDialogMessage
     public required string Message { get; init; }
 
     /// <summary>
-    ///     Gets the type of project to create.
+    ///     Gets the icon to display (e.g., ProgrammableBlockSymbol, ModSymbol, MixinSymbol).
     /// </summary>
-    public required ProjectType ProjectType { get; init; }
+    public object? Icon { get; init; }
+
+    /// <summary>
+    ///     Gets the default project name.
+    /// </summary>
+    public required string DefaultProjectName { get; init; }
 
     /// <summary>
     ///     Gets the default location for the new project.

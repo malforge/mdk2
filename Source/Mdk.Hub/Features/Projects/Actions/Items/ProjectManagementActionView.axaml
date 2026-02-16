@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
              xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+             xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
              x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectManagementActionView"
@@ -21,13 +22,11 @@
                 IsVisible="{Binding CanMakeScript}"
                 Tapped="OnCreateScriptTapped">
             <Grid ColumnDefinitions="Auto,*">
-                <i:Icon Value="fa-solid fa-file-code"
-                        FontSize="18"
-                        Width="32"
-                        Height="32"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center" />
+                <icons:ProgrammableBlockSymbol Width="32"
+                                               Height="32"
+                                               Grid.Column="0"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center" />
                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
                     <TextBlock Text="New Programmable Block Script" Classes="body medium" />
                     <TextBlock Text="Create a new Programmable Block Script project" Classes="caption muted" />
@@ -43,16 +42,33 @@
                 IsVisible="{Binding CanMakeMod}"
                 Tapped="OnCreateModTapped">
             <Grid ColumnDefinitions="Auto,*">
-                <i:Icon Value="fa-solid fa-puzzle-piece"
-                        FontSize="18"
-                        Width="32"
-                        Height="32"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center" />
+                <icons:ModSymbol Width="32"
+                                 Height="32"
+                                 Grid.Column="0"
+                                 VerticalAlignment="Center"
+                                 HorizontalAlignment="Center" />
                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
                     <TextBlock Text="New Mod" Classes="body medium" />
                     <TextBlock Text="Create a new Space Engineers mod project" Classes="caption muted" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Create New Mixin -->
+        <Border Classes="create-hover-row"
+                Padding="10"
+                CornerRadius="4"
+                Cursor="Hand"
+                Tapped="OnCreateMixinTapped">
+            <Grid ColumnDefinitions="Auto,*">
+                <icons:MixinSymbol Width="32"
+                                   Height="32"
+                                   Grid.Column="0"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center" />
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="New Mixin" Classes="body medium" />
+                    <TextBlock Text="Create a new Code Sharing Mixin Library" Classes="caption muted" />
                 </StackPanel>
             </Grid>
         </Border>

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 
@@ -50,14 +51,10 @@ public struct HubSettings
     public ImmutableArray<string> DismissedAnnouncementIds { get; set; } = ImmutableArray<string>.Empty;
 
     /// <summary>
-    ///     Gets or sets the last used location for creating Ingame Script projects.
+    ///     Gets or sets the last used location for creating projects, keyed by template name.
+    ///     Template names: "mdk2pbscript", "mdk2mod", "mdk2mixin", etc.
     /// </summary>
-    public string? LastIngameScriptLocation { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the last used location for creating Mod projects.
-    /// </summary>
-    public string? LastModLocation { get; set; }
+    public Dictionary<string, string> LastProjectLocationByTemplate { get; set; } = new();
 
     /// <summary>
     ///     Gets or sets whether the Easter egg is disabled forever.

@@ -859,12 +859,6 @@ public class ProjectService : IProjectService
         }
     }
 
-    /// <inheritdoc />
-    public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProgrammableBlockProjectAsync(string projectName, string location) => await CreateProjectInternalAsync(projectName, location, "mdk2pbscript");
-
-    /// <inheritdoc />
-    public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateModProjectAsync(string projectName, string location) => await CreateProjectInternalAsync(projectName, location, "mdk2mod");
-
     static ProjectConfigLayer ParseLayer(Ini? ini)
     {
         if (ini == null)
@@ -1326,7 +1320,8 @@ public class ProjectService : IProjectService
         }
     }
 
-    async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProjectInternalAsync(string projectName, string location, string templateName)
+    /// <inheritdoc />
+    public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProjectAsync(string projectName, string location, string templateName)
     {
         try
         {

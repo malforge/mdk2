@@ -33,10 +33,8 @@ public class NewProjectDialogViewModel : OverlayModel
         _okCommand = new RelayCommand(Ok, CanOk);
         _cancelCommand = new RelayCommand(Cancel);
 
-        // Set default project name based on project type
-        ProjectName = message.ProjectType == ProjectType.ProgrammableBlock
-            ? "MdkScriptProject"
-            : "MdkModProject";
+        // Set default project name
+        ProjectName = message.DefaultProjectName;
 
         // Now set Location which will trigger validation and NotifyCanExecuteChanged
         Location = message.DefaultLocation;
