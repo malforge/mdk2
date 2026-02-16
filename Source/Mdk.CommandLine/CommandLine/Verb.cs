@@ -18,10 +18,5 @@ public enum Verb
     /// <summary>
     /// The pack verb packages a script or mod into a format the game understands.
     /// </summary>
-    Pack,
-    
-    /// <summary>
-    /// The restore verb restores a script or mod.
-    /// </summary>
-    Restore
+    Pack
 }

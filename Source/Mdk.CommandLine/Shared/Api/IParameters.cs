@@ -25,9 +25,9 @@ public interface IParameters
     bool Trace { get; }
 
     /// <summary>
-    ///     Whether to use interactive prompts through the external UI app - if available.
+    ///     Interactive mode setting: OpenHub, ShowNotification, DoNothing, or null to use INI default.
     /// </summary>
-    bool Interactive { get; }
+    InteractiveMode? Interactive { get; }
 
     /// <summary>
     ///     Detailed parameters for the help verb.
@@ -38,11 +38,6 @@ public interface IParameters
     ///     Detailed parameters for the pack verb.
     /// </summary>
     IPackVerbParameters PackVerb { get; }
-
-    /// <summary>
-    ///     Detailed parameters for the restore verb.
-    /// </summary>
-    IRestoreVerbParameters RestoreVerb { get; }
 
     /// <summary>
     ///     Parameters for the help verb.
@@ -120,21 +115,5 @@ public interface IParameters
         ///     </para>
         /// </remarks>
         IReadOnlyDictionary<string, string> Macros { get; }
-    }
-
-    /// <summary>
-    ///     Parameters for the restore verb.
-    /// </summary>
-    public interface IRestoreVerbParameters
-    {
-        /// <summary>
-        ///     The project file to restore.
-        /// </summary>
-        string? ProjectFile { get; }
-
-        /// <summary>
-        ///     Whether to perform a dry run, which will not make actual changes to the project.
-        /// </summary>
-        bool DryRun { get; }
     }
 }

@@ -26,8 +26,8 @@ public class LegacyConverter
     /// <param name="httpClient"></param>
     public async Task ConvertAsync(Parameters parameters, MdkProject project, IConsole console, IHttpClient httpClient)
     {
-        await ConvertConfigAsync(project, console, parameters.RestoreVerb.DryRun);
-        await AddNugetReferencesAsync(project, console, httpClient, parameters.RestoreVerb.DryRun);
+        await ConvertConfigAsync(project, console, dryRun: false);
+        await AddNugetReferencesAsync(project, console, httpClient, dryRun: false);
     }
     
     static async Task ConvertConfigAsync(MdkProject project, IConsole console, bool dryRun)

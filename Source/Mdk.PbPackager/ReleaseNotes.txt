@@ -1,3 +1,6 @@
+v.2.2.0-pre.5
+   - Improved MSBuild property handling for interactive mode
+
 v.2.1.11
 - Changed: ini files are now exposed as AdditionalFiles to enable analyzer integration
 

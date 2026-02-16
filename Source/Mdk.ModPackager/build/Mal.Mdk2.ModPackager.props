@@ -3,7 +3,14 @@
     <PropertyGroup>
         <MdkBuildConfiguration>all</MdkBuildConfiguration>
         <MdkArguments/>
-        <MdkInteractive>-interactive</MdkInteractive>
+        <MdkInteractive>auto</MdkInteractive>
+        
+        <!-- Convert MdkInteractive property to CLI flag -->
+        <!-- 'auto' = don't override, let INI/CLI defaults decide -->
+        <!-- Empty or 'no' = explicitly disable interactive mode -->
+        <MdkInteractiveFlag Condition="'$(MdkInteractive)' == '' Or '$(MdkInteractive)' == 'no'">-interactive DoNothing</MdkInteractiveFlag>
+        <MdkInteractiveFlag Condition="'$(MdkInteractive)' != '' And '$(MdkInteractive)' != 'no' And '$(MdkInteractive)' != 'auto'">-interactive $(MdkInteractive)</MdkInteractiveFlag>
+        <!-- 'auto' = MdkInteractiveFlag stays empty = no flag passed -->
         
         <!-- Detect CLI binary based on OS -->
         <MdkRuntimeIdentifier Condition="'$(OS)' == 'Windows_NT'">win-x64</MdkRuntimeIdentifier>
@@ -18,7 +25,7 @@
     </ItemGroup>
 
     <Target Name="MdkPack" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
-        <Exec Command="&quot;$(MdkCliPath)&quot; pack &quot;$(MSBuildProjectFullPath)&quot; $(MdkArguments) -configuration $(Configuration) $(MdkInteractive)" ContinueOnError="true">
+        <Exec Command="&quot;$(MdkCliPath)&quot; pack &quot;$(MSBuildProjectFullPath)&quot; $(MdkArguments) -configuration $(Configuration) $(MdkInteractiveFlag)" ContinueOnError="true">
             <Output TaskParameter="ExitCode" PropertyName="MdkExitCode"/>
         </Exec>
         <Error Condition="'$(MdkExitCode)' != '0'" Text="MDK could not package the project. Please check the build output."/>
