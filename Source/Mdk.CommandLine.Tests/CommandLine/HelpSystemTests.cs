@@ -53,7 +53,6 @@ public class HelpSystemTests
         Assert.That(output, Contains.Substring("Usage: mdk [options] <verb>"), "Should show general usage");
         Assert.That(output, Contains.Substring("Verbs:"), "Should list available verbs");
         Assert.That(output, Contains.Substring("pack"), "Should mention pack verb");
-        Assert.That(output, Contains.Substring("restore"), "Should mention restore verb");
     }
 
     [Test]
@@ -77,26 +76,6 @@ public class HelpSystemTests
     }
 
     [Test]
-    public void ShowHelp_WithHelpRestore_ShowsRestoreHelp()
-    {
-        // Arrange
-        var parameters = new Parameters();
-        parameters.Parse(new[] { "help", "restore" });
-        var console = new TestConsole();
-
-        // Act
-        parameters.ShowHelp(console);
-        var output = console.GetOutput();
-
-        // Assert
-        Assert.That(parameters.Verb, Is.EqualTo(Verb.Help), "Verb should be Help");
-        Assert.That(parameters.HelpVerb.Verb, Is.EqualTo(Verb.Restore), "HelpVerb.Verb should be Restore");
-        Assert.That(output, Contains.Substring("Usage: mdk restore"), "Should show restore usage");
-        Assert.That(output, Contains.Substring("compatibility"), "Should mention compatibility check");
-        Assert.That(output, !Contains.Substring("Usage: mdk pack"), "Should NOT show pack usage");
-    }
-
-    [Test]
     public void Parse_HelpWithPackArgument_SetsCorrectValues()
     {
         // Arrange
@@ -111,17 +90,13 @@ public class HelpSystemTests
     }
 
     [Test]
-    public void Parse_HelpWithRestoreArgument_SetsCorrectValues()
+    public void ShowHelp_WithRestoreArgument_ShowsPackHelp()
     {
-        // Arrange
+        // Arrange - "restore" is no longer valid, should show general help or error
         var parameters = new Parameters();
 
-        // Act
-        parameters.Parse(new[] { "help", "restore" });
-
-        // Assert
-        Assert.That(parameters.Verb, Is.EqualTo(Verb.Help), "Main verb should be Help");
-        Assert.That(parameters.HelpVerb.Verb, Is.EqualTo(Verb.Restore), "HelpVerb should be Restore");
+        // Act & Assert - should throw or show general help
+        Assert.Throws<CommandLineException>(() => parameters.Parse(new[] { "help", "restore" }));
     }
 
     [Test]

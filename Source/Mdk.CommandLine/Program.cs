@@ -91,9 +91,6 @@ public static class Program
                 return null;
             case Verb.Pack:
                 return await PackAsync(parameters, console, interaction);
-            case Verb.Restore:
-                await RestoreAsync(parameters, console, httpClient, interaction);
-                return null;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -102,7 +99,7 @@ public static class Program
     static async Task<ImmutableArray<PackedProject>?> PackAsync(Parameters parameters, IConsole console, IInteraction interaction)
     {
         if (parameters.PackVerb.ProjectFile is null) throw new CommandLineException(-1, "No project file specified.");
-        if (!File.Exists(parameters.PackVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.RestoreVerb.ProjectFile}' does not exist.");
+        if (!File.Exists(parameters.PackVerb.ProjectFile)) throw new CommandLineException(-1, $"The specified project file '{parameters.PackVerb.ProjectFile}' does not exist.");
 
         if (parameters.PackVerb.DryRun)
             console.Print("Currently performing a dry run. No changes will be made.");
@@ -147,13 +144,6 @@ public static class Program
         if (result.Count == 0)
             return null;
         return result.ToImmutable();
-    }
-
-    static async Task RestoreAsync(Parameters parameters, IConsole console, IHttpClient httpClient, IInteraction interaction)
-    {
-        console.Print("The 'restore' command is no longer necessary.");
-        console.Print("MDK package updates are now handled by the MDK Hub.");
-        console.Print("Please use the Hub's update notifications to keep your packages current.");
     }
 
     /// <summary>

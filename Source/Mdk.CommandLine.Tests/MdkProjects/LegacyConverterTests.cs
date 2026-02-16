@@ -52,8 +52,8 @@ public class LegacyConverterTests
             var converter = new LegacyConverter();
             var parameters = new Parameters()
             {
-                Verb = Verb.Restore,
-                RestoreVerb =
+                Verb = Verb.Pack,
+                PackVerb =
                 {
                     ProjectFile = projectFileName
                 }

@@ -286,7 +286,7 @@ public class ProjectInfoAction : ActionItem
 
         try
         {
-            var scriptFile = Path.Combine(_outputPath!, "Script.cs");
+            var scriptFile = Path.Combine(_outputPath!, "script.cs");
 
             if (File.Exists(scriptFile))
             {
@@ -449,7 +449,7 @@ public class ProjectInfoAction : ActionItem
                     {
                         try
                         {
-                            var scriptFile = Path.Combine(outputPath, "Script.cs");
+                            var scriptFile = Path.Combine(outputPath, "script.cs");
                             if (File.Exists(scriptFile))
                             {
                                 var content = File.ReadAllText(scriptFile);

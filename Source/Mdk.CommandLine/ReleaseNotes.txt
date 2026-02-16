@@ -1,4 +1,9 @@
-﻿v.2.2.0-pre.4
+﻿v.2.2.0-pre.5
+   - Removed deprecated restore command
+   - Interactive mode now loads from INI files as intended
+   - MSBuild integration improvements for interactive mode control
+
+v.2.2.0-pre.4
    - Bugfix: Unused field minification fix merged from main (v2.1.18)
 
 v.2.2.0-pre.3

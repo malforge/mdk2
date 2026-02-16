@@ -436,7 +436,7 @@ public class ProjectService : IProjectService
             if (string.IsNullOrEmpty(outputPath) || !Directory.Exists(outputPath))
                 return false;
 
-            var scriptFile = Path.Combine(outputPath, "Script.cs");
+            var scriptFile = Path.Combine(outputPath, "script.cs");
             if (!File.Exists(scriptFile))
                 return false;
 
@@ -1009,7 +1009,7 @@ public class ProjectService : IProjectService
     Task HandleBuildNotification(InterConnectMessage message)
     {
         // Parse project path from message arguments
-        // Expected format: script/mod <ProjectName> <ProjectPath> <OptionalMessage> [--simulate]
+        // Expected format: script/mod <ProjectName> <ProjectPath> <OptionalMessage> [--simulate] [--interactive <mode>]
         if (message.Arguments.Length < 2)
         {
             _logger.Warning($"Build notification has insufficient arguments: {string.Join(", ", message.Arguments)}");
@@ -1022,6 +1022,18 @@ public class ProjectService : IProjectService
         // Check for --simulate flag in arguments
         var isSimulated = message.Arguments.Any(arg =>
             string.Equals(arg, "--simulate", StringComparison.OrdinalIgnoreCase));
+        
+        // Extract --interactive argument if present
+        string? interactionModeOverride = null;
+        for (var i = 0; i < message.Arguments.Length - 1; i++)
+        {
+            if (string.Equals(message.Arguments[i], "--interactive", StringComparison.OrdinalIgnoreCase))
+            {
+                interactionModeOverride = message.Arguments[i + 1];
+                _logger.Info($"Command-line interactive mode override: {interactionModeOverride}");
+                break;
+            }
+        }
 
         if (isSimulated)
             _logger.Info($"Handling SIMULATED build notification for project: {projectPath}");
@@ -1065,7 +1077,7 @@ public class ProjectService : IProjectService
 
                 // Handle build notification based on user preference
                 if (message.Type == NotificationType.Script)
-                    HandleBuildNotification(projectName, projectPath, true);
+                    HandleBuildNotification(projectName, projectPath, true, interactionModeOverride);
             }
             else
             {
@@ -1085,7 +1097,7 @@ public class ProjectService : IProjectService
 
                     // Handle build notification based on user preference
                     if (message.Type == NotificationType.Script)
-                        HandleBuildNotification(projectName, projectPath, true);
+                        HandleBuildNotification(projectName, projectPath, true, interactionModeOverride);
                 }
                 else
                     _logger.Error($"Failed to add project: {errorMessage}");
@@ -1098,7 +1110,7 @@ public class ProjectService : IProjectService
 
             // Handle build notification based on user preference
             if (message.Type == NotificationType.Script)
-                HandleBuildNotification(projectName, projectPath, false);
+                HandleBuildNotification(projectName, projectPath, false, interactionModeOverride);
         }
         return Task.CompletedTask;
     }
@@ -1189,11 +1201,11 @@ public class ProjectService : IProjectService
         }
     }
 
-    async void HandleBuildNotification(string projectName, string projectPath, bool isNewProject)
+    async void HandleBuildNotification(string projectName, string projectPath, bool isNewProject, string? interactionModeOverride = null)
     {
         try
         {
-            await HandleBuildNotificationAsync(projectName, projectPath, isNewProject);
+            await HandleBuildNotificationAsync(projectName, projectPath, isNewProject, interactionModeOverride);
         }
         catch (Exception e)
         {
@@ -1201,20 +1213,31 @@ public class ProjectService : IProjectService
         }
     }
 
-    async Task HandleBuildNotificationAsync(string projectName, string projectPath, bool isNewProject)
+    async Task HandleBuildNotificationAsync(string projectName, string projectPath, bool isNewProject, string? interactionModeOverride = null)
     {
-        // Load configuration to check notification preference
-        var projectData = await LoadProjectDataAsync(new CanonicalPath(projectPath));
-        var preference = projectData?.Config.GetEffective().Interactive?.ToString() ?? "";
-
-        // If not set in INI, default to "ShowNotification" (less intrusive)
-        if (string.IsNullOrWhiteSpace(preference))
+        // Determine preference: command-line override takes precedence over INI setting
+        string preference;
+        
+        if (!string.IsNullOrWhiteSpace(interactionModeOverride))
         {
-            preference = "ShowNotification";
-            _logger.Info($"Build notification preference not set for {projectName}, using ShowNotification");
+            preference = interactionModeOverride;
+            _logger.Info($"Using command-line interaction mode override for {projectName}: {preference}");
         }
         else
-            _logger.Info($"Build notification preference for {projectName}: {preference}");
+        {
+            // Load configuration to check notification preference from INI
+            var projectData = await LoadProjectDataAsync(new CanonicalPath(projectPath));
+            preference = projectData?.Config.GetEffective().Interactive?.ToString() ?? "";
+
+            // If not set in INI, default to "ShowNotification" (less intrusive)
+            if (string.IsNullOrWhiteSpace(preference))
+            {
+                preference = "ShowNotification";
+                _logger.Info($"Build notification preference not set for {projectName}, using ShowNotification");
+            }
+            else
+                _logger.Info($"Build notification preference for {projectName}: {preference}");
+        }
 
         // Determine if we should bring hub to front
         var bringToFront = preference.Equals("OpenHub", StringComparison.OrdinalIgnoreCase);

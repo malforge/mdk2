@@ -13,7 +13,7 @@ namespace Mdk.CommandLine.CommandLine;
 public class Parameters : TracksPropertyChanges, IParameters
 {
     readonly List<string> _autoConfigFiles = new();
-    bool _interactive;
+    InteractiveMode? _interactive;
     string? _log;
     bool _trace;
     Verb _verb;
@@ -27,11 +27,6 @@ public class Parameters : TracksPropertyChanges, IParameters
     ///     Detailed parameters for the pack verb.
     /// </summary>
     public PackVerbParameters PackVerb { get; } = new();
-
-    /// <summary>
-    ///     Detailed parameters for the restore verb.
-    /// </summary>
-    public RestoreVerbParameters RestoreVerb { get; } = new();
 
     /// <inheritdoc />
     public Verb Verb
@@ -55,7 +50,7 @@ public class Parameters : TracksPropertyChanges, IParameters
     }
 
     /// <inheritdoc />
-    public bool Interactive
+    public InteractiveMode? Interactive
     {
         get => _interactive;
         set => SetField(ref _interactive, value);
@@ -63,7 +58,6 @@ public class Parameters : TracksPropertyChanges, IParameters
 
     IParameters.IHelpVerbParameters IParameters.HelpVerb => HelpVerb;
     IParameters.IPackVerbParameters IParameters.PackVerb => PackVerb;
-    IParameters.IRestoreVerbParameters IParameters.RestoreVerb => RestoreVerb;
 
     /// <summary>
     ///     Enumerates any config files that were loaded when using the <see cref="ParseAndLoadConfigs" /> method.
@@ -83,9 +77,6 @@ public class Parameters : TracksPropertyChanges, IParameters
         {
             case Verb.Pack:
                 projectFile = PackVerb.ProjectFile;
-                break;
-            case Verb.Restore:
-                projectFile = RestoreVerb.ProjectFile;
                 break;
             default:
                 return false;
@@ -128,7 +119,14 @@ public class Parameters : TracksPropertyChanges, IParameters
 
             if (matches("-interactive"))
             {
-                Interactive = true;
+                if (!queue.TryDequeue(out var interactiveValue))
+                    throw new CommandLineException(-1, "No interactive mode specified. Expected: OpenHub, ShowNotification, or DoNothing.");
+                
+                // Parse and validate the enum value
+                if (!Enum.TryParse<InteractiveMode>(interactiveValue, true, out var mode))
+                    throw new CommandLineException(-1, $"Invalid interactive mode '{interactiveValue}'. Expected: OpenHub, ShowNotification, or DoNothing.");
+                
+                Interactive = mode;
                 continue;
             }
 
@@ -234,19 +232,6 @@ public class Parameters : TracksPropertyChanges, IParameters
                     PackVerb.ProjectFile = arg;
                     break;
 
-                case Verb.Restore:
-                    if (matches("-dry-run"))
-                    {
-                        RestoreVerb.DryRun = true;
-                        continue;
-                    }
-                    if (arg.StartsWith('-'))
-                        throw new CommandLineException(-1, $"Unknown option '{arg}' for verb '{verb}'.");
-                    if (RestoreVerb.ProjectFile != null)
-                        throw new CommandLineException(-1, "Only one project file can be specified.");
-                    RestoreVerb.ProjectFile = arg;
-                    break;
-
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -259,11 +244,6 @@ public class Parameters : TracksPropertyChanges, IParameters
         {
             case Verb.Pack:
                 if (PackVerb.ProjectFile == null)
-                    throw new CommandLineException(-1, "No project file specified.");
-                break;
-
-            case Verb.Restore:
-                if (RestoreVerb.ProjectFile == null)
                     throw new CommandLineException(-1, "No project file specified.");
                 break;
         }
@@ -285,7 +265,7 @@ public class Parameters : TracksPropertyChanges, IParameters
         if (section.HasKey("trace") && (overrideExisting || !IsSet(this, nameof(Trace))))
             Trace = section["trace"].ToBool();
         if (section.HasKey("interactive") && (overrideExisting || !IsSet(this, nameof(Interactive))))
-            Interactive = section["interactive"].ToBool();
+            Interactive = section["interactive"].ToEnum<InteractiveMode>();
         if (section.HasKey("game-bin") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.GameBin))))
             PackVerb.GameBin = section["game-bin"].ToString();
         if (section.HasKey("output") && (overrideExisting || !IsSet(PackVerb, nameof(PackVerb.Output))))
@@ -383,17 +363,12 @@ public class Parameters : TracksPropertyChanges, IParameters
                     case Verb.Pack:
                         ShowHelpAboutPack(console);
                         break;
-                    case Verb.Restore:
-                        ShowHelpAboutRestore(console);
-                        break;
                     default:
                         ShowGeneralHelp(console);
                         break;
                 }
                 break;
             case Verb.Pack:
-                break;
-            case Verb.Restore:
                 break;
             default:
                 ShowGeneralHelp(console);
@@ -408,50 +383,58 @@ public class Parameters : TracksPropertyChanges, IParameters
                    + "checks nuget packages for updates, etcetera.")
             .Print()
             .Print("Options:")
-            .Print("  -interactive  Prompt for confirmation before restoring the script.")
-            .Print("  -log <file>   Log to the specified file.")
-            .Print("  -trace        Enable trace logging.")
-            .Print("  -dry-run      Don't actually restore the script, just print what would be done.")
+            .Print("  -interactive <mode>  Control Hub interaction behavior.")
+            .Print("                        - OpenHub: Opens and brings Hub to front")
+            .Print("                        - ShowNotification: Shows notification without opening Hub")
+            .Print("                        - DoNothing: Disables all Hub interaction")
+            .Print("  -log <file>          Log to the specified file.")
+            .Print("  -trace               Enable trace logging.")
+            .Print("  -dry-run             Don't actually restore the script, just print what would be done.")
             .Print()
             .Print("Example:")
-            .Print("  mdk restore MyProject.csproj -interactive");
+            .Print("  mdk restore MyProject.csproj -interactive ShowNotification");
 
     void ShowHelpAboutPack(IConsole console) =>
         console.Print("Usage: mdk pack <project-file> [options]")
             .Print("Packs a script or mod project into a workshop-ready package.")
             .Print()
             .Print("Options (for script projects):")
-            .Print("  -minifier <level>  Set the minifier level.")
-            .Print("                      - none (default), trim, strip-comments, lite, full.")
-            .Print("  -gamebin <path>    Path to the game's bin folder.")
-            .Print("                      \"auto\" to auto-detect the bin folder from Steam (default).")
-            .Print("  -output <path>     Write the output to the specified folder.")
-            .Print("                      \"auto\" to auto-detect the output folder from Steam (default).")
-            .Print("  -ignore <paths>    A semi-colon separated list of paths to ignore when packing (globbing "
+            .Print("  -minifier <level>    Set the minifier level.")
+            .Print("                        - none (default), trim, strip-comments, lite, full.")
+            .Print("  -gamebin <path>      Path to the game's bin folder.")
+            .Print("                        \"auto\" to auto-detect the bin folder from Steam (default).")
+            .Print("  -output <path>       Write the output to the specified folder.")
+            .Print("                        \"auto\" to auto-detect the output folder from Steam (default).")
+            .Print("  -ignore <paths>      A semi-colon separated list of paths to ignore when packing (globbing "
                    + "format, eg. 'obj/**/*' ignores all files and folders in the `obj` folder.).")
-            .Print("  -macro <name=value> Define a macro to be replaced in the script. Can be used multiple times.")
-            .Print("  -interactive       Prompt for confirmation before packing the script.")
-            .Print("  -log <file>        Log to the specified file.")
-            .Print("  -trace             Enable trace logging.")
+            .Print("  -macro <name=value>  Define a macro to be replaced in the script. Can be used multiple times.")
+            .Print("  -interactive <mode>  Control Hub interaction behavior.")
+            .Print("                        - OpenHub: Opens and brings Hub to front")
+            .Print("                        - ShowNotification: Shows notification without opening Hub")
+            .Print("                        - DoNothing: Disables all Hub interaction")
+            .Print("  -log <file>          Log to the specified file.")
+            .Print("  -trace               Enable trace logging.")
             .Print()
             .Print("Options (for mod projects):")
             .Print("  To be determined: Mod packing is pending implementation.")
             .Print()
             .Print("Example:")
-            .Print("  mdk pack /path/to/project.csproj -minifier full -output auto");
+            .Print("  mdk pack /path/to/project.csproj -minifier full -interactive OpenHub");
 
     void ShowGeneralHelp(IConsole console) =>
         console.Print("Usage: mdk [options] <verb> [verb-options]")
             .Print()
             .Print("Options:")
-            .Print("  -log <file>  Log output to the specified file.")
-            .Print("  -trace       Enable trace output.")
-            .Print("  -interactive Prompt for confirmation before executing the verb.")
+            .Print("  -log <file>          Log output to the specified file.")
+            .Print("  -trace               Enable trace output.")
+            .Print("  -interactive <mode>  Control Hub interaction behavior.")
+            .Print("                        - OpenHub: Opens and brings Hub to front")
+            .Print("                        - ShowNotification: Shows notification without opening Hub")
+            .Print("                        - DoNothing: Disables all Hub interaction")
             .Print()
             .Print("Verbs:")
             .Print("  help [verb]  Display help for a verb.")
             .Print("  pack         Pack a project into a single script.")
-            .Print("  restore      Restore a project.")
             .Print("  version      Display the version of MDK.")
             .Print()
             .Print("Use 'mdk help <verb>' for more information on a verb.");
@@ -468,7 +451,7 @@ public class Parameters : TracksPropertyChanges, IParameters
         console.Trace($"> Verb: {Verb}")
             .TraceIf(Log != null, "> Log: {Log}")
             .TraceIf(Trace, "> Trace")
-            .TraceIf(Interactive, "> Interactive");
+            .TraceIf(Interactive != null, $"> Interactive: {Interactive}");
         switch (Verb)
         {
             case Verb.Help:
@@ -483,10 +466,6 @@ public class Parameters : TracksPropertyChanges, IParameters
                     .TraceIf(PackVerb.DoNotClean.Count > 0, $"> Pack.DoNotClean: {string.Join(", ", PackVerb.DoNotClean)}")
                     .TraceIf(PackVerb.Macros.Count > 0, $"> Pack.Macros: {string.Join(", ", PackVerb.Macros)}")
                     .TraceIf(PackVerb.Configuration != "Release", $"> Pack.Configuration: {PackVerb.Configuration}");
-                break;
-            case Verb.Restore:
-                console.Trace($"> Restore.ProjectFile: {RestoreVerb.ProjectFile}")
-                    .TraceIf(RestoreVerb.DryRun, "> Restore.DryRun");
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -588,27 +567,25 @@ public class Parameters : TracksPropertyChanges, IParameters
         /// <inheritdoc />
         IReadOnlyDictionary<string, string> IParameters.IPackVerbParameters.Macros => Macros;
     }
+}
 
+/// <summary>
+///     Interactive mode options for MDK CLI.
+/// </summary>
+public enum InteractiveMode
+{
     /// <summary>
-    ///     Default implementation of <see cref="IParameters.IRestoreVerbParameters" />.
+    ///     Opens the Hub window and brings it to the front.
     /// </summary>
-    public class RestoreVerbParameters : TracksPropertyChanges, IParameters.IRestoreVerbParameters
-    {
-        bool _dryRun;
-        string? _projectFile;
-
-        /// <inheritdoc />
-        public string? ProjectFile
-        {
-            get => _projectFile;
-            set => SetField(ref _projectFile, value);
-        }
-
-        /// <inheritdoc />
-        public bool DryRun
-        {
-            get => _dryRun;
-            set => SetField(ref _dryRun, value);
-        }
-    }
+    OpenHub,
+    
+    /// <summary>
+    ///     Shows a notification but keeps the Hub minimized.
+    /// </summary>
+    ShowNotification,
+    
+    /// <summary>
+    ///     Disables all interaction with the Hub.
+    /// </summary>
+    DoNothing
 }

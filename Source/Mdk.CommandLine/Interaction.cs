@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.Shared.Api;
 
 namespace Mdk.CommandLine;
@@ -11,16 +12,21 @@ public class Interaction : IInteraction
 {
     readonly IConsole _console;
     readonly string? _hubPath;
+    readonly InteractiveMode? _interactiveMode;
     
-    public Interaction(IConsole console, bool interactive)
+    public Interaction(IConsole console, InteractiveMode? interactiveMode)
     {
         _console = console;
-        if (!interactive)
+        _interactiveMode = interactiveMode;
+        
+        // If interactive mode is explicitly set to DoNothing, disable interaction
+        if (interactiveMode == InteractiveMode.DoNothing)
         {
-            console.Trace("Interaction disabled.");
+            console.Trace("Interaction disabled by command-line.");
             return;
         }
-
+        
+        // If set to ShowNotification or OpenHub (or null - use default), enable interaction
         _hubPath = HubLocator.FindHub(console);
         if (_hubPath is null)
         {
@@ -37,7 +43,7 @@ public class Interaction : IInteraction
         _console.Print(message);
         if (_hubPath is null)
             return;
-        var arguments = $"custom {Escape(message)}";
+        var arguments = BuildArguments("custom", Escape(message));
         _console.Trace($"Running Hub: {arguments}");  
         Run(arguments);
     }
@@ -51,7 +57,7 @@ public class Interaction : IInteraction
         _console.Print(message);
         if (_hubPath is null)
             return;
-        var arguments = $"script {Escape(scriptName)} {Escape(projectPath)} {Escape(message)}";
+        var arguments = BuildArguments("script", Escape(scriptName), Escape(projectPath), Escape(message));
         _console.Trace($"Running Hub: {arguments}");
         Run(arguments);
     }
@@ -65,7 +71,7 @@ public class Interaction : IInteraction
         _console.Print(message);
         if (_hubPath is null)
             return;
-        var arguments = $"nuget {Escape(packageName)} {Escape(currentVersion)} {Escape(newVersion)} {Escape(message)}";
+        var arguments = BuildArguments("nuget", Escape(packageName), Escape(currentVersion), Escape(newVersion), Escape(message));
         _console.Trace($"Running Hub: {arguments}");
         Run(arguments);
     }
@@ -78,6 +84,17 @@ public class Interaction : IInteraction
         if (content.Contains(' '))
             return $"\"{content}\"";
         return content;
+    }
+
+    string BuildArguments(string command, params string[] args)
+    {
+        var baseArgs = $"{command} {string.Join(" ", args)}";
+        
+        // If interactive mode is set, append it as a command-line argument for Hub
+        if (_interactiveMode.HasValue)
+            return $"{baseArgs} --interactive {_interactiveMode.Value}";
+        
+        return baseArgs;
     }
 
     void Run(string arguments)
