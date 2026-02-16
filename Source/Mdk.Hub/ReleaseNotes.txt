@@ -1,3 +1,6 @@
+v.1.0.0-pre.43
+   - Fix "Script.cs" Case sensitivity causing issues on Linux
+
 v.1.0.0-pre.42
    - Package update checks now respond to refresh command.
    - Improved visual spacing consistency between action items.

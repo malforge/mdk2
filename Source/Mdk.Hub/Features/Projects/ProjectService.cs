@@ -436,7 +436,7 @@ public class ProjectService : IProjectService
             if (string.IsNullOrEmpty(outputPath) || !Directory.Exists(outputPath))
                 return false;
 
-            var scriptFile = Path.Combine(outputPath, "Script.cs");
+            var scriptFile = Path.Combine(outputPath, "script.cs");
             if (!File.Exists(scriptFile))
                 return false;
 
