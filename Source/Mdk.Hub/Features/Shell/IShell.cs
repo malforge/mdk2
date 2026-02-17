@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -135,4 +136,11 @@ public interface IShell
     /// <param name="busyOverlay">The busy overlay view model with message and progress.</param>
     /// <returns>A task that completes when the overlay is dismissed.</returns>
     Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay);
+
+    /// <summary>
+    ///     Opens a new window hosting the specified view model.
+    /// </summary>
+    /// <param name="viewModel">The view model to display in the window.</param>
+    /// <param name="title">Optional window title. If not provided and the ViewModel implements IWindowTitle, binds to its Title property.</param>
+    void OpenWindow(ViewModel viewModel, string? title = null);
 }

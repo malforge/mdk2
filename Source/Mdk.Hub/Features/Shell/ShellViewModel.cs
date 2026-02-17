@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -47,6 +48,7 @@ public class ShellViewModel : ViewModel, IShell
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
+    readonly List<HostWindow> _openWindows = new();
     readonly IDependencyContainer _container;
     ViewModel? _currentView;
     bool _hasStarted;
@@ -420,6 +422,33 @@ public class ShellViewModel : ViewModel, IShell
 
     /// <inheritdoc />
     public async Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay) => await ShowOverlayAsync(busyOverlay);
+
+    /// <inheritdoc />
+    public void OpenWindow(ViewModel viewModel, string? title = null)
+    {
+        var window = new HostWindow(title, _logger)
+        {
+            DataContext = viewModel
+        };
+
+        // Track the window
+        _openWindows.Add(window);
+
+        // Remove from tracking when closed
+        window.Closed += (_, _) =>
+        {
+            _openWindows.Remove(window);
+        };
+
+        // Show the window
+        var mainWindow = (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?
+            .Windows.FirstOrDefault(w => w is ShellWindow);
+        
+        if (mainWindow != null)
+            window.Show(mainWindow);
+        else
+            window.Show();
+    }
 
     /// <summary>
     ///     Begins asynchronous startup process without blocking initialization.

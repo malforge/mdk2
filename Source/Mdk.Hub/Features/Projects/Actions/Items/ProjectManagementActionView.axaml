@@ -54,6 +54,27 @@
             </Grid>
         </Border>
 
+        <!-- Create New Node Script -->
+        <Border Classes="create-hover-row"
+                Padding="10"
+                CornerRadius="4"
+                Cursor="Hand"
+                Tapped="OnCreateNodeScriptTapped">
+            <Grid ColumnDefinitions="Auto,*">
+                <i:Icon Value="fa-solid fa-diagram-project"
+                        FontSize="18"
+                        Width="32"
+                        Height="32"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center" />
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
+                    <TextBlock Text="New Node Script Project" Classes="body medium" />
+                    <TextBlock Text="Create a script using the visual node editor" Classes="caption muted" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
         <!-- Create New Mixin -->
         <!-- <Border Classes="create-hover-row" -->
         <!--         Padding="10" -->

@@ -113,13 +113,30 @@ namespaces=IngameScript  # PbScript only
 
 For per-developer settings (e.g., custom Space Engineers path), use `<projectname>.mdk.local.ini` (should be in .gitignore).
 
-### Dependency Injection
+### Dependency Injection (Hub Only)
 
 The Hub uses a custom source generator (`DISourceGenerator`) for dependency injection:
 
-- Classes marked with `[Singleton]` or `[Instance]` attributes are auto-registered
+- **`[Singleton]`** - Creates a single instance shared across the application (services, managers)
+- **`[Instance]`** - Creates a new instance each time it's resolved (views, view models)
+- **`[ViewModelFor<TView>]`** - Associates a ViewModel with its View for automatic pairing
 - Generator produces `DependencyRegistry.g.cs` with registration code
-- Access via `App.Container.Resolve<T>()`
+- Access via `App.Container.Resolve<T>()` or `_container.Resolve<T>()`
+
+**Critical**: When creating new Views (UserControls), **always** add `[Instance]` attribute:
+```csharp
+[Instance]
+public partial class MyNewView : UserControl
+```
+
+ViewModels typically use:
+```csharp
+[Instance]  // or [Singleton] for shared state
+[ViewModelFor<MyNewView>]
+public class MyNewViewModel : ViewModel
+```
+
+The source generator scans the assembly and auto-generates registration code at compile time.
 
 ### Feature Organization (Hub)
 
