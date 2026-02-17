@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:nodeScript="clr-namespace:Mdk.Hub.Features.NodeScript"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="400"
+             x:Class="Mdk.Hub.Features.NodeScript.AddNodeMenuView"
+             x:DataType="nodeScript:AddNodeMenuViewModel">
+    
+    <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+            BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="8"
+            MinWidth="200"
+            BoxShadow="0 4 12 0 #40000000">
+        
+        <StackPanel Spacing="4">
+            <!-- Header -->
+            <TextBlock Text="Add Node"
+                       Classes="caption semibold"
+                       Margin="8,4" />
+            
+            <Separator />
+            
+            <!-- Data Sources -->
+            <TextBlock Text="Data Sources"
+                       Classes="caption muted"
+                       Margin="8,4,8,2" />
+            <Button Content="Block"
+                    Command="{Binding CreateBlockNodeCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Classes="subtle" />
+            
+            <Separator Margin="0,4" />
+            
+            <!-- Triggers -->
+            <TextBlock Text="Triggers"
+                       Classes="caption muted"
+                       Margin="8,4,8,2" />
+            <Button Content="On Argument"
+                    Command="{Binding CreateOnArgumentNodeCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Classes="subtle" />
+            
+            <Separator Margin="0,4" />
+            
+            <!-- Flow Control -->
+            <TextBlock Text="Flow Control"
+                       Classes="caption muted"
+                       Margin="8,4,8,2" />
+            <Button Content="Wait For State"
+                    Command="{Binding CreateWaitForStateNodeCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Left"
+                    Classes="subtle" />
+            
+            <Separator Margin="0,4" />
+            
+            <!-- Cancel -->
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    HorizontalAlignment="Stretch"
+                    Classes="subtle"
+                    Margin="0,4,0,0" />
+        </StackPanel>
+        
+    </Border>
+    
+</UserControl>

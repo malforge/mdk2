@@ -97,6 +97,8 @@
                                 <LineBreak />
                                 <Run Text="• Microsoft.Build (MIT License)" />
                                 <LineBreak />
+                                <Run Text="• NodifyM.Avalonia (MIT License)" />
+                                <LineBreak />
                                 <Run Text="• Projektanker.Icons.Avalonia (MIT License)" />
                                 <LineBreak />
                                 <Run Text="• Velopack (MIT License)" />

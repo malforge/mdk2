@@ -29,8 +29,8 @@
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Linux.cs"/>
-                <None Include="**\*.Linux.cs"/>
+                <Compile Remove="**\*.Linux.cs" />
+                <None Include="**\*.Linux.cs" />
             </ItemGroup>
         </When>
 
@@ -41,14 +41,14 @@
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Windows.cs"/>
-                <None Include="**\*.Windows.cs"/>
+                <Compile Remove="**\*.Windows.cs" />
+                <None Include="**\*.Windows.cs" />
             </ItemGroup>
         </Otherwise>
     </Choose>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -66,8 +66,9 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2"/>
-        <PackageReference Include="Velopack" Version="0.0.1298"/>
+        <PackageReference Include="NodifyM.Avalonia" Version="1.1.9" />
+        <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2" />
+        <PackageReference Include="Velopack" Version="0.0.1298" />
     </ItemGroup>
 
     <ItemGroup>

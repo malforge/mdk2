@@ -3,24 +3,84 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:nodeScript="clr-namespace:Mdk.Hub.Features.NodeScript"
+             xmlns:nodes="clr-namespace:Mdk.Hub.Features.NodeScript.Nodes"
+             xmlns:controls="clr-namespace:NodifyM.Avalonia.Controls;assembly=NodifyM.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Mdk.Hub.Features.NodeScript.NodeScriptEditorView"
              x:DataType="nodeScript:NodeScriptEditorViewModel">
     
-    <Grid RowDefinitions="Auto,*">
-        <!-- Header -->
-        <Border Grid.Row="0" Padding="20" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-            <TextBlock Text="{Binding Title}" Classes="title" />
-        </Border>
+    <UserControl.Styles>
+        <StyleInclude Source="NodeEditorStyles.axaml" />
+    </UserControl.Styles>
+    
+    <Grid>
+        <!-- Debug: Test button to verify menu works -->
+        <Button Content="Test Menu"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="10"
+                Click="OnTestMenuClick"
+                ZIndex="100" />
         
-        <!-- Editor Content -->
-        <Grid Grid.Row="1">
-            <TextBlock Text="Node Script Editor - Coming Soon"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Classes="title"
-                       Opacity="0.5" />
-        </Grid>
+        <!-- NodifyEditor Canvas -->
+        <controls:NodifyEditor
+            x:Name="EditorCanvas"
+            PointerPressed="OnCanvasPointerPressed"
+            ItemsSource="{Binding Nodes}"
+            Connections="{Binding Connections}"
+            Zoom="{Binding Zoom, Mode=TwoWay}">
+            
+            <!-- Grid Lines -->
+            <controls:NodifyEditor.GridLineTemplate>
+                <DataTemplate>
+                    <controls:LargeGridLine 
+                        Width="{Binding $parent[controls:NodifyEditor].Bounds.Width}"
+                        Height="{Binding $parent[controls:NodifyEditor].Bounds.Height}"
+                        OffsetX="{Binding $parent[controls:NodifyEditor].OffsetX}"
+                        OffsetY="{Binding $parent[controls:NodifyEditor].OffsetY}"
+                        Zoom="{Binding $parent[controls:NodifyEditor].Zoom}"
+                        Spacing="30"
+                        Thickness="0.5"
+                        Brush="{StaticResource BorderSubtleBrush}"
+                        ZIndex="-2" />
+                </DataTemplate>
+            </controls:NodifyEditor.GridLineTemplate>
+            
+            <!-- Node Template -->
+            <controls:NodifyEditor.ItemTemplate>
+                <DataTemplate DataType="nodes:BlockNodeViewModel">
+                    <controls:Node Location="{Binding Location, Mode=TwoWay}"
+                                   Classes="block-node">
+                        <controls:Node.Header>
+                            <TextBlock Text="{Binding Title}" 
+                                       Classes="caption semibold node-header" />
+                        </controls:Node.Header>
+                        
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Pattern}" 
+                                       Classes="caption node-content" />
+                            <TextBlock Text="{Binding BlockType, StringFormat='Type: {0}'}" 
+                                       Classes="caption node-meta" />
+                        </StackPanel>
+                    </controls:Node>
+                </DataTemplate>
+            </controls:NodifyEditor.ItemTemplate>
+            
+        </controls:NodifyEditor>
+        
+        <!-- Empty State Hint -->
+        <TextBlock Text="Right Click to Start"
+                   Classes="empty-state-hint"
+                   IsVisible="{Binding !HasNodes}"
+                   IsHitTestVisible="False" />
+        
+        <!-- Add Node Menu Popup -->
+        <Popup IsOpen="{Binding IsAddNodeMenuOpen}"
+               PlacementTarget="{Binding $parent[UserControl]}"
+               IsLightDismissEnabled="True"
+               Placement="Pointer">
+            <nodeScript:AddNodeMenuView DataContext="{Binding AddNodeMenu}" />
+        </Popup>
     </Grid>
     
 </UserControl>

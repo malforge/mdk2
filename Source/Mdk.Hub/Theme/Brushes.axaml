@@ -49,6 +49,12 @@
     <SolidColorBrush x:Key="OverlayLightBrush" Color="{StaticResource OverlayLightColor}" />
     <SolidColorBrush x:Key="OverlayLightStrongBrush" Color="{StaticResource OverlayLightStrongColor}" />
 
+    <!-- NodifyM Theme Overrides - Integrate NodifyM with Hub theme -->
+    <Color x:Key="NodifyEditor.BackgroundColor">#FF0f0f1a</Color>  <!-- BackgroundSecondaryColor -->
+    <Color x:Key="GridLinesColor">#1affffff</Color>                <!-- BorderSubtleColor -->
+    <Color x:Key="Node.BackgroundColor">#CC1a1a2e</Color>          <!-- BackgroundCardColor -->
+    <Color x:Key="Node.BorderColor">#FF4da6ff</Color>              <!-- AccentInteractiveColor -->
+
     <!-- Background Brushes - Buttons -->
     <SolidColorBrush x:Key="BackgroundAccentBrush" Color="{StaticResource AccentPrimaryColor}" />
     <SolidColorBrush x:Key="BackgroundAccentHoverBrush" Color="{StaticResource AccentPrimaryHoverColor}" />

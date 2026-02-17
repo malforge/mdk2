@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:nodeScript="clr-namespace:Mdk.Hub.Features.NodeScript"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Mdk.Hub.Features.NodeScript.NodeScriptEditorView"
+             x:DataType="nodeScript:NodeScriptEditorViewModel">
+    
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="20" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock Text="{Binding Title}" Classes="title" />
+        </Border>
+        
+        <!-- Editor Content -->
+        <Grid Grid.Row="1">
+            <TextBlock Text="Node Script Editor - Coming Soon"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Classes="title"
+                       Opacity="0.5" />
+        </Grid>
+    </Grid>
+    
+</UserControl>

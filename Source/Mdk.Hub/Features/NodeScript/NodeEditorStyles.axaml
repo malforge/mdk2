@@ -1,0 +1,51 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:NodifyM.Avalonia.Controls;assembly=NodifyM.Avalonia">
+
+    <!-- NodeScript Editor Styles -->
+    
+    <!-- Empty State Hint -->
+    <Style Selector="TextBlock.empty-state-hint">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}"/>
+        <Setter Property="Opacity" Value="0.5"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- NodifyEditor Canvas - Override NodifyM defaults -->
+    <Style Selector="controls|NodifyEditor">
+        <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+    </Style>
+    
+    <!-- Block Node -->
+    <Style Selector="controls|Node.block-node">
+        <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="MinWidth" Value="150"/>
+        <Setter Property="Padding" Value="12"/>
+        
+        <Style Selector="^[IsSelected=True]">
+            <Setter Property="BorderBrush" Value="{StaticResource ForegroundAccentBrush}"/>
+        </Style>
+        
+        <Style Selector="^[IsSelected=False]:pointerover">
+            <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundCardHoverBrush}"/>
+        </Style>
+        
+        <Style Selector="^ TextBlock.node-header">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}"/>
+        </Style>
+        
+        <Style Selector="^ TextBlock.node-content">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBodyBrush}"/>
+        </Style>
+        
+        <Style Selector="^ TextBlock.node-meta">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}"/>
+        </Style>
+    </Style>
+    
+</Styles>
