@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Mod.Pack.Api;
+using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -27,7 +28,6 @@ public partial class ModRegionAnnotator : IDocumentProcessor
     partial class MdkAnnotationRewriter : CSharpSyntaxRewriter
     {
         static readonly char[] TagSeparators = [' '];
-        readonly Regex _macroRegex = GetMacroRegex();
 
         readonly IReadOnlyDictionary<string, string> _macros;
         readonly bool _hasMacros;
@@ -41,9 +41,7 @@ public partial class ModRegionAnnotator : IDocumentProcessor
             _stack.Push(new RegionInfo());
         }
 
-        string ReplaceMacros(string content) =>
-            _macroRegex.Replace(content,
-                match => _macros.TryGetValue(match.Value, out var value) ? value : match.Value);
+        string ReplaceMacros(string content) => MacroReplacer.Replace(content, _macros);
 
         public override SyntaxNode? Visit(SyntaxNode? node)
         {
@@ -189,10 +187,7 @@ public partial class ModRegionAnnotator : IDocumentProcessor
             return region.Annotation != null ? node.WithAdditionalAnnotations(region.Annotation) : node;
         }
 
-        [GeneratedRegex(@"\$\w+\$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
-        private static partial Regex GetMacroRegex();
-
-        [GeneratedRegex(@"\s*#region\s+mdk\s+([^\r\n]*)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+        [GeneratedRegex(@"^\s*#region\s+(mdk\s+)?(?<tags>.*)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
         private static partial Regex GetRegionRegex();
 
         readonly partial struct RegionInfo(SyntaxAnnotation? annotation, bool isDeclaration = true)

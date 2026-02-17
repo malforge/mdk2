@@ -55,23 +55,23 @@
         </Border>
 
         <!-- Create New Mixin -->
-        <Border Classes="create-hover-row"
-                Padding="10"
-                CornerRadius="4"
-                Cursor="Hand"
-                Tapped="OnCreateMixinTapped">
-            <Grid ColumnDefinitions="Auto,*">
-                <icons:MixinSymbol Width="32"
-                                   Height="32"
-                                   Grid.Column="0"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center" />
-                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="New Mixin" Classes="body medium" />
-                    <TextBlock Text="Create a new Code Sharing Mixin Library" Classes="caption muted" />
-                </StackPanel>
-            </Grid>
-        </Border>
+        <!-- <Border Classes="create-hover-row" -->
+        <!--         Padding="10" -->
+        <!--         CornerRadius="4" -->
+        <!--         Cursor="Hand" -->
+        <!--         Tapped="OnCreateMixinTapped"> -->
+        <!--     <Grid ColumnDefinitions="Auto,*"> -->
+        <!--         <icons:MixinSymbol Width="32" -->
+        <!--                            Height="32" -->
+        <!--                            Grid.Column="0" -->
+        <!--                            VerticalAlignment="Center" -->
+        <!--                            HorizontalAlignment="Center" /> -->
+        <!--         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1"> -->
+        <!--             <TextBlock Text="New Mixin" Classes="body medium" /> -->
+        <!--             <TextBlock Text="Create a new Code Sharing Mixin Library" Classes="caption muted" /> -->
+        <!--         </StackPanel> -->
+        <!--     </Grid> -->
+        <!-- </Border> -->
 
         <!-- Add Existing Project -->
         <Border Classes="create-hover-row"

@@ -1,4 +1,7 @@
-﻿v.2.2.0-pre.5
+﻿v.2.2.0-pre.6
+    - Macro replacement now works in Instructions.readme files
+
+v.2.2.0-pre.5
    - Removed deprecated restore command
    - Interactive mode now loads from INI files as intended
    - MSBuild integration improvements for interactive mode control

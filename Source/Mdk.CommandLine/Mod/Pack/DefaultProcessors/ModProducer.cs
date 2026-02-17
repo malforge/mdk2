@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Mod.Pack.Api;
+using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
 
@@ -33,7 +34,12 @@ public class ModProducer : IModProducer
         if (readmeDocument != null)
         {
             var readmeText = await readmeDocument.GetTextAsync();
-            buffer.Append("// " + string.Join("\n// ", readmeText.Lines.Select(l => l.ToString()))).Append('\n');
+            var readmeContent = readmeText.ToString();
+            
+            // Apply macro replacement to readme content
+            readmeContent = MacroReplacer.Replace(readmeContent, context.Parameters.PackVerb.Macros);
+            
+            buffer.Append("// " + string.Join("\n// ", readmeContent.Split('\n'))).Append('\n');
         }
         buffer.Append(script.ToString().Replace(Environment.NewLine, "\n"));
         fileBuilder.Add(new ProducedFile("script.cs", outputPath, buffer.ToString()));
