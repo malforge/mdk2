@@ -41,7 +41,8 @@ public partial class MacroEditorDialogViewModel : OverlayModel
                 var entry = new MacroEntryViewModel
                 {
                     Key = StripDelimiters(key),
-                    Value = value
+                    Value = value,
+                    DeleteCommand = _deleteMacroCommand
                 };
                 entry.PropertyChanged += OnEntryChanged;
                 Macros.Add(entry);
@@ -115,7 +116,10 @@ public partial class MacroEditorDialogViewModel : OverlayModel
         // Check if there's already an empty row at the end
         if (Macros.Count == 0 || !Macros[^1].IsEmpty)
         {
-            var emptyEntry = new MacroEntryViewModel();
+            var emptyEntry = new MacroEntryViewModel
+            {
+                DeleteCommand = _deleteMacroCommand
+            };
             emptyEntry.PropertyChanged += OnEntryChanged;
             Macros.Add(emptyEntry);
         }

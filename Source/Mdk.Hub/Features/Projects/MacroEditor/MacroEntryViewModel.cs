@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Projects.MacroEditor;
@@ -40,4 +41,9 @@ public class MacroEntryViewModel : Model
     /// Gets whether this entry is empty (both key and value are empty).
     /// </summary>
     public bool IsEmpty => string.IsNullOrWhiteSpace(Key) && string.IsNullOrWhiteSpace(Value);
+
+    /// <summary>
+    /// Gets or sets the delete command.
+    /// </summary>
+    public ICommand? DeleteCommand { get; set; }
 }

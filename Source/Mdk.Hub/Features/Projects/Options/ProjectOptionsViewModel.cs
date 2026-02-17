@@ -32,8 +32,10 @@ public class ProjectOptionsViewModel : ViewModel
     readonly RelayCommand _clearLocalOutputPathCommand;
     readonly RelayCommand _clearLocalTraceCommand;
     readonly IShell _dialogShell;
+    readonly AsyncRelayCommand _editIgnoresCommand;
     readonly AsyncRelayCommand _editLocalMacrosCommand;
     readonly AsyncRelayCommand _editMacrosCommand;
+    readonly AsyncRelayCommand _editNamespacesCommand;
     readonly ILogger _logger;
     readonly AsyncRelayCommand _normalizeConfigurationCommand;
     readonly Action<bool> _onClose; // bool parameter: true if saved, false if cancelled
@@ -84,6 +86,8 @@ public class ProjectOptionsViewModel : ViewModel
         _openGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);
         _editMacrosCommand = new AsyncRelayCommand(EditMacrosAsync);
         _editLocalMacrosCommand = new AsyncRelayCommand(EditLocalMacrosAsync);
+        _editNamespacesCommand = new AsyncRelayCommand(EditNamespacesAsync);
+        _editIgnoresCommand = new AsyncRelayCommand(EditIgnoresAsync);
 
         // Subscribe to property changes to update override indicators and dirty state
         MainConfig.PropertyChanged += (_, _) =>
@@ -197,6 +201,16 @@ public class ProjectOptionsViewModel : ViewModel
     ///     Gets the command to edit local macros.
     /// </summary>
     public ICommand EditLocalMacrosCommand => _editLocalMacrosCommand;
+
+    /// <summary>
+    ///     Gets the command to edit namespaces.
+    /// </summary>
+    public ICommand EditNamespacesCommand => _editNamespacesCommand;
+
+    /// <summary>
+    ///     Gets the command to edit ignore patterns.
+    /// </summary>
+    public ICommand EditIgnoresCommand => _editIgnoresCommand;
 
     /// <summary>
     ///     Gets the project name (filename without extension).
@@ -670,7 +684,9 @@ public class ProjectOptionsViewModel : ViewModel
 
     async Task EditMacrosAsync()
     {
-        var message = new MacroEditor.MacroEditorDialogMessage(MainConfig.Macros);
+        var message = new MacroEditor.MacroEditorDialogMessage(
+            Description: "Define text replacement macros that will be substituted in your script. Useful for version numbers, constants, or repeated text.",
+            InitialMacros: MainConfig.Macros);
         var viewModel = new MacroEditor.MacroEditorDialogViewModel(message);
         
         await _dialogShell.ShowOverlayAsync(viewModel);
@@ -685,7 +701,9 @@ public class ProjectOptionsViewModel : ViewModel
 
     async Task EditLocalMacrosAsync()
     {
-        var message = new MacroEditor.MacroEditorDialogMessage(LocalConfig.Macros);
+        var message = new MacroEditor.MacroEditorDialogMessage(
+            Description: "Define local macros for this developer only. Use for personal file paths, test values, or other machine-specific settings.",
+            InitialMacros: LocalConfig.Macros);
         var viewModel = new MacroEditor.MacroEditorDialogViewModel(message);
         
         await _dialogShell.ShowOverlayAsync(viewModel);
@@ -696,5 +714,75 @@ public class ProjectOptionsViewModel : ViewModel
             OnPropertyChanged(nameof(HasUnsavedChanges));
             NotifyDirtyStateChanged();
         }
+    }
+
+    async Task EditNamespacesAsync()
+    {
+        var currentNamespaces = MainConfig.Namespaces?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        
+        var message = new ListEditor.ListEditorDialogMessage(
+            Title: "Edit Namespaces",
+            Description: "Specify which namespaces are allowed in your script. Prevents type name conflicts when namespaces are stripped in the final script.",
+            FieldLabel: "Namespace",
+            FieldWatermark: "e.g., IngameScript",
+            InitialItems: currentNamespaces,
+            ValidateItem: ValidateNamespace
+        );
+        
+        var viewModel = new ListEditor.ListEditorDialogViewModel(message);
+        await _dialogShell.ShowOverlayAsync(viewModel);
+        
+        if (viewModel.Result != null)
+        {
+            MainConfig.Namespaces = viewModel.Result.Items != null ? string.Join(",", viewModel.Result.Items) : string.Empty;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            NotifyDirtyStateChanged();
+        }
+    }
+
+    async Task EditIgnoresAsync()
+    {
+        var currentIgnores = MainConfig.Ignores?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        
+        var message = new ListEditor.ListEditorDialogMessage(
+            Title: "Edit Ignore Patterns",
+            Description: "Specify files and folders to exclude from the build. Use * to match files in a folder, or ** to match files in any subfolder.",
+            FieldLabel: "Pattern",
+            FieldWatermark: "e.g., obj/**/*",
+            InitialItems: currentIgnores,
+            ValidateItem: null // No validation for glob patterns for now
+        );
+        
+        var viewModel = new ListEditor.ListEditorDialogViewModel(message);
+        await _dialogShell.ShowOverlayAsync(viewModel);
+        
+        if (viewModel.Result != null)
+        {
+            MainConfig.Ignores = viewModel.Result.Items != null ? string.Join(",", viewModel.Result.Items) : string.Empty;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            NotifyDirtyStateChanged();
+        }
+    }
+
+    static string? ValidateNamespace(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "Namespace cannot be empty.";
+        
+        // Basic C# namespace validation
+        var parts = value.Split('.');
+        foreach (var part in parts)
+        {
+            if (string.IsNullOrWhiteSpace(part))
+                return $"Invalid namespace format: '{value}'";
+            
+            if (!char.IsLetter(part[0]) && part[0] != '_')
+                return $"Namespace parts must start with a letter or underscore: '{part}'";
+            
+            if (part.Any(c => !char.IsLetterOrDigit(c) && c != '_'))
+                return $"Namespace parts can only contain letters, digits, and underscores: '{part}'";
+        }
+        
+        return null;
     }
 }

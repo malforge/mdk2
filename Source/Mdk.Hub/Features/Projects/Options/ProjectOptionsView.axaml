@@ -102,7 +102,10 @@
                             <TextBlock Text="Namespaces" Classes="label muted" />
                             <controls:ValidatedControl>
                                 <controls:ValidatedControl.Content>
-                                    <TextBox Text="{Binding MainConfig.Namespaces}" />
+                                    <Button Content="Edit Namespaces..."
+                                            Command="{Binding EditNamespacesCommand}"
+                                            HorizontalAlignment="Left"
+                                            MinWidth="150" />
                                 </controls:ValidatedControl.Content>
                             </controls:ValidatedControl>
                         </StackPanel>
@@ -112,7 +115,10 @@
                             <TextBlock Text="Ignores" Classes="label muted" />
                             <controls:ValidatedControl>
                                 <controls:ValidatedControl.Content>
-                                    <TextBox Text="{Binding MainConfig.Ignores}" />
+                                    <Button Content="Edit Ignores..."
+                                            Command="{Binding EditIgnoresCommand}"
+                                            HorizontalAlignment="Left"
+                                            MinWidth="150" />
                                 </controls:ValidatedControl.Content>
                             </controls:ValidatedControl>
                         </StackPanel>

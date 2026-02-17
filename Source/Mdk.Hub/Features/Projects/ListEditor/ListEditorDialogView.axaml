@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:macro="clr-namespace:Mdk.Hub.Features.Projects.MacroEditor"
+             xmlns:list="clr-namespace:Mdk.Hub.Features.Projects.ListEditor"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
-             x:Class="Mdk.Hub.Features.Projects.MacroEditor.MacroEditorDialogView"
-             x:DataType="macro:MacroEditorDialogViewModel">
+             x:Class="Mdk.Hub.Features.Projects.ListEditor.ListEditorDialogView"
+             x:DataType="list:ListEditorDialogViewModel">
 
     <Grid ColumnDefinitions="10*, 80*, 10*">
         <Border Classes="dialog-container"
@@ -16,7 +16,7 @@
                 Height="400">
             <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
                 <!-- Title -->
-                <TextBlock Text="Edit Macros"
+                <TextBlock Text="{Binding Message.Title}"
                            Classes="h1"
                            Grid.Row="0"
                            Margin="0,0,0,8" />
@@ -28,27 +28,21 @@
                            TextWrapping="Wrap"
                            Margin="0,0,0,16" />
 
-                <!-- Macro list -->
+                <!-- Item list -->
                 <ScrollViewer Grid.Row="2"
                               VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Macros}">
+                    <ItemsControl ItemsSource="{Binding Items}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="macro:MacroEntryViewModel">
-                                <Grid ColumnDefinitions="200,*,Auto"
+                            <DataTemplate x:DataType="list:ListEntryViewModel">
+                                <Grid ColumnDefinitions="*,Auto"
                                       Margin="0,0,0,8">
-                                    <!-- Key input -->
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding Key}"
-                                             Watermark="MACRO_NAME" />
-
                                     <!-- Value input -->
-                                    <TextBox Grid.Column="1"
-                                             Text="{Binding Value}"
-                                             Watermark="value"
-                                             Margin="8,0,0,0" />
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding Value}" 
+                                             Watermark="{Binding Watermark}" />
 
                                     <!-- Delete button (only visible for non-empty rows) -->
-                                    <Button Grid.Column="2"
+                                    <Button Grid.Column="1"
                                             Command="{Binding DeleteCommand}"
                                             CommandParameter="{Binding}"
                                             Content="×"
@@ -61,7 +55,7 @@
                                             VerticalContentAlignment="Center"
                                             VerticalAlignment="Center"
                                             IsVisible="{Binding !IsEmpty}"
-                                            ToolTip.Tip="Delete this macro" />
+                                            ToolTip.Tip="Delete this item" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
