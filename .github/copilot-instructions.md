@@ -8,10 +8,10 @@
 ### Rules
 - **Check uncommitted changes first**: Always review `git status` and `git diff` to see what's actually changed
 - **Describe only uncommitted changes**: Don't duplicate previous commits
-- **Short and sweet**: Keep subject line concise (under 72 chars)
-- **Technical accuracy matters**: Can include class names, method names, file paths when needed for clarity
+- **Short and sweet**: Keep subject line concise (under 72 chars), body to 2-3 sentences max
+- **Focus on what and why, not how**: Explain the problem and the solution approach; the diff shows the implementation details
 - **Be specific**: "Fix TypeTrimmer null reference when processing empty classes" is better than "Fix bug"
-- **Multi-line for complex changes**: Use bullets to list multiple related changes
+- **Avoid enumerating changes**: Don't list files, methods, or step-by-step changes—describe the change conceptually
 - **Comprehensive**: Cover all relevant uncommitted changes, not just the most recent work
 
 ### Examples
