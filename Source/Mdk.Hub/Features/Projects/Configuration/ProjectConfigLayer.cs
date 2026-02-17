@@ -56,6 +56,11 @@ public class ProjectConfigLayer : IEquatable<ProjectConfigLayer>
     public CanonicalPath? BinaryPath { get; init; }
 
     /// <summary>
+    ///     Gets or initializes custom macros for text replacement (keys include $ delimiters, e.g., "$MY_MACRO$").
+    /// </summary>
+    public ImmutableDictionary<string, string>? Macros { get; init; }
+
+    /// <summary>
     ///     Compares two configuration layers for semantic equality (uses type-aware comparison for collections and paths).
     /// </summary>
     /// <param name="other">The configuration layer to compare with.</param>
@@ -72,7 +77,8 @@ public class ProjectConfigLayer : IEquatable<ProjectConfigLayer>
                && ProjectConfig.CompareIgnores(Ignores, other.Ignores)
                && ProjectConfig.CompareNamespaces(Namespaces, other.Namespaces)
                && ProjectConfig.ComparePaths(Output, other.Output)
-               && ProjectConfig.ComparePaths(BinaryPath, other.BinaryPath);
+               && ProjectConfig.ComparePaths(BinaryPath, other.BinaryPath)
+               && ProjectConfig.CompareMacros(Macros, other.Macros);
     }
 
     /// <summary>
@@ -104,6 +110,7 @@ public class ProjectConfigLayer : IEquatable<ProjectConfigLayer>
         hashCode.Add(Namespaces);
         hashCode.Add(Output);
         hashCode.Add(BinaryPath);
+        hashCode.Add(Macros);
         return hashCode.ToHashCode();
     }
 

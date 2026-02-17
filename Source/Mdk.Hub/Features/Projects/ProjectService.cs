@@ -235,13 +235,14 @@ public class ProjectService : IProjectService
         // Build correctly structured layers
         var newMain = new ProjectConfigLayer
         {
-            // Main should have: Type, Namespaces, Ignores, Minify, MinifyExtraOptions, Trace
+            // Main should have: Type, Namespaces, Ignores, Minify, MinifyExtraOptions, Trace, Macros
             Type = projectData.Config.Main?.Type ?? projectData.Config.Local?.Type,
             Namespaces = projectData.Config.Main?.Namespaces ?? projectData.Config.Local?.Namespaces,
             Ignores = projectData.Config.Main?.Ignores ?? projectData.Config.Local?.Ignores,
             Minify = projectData.Config.Main?.Minify ?? projectData.Config.Local?.Minify,
             MinifyExtraOptions = projectData.Config.Main?.MinifyExtraOptions ?? projectData.Config.Local?.MinifyExtraOptions,
             Trace = projectData.Config.Main?.Trace ?? projectData.Config.Local?.Trace,
+            Macros = projectData.Config.Main?.Macros ?? projectData.Config.Local?.Macros,
             // Main should NOT have these:
             Output = null,
             BinaryPath = null,
@@ -260,7 +261,8 @@ public class ProjectService : IProjectService
             Ignores = null,
             Minify = null,
             MinifyExtraOptions = null,
-            Trace = null
+            Trace = null,
+            Macros = null
         };
 
         // Build migrated INIs: start with existing, remove misplaced known keys, update correct keys
@@ -280,6 +282,7 @@ public class ProjectService : IProjectService
         localIni = localIni.WithoutKey("mdk", "minify");
         localIni = localIni.WithoutKey("mdk", "minifyextraoptions");
         localIni = localIni.WithoutKey("mdk", "trace");
+        localIni = localIni.WithoutKey("mdk", "macros");
         // Update known "local" keys
         localIni = UpdateIniFromLayer(localIni, "mdk", newLocal, false);
 
@@ -876,7 +879,8 @@ public class ProjectService : IProjectService
             Ignores = ParseStringList(section.TryGet("ignores", out string? ignores) ? ignores : null),
             Namespaces = ParseStringList(section.TryGet("namespaces", out string? namespaces) ? namespaces : null),
             Output = ParsePath(section.TryGet("output", out string? output) ? output : null),
-            BinaryPath = ParsePath(section.TryGet("binarypath", out string? binaryPath) ? binaryPath : null)
+            BinaryPath = ParsePath(section.TryGet("binarypath", out string? binaryPath) ? binaryPath : null),
+            Macros = ParseMacros(section.TryGet("macros", out string? macros) ? macros : null)
         };
     }
 
@@ -954,6 +958,38 @@ public class ProjectService : IProjectService
             .ToArray();
 
         return items.Length > 0 ? ImmutableArray.Create(items) : null;
+    }
+
+    static ImmutableDictionary<string, string>? ParseMacros(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var pairs = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var pair in pairs)
+        {
+            var equalsIndex = pair.IndexOf('=');
+            if (equalsIndex == -1)
+                continue; // Skip invalid pairs
+
+            var key = pair[..equalsIndex].Trim();
+            var val = pair[(equalsIndex + 1)..].Trim();
+
+            if (string.IsNullOrWhiteSpace(key))
+                continue; // Skip if no key
+
+            // Add $ delimiters if not already present
+            if (!key.StartsWith('$'))
+                key = $"${key}";
+            if (!key.EndsWith('$'))
+                key = $"{key}$";
+
+            builder[key] = val;
+        }
+
+        return builder.Count > 0 ? builder.ToImmutable() : null;
     }
 
     void OnProjectUpdateAvailable(object? sender, ProjectUpdateAvailableEventArgs e)
@@ -1414,7 +1450,25 @@ public class ProjectService : IProjectService
             binaryPathValue = "auto";
         ini = UpdateIniValue(ini, section, "binarypath", binaryPathValue, removeNulls);
 
+        // Macros - convert dictionary to comma-separated key=value pairs (strip $ delimiters)
+        ini = UpdateIniValue(ini, section, "macros", SerializeMacros(layer.Macros), removeNulls);
+
         return ini;
+    }
+
+    static string? SerializeMacros(ImmutableDictionary<string, string>? macros)
+    {
+        if (macros == null || macros.Count == 0)
+            return null;
+
+        var pairs = macros.Select(kvp =>
+        {
+            // Strip $ delimiters from keys for INI format
+            var key = kvp.Key.Trim('$');
+            return $"{key}={kvp.Value}";
+        });
+
+        return string.Join(",", pairs);
     }
 
     static Ini UpdateIniValue(Ini ini, string section, string key, string? value, bool removeNulls)

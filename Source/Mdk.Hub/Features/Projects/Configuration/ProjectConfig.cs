@@ -23,7 +23,8 @@ public class ProjectConfig
         Ignores = ImmutableArray.Create("obj/**/*", "MDK/**/*", "**/*.debug.cs"),
         Namespaces = ImmutableArray.Create("IngameScript"),
         Output = null,
-        BinaryPath = null
+        BinaryPath = null,
+        Macros = ImmutableDictionary<string, string>.Empty
     };
 
     /// <summary>
@@ -50,7 +51,8 @@ public class ProjectConfig
             Ignores = Local?.Ignores ?? Main?.Ignores ?? Default.Ignores,
             Namespaces = Local?.Namespaces ?? Main?.Namespaces ?? Default.Namespaces,
             Output = Local?.Output ?? Main?.Output ?? Default.Output,
-            BinaryPath = Local?.BinaryPath ?? Main?.BinaryPath ?? Default.BinaryPath
+            BinaryPath = Local?.BinaryPath ?? Main?.BinaryPath ?? Default.BinaryPath,
+            Macros = MergeMacros(Default.Macros, Main?.Macros, Local?.Macros)
         };
 
     /// <summary>
@@ -71,7 +73,8 @@ public class ProjectConfig
             Ignores = Main?.Ignores ?? Default.Ignores,
             Namespaces = Main?.Namespaces ?? Default.Namespaces,
             Output = Main?.Output,
-            BinaryPath = Main?.BinaryPath
+            BinaryPath = Main?.BinaryPath,
+            Macros = Main?.Macros ?? Default.Macros
         };
 
         var optimizedLocal = new ProjectConfigLayer
@@ -84,7 +87,8 @@ public class ProjectConfig
             Ignores = !CompareIgnores(Local?.Ignores, optimizedMain.Ignores) ? Local?.Ignores : null,
             Namespaces = !CompareNamespaces(Local?.Namespaces, optimizedMain.Namespaces) ? Local?.Namespaces : null,
             Output = !ComparePaths(Local?.Output, optimizedMain.Output) ? Local?.Output : null,
-            BinaryPath = !ComparePaths(Local?.BinaryPath, optimizedMain.BinaryPath) ? Local?.BinaryPath : null
+            BinaryPath = !ComparePaths(Local?.BinaryPath, optimizedMain.BinaryPath) ? Local?.BinaryPath : null,
+            Macros = !CompareMacros(Local?.Macros, optimizedMain.Macros) ? Local?.Macros : null
         };
 
         return new ProjectConfig
@@ -153,5 +157,48 @@ public class ProjectConfig
             return false;
 
         return a.Value.Equals(b.Value);
+    }
+
+    /// <summary>
+    /// Compares two macro dictionaries for equality (null-safe, case-insensitive keys).
+    /// </summary>
+    public static bool CompareMacros(ImmutableDictionary<string, string>? a, ImmutableDictionary<string, string>? b)
+    {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (a.Count != b.Count) return false;
+        
+        foreach (var (key, value) in a)
+        {
+            if (!b.TryGetValue(key, out var otherValue) || value != otherValue)
+                return false;
+        }
+        
+        return true;
+    }
+
+    /// <summary>
+    /// Merges macros from multiple layers (Default, Main, Local) with Local taking precedence.
+    /// </summary>
+    static ImmutableDictionary<string, string>? MergeMacros(
+        ImmutableDictionary<string, string>? defaultMacros,
+        ImmutableDictionary<string, string>? mainMacros,
+        ImmutableDictionary<string, string>? localMacros)
+    {
+        var result = defaultMacros ?? ImmutableDictionary<string, string>.Empty;
+        
+        if (mainMacros != null)
+        {
+            foreach (var (key, value) in mainMacros)
+                result = result.SetItem(key, value);
+        }
+        
+        if (localMacros != null)
+        {
+            foreach (var (key, value) in localMacros)
+                result = result.SetItem(key, value);
+        }
+        
+        return result.Count > 0 ? result : null;
     }
 }
