@@ -117,6 +117,19 @@
                             </controls:ValidatedControl>
                         </StackPanel>
 
+                        <!-- Macros -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Macros" Classes="label muted" />
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <Button Content="Edit Macros..."
+                                            Command="{Binding EditMacrosCommand}"
+                                            HorizontalAlignment="Left"
+                                            MinWidth="150" />
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
+                        </StackPanel>
+
                         <!-- Trace -->
                         <StackPanel Spacing="4">
                             <TextBlock Text="Trace" Classes="label muted" />
@@ -186,6 +199,19 @@
                                                        DefaultPath="auto"
                                                        CanReset="True"
                                                        ResetTooltip="Reset to Auto-detect" />
+                                </controls:ValidatedControl.Content>
+                            </controls:ValidatedControl>
+                        </StackPanel>
+
+                        <!-- Local Macros -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Local Macros (Developer Overrides)" Classes="label muted" />
+                            <controls:ValidatedControl>
+                                <controls:ValidatedControl.Content>
+                                    <Button Content="Edit Local Macros..."
+                                            Command="{Binding EditLocalMacrosCommand}"
+                                            HorizontalAlignment="Left"
+                                            MinWidth="150" />
                                 </controls:ValidatedControl.Content>
                             </controls:ValidatedControl>
                         </StackPanel>

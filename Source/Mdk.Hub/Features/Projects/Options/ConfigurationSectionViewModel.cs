@@ -138,6 +138,11 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
+    /// Gets or sets the custom macros for text replacement.
+    /// </summary>
+    public ImmutableDictionary<string, string>? Macros { get; set; }
+
+    /// <summary>
     /// Resets all configuration options to their default values.
     /// </summary>
     public void Clear()

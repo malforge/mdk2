@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:macro="clr-namespace:Mdk.Hub.Features.Projects.MacroEditor"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="Mdk.Hub.Features.Projects.MacroEditor.MacroEditorDialogView"
+             x:DataType="macro:MacroEditorDialogViewModel">
+
+    <Grid ColumnDefinitions="10*, 80*, 10*">
+        <Border Classes="dialog-container"
+                Grid.Column="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="600"
+                Height="400">
+            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                <!-- Title -->
+                <TextBlock Text="Edit Macros"
+                           Classes="h1"
+                           Grid.Row="0"
+                           Margin="0,0,0,16" />
+
+                <!-- Macro list -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Macros}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="macro:MacroEntryViewModel">
+                                <Grid ColumnDefinitions="*,*,Auto"
+                                      Margin="0,0,0,8">
+                                    <!-- Key input -->
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding Key}"
+                                             Watermark="MACRO_NAME"
+                                             Margin="0,0,8,0" />
+
+                                    <!-- Value input -->
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding Value}"
+                                             Watermark="value"
+                                             Margin="0,0,8,0" />
+
+                                    <!-- Delete button (only visible for non-empty rows) -->
+                                    <Button Grid.Column="2"
+                                            Command="{Binding $parent[ItemsControl].((macro:MacroEditorDialogViewModel)DataContext).DeleteMacroCommand}"
+                                            CommandParameter="{Binding}"
+                                            Content="×"
+                                            Width="32"
+                                            Height="32"
+                                            FontSize="20"
+                                            Padding="0"
+                                            HorizontalContentAlignment="Center"
+                                            VerticalContentAlignment="Top"
+                                            IsVisible="{Binding !IsEmpty}"
+                                            ToolTip.Tip="Delete this macro" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Validation message -->
+                <Grid Grid.Row="2"
+                      MinHeight="40"
+                      Margin="0,8,0,0">
+                    <TextBlock Text="{Binding ValidationError}"
+                               Foreground="{DynamicResource ForegroundDangerBrush}"
+                               Classes="medium"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Top"
+                               IsVisible="{Binding ValidationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </Grid>
+
+                <!-- Buttons -->
+                <StackPanel Grid.Row="3"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8"
+                            Margin="0,8,0,0">
+                    <Button Content="Save"
+                            Command="{Binding SaveCommand}"
+                            IsDefault="True"
+                            MinWidth="100" />
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            IsCancel="True"
+                            MinWidth="100" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

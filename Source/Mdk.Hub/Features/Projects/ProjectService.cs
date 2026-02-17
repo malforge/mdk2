@@ -242,7 +242,7 @@ public class ProjectService : IProjectService
             Minify = projectData.Config.Main?.Minify ?? projectData.Config.Local?.Minify,
             MinifyExtraOptions = projectData.Config.Main?.MinifyExtraOptions ?? projectData.Config.Local?.MinifyExtraOptions,
             Trace = projectData.Config.Main?.Trace ?? projectData.Config.Local?.Trace,
-            Macros = projectData.Config.Main?.Macros ?? projectData.Config.Local?.Macros,
+            Macros = projectData.Config.Main?.Macros, // Keep Main macros as-is
             // Main should NOT have these:
             Output = null,
             BinaryPath = null,
@@ -251,18 +251,18 @@ public class ProjectService : IProjectService
 
         var newLocal = new ProjectConfigLayer
         {
-            // Local should have: Output, BinaryPath, Interactive
+            // Local should have: Output, BinaryPath, Interactive, Macros (for developer overrides)
             Output = projectData.Config.Local?.Output ?? projectData.Config.Main?.Output,
             BinaryPath = projectData.Config.Local?.BinaryPath ?? projectData.Config.Main?.BinaryPath,
             Interactive = projectData.Config.Local?.Interactive ?? projectData.Config.Main?.Interactive,
+            Macros = projectData.Config.Local?.Macros, // Keep Local macros as-is
             // Local should NOT have these:
             Type = null,
             Namespaces = null,
             Ignores = null,
             Minify = null,
             MinifyExtraOptions = null,
-            Trace = null,
-            Macros = null
+            Trace = null
         };
 
         // Build migrated INIs: start with existing, remove misplaced known keys, update correct keys
@@ -282,7 +282,7 @@ public class ProjectService : IProjectService
         localIni = localIni.WithoutKey("mdk", "minify");
         localIni = localIni.WithoutKey("mdk", "minifyextraoptions");
         localIni = localIni.WithoutKey("mdk", "trace");
-        localIni = localIni.WithoutKey("mdk", "macros");
+        // Note: macros can exist in both Main and Local
         // Update known "local" keys
         localIni = UpdateIniFromLayer(localIni, "mdk", newLocal, false);
 

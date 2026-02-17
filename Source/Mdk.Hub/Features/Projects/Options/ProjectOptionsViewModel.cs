@@ -32,6 +32,8 @@ public class ProjectOptionsViewModel : ViewModel
     readonly RelayCommand _clearLocalOutputPathCommand;
     readonly RelayCommand _clearLocalTraceCommand;
     readonly IShell _dialogShell;
+    readonly AsyncRelayCommand _editLocalMacrosCommand;
+    readonly AsyncRelayCommand _editMacrosCommand;
     readonly ILogger _logger;
     readonly AsyncRelayCommand _normalizeConfigurationCommand;
     readonly Action<bool> _onClose; // bool parameter: true if saved, false if cancelled
@@ -80,6 +82,8 @@ public class ProjectOptionsViewModel : ViewModel
         _clearLocalIgnoresCommand = new RelayCommand(ClearLocalIgnores);
         _clearLocalNamespacesCommand = new RelayCommand(ClearLocalNamespaces);
         _openGlobalSettingsCommand = new RelayCommand(OpenGlobalSettings);
+        _editMacrosCommand = new AsyncRelayCommand(EditMacrosAsync);
+        _editLocalMacrosCommand = new AsyncRelayCommand(EditLocalMacrosAsync);
 
         // Subscribe to property changes to update override indicators and dirty state
         MainConfig.PropertyChanged += (_, _) =>
@@ -183,6 +187,16 @@ public class ProjectOptionsViewModel : ViewModel
     ///     Gets the command to open global Hub settings.
     /// </summary>
     public ICommand OpenGlobalSettingsCommand => _openGlobalSettingsCommand;
+
+    /// <summary>
+    ///     Gets the command to edit macros.
+    /// </summary>
+    public ICommand EditMacrosCommand => _editMacrosCommand;
+
+    /// <summary>
+    ///     Gets the command to edit local macros.
+    /// </summary>
+    public ICommand EditLocalMacrosCommand => _editLocalMacrosCommand;
 
     /// <summary>
     ///     Gets the project name (filename without extension).
@@ -467,6 +481,10 @@ public class ProjectOptionsViewModel : ViewModel
             : ConfigurationSectionViewModel.TraceOptionsList[0]; // Default: false
         MainConfig.Ignores = effective.Ignores.HasValue ? string.Join(",", effective.Ignores.Value) : string.Empty;
         MainConfig.Namespaces = effective.Namespaces.HasValue ? string.Join(",", effective.Namespaces.Value) : "IngameScript";
+        MainConfig.Macros = _projectData.Config.Main?.Macros;
+        
+        // Load Local layer macros separately (not merged)
+        LocalConfig.Macros = _projectData.Config.Local?.Macros;
 
         // LocalConfig is no longer used in simple editor mode (we don't need it)
     }
@@ -492,7 +510,8 @@ public class ProjectOptionsViewModel : ViewModel
                 MinifyExtraOptions = ToMinifierExtraOptions(MainConfig.MinifyExtraOptions?.Value),
                 Trace = ToBool(MainConfig.Trace?.Value),
                 Ignores = ToStringArray(MainConfig.Ignores),
-                Namespaces = ToStringArray(MainConfig.Namespaces)
+                Namespaces = ToStringArray(MainConfig.Namespaces),
+                Macros = MainConfig.Macros
             };
 
             var localLayer = new ProjectConfigLayer
@@ -505,7 +524,8 @@ public class ProjectOptionsViewModel : ViewModel
                 MinifyExtraOptions = null, // Never in local
                 Trace = null, // Never in local
                 Ignores = null, // Never in local
-                Namespaces = null // Never in local
+                Namespaces = null, // Never in local
+                Macros = LocalConfig.Macros
             };
 
             // Create updated ProjectData
@@ -646,5 +666,35 @@ public class ProjectOptionsViewModel : ViewModel
     {
         var viewModel = _container.Resolve<GlobalSettingsViewModel>();
         _shell.AddOverlay(viewModel);
+    }
+
+    async Task EditMacrosAsync()
+    {
+        var message = new MacroEditor.MacroEditorDialogMessage(MainConfig.Macros);
+        var viewModel = new MacroEditor.MacroEditorDialogViewModel(message);
+        
+        await _dialogShell.ShowOverlayAsync(viewModel);
+        
+        if (viewModel.Result != null)
+        {
+            MainConfig.Macros = viewModel.Result.Macros;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            NotifyDirtyStateChanged();
+        }
+    }
+
+    async Task EditLocalMacrosAsync()
+    {
+        var message = new MacroEditor.MacroEditorDialogMessage(LocalConfig.Macros);
+        var viewModel = new MacroEditor.MacroEditorDialogViewModel(message);
+        
+        await _dialogShell.ShowOverlayAsync(viewModel);
+        
+        if (viewModel.Result != null)
+        {
+            LocalConfig.Macros = viewModel.Result.Macros;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            NotifyDirtyStateChanged();
+        }
     }
 }
