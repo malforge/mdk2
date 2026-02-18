@@ -1,3 +1,9 @@
+v.2.2.52
+ - Fixed Mal.Mdk2.References package reference in Script and Mod templates to include explicit IncludeAssets to avoid NuGet update issues.
+
+v.2.2.51
+ - Updated the package versions in the template.
+
 v.2.2.50
  - Updated the package versions in the template.
 
