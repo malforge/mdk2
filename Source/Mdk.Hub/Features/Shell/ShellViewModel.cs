@@ -6,7 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.CommonDialogs;
@@ -35,33 +37,34 @@ namespace Mdk.Hub.Features.Shell;
 [Singleton]
 [Singleton<IShell>]
 [ViewModelFor<ShellWindow>]
-public class ShellViewModel : ViewModel, IShell
+public class ShellViewModel : ViewModel, IShell, ISupportClosing
 {
+    readonly IDependencyContainer _container;
+    readonly FileEditorRegistry _fileEditorRegistry;
+    readonly IFileStorageService _fileStorage;
     readonly Lazy<IAnnouncementService> _lazyAnnouncementService;
     readonly Lazy<IProjectService> _lazyProjectService;
     readonly Lazy<IUpdateManager> _lazyUpdateManager;
-    readonly IFileStorageService _fileStorage;
     readonly ILogger _logger;
+    readonly List<HostWindow> _openWindows = new();
     readonly Lazy<ProjectActionsViewModel> _projectActionsViewModel;
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
     readonly Lazy<ProjectOverviewViewModel> _projectOverviewViewModel;
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
-    readonly List<HostWindow> _openWindows = new();
-    readonly IDependencyContainer _container;
+    readonly List<Action<string[]>> _windowReadyCallbacks = new();
     ViewModel? _currentView;
     bool _hasStarted;
-    WindowState? _initialWindowState;
     bool _isInBackground;
-    bool _isReady;
+    bool _isReady, _windowIsReady;
     ViewModel? _navigationView;
     string[]? _startupArgs;
 
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -78,6 +81,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <param name="lazyUpdateManager">Update manager service for monitoring MDK versions.</param>
     /// <param name="fileStorage">File storage service for filesystem operations.</param>
     /// <param name="container">Dependency container for resolving additional services as needed.</param>
+    /// <param name="fileEditorRegistry">Registry for file type to editor mappings.</param>
     public ShellViewModel(
         ISettings settings,
         Lazy<IProjectService> lazyProjectService,
@@ -87,7 +91,8 @@ public class ShellViewModel : ViewModel, IShell
         Lazy<ProjectOverviewViewModel> projectOverviewViewModel,
         Lazy<ProjectActionsViewModel> projectActionsViewModel,
         IFileStorageService fileStorage,
-        IDependencyContainer container)
+        IDependencyContainer container,
+        FileEditorRegistry fileEditorRegistry)
     {
         _lazyProjectService = lazyProjectService;
         _lazyUpdateManager = lazyUpdateManager;
@@ -97,13 +102,20 @@ public class ShellViewModel : ViewModel, IShell
         _projectOverviewViewModel = projectOverviewViewModel;
         _projectActionsViewModel = projectActionsViewModel;
         _container = container;
+        _fileEditorRegistry = fileEditorRegistry;
         Settings = settings;
         // NavigationView = projectOverviewViewModel;
         // CurrentView = projectActionsViewModel;
 
         // Subscribe to overlay collection changes for HasOverlays property
         if (!IsDesignMode)
+        {
             OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
+
+            // Subscribe to IPC messages for .mdknodes files from other instances
+            var ipc = container.Resolve<IInterProcessCommunication>();
+            ipc.MessageReceived += OnIpcMessageReceived;
+        }
     }
 
     /// <summary>
@@ -146,10 +158,16 @@ public class ShellViewModel : ViewModel, IShell
     public bool HasOverlays => OverlayViews.Count > 0;
 
     /// <summary>
+    ///     Gets the initial window state to use when launching with notification arguments.
+    ///     Null means use the saved window settings.
+    /// </summary>
+    public WindowState? InitialWindowState { get; private set; }
+
+    /// <summary>
     ///     Raised when the window gains keyboard focus.
     /// </summary>
     public event EventHandler? WindowFocusGained;
-    
+
     /// <summary>
     ///     Raised when a UI refresh has been requested (e.g., Ctrl+R).
     /// </summary>
@@ -159,17 +177,11 @@ public class ShellViewModel : ViewModel, IShell
     ///     Gets the collection of currently displayed toast messages.
     /// </summary>
     public ObservableCollection<ToastMessage> ToastMessages { get; } = new();
-    
+
     /// <summary>
     ///     Gets the collection of overlay views (dialogs, popups) currently shown over the main content.
     /// </summary>
     public ObservableCollection<OverlayModel> OverlayViews { get; } = new();
-
-    /// <summary>
-    ///     Gets the initial window state to use when launching with notification arguments.
-    ///     Null means use the saved window settings.
-    /// </summary>
-    public WindowState? InitialWindowState => _initialWindowState;
 
     /// <inheritdoc />
     public bool IsInBackground
@@ -193,17 +205,20 @@ public class ShellViewModel : ViewModel, IShell
     {
         _startupArgs = args;
         _hasStarted = true;
-        
+
         // Start minimized if launched with notification arguments
         // HandleBuildNotificationAsync will call BringToFront() if InteractiveMode is OpenHub
         if (NotificationCommand.IsNotificationCommand(args))
-            _initialWindowState = WindowState.Minimized;
-        
+            InitialWindowState = WindowState.Minimized;
+
         NavigationView = _projectOverviewViewModel.Value;
         CurrentView = _projectActionsViewModel.Value;
 
         // Write Hub executable path for MDK CLI to discover
         WriteHubPath();
+
+        // Check for editable files in arguments
+        CheckForEditableFiles(args);
 
         BeginStartup();
     }
@@ -223,6 +238,8 @@ public class ShellViewModel : ViewModel, IShell
     /// <summary>
     ///     Registers a callback to be invoked when the shell is fully ready (all async initialization complete).
     /// </summary>
+    /// <seealso cref="WhenWindowReady" />
+    /// for waiting until the shell window is shown and responsive, which will occur after the shell is ready.
     /// <param name="callback">Action to invoke with startup arguments.</param>
     public void WhenReady(Action<string[]> callback)
     {
@@ -424,7 +441,7 @@ public class ShellViewModel : ViewModel, IShell
     public async Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay) => await ShowOverlayAsync(busyOverlay);
 
     /// <inheritdoc />
-    public void OpenWindow(ViewModel viewModel, string? title = null)
+    public void OpenWindow(ViewModel viewModel, string? title = null, bool setParent = true)
     {
         var window = new HostWindow(title, _logger)
         {
@@ -435,19 +452,100 @@ public class ShellViewModel : ViewModel, IShell
         _openWindows.Add(window);
 
         // Remove from tracking when closed
-        window.Closed += (_, _) =>
-        {
-            _openWindows.Remove(window);
-        };
+        window.Closed += (_, _) => { _openWindows.Remove(window); };
 
         // Show the window
-        var mainWindow = (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?
-            .Windows.FirstOrDefault(w => w is ShellWindow);
-        
-        if (mainWindow != null)
-            window.Show(mainWindow);
+        if (setParent)
+        {
+            var mainWindow = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?
+                .Windows.FirstOrDefault(w => w is ShellWindow);
+
+            if (mainWindow != null)
+                window.Show(mainWindow);
+            else
+                window.Show();
+        }
         else
+        {
+            // Show without parent (independent window)
             window.Show();
+        }
+    }
+
+    /// <summary>
+    ///     Checks command-line arguments for file paths that can be opened in editors.
+    /// </summary>
+    void CheckForEditableFiles(string[] args)
+    {
+        if (args == null || args.Length == 0)
+            return;
+
+        // Look for files with registered editors
+        foreach (var arg in args)
+        {
+            if (_fileEditorRegistry.HasEditorFor(arg))
+            {
+                // Store the file path for opening after shell is fully ready
+                // Editor opens as independent window (setParent: false)
+                WhenWindowReady(_ => OpenFileEditor(arg, false));
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Opens the appropriate editor for the specified file.
+    /// </summary>
+    /// <param name="filePath">Path to the file to edit.</param>
+    /// <param name="setParent">Whether to set the shell as the parent window (false when shell is minimized).</param>
+    async void OpenFileEditor(string filePath, bool setParent = true)
+    {
+        try
+        {
+            var editorType = _fileEditorRegistry.GetEditorType(filePath);
+            if (editorType == null)
+            {
+                _logger.Warning($"No editor registered for file: {filePath}");
+                return;
+            }
+
+            _logger.Info($"Opening editor for: {filePath}");
+
+            // Resolve editor from container
+            var editorViewModel = (IFileEditor)_container.Resolve(editorType);
+
+            // Open window first (better UX for large files)
+            if (editorViewModel is ViewModel viewModel)
+                OpenWindow(viewModel, setParent: setParent);
+            else
+            {
+                _logger.Error($"Editor type does not extend ViewModel: {editorType.Name}");
+                return;
+            }
+
+            // Then load the file asynchronously
+            await editorViewModel.OpenFileAsync(filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to open file editor: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Registers a callback to be invoked when the shell window is ready (opened and visible). This is useful for
+    ///     operations that require the window handle or need to ensure the UI is responsive before executing (e.g., showing
+    ///     dialogs, opening file editors).
+    /// </summary>
+    /// <seealso cref="WhenReady" />
+    /// for waiting until shell initialization is complete, which will occur before the window is shown.
+    /// <param name="callback"></param>
+    public void WhenWindowReady(Action<string[]> callback)
+    {
+        if (_windowIsReady)
+            callback(_startupArgs!);
+        else
+            _windowReadyCallbacks.Add(callback);
     }
 
     /// <summary>
@@ -502,6 +600,19 @@ public class ShellViewModel : ViewModel, IShell
     public event EventHandler? BringToFrontRequested;
 
     /// <summary>
+    ///     Called when the shell window has been opened and is visible.
+    /// </summary>
+    public void WindowIsReady()
+    {
+        _windowIsReady = true;
+        _logger.Info("Window is ready");
+
+        foreach (var callback in _windowReadyCallbacks)
+            callback(_startupArgs!);
+        _windowReadyCallbacks.Clear();
+    }
+
+    /// <summary>
     ///     Notifies the ViewModel that the window focus was gained.
     /// </summary>
     public void WindowFocusWasGained() => RaiseWindowFocusGained();
@@ -511,18 +622,19 @@ public class ShellViewModel : ViewModel, IShell
     /// </summary>
     /// <param name="isMinimized">True if window is minimized.</param>
     /// <param name="isFocused">True if window has focus.</param>
-    public void UpdateWindowState(bool isMinimized, bool isFocused)
-    {
-        IsInBackground = isMinimized || !isFocused;
-    }
+    public void UpdateWindowState(bool isMinimized, bool isFocused) => IsInBackground = isMinimized || !isFocused;
 
     /// <summary>
     ///     Checks if the window can close. Returns false if there are unsaved changes and user cancels.
     /// </summary>
-    public async Task<bool> CanCloseAsync()
+    public async Task<bool> WillCloseAsync()
     {
+        // Check Hub's own unsaved changes first
         if (!TryGetUnsavedChangesInfo(out var info))
-            return true;
+        {
+            // Hub has no unsaved changes, proceed to check editor windows
+            return CheckEditorsCanCloseAsync();
+        }
 
         var result = await ShowOverlayAsync(new ConfirmationMessage
         {
@@ -532,15 +644,49 @@ public class ShellViewModel : ViewModel, IShell
             CancelText = "Show Me"
         });
 
-        if (result)
+        if (!result)
         {
-            // User chose "Exit Anyway" - allow close
-            return true;
+            // User chose "Show Me" - execute navigation action and don't close
+            info.GoThereAction.Invoke();
+            return false;
         }
+        
+        // User chose "Exit Anyway" - now check editor windows
+        return CheckEditorsCanCloseAsync();
+    }
 
-        // User chose "Show Me" - execute navigation action and don't close
-        info.GoThereAction.Invoke();
-        return false;
+    /// <summary>
+    ///     Attempts to close all open editor windows.
+    ///     Each window handles its own close logic through normal lifecycle.
+    /// </summary>
+    bool CheckEditorsCanCloseAsync()
+    {
+        foreach (var window in _openWindows.ToList())
+        {
+            // Activate window so user sees which one is being checked
+            window.Activate();
+            
+            // Close the window - this triggers normal OnClosing → WillCloseAsync flow
+            window.Close();
+            
+            // If window didn't actually close, user cancelled
+            if (!window.IsClosed)
+            {
+                return false;
+            }
+        }
+        
+        // All editors closed successfully
+        return true;
+    }
+
+    /// <summary>
+    /// Called after the Shell window has closed. Cleanup is handled elsewhere.
+    /// </summary>
+    public Task DidCloseAsync()
+    {
+        // Shell cleanup happens elsewhere in Dispose
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -739,7 +885,7 @@ public class ShellViewModel : ViewModel, IShell
         try
         {
             string? exePath;
-            
+
             // On Linux AppImages, check environment variables in order of preference:
             // 1. APPIMAGE - absolute path to .AppImage file (normal launch)
             // 2. ARGV0 - path used to execute (works for extract-and-run mode)
@@ -747,12 +893,12 @@ public class ShellViewModel : ViewModel, IShell
             if (App.IsLinux)
             {
                 exePath = Environment.GetEnvironmentVariable("APPIMAGE");
-                
+
                 if (string.IsNullOrEmpty(exePath))
                 {
                     // Try ARGV0 (works even in extract-and-run mode)
                     exePath = Environment.GetEnvironmentVariable("ARGV0");
-                    
+
                     if (string.IsNullOrEmpty(exePath))
                     {
                         // Fall back to process path
@@ -783,9 +929,7 @@ public class ShellViewModel : ViewModel, IShell
                     }
                 }
                 else
-                {
                     _logger.Debug($"Detected AppImage via APPIMAGE env var: {exePath}");
-                }
             }
             else
             {
@@ -803,17 +947,17 @@ public class ShellViewModel : ViewModel, IShell
 
             // Write to %AppData%/MDK2/hub.path or ~/.config/MDK2/hub.path
             var pathFile = _fileStorage.GetApplicationDataPath("hub.path");
-            
+
             // Only write if path has changed to avoid unnecessary I/O
             if (_fileStorage.FileExists(pathFile))
             {
                 var existingPath = _fileStorage.ReadAllText(pathFile);
                 if (existingPath == exePath)
                     return;
-                
+
                 _logger.Info($"Hub path changed from {existingPath} to {exePath}");
             }
-            
+
             _fileStorage.WriteAllText(pathFile, exePath);
 
             _logger.Info($"Hub path written to: {pathFile}");
@@ -929,6 +1073,37 @@ public class ShellViewModel : ViewModel, IShell
         catch (Exception ex)
         {
             _logger.Error($"Error checking prerelease prompt: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Handles IPC messages from other instances, checking for editable files.
+    /// </summary>
+    void OnIpcMessageReceived(object? sender, MessageReceivedEventArgs e)
+    {
+        try
+        {
+            // Check if the message contains arguments
+            if (e.Message.Arguments == null || e.Message.Arguments.Length == 0)
+                return;
+
+            // Look for files with registered editors
+            foreach (var arg in e.Message.Arguments)
+            {
+                if (_fileEditorRegistry.HasEditorFor(arg))
+                {
+                    _logger.Info($"Received editable file via IPC: {arg}");
+
+                    // Open the appropriate editor (will bring window to front)
+                    OpenFileEditor(arg);
+                    BringToFront();
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Error handling IPC message: {ex.Message}");
         }
     }
 

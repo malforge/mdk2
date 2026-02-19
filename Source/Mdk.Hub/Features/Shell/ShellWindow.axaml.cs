@@ -26,6 +26,18 @@ public partial class ShellWindow : Window
         
         // Subscribe to window state and focus changes
         PropertyChanged += OnWindowPropertyChanged;
+        
+        // Subscribe to window opened event
+        Opened += OnWindowOpened;
+    }
+    
+    void OnWindowOpened(object? sender, EventArgs e)
+    {
+        if (DataContext is ShellViewModel viewModel)
+        {
+            Opened -= OnWindowOpened; // Only handle first Opened event
+            viewModel.WindowIsReady();
+        }
     }
     
     void OnWindowPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -196,7 +208,7 @@ public partial class ShellWindow : Window
 
     async Task CheckCanCloseAsync(ShellViewModel viewModel)
     {
-        if (await viewModel.CanCloseAsync())
+        if (await viewModel.WillCloseAsync())
         {
             // Close programmatically to bypass the check
             Close();

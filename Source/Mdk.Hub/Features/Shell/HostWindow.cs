@@ -16,6 +16,11 @@ public class HostWindow : Window
     bool _isClosing;
 
     /// <summary>
+    /// Gets whether the window has been closed.
+    /// </summary>
+    public bool IsClosed { get; private set; }
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="HostWindow" /> class.
     /// </summary>
     /// <param name="title">Optional explicit window title.</param>
@@ -90,6 +95,8 @@ public class HostWindow : Window
     {
         try
         {
+            IsClosed = true;
+
             if (DataContext is ISupportClosing supportClosing)
                 await supportClosing.DidCloseAsync();
 

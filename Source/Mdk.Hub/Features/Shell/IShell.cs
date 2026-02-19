@@ -142,5 +142,6 @@ public interface IShell
     /// </summary>
     /// <param name="viewModel">The view model to display in the window.</param>
     /// <param name="title">Optional window title. If not provided and the ViewModel implements IWindowTitle, binds to its Title property.</param>
-    void OpenWindow(ViewModel viewModel, string? title = null);
+    /// <param name="setParent">Whether to set the shell as the parent window. Defaults to true.</param>
+    void OpenWindow(ViewModel viewModel, string? title = null, bool setParent = true);
 }
