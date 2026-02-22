@@ -28,6 +28,7 @@
                                    Height="64"
                                    HorizontalAlignment="Center" />
                             <TextBlock Text="MDK²"
+                                       IsVisible="False"
                                        Classes="h1"
                                        HorizontalAlignment="Center" />
                             <TextBlock Text="{Binding Version, StringFormat='Hub Version: {0}'}"
@@ -46,6 +47,16 @@
                             HorizontalAlignment="Center"
                             TextAlignment="Center"
                             MaxWidth="400" />
+
+                        <!-- Icon Attribution -->
+                        <TextBlock
+                            Classes="caption muted"
+                            TextWrapping="Wrap"
+                            HorizontalAlignment="Center"
+                            TextAlignment="Center"
+                            MaxWidth="400">
+                            <Run Text="Application icon by Yellow51" />
+                        </TextBlock>
 
                         <!-- Actions -->
                         <StackPanel Spacing="8">

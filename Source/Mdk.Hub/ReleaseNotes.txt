@@ -1,3 +1,6 @@
+v.1.0.0-pre.44
+   - New icon by Yellow51
+   
 v.1.0.0-pre.43
    - Added Mixin project template support.
    - Project icons now consistent across the application.
