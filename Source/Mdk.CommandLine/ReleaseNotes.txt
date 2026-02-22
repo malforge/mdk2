@@ -1,4 +1,7 @@
-﻿v.2.2.0-pre.6
+﻿v.2.2.0-pre.7
+    - Scripts using Roslyn source generators are now packed correctly
+
+v.2.2.0-pre.6
     - Macro replacement now works in Instructions.readme files
 
 v.2.2.0-pre.5
