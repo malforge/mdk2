@@ -1,4 +1,7 @@
-﻿v.2.2.0-pre.7
+v.2.2.0
+    - First stable 2.2 release, including source-generator packing fixes and recent CLI/packaging improvements.
+
+v.2.2.0-pre.7
     - Scripts using Roslyn source generators are now packed correctly
 
 v.2.2.0-pre.6
@@ -194,3 +197,4 @@ v.2.0.0-alpha051
 v.2.0.0-alpha1
  - Emergency publish of a very early build due to the problems with MDK1 and the new version of Visual Studio 2022.
  - This version is highly untested, and is missing the minifier.
+
