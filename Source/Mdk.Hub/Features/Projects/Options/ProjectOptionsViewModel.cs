@@ -60,6 +60,7 @@ public class ProjectOptionsViewModel : ViewModel
     /// <param name="shell">Main shell service.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="onClose">Callback invoked when closing (true if saved, false if cancelled).</param>
+    /// <param name="container">Container for dependency injection</param>
     /// <param name="onDirtyStateChanged">Optional callback when dirty state changes.</param>
     public ProjectOptionsViewModel(string projectPath, IProjectService projectService, IShell dialogShell, IShell shell, ILogger logger, Action<bool> onClose, IDependencyContainer container, Action? onDirtyStateChanged = null)
     {

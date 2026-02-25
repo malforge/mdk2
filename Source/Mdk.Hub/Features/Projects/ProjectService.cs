@@ -72,7 +72,7 @@ public class ProjectService : IProjectService
         _updateChecker.ProjectUpdateAvailable += OnProjectUpdateAvailable;
 
         // Subscribe to IPC messages
-        ipc.MessageReceived += (_, e) => HandleBuildNotification(e.Message);
+        ipc.MessageReceived += (_, e) => HandleIpcMessage(e.Message);
 
         // Handle startup arguments when shell is ready
         shell.WhenReady(HandleStartupArguments);
@@ -583,12 +583,32 @@ public class ProjectService : IProjectService
         {
             if (!File.Exists(projectPath.Value))
                 return false;
+            
+            string executablePath;
+            string arguments = string.Empty;
+            var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+            if (string.IsNullOrEmpty(hubSettings.CustomIdePath))
+            {
+                // let the OS decide what to do
+                executablePath = projectPath.Value;
+            }
+            else
+            {
+                // launch the IDE with this file
+                executablePath = hubSettings.CustomIdePath;
+                arguments = $"\"{projectPath.Value}\"";
+            }
+
+            if (executablePath != projectPath.Value && !File.Exists(executablePath))
+                return false;
 
             Process.Start(new ProcessStartInfo
             {
-                FileName = projectPath.Value,
+                FileName = executablePath,
+                Arguments = arguments,
                 UseShellExecute = true
             });
+
 
             _logger.Info($"Opened project in IDE: {projectPath}");
             return true;
@@ -1034,6 +1054,41 @@ public class ProjectService : IProjectService
 
         errorMessage = "The selected project is not a valid MDK² project. MDK² projects must have a mdk.ini or mdk.local.ini configuration file.";
         return false;
+    }
+
+    Task HandleIpcMessage(InterConnectMessage message)
+    {
+        if (message.Type == NotificationType.StartupArgs)
+        {
+            HandleForwardedStartupArguments(message.Arguments);
+            return Task.CompletedTask;
+        }
+
+        return HandleBuildNotification(message);
+    }
+
+    void HandleForwardedStartupArguments(string[] args)
+    {
+        if (args.Length == 0)
+            return;
+
+        if (args.Length == 1 && string.Equals(args[0], "--activate-hub", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.Info("Received secondary-launch activation request");
+            _shell.BringToFront();
+            return;
+        }
+
+        if (args.Any(arg => string.Equals(arg, "--force-first-run-setup", StringComparison.OrdinalIgnoreCase)))        
+        {
+            const string warningMessage = "Cannot run first-run setup while MDK Hub is already running. Close Hub and launch it again with --force-first-run-setup.";
+            _logger.Warning($"Rejected forwarded startup arguments: {string.Join(" ", args)}");
+            _shell.BringToFront();
+            _shell.ShowToast(warningMessage, 8000);
+            return;
+        }
+
+        HandleStartupArguments(args);
     }
 
     Task HandleBuildNotification(InterConnectMessage message)

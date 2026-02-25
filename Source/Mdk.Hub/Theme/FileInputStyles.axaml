@@ -1,0 +1,64 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
+        xmlns:i="https://github.com/projektanker/icons.avalonia">
+
+    <!-- FileInput - Unified file input with browse and optional reset -->
+    <Style Selector="controls|FileInput">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBox Grid.Column="0"
+                             Name="PART_TextBox"
+                             Watermark="{TemplateBinding ResolvedWatermark}"
+                             Margin="0,0,8,0" />
+                    <Button Grid.Column="1"
+                            Name="PART_BrowseButton"
+                            Padding="8"
+                            VerticalAlignment="Stretch"
+                            ToolTip.Tip="Browse for file"
+                            Margin="0,0,8,0">
+                        <i:Icon Value="fa-solid fa-file-import" FontSize="12" />
+                    </Button>
+                    <Button Grid.Column="2"
+                            Name="PART_ResetButton"
+                            Padding="8"
+                            VerticalAlignment="Stretch"
+                            ToolTip.Tip="{TemplateBinding ResolvedResetTooltip}"
+                            IsVisible="{TemplateBinding CanReset}"
+                            IsEnabled="{TemplateBinding CanResetToDefault}">
+                        <i:Icon Value="fa-solid fa-rotate-left" FontSize="12" />
+                    </Button>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- Error state for FileInput -->
+    <Style Selector="controls|FileInput:error TextBox">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
+        
+        <Style Selector="^:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
+        </Style>
+
+        <Style Selector="^:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
+        </Style>
+    </Style>
+    
+    <Style Selector="controls|FileInput /template/ Button#PART_BrowseButton > i|Icon">
+        <Setter Property="Value" Value="fa-solid fa-file-import"/>
+    </Style>
+
+    <Style Selector="controls|FileInput.executable">
+        <!-- Pre-set for File Pickers for Executable Files -->
+        <Style Selector="^ /template/ Button#PART_BrowseButton > i|Icon">
+            <Setter Property="Value" Value="fa-solid fa-file-code"/>
+        </Style>
+        <Style Selector="^:not(.linux)">
+            <!-- List of possible extensions a user may want to execute... except .jar, I don't like .jar -->
+            <Setter Property="Patterns" Value="*.exe;*.com;*.bat;*.cmd;*.ps1;*.vbs;*.js;*.wsf"/>
+        </Style>
+    </Style>
+</Styles>

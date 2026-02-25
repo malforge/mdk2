@@ -31,19 +31,18 @@ sealed class Program
 
         // Handle IPC before initializing Avalonia
         // Must stay synchronous with [STAThread] for COM/clipboard to work properly
-        if (args.Length > 0)
+        using (var ipc = new InterProcessCommunication.Standalone())
         {
-            using var ipc = new InterProcessCommunication.Standalone();
-
             // If another instance is running, send message and exit
             if (ipc.IsAlreadyRunning())
             {
-                ipc.SendMessage(args); // Fully synchronous - no deadlock risk
+                if (args.Length > 0)
+                    ipc.SendMessage(args); // Fully synchronous - no deadlock risk
+                else
+                    ipc.SendMessage(["--activate-hub"]);
+
                 return 0; // Exit immediately
             }
-
-            // We are first instance with args - they'll be handled via IPC MessageReceived
-            // after services initialize, so just continue to start UI
         }
 
         // Start Avalonia UI

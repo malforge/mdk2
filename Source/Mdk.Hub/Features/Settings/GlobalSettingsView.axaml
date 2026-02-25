@@ -144,8 +144,35 @@
                                                                    IsVisible="{Binding IsLinux}">
                                             <controls:ValidatedControl.Content>
                                                 <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
-                                                                   Watermark="Select Space Engineers binary folder (required)"
-                                                                   HorizontalAlignment="Stretch" />
+                                                                    Watermark="Select Space Engineers binary folder (required)"
+                                                                    HorizontalAlignment="Stretch" />
+                                            </controls:ValidatedControl.Content>
+                                        </controls:ValidatedControl>
+                                    </StackPanel>
+                                    
+                                    <!-- Custom IDE Exe -->
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Custom IDE Executable Path"
+                                                   Classes="h3 heading" />
+
+                                        <TextBlock TextWrapping="Wrap"
+                                                   Classes="caption muted"
+                                                   Margin="0,0,0,4">
+                                            Select which executable should be used when clicking “Open in IDE.”. Leave as "Default" to use the OS handler.
+                                        </TextBlock>
+
+                                        <controls:ValidatedControl>
+                                            <controls:ValidatedControl.Content>
+                                                <controls:FileInput Path="{Binding CustomIdePath}"
+                                                                    DefaultPath=""
+                                                                    AllowNonExisting="False"
+                                                                    CanReset="True"
+                                                                    Classes="executable"
+                                                                    Classes.linux="{Binding IsLinux}"
+                                                                    TypeName="IDE executable file"
+                                                                    ResetTooltip="Reset to Default"
+                                                                    Watermark="Leave empty to use default handler"
+                                                                    HorizontalAlignment="Stretch" />
                                             </controls:ValidatedControl.Content>
                                         </controls:ValidatedControl>
                                     </StackPanel>

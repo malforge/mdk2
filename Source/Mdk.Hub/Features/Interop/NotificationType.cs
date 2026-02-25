@@ -8,20 +8,25 @@ public enum NotificationType
     /// <summary>
     ///     A custom notification message.
     /// </summary>
-    Custom,
+    Custom = 0,
 
     /// <summary>
     ///     A script build/deployment notification.
     /// </summary>
-    Script,
+    Script = 1,
 
     /// <summary>
     ///     A mod build/deployment notification.
     /// </summary>
-    Mod,
+    Mod = 2,
 
     /// <summary>
     ///     A NuGet package version available notification.
     /// </summary>
-    Nuget
+    Nuget = 3,
+
+    /// <summary>
+    ///     Raw startup arguments forwarded from a secondary instance.
+    /// </summary>
+    StartupArgs = 4
 }

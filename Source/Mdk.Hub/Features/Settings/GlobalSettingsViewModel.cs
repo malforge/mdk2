@@ -29,6 +29,7 @@ public class GlobalSettingsViewModel : OverlayModel
     readonly IUpdateManager _updateManager;
     readonly HubSettings _hubSettings;
     string _customAutoBinaryPath = "";
+    string _customIdePath = "";
     string _customAutoModOutputPath = "";
     string _customAutoScriptOutputPath = "";
     string _ipcPort = "";
@@ -79,6 +80,7 @@ public class GlobalSettingsViewModel : OverlayModel
         CustomAutoScriptOutputPath = (App.IsLinux && scriptPath == "auto") ? "" : scriptPath;
         CustomAutoModOutputPath = (App.IsLinux && modPath == "auto") ? "" : modPath;
         CustomAutoBinaryPath = (App.IsLinux && binPath == "auto") ? "" : binPath;
+        CustomIdePath = settings.CustomIdePath;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
         IpcPort = settings.IpcPort?.ToString() ?? "";
@@ -163,6 +165,15 @@ public class GlobalSettingsViewModel : OverlayModel
                 OnPropertyChanged(nameof(BinaryPathValidationError));
             }
         }
+    }
+
+    /// <summary>
+    /// Gets or sets the custom IDE executable path.
+    /// </summary>
+    public string CustomIdePath
+    {
+        get => _customIdePath;
+        set => SetProperty(ref _customIdePath, value);
     }
 
     /// <summary>
@@ -345,6 +356,7 @@ public class GlobalSettingsViewModel : OverlayModel
             CustomAutoScriptOutputPath = _customAutoScriptOutputPath,
             CustomAutoModOutputPath = _customAutoModOutputPath,
             CustomAutoBinaryPath = _customAutoBinaryPath,
+            CustomIdePath = _customIdePath,
             IncludePrereleaseUpdates = _includePrereleaseUpdates,
             DeploymentNotificationTimeoutSeconds = _deploymentNotificationTimeoutSeconds ?? 0,
             IpcPort = string.IsNullOrWhiteSpace(_ipcPort) || !int.TryParse(_ipcPort, out var port) ? null : port
@@ -445,4 +457,3 @@ public class GlobalSettingsViewModel : OverlayModel
         }
     }
 }
-

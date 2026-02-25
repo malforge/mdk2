@@ -115,8 +115,14 @@ public partial class ShellWindow : Window
         // On Linux (and macOS), also use Topmost trick to ensure window comes to front
         if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() || App.IsLinux)
         {
-            Topmost = true;
-            Topmost = false;
+            try
+            {
+                Topmost = true;
+            }
+            finally
+            {
+                Topmost = false;
+            }
         }
     }
 

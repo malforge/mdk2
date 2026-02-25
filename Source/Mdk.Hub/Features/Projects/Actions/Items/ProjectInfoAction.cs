@@ -266,14 +266,18 @@ public class ProjectInfoAction : ActionItem
         _projectService.OpenOutputFolderAsync(Project!.ProjectPath);
     }
 
-    bool CanOpenInIde() => Project is not null && File.Exists(Project.ProjectPath.Value);
+    bool CanOpenInIde() => Project is not null && 
+                           File.Exists(Project.ProjectPath.Value);
 
     void OpenInIde()
     {
         if (!CanOpenInIde())
             return;
-
-        if (_projectService.OpenProjectInIde(Project!.ProjectPath))
+        
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        if (!string.IsNullOrEmpty(hubSettings.CustomIdePath) && !File.Exists(hubSettings.CustomIdePath))
+            _shell.ShowToast($"IDE executable could not be found at {hubSettings.CustomIdePath}");
+        else if (_projectService.OpenProjectInIde(Project!.ProjectPath))
             _shell.ShowToast($"Opening {Project.Name} in IDE...");
     }
 

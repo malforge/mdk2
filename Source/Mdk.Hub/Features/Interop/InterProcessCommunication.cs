@@ -367,14 +367,16 @@ public class InterProcessCommunication : IInterProcessCommunication
             {
                 _logger.Info($"Standalone.SendMessage called with {args.Length} args: {string.Join(" ", args)}");
 
-                // Parse arguments
-                if (args.Length < 1 || !Enum.TryParse<NotificationType>(args[0], true, out var type))
+                if (args.Length < 1)
                 {
                     _logger.Warning($"Invalid arguments: {string.Join(" ", args)}");
                     return;
                 }
 
-                var messageArgs = args.Skip(1).ToArray();
+                // Parse known IPC notification commands; otherwise forward raw startup args.
+                var isKnownNotification = Enum.TryParse<NotificationType>(args[0], true, out var type) && type != NotificationType.StartupArgs;
+                var messageArgs = isKnownNotification ? args.Skip(1).ToArray() : args;
+                type = isKnownNotification ? type : NotificationType.StartupArgs;
                 var message = new InterConnectMessage(type, messageArgs);
 
                 // Read port from file (synchronous) - use static helper for standalone

@@ -35,6 +35,12 @@ public struct HubSettings
     public string CustomAutoBinaryPath { get; set; } = "auto";
 
     /// <summary>
+    ///     Gets or sets the custom IDE path.
+    ///     When empty, uses the default behavior (OS defined file handler).
+    /// </summary>
+    public string CustomIdePath { get; set; } = string.Empty;
+
+    /// <summary>
     ///     Gets or sets whether to include prerelease versions when checking for updates.
     /// </summary>
     public bool IncludePrereleaseUpdates { get; set; }
