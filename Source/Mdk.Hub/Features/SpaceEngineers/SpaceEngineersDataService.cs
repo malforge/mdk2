@@ -32,6 +32,7 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
     ApiErrorKind _loadErrorKind;
     Dictionary<BlockId, BlockInfo> _blocks = new();
     List<BlockCategory> _categories = [];
+    HashSet<string> _terminalTypeIds = new();
 
     /// <inheritdoc />
     public async Task<ApiResult<IReadOnlyList<BlockCategory>>> GetCategoriesAsync()
@@ -100,6 +101,12 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
             else
                 await RebuildCacheAsync(localizationPath, categoryPath, cubeBlocksDir, cacheDir, dataPath, metaPath, sources);
 
+            var binPath = ResolveBinPath(contentPath);
+            await LoadTerminalTypesAsync(binPath, cacheDir);
+
+            if (_terminalTypeIds.Count > 0)
+                FilterToTerminalBlocks();
+
             _loaded = true;
             logger.Info($"SE data ready: {_blocks.Count} blocks, {_categories.Count} categories.");
         }
@@ -132,6 +139,87 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
         {
             return null;
         }
+    }
+
+    /// <summary>
+    ///     Resolves the path to the Space Engineers <c>Bin64/</c> directory by going up one level
+    ///     from the Content directory.  Returns <c>null</c> if the directory is not found.
+    /// </summary>
+    /// <remarks>Protected virtual to allow test subclasses to return <c>null</c> (skips terminal scan).</remarks>
+    protected virtual string? ResolveBinPath(string contentPath)
+    {
+        var seRoot = Path.GetDirectoryName(contentPath);
+        if (seRoot == null) return null;
+        var binPath = Path.Combine(seRoot, "Bin64");
+        return Directory.Exists(binPath) ? binPath : null;
+    }
+
+    async Task LoadTerminalTypesAsync(string? binPath, string cacheDir)
+    {
+        if (binPath == null)
+            return;
+
+        var terminalDataPath = Path.Combine(cacheDir, "se-terminal-types.json");
+        var terminalMetaPath = Path.Combine(cacheDir, "se-terminal-types-meta.json");
+        var terminalSources = SpaceEngineersTerminalScanner.GetDllPaths(binPath);
+
+        if (SpaceEngineersDataParser.IsCacheFresh(terminalMetaPath, terminalSources))
+        {
+            if (File.Exists(terminalDataPath))
+            {
+                var json = await File.ReadAllTextAsync(terminalDataPath);
+                var cache = JsonSerializer.Deserialize<TerminalTypesCacheData>(json);
+                if (cache != null)
+                    _terminalTypeIds = new HashSet<string>(cache.TypeIds, StringComparer.OrdinalIgnoreCase);
+            }
+            return;
+        }
+
+        var overlay = new BusyOverlayViewModel("Scanning Space Engineers terminal block types...");
+        var shellTask = shell.ShowBusyOverlayAsync(overlay);
+        try
+        {
+            await Task.Run(() =>
+            {
+                var typeIds = SpaceEngineersTerminalScanner.Scan(binPath);
+
+                Directory.CreateDirectory(cacheDir);
+
+                var cacheData = new TerminalTypesCacheData { TypeIds = [.. typeIds] };
+                var meta = new BlocksCacheMeta
+                {
+                    Sources = terminalSources.ToDictionary(
+                        s => s,
+                        s => File.Exists(s) ? File.GetLastWriteTimeUtc(s).ToString("O") : string.Empty)
+                };
+
+                File.WriteAllText(terminalDataPath, JsonSerializer.Serialize(cacheData, JsonOptions));
+                File.WriteAllText(terminalMetaPath, JsonSerializer.Serialize(meta, JsonOptions));
+
+                _terminalTypeIds = typeIds;
+            });
+        }
+        finally
+        {
+            overlay.Dismiss();
+            await shellTask;
+        }
+    }
+
+    void FilterToTerminalBlocks()
+    {
+        var keysToRemove = _blocks.Keys
+            .Where(id => !_terminalTypeIds.Contains(id.TypeId))
+            .ToList();
+        foreach (var key in keysToRemove)
+            _blocks.Remove(key);
+
+        _categories = _categories
+            .Select(c => c with { Items = c.Items.Where(id => _terminalTypeIds.Contains(id.TypeId)).ToList() })
+            .Where(c => c.Items.Count > 0)
+            .ToList();
+
+        logger.Info($"Filtered to terminal blocks: {_blocks.Count} blocks, removed {keysToRemove.Count} non-terminal types.");
     }
 
     async Task LoadFromCacheAsync(string dataPath)

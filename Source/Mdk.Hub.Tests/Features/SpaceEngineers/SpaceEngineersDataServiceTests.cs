@@ -139,6 +139,90 @@ public class SpaceEngineersDataServiceTests
         Assert.That(c2, Is.Not.Empty);
     }
 
+    // ── Terminal filtering ────────────────────────────────────────────────────
+
+    [Test]
+    public async Task GetBlockAsync_NoBinPath_ReturnsUnfilteredBlocks()
+    {
+        // _service has binPath=null (default) → no terminal filtering.
+        // All fixture blocks (TestRefinery, TestGyro, TestArmor) should be accessible.
+        var r1 = await _service.GetBlockAsync("TestRefinery", "TestRefinery_Large");
+        var r2 = await _service.GetBlockAsync("TestArmor", "TestArmor_Small");
+
+        Assert.That(r1.IsSuccess, Is.True);
+        Assert.That(r2.IsSuccess, Is.True);
+        TestContext.Out.WriteLine("No bin path → all blocks reachable (no filtering).");
+    }
+
+    [Test]
+    public async Task GetBlockAsync_WithTerminalFilter_NonTerminalBlockIsFilteredOut()
+    {
+        // Create a fake bin dir where only TestRefinery is terminal.
+        var binDir = Path.Combine(_tempDir, "FakeBin");
+        Directory.CreateDirectory(binDir);
+        FakeGameDllBuilder.Create(binDir,
+            ("TestRefinery", true),
+            ("TestGyro", true),
+            ("TestArmor", false));  // ← non-terminal
+
+        var service = new TestableSpaceEngineersDataService(_contentDir, _storage, _shell, _logger, binDir);
+        await service.GetCategoriesAsync();  // trigger load
+
+        var terminal = await service.GetBlockAsync("TestRefinery", "TestRefinery_Large");
+        var nonTerminal = await service.GetBlockAsync("TestArmor", "TestArmor_Small");
+
+        TestContext.Out.WriteLine($"TestRefinery (terminal): IsSuccess={terminal.IsSuccess}");
+        TestContext.Out.WriteLine($"TestArmor (non-terminal): IsSuccess={nonTerminal.IsSuccess} ErrorKind={nonTerminal.ErrorKind}");
+
+        Assert.That(terminal.IsSuccess, Is.True);
+        Assert.That(nonTerminal.IsSuccess, Is.False);
+        Assert.That(nonTerminal.ErrorKind, Is.EqualTo(ApiErrorKind.NotFound));
+    }
+
+    [Test]
+    public async Task GetCategoriesAsync_WithTerminalFilter_CategoryItemsFilteredToTerminalOnly()
+    {
+        var binDir = Path.Combine(_tempDir, "FakeBin");
+        Directory.CreateDirectory(binDir);
+        FakeGameDllBuilder.Create(binDir,
+            ("TestRefinery", true),
+            ("TestGyro", true),
+            ("TestArmor", false));
+
+        var service = new TestableSpaceEngineersDataService(_contentDir, _storage, _shell, _logger, binDir);
+        var result = await service.GetCategoriesAsync();
+
+        Assert.That(result.TryGetValue(out var categories), Is.True);
+        TestContext.Out.WriteLine("Categories after terminal filtering:");
+        foreach (var c in categories!)
+        {
+            TestContext.Out.WriteLine($"  [{c.Name}] items: {string.Join(", ", c.Items)}");
+            Assert.That(c.Items.Select(i => i.TypeId), Does.Not.Contain("TestArmor"),
+                $"Category {c.Name} should not contain non-terminal TestArmor");
+        }
+    }
+
+    [Test]
+    public async Task GetCategoriesAsync_WithTerminalFilter_EmptyCategoriesDropped()
+    {
+        // Fixture has Section1_Processing containing only TestRefinery.
+        // If TestRefinery is NOT terminal, that category should disappear entirely.
+        var binDir = Path.Combine(_tempDir, "FakeBin");
+        Directory.CreateDirectory(binDir);
+        FakeGameDllBuilder.Create(binDir,
+            ("TestGyro", true),       // in Section2_Motion
+            ("TestRefinery", false),  // in Section1_Processing — non-terminal → category should drop
+            ("TestArmor", false));
+
+        var service = new TestableSpaceEngineersDataService(_contentDir, _storage, _shell, _logger, binDir);
+        var result = await service.GetCategoriesAsync();
+
+        Assert.That(result.TryGetValue(out var categories), Is.True);
+        var names = categories!.Select(c => c.Name).ToList();
+        TestContext.Out.WriteLine($"Remaining categories: [{string.Join(", ", names)}]");
+        Assert.That(names, Does.Not.Contain("Section1_Processing"));
+    }
+
     /// <summary>
     ///     Subclass that bypasses the SE install detection and injects a fixed content path.
     ///     The cache location comes from the real <c>IFileStorageService.GetLocalApplicationDataPath</c>,
@@ -146,14 +230,21 @@ public class SpaceEngineersDataServiceTests
     ///     However, the service writes cache files via <c>File.WriteAllText</c>, so the cache ends
     ///     up in the path string that <see cref="InMemoryFileStorageService" /> returns — which is
     ///     a real filesystem-looking path that we can observe with <c>File.Exists</c>.
+    ///     <para>
+    ///         Pass a non-null <paramref name="binPath" /> to enable terminal type scanning against
+    ///         a fake DLL directory (e.g., one built by <see cref="FakeGameDllBuilder" />).
+    ///         Passing <c>null</c> (default) skips terminal scanning entirely.
+    ///     </para>
     /// </summary>
     sealed class TestableSpaceEngineersDataService(
         string contentPath,
         InMemoryFileStorageService storage,
         IShell shell,
-        ILogger logger)
+        ILogger logger,
+        string? binPath = null)
         : SpaceEngineersDataService(storage, shell, logger)
     {
         protected override string? ResolveContentPath() => contentPath;
+        protected override string? ResolveBinPath(string _) => binPath;
     }
 }

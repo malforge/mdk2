@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using FakeItEasy;
 using Mdk.Hub.Features.Diagnostics;
@@ -123,6 +124,65 @@ public class SpaceEngineersDataServiceRealTests
         }
 
         Assert.That(shown, Is.GreaterThan(0), "Expected to resolve at least one block from the first category.");
+    }
+
+    [Test]
+    [Description("Verifies the terminal type scanner finds well-known terminal TypeIds in the real SE DLLs.")]
+    public void TerminalScanner_RealInstall_FindsKnownTerminalTypes()
+    {
+        // Derive Bin64 path from the SE install — same logic as SpaceEngineersDataService.ResolveBinPath.
+        var seInstall = new Mdk.Hub.Utility.SpaceEngineers();
+        var contentPath = seInstall.GetInstallPath("Content");
+        Assert.That(contentPath, Is.Not.Null, "SE Content path not found");
+
+        var binPath = Path.Combine(Path.GetDirectoryName(contentPath)!, "Bin64");
+        Assert.That(Directory.Exists(binPath), Is.True, $"Bin64 not found at {binPath}");
+
+        var typeIds = SpaceEngineersTerminalScanner.Scan(binPath);
+
+        TestContext.Out.WriteLine($"Found {typeIds.Count} terminal TypeIds. Sample:");
+        foreach (var id in typeIds.OrderBy(x => x).Take(30))
+            TestContext.Out.WriteLine($"  {id}");
+
+        // These are known terminal blocks in every SE release.
+        Assert.That(typeIds, Contains.Item("Refinery"),       "Refinery should be terminal");
+        Assert.That(typeIds, Contains.Item("Gyro"),           "Gyro should be terminal");
+        Assert.That(typeIds, Contains.Item("Thrust"),         "Thrust should be terminal");
+        Assert.That(typeIds, Contains.Item("BatteryBlock"),   "BatteryBlock should be terminal");
+    }
+
+    [Test]
+    [Description("Verifies that armor blocks (non-terminal) are NOT returned by the terminal scanner.")]
+    public void TerminalScanner_RealInstall_ExcludesNonTerminalTypes()
+    {
+        var seInstall = new Mdk.Hub.Utility.SpaceEngineers();
+        var contentPath = seInstall.GetInstallPath("Content");
+        var binPath = Path.Combine(Path.GetDirectoryName(contentPath!)!, "Bin64");
+
+        var typeIds = SpaceEngineersTerminalScanner.Scan(binPath);
+
+        // CubeBlock (armor) is a structural block with no terminal interface.
+        Assert.That(typeIds, Does.Not.Contain("CubeBlock"), "Armor CubeBlock should not be terminal");
+        TestContext.Out.WriteLine($"Confirmed: CubeBlock not in terminal type set ({typeIds.Count} total terminal types).");
+    }
+
+    [Test]
+    [Description("Verifies the full service load on real data only returns terminal blocks.")]
+    public async Task GetCategoriesAsync_RealInstall_OnlyContainsTerminalBlocks()
+    {
+        var result = await _service.GetCategoriesAsync();
+        Assert.That(result.TryGetValue(out var categories), Is.True, result.ErrorMessage);
+
+        // Armor TypeId is "CubeBlock" — it should not appear in any category.
+        foreach (var c in categories!)
+        {
+            var armorItems = c.Items.Where(i => i.TypeId == "CubeBlock").ToList();
+            if (armorItems.Count > 0)
+                TestContext.Out.WriteLine($"WARNING: Category {c.Name} still contains CubeBlock items: {string.Join(", ", armorItems)}");
+            Assert.That(armorItems, Is.Empty, $"Category {c.Name} should not contain non-terminal CubeBlock items");
+        }
+
+        TestContext.Out.WriteLine($"All {categories.Count} categories contain only terminal blocks. ✓");
     }
 
     /// <summary>
