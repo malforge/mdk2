@@ -11,7 +11,7 @@
              VerticalAlignment="Stretch">
 
     <UserControl.Styles>
-        <!-- Strip default selection/hover chrome from block grid items -->
+    <!-- Strip default selection/hover chrome from block grid items -->
         <Style Selector="ListBox.block-grid > ListBoxItem">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Template">
@@ -64,7 +64,8 @@
                                Classes="title2 semibold"
                                VerticalAlignment="Center" />
                     <!-- spring -->
-                    <TextBox Grid.Column="2"
+                    <TextBox x:Name="SearchBox"
+                             Grid.Column="2"
                              Width="220"
                              Text="{Binding SearchText, Mode=TwoWay}"
                              Watermark="Search..."
@@ -120,9 +121,13 @@
                                     Height="110"
                                     ToolTip.Tip="{Binding DisplayName}">
                                 <Grid>
-                                    <!-- Icon fills entire cell -->
+                                    <!-- Icon fills entire cell; placeholder shown until loaded -->
                                     <Border Background="{StaticResource BackgroundSecondaryBrush}"
                                             CornerRadius="2" />
+                                    <Image Source="{Binding Icon}"
+                                           Stretch="UniformToFill"
+                                           Margin="8"
+                                           IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}" />
                                     <!-- Text at bottom, no scrim -->
                                     <TextBlock Text="{Binding DisplayName}"
                                                FontSize="11"
@@ -132,15 +137,14 @@
                                                TextAlignment="Center"
                                                HorizontalAlignment="Stretch"
                                                VerticalAlignment="Bottom" />
-                                    <!-- Upper-right: cube size indicator placeholder -->
-                                    <Border Width="18" Height="18"
-                                            Background="{StaticResource BackgroundCardBrush}"
-                                            BorderBrush="{StaticResource BorderSubtleBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="2"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            Margin="0,4,4,0" />
+                                    <!-- Upper-right: grid size indicator — only meaningful in specific-block mode -->
+                                    <!-- Large grid: outline square. Small grid: filled square with hole at lower-left. -->
+                                    <Path HorizontalAlignment="Right"
+                                          VerticalAlignment="Top"
+                                          Margin="0,4,4,0"
+                                          Fill="{StaticResource ForegroundMutedBrush}"
+                                          IsVisible="{Binding $parent[ListBox].((local:BlockSelectorViewModel)DataContext).IsSpecificBlock}"
+                                          Data="{Binding IsLargeGrid, Converter={x:Static local:GridSizeGeometryConverter.Instance}}" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -171,3 +175,4 @@
     </Border>
 
 </UserControl>
+

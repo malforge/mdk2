@@ -30,6 +30,7 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
     bool _loaded;
     string? _loadError;
     ApiErrorKind _loadErrorKind;
+    string? _contentPath;
     Dictionary<BlockId, BlockInfo> _blocks = new();
     List<BlockCategory> _categories = [];
     HashSet<string> _terminalTypeIds = new();
@@ -47,7 +48,13 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
     {
         if (!await EnsureLoadedAsync())
             return ApiResult<IReadOnlyList<BlockInfo>>.Fail(_loadError!, _loadErrorKind);
-        return ApiResult<IReadOnlyList<BlockInfo>>.Ok(_blocks.Values.ToList());
+        var contentPath = _contentPath;
+        var blocks = _blocks.Values
+            .Select(b => contentPath != null && b.IconPath != null
+                ? b with { IconPath = Path.Combine(contentPath, b.IconPath) }
+                : b)
+            .ToList();
+        return ApiResult<IReadOnlyList<BlockInfo>>.Ok(blocks);
     }
 
     /// <inheritdoc />
@@ -91,6 +98,8 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
             logger.Warning(_loadError);
             return;
         }
+
+        _contentPath = contentPath;
 
         try
         {

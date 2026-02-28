@@ -26,11 +26,13 @@
         <When Condition="$([System.String]::Copy('$(TargetFramework)').Contains('-windows'))">
             <PropertyGroup>
                 <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+                <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
             </PropertyGroup>
 
             <ItemGroup>
                 <Compile Remove="**\*.Linux.cs" />
                 <None Include="**\*.Linux.cs" />
+                <PackageReference Include="DirectXTexNet" Version="1.0.1" />
             </ItemGroup>
         </When>
 

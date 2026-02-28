@@ -105,7 +105,9 @@
         </Grid>
 
         <!-- Overlay Layer (property editors, dialogs) -->
-        <ItemsControl IsVisible="{Binding HasOverlays}"
+        <ItemsControl x:Name="OverlayPanel"
+                      IsVisible="{Binding HasOverlays}"
+                      Focusable="True"
                       ItemsSource="{Binding OverlayViews}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>

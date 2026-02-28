@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Media.Imaging;
+using Mdk.Hub.Features.Images;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.SpaceEngineers;
 using Mdk.Hub.Framework;
@@ -18,16 +20,39 @@ public sealed record BlockCategoryItem(string Name, int Depth = 0);
 /// <summary>
 ///     Represents a selectable block in the block selector grid.
 /// </summary>
-public sealed record BlockItem(
-    string TypeId,
-    string SubtypeId,
-    string DisplayName,
-    bool IsLargeGrid = true,
-    bool IsDlc = false,
-    string? IconPath = null)
+public sealed class BlockItem(
+    string typeId,
+    string subtypeId,
+    string displayName,
+    bool isLargeGrid = true,
+    bool isDlc = false,
+    string? iconPath = null) : Model
 {
+    Bitmap? _icon;
+
     /// <summary>Full definition ID (TypeId/SubtypeId) used when selecting a specific block.</summary>
     public string Id => $"{TypeId}/{SubtypeId}";
+    /// <summary>The block TypeId without the MyObjectBuilder_ prefix.</summary>
+    public string TypeId { get; } = typeId;
+    /// <summary>The block SubtypeId.</summary>
+    public string SubtypeId { get; } = subtypeId;
+    /// <summary>Display name shown in the selector.</summary>
+    public string DisplayName { get; } = displayName;
+    /// <summary>Whether this is a large-grid variant.</summary>
+    public bool IsLargeGrid { get; } = isLargeGrid;
+    /// <summary>Whether this is a small-grid variant.</summary>
+    public bool IsSmallGrid => !IsLargeGrid;
+    /// <summary>Whether this block requires DLC.</summary>
+    public bool IsDlc { get; } = isDlc;
+    /// <summary>Absolute path to the block's .dds icon file, if available.</summary>
+    public string? IconPath { get; } = iconPath;
+
+    /// <summary>Decoded icon bitmap, populated asynchronously after construction.</summary>
+    public Bitmap? Icon
+    {
+        get => _icon;
+        set => SetProperty(ref _icon, value);
+    }
 }
 
 /// <summary>
@@ -46,6 +71,7 @@ public class BlockSelectorViewModel : OverlayModel
     static readonly BlockCategoryItem AllCategory = new("All");
 
     readonly ISpaceEngineersDataService _seData;
+    readonly IImageService _images;
     List<BlockItem> _allBlocks = [];
     // Maps category display name → set of block IDs in that category.
     // A block can appear in multiple categories (e.g., DLC Blocks + its functional category).
@@ -61,9 +87,10 @@ public class BlockSelectorViewModel : OverlayModel
     /// <summary>
     ///     Initializes a new instance of <see cref="BlockSelectorViewModel" />.
     /// </summary>
-    public BlockSelectorViewModel(ISpaceEngineersDataService seData)
+    public BlockSelectorViewModel(ISpaceEngineersDataService seData, IImageService images)
     {
         _seData = seData;
+        _images = images;
         Categories = [];
         FilteredBlocks = [];
         OkCommand = new RelayCommand(Ok, CanOk);
@@ -83,12 +110,12 @@ public class BlockSelectorViewModel : OverlayModel
         {
             _allBlocks = blocks
                 .Select(b => new BlockItem(
-                    TypeId: b.Id.TypeId,
-                    SubtypeId: b.Id.SubtypeId,
-                    DisplayName: b.DisplayName,
-                    IsLargeGrid: b.CubeSize == "Large",
-                    IsDlc: b.Dlc != null,
-                    IconPath: b.IconPath))
+                    b.Id.TypeId,
+                    b.Id.SubtypeId,
+                    b.DisplayName,
+                    b.CubeSize == "Large",
+                    b.Dlc != null,
+                    b.IconPath))
                 .ToList();
 
             // Build category → block ID sets (blocks can belong to multiple categories)
@@ -102,6 +129,7 @@ public class BlockSelectorViewModel : OverlayModel
             }
 
             BuildCategories(categories);
+            LoadIconsInBackground(_allBlocks);
         }
         else
         {
@@ -228,6 +256,20 @@ public class BlockSelectorViewModel : OverlayModel
     ///     Gets the command that dismisses the overlay without making a selection.
     /// </summary>
     public ICommand CancelCommand { get; }
+
+    void LoadIconsInBackground(List<BlockItem> blocks)
+    {
+        foreach (var block in blocks)
+        {
+            if (block.IconPath is not { } path)
+                continue;
+            _ = Task.Run(async () =>
+            {
+                var bitmap = await _images.LoadDdsAsync(path);
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => block.Icon = bitmap);
+            });
+        }
+    }
 
     void BuildCategories(IReadOnlyList<SpaceEngineers.BlockCategory> seCategories)
     {

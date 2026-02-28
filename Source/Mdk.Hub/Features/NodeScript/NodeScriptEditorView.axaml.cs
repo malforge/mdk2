@@ -1,5 +1,8 @@
+using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.NodeScript;
@@ -16,6 +19,11 @@ public partial class NodeScriptEditorView : UserControl
     public NodeScriptEditorView()
     {
         InitializeComponent();
+        OverlayPanel.GetObservable(IsVisibleProperty).Subscribe(isVisible =>
+        {
+            if (isVisible)
+                OverlayPanel.Focus();
+        });
     }
 
     void OnNodeContentPointerPressed(object? sender, PointerPressedEventArgs e)

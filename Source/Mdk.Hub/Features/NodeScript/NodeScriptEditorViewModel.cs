@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia;
 using Mal.SourceGeneratedDI;
+using Mdk.Hub.Features.Images;
+using Mdk.Hub.Features.Input;
 using Mdk.Hub.Features.NodeScript.BlockSelector;
 using Mdk.Hub.Features.NodeScript.Nodes;
 using Mdk.Hub.Features.Shell;
@@ -20,6 +22,8 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
 {
     readonly IShell _shell;
     readonly ISpaceEngineersDataService _seData;
+    readonly IImageService _images;
+    readonly IKeyScopeService _keyScopes;
     string _title = "Node Script Editor";
     string? _filePath;
     double _zoom = 1.0;
@@ -30,15 +34,17 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
     /// <summary>
     ///     Design-time constructor.
     /// </summary>
-    public NodeScriptEditorViewModel() : this(null!, null!) { }
+    public NodeScriptEditorViewModel() : this(null!, null!, null!, null!) { }
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="NodeScriptEditorViewModel" /> class.
     /// </summary>
-    public NodeScriptEditorViewModel(IShell shell, ISpaceEngineersDataService seData)
+    public NodeScriptEditorViewModel(IShell shell, ISpaceEngineersDataService seData, IImageService images, IKeyScopeService keyScopes)
     {
         _shell = shell;
         _seData = seData;
+        _images = images;
+        _keyScopes = keyScopes;
         Nodes = new ObservableCollection<object>();
         Connections = new ObservableCollection<object>();
         OverlayViews = new ObservableCollection<object>();
@@ -235,8 +241,8 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
 
     async Task TestBlockSelectorAsync()
     {
-        var selector = new BlockSelectorViewModel(_seData);
-        var view = new BlockSelector.BlockSelectorView { DataContext = selector };
+        var selector = new BlockSelectorViewModel(_seData, _images);
+        var view = new BlockSelector.BlockSelectorView(_keyScopes) { DataContext = selector };
 
         var tcs = new TaskCompletionSource();
         selector.Dismissed += (_, _) =>
