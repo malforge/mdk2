@@ -3,15 +3,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:Mdk.Hub.Features.NodeScript.BlockSelector"
+             xmlns:selector="clr-namespace:Mdk.Hub.Features.NodeScript.Selector"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="Mdk.Hub.Features.NodeScript.BlockSelector.BlockSelectorView"
              x:DataType="local:BlockSelectorViewModel"
-             Background="#CC000000"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch">
 
     <UserControl.Styles>
-    <!-- Strip default selection/hover chrome from block grid items -->
+        <!-- Strip default selection/hover chrome from block grid items -->
         <Style Selector="ListBox.block-grid > ListBoxItem">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Template">
@@ -45,134 +45,63 @@
         </Style>
     </UserControl.Styles>
 
-    <!-- Content area: fills the window with breathing room via margin -->
-    <Border Background="{StaticResource BackgroundDialogBrush}"
-            CornerRadius="8"
-            Margin="60,40"
-            BoxShadow="0 8 40 0 #AA000000">
+    <selector:SelectorOverlayView x:Name="Selector"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch">
 
-        <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header filter: specific-block toggle -->
+        <selector:SelectorOverlayView.FilterContent>
+            <CheckBox Content="Specific block"
+                      IsChecked="{Binding IsSpecificBlock, Mode=TwoWay}"
+                      IsVisible="{Binding CanToggleTypeOnly}"
+                      VerticalAlignment="Center" />
+        </selector:SelectorOverlayView.FilterContent>
 
-            <!-- Header -->
-            <Border Grid.Row="0"
-                    Padding="20,16"
-                    BorderBrush="{StaticResource BorderSubtleBrush}"
-                    BorderThickness="0,0,0,1">
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="16">
-                    <TextBlock Grid.Column="0"
-                               Text="Select Block Type"
-                               Classes="title2 semibold"
-                               VerticalAlignment="Center" />
-                    <!-- spring -->
-                    <TextBox x:Name="SearchBox"
-                             Grid.Column="2"
-                             Width="220"
-                             Text="{Binding SearchText, Mode=TwoWay}"
-                             Watermark="Search..."
-                             VerticalAlignment="Center" />
-                    <CheckBox Grid.Column="3"
-                              Content="Specific block"
-                              IsChecked="{Binding IsSpecificBlock, Mode=TwoWay}"
-                              IsVisible="{Binding CanToggleTypeOnly}"
-                              VerticalAlignment="Center" />
-                </Grid>
-            </Border>
+        <!-- Items panel: wrap grid for blocks -->
+        <selector:SelectorOverlayView.ItemsPanel>
+            <ItemsPanelTemplate>
+                <WrapPanel />
+            </ItemsPanelTemplate>
+        </selector:SelectorOverlayView.ItemsPanel>
 
-            <!-- Main content: category list on left, block grid on right -->
-            <Grid Grid.Row="1" ColumnDefinitions="220,1,*">
+        <!-- Item template: 110×110 icon cell -->
+        <selector:SelectorOverlayView.ItemTemplate>
+            <DataTemplate DataType="local:BlockItem">
+                <Border Classes="block-cell"
+                        Classes.selected="{Binding $parent[ListBoxItem].IsSelected}"
+                        Width="110"
+                        Height="110"
+                        ToolTip.Tip="{Binding DisplayName}">
+                    <Grid>
+                        <!-- Icon fills entire cell; placeholder shown until loaded -->
+                        <Border Background="{StaticResource BackgroundSecondaryBrush}"
+                                CornerRadius="2" />
+                        <Image Source="{Binding Icon}"
+                               Stretch="UniformToFill"
+                               Margin="8"
+                               IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        <!-- Text at bottom, no scrim -->
+                        <TextBlock Text="{Binding DisplayName}"
+                                   FontSize="11"
+                                   Padding="4,0,4,4"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="NoWrap"
+                                   TextAlignment="Center"
+                                   HorizontalAlignment="Stretch"
+                                   VerticalAlignment="Bottom" />
+                        <!-- Upper-right: grid size indicator — only meaningful in specific-block mode -->
+                        <Path HorizontalAlignment="Right"
+                              VerticalAlignment="Top"
+                              Margin="0,4,4,0"
+                              Fill="{StaticResource ForegroundMutedBrush}"
+                              IsVisible="{Binding $parent[ListBox].((local:BlockSelectorViewModel)DataContext).IsSpecificBlock}"
+                              Data="{Binding IsLargeGrid, Converter={x:Static local:GridSizeGeometryConverter.Instance}}" />
+                    </Grid>
+                </Border>
+            </DataTemplate>
+        </selector:SelectorOverlayView.ItemTemplate>
 
-                <!-- Category list -->
-                <ListBox Grid.Column="0"
-                         ItemsSource="{Binding Categories}"
-                         SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         Padding="4,8">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="local:BlockCategoryItem">
-                            <TextBlock Text="{Binding Name}"
-                                       Padding="8,4" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
-                <!-- Vertical separator -->
-                <Rectangle Grid.Column="1"
-                           Fill="{StaticResource BorderSubtleBrush}" />
-
-                <!-- Block grid -->
-                <ListBox Grid.Column="2"
-                         Classes="block-grid"
-                         ItemsSource="{Binding FilteredBlocks}"
-                         SelectedItem="{Binding SelectedBlock, Mode=TwoWay}"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         Padding="8">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="local:BlockItem">
-                            <Border Classes="block-cell"
-                                    Classes.selected="{Binding $parent[ListBoxItem].IsSelected}"
-                                    Width="110"
-                                    Height="110"
-                                    ToolTip.Tip="{Binding DisplayName}">
-                                <Grid>
-                                    <!-- Icon fills entire cell; placeholder shown until loaded -->
-                                    <Border Background="{StaticResource BackgroundSecondaryBrush}"
-                                            CornerRadius="2" />
-                                    <Image Source="{Binding Icon}"
-                                           Stretch="UniformToFill"
-                                           Margin="8"
-                                           IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}" />
-                                    <!-- Text at bottom, no scrim -->
-                                    <TextBlock Text="{Binding DisplayName}"
-                                               FontSize="11"
-                                               Padding="4,0,4,4"
-                                               TextTrimming="CharacterEllipsis"
-                                               TextWrapping="NoWrap"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Stretch"
-                                               VerticalAlignment="Bottom" />
-                                    <!-- Upper-right: grid size indicator — only meaningful in specific-block mode -->
-                                    <!-- Large grid: outline square. Small grid: filled square with hole at lower-left. -->
-                                    <Path HorizontalAlignment="Right"
-                                          VerticalAlignment="Top"
-                                          Margin="0,4,4,0"
-                                          Fill="{StaticResource ForegroundMutedBrush}"
-                                          IsVisible="{Binding $parent[ListBox].((local:BlockSelectorViewModel)DataContext).IsSpecificBlock}"
-                                          Data="{Binding IsLargeGrid, Converter={x:Static local:GridSizeGeometryConverter.Instance}}" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
-            </Grid>
-
-            <!-- Footer -->
-            <Border Grid.Row="2"
-                    Padding="16"
-                    BorderBrush="{StaticResource BorderSubtleBrush}"
-                    BorderThickness="0,1,0,0">
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            Spacing="8">
-                    <Button Content="OK"
-                            Command="{Binding OkCommand}"
-                            Classes="accent"
-                            MinWidth="80" />
-                    <Button Content="Cancel"
-                            Command="{Binding CancelCommand}"
-                            MinWidth="80" />
-                </StackPanel>
-            </Border>
-
-        </Grid>
-    </Border>
+    </selector:SelectorOverlayView>
 
 </UserControl>
 

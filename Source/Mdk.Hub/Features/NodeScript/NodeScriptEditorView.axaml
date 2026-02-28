@@ -94,14 +94,6 @@
                        Classes="empty-state-hint"
                        IsVisible="{Binding !HasNodes}"
                        IsHitTestVisible="False" />
-
-            <!-- Add Node Menu Popup -->
-            <Popup IsOpen="{Binding IsAddNodeMenuOpen}"
-                   PlacementTarget="{Binding $parent[UserControl]}"
-                   IsLightDismissEnabled="True"
-                   Placement="Pointer">
-                <nodeScript:AddNodeMenuView DataContext="{Binding AddNodeMenu}" />
-            </Popup>
         </Grid>
 
         <!-- Overlay Layer (property editors, dialogs) -->

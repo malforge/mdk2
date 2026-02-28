@@ -1,4 +1,5 @@
 using System;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
@@ -17,4 +18,9 @@ public abstract class OverlayModel : ViewModel
     ///     Dismisses the overlay by invoking the Dismissed event.
     /// </summary>
     public void Dismiss() => Dismissed?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
+    ///     Shows this overlay via the provided <see cref="IOverlayService" />.
+    /// </summary>
+    public void Show(IOverlayService overlayService) => overlayService.Show(this);
 }

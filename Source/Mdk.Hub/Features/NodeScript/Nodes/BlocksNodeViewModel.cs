@@ -1,6 +1,4 @@
-﻿using System;
-using Avalonia;
-using Mdk.Hub.Features.NodeScript.Editors;
+﻿using Avalonia;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.NodeScript.Nodes;
@@ -8,7 +6,7 @@ namespace Mdk.Hub.Features.NodeScript.Nodes;
 /// <summary>
 ///     ViewModel for a Blocks node (data source for blocks in Space Engineers).
 /// </summary>
-public class BlocksNodeViewModel : ViewModel, INodeEditor
+public class BlocksNodeViewModel : ViewModel
 {
     Point _location;
     string? _pattern;
@@ -94,11 +92,5 @@ public class BlocksNodeViewModel : ViewModel, INodeEditor
             return parts.Count > 0 ? $"Blocks: {string.Join(", ", parts)}" : "Blocks: (all)";
         }
     }
-
-    /// <inheritdoc />
-    public (object viewModel, Type viewType) GetEditor()
-    {
-        var editorViewModel = new BlocksNodeEditorViewModel(this);
-        return (editorViewModel, typeof(BlocksNodeEditorView));
-    }
 }
+

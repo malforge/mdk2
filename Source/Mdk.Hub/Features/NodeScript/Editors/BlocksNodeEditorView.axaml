@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:editors="clr-namespace:Mdk.Hub.Features.NodeScript.Editors"
              xmlns:converters="clr-namespace:Mdk.Hub.Framework.Converters"
+             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
              x:Class="Mdk.Hub.Features.NodeScript.Editors.BlocksNodeEditorView"
              x:DataType="editors:BlocksNodeEditorViewModel"
@@ -45,15 +46,13 @@
             <!-- Content -->
             <StackPanel Spacing="16">
                 
-                <!-- Block Type (Optional) - Dropdown -->
+                <!-- Block Type (Optional) - Block Picker -->
                 <StackPanel Spacing="4">
                     <TextBlock Text="Block Type (optional)"
                                Classes="caption semibold" />
-                    <AutoCompleteBox Text="{Binding BlockType}"
-                                     ItemsSource="{Binding AvailableBlockTypes}"
-                                     Watermark="Type to search..."
-                                     FilterMode="Contains"
-                                     MaxDropDownHeight="200" />
+                    <controls:TextWithButton Value="{Binding BlockType}"
+                                            Placeholder="Any block type"
+                                            Command="{Binding BrowseBlockTypeCommand}" />
                     <TextBlock Text="Leave empty to match any block type."
                                Classes="caption muted" />
                 </StackPanel>

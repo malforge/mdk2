@@ -1,0 +1,30 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls">
+
+    <Style Selector="controls|TextWithButton">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Border Grid.Column="0"
+                            CornerRadius="4"
+                            Padding="8,5"
+                            Background="{StaticResource OverlayLightSubtleBrush}"
+                            BorderBrush="{StaticResource BorderDefaultBrush}"
+                            BorderThickness="1">
+                        <TextBlock Text="{TemplateBinding DisplayText}"
+                                   Classes.muted="{TemplateBinding IsShowingPlaceholder}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                    </Border>
+                    <Button Grid.Column="1"
+                            Name="PART_Button"
+                            Content="{TemplateBinding ButtonContent}"
+                            Command="{TemplateBinding Command}"
+                            MinWidth="80" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+</Styles>

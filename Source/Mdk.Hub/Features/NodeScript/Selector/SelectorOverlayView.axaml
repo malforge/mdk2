@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Mdk.Hub.Features.NodeScript.Selector"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="Mdk.Hub.Features.NodeScript.Selector.SelectorOverlayView"
+             x:DataType="local:SelectorViewModelBase"
+             Background="#CC000000"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+
+    <UserControl.Styles>
+        <Style Selector="ListBox.selector-categories > ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Content card: fills the window with breathing room -->
+    <Border Background="{StaticResource BackgroundDialogBrush}"
+            CornerRadius="8"
+            Margin="60,40"
+            BoxShadow="0 8 40 0 #AA000000">
+
+        <Grid RowDefinitions="Auto,*,Auto">
+
+            <!-- Header: title | (spring) | search | filter content -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="16">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Title}"
+                               Classes="title2 semibold"
+                               VerticalAlignment="Center" />
+                    <!-- spring (column 1 stretches) -->
+                    <TextBox x:Name="PART_SearchBox"
+                             Grid.Column="2"
+                             Width="220"
+                             Text="{Binding SearchText, Mode=TwoWay}"
+                             Watermark="Search..."
+                             VerticalAlignment="Center" />
+                    <ContentPresenter x:Name="PART_FilterContent"
+                                      Grid.Column="3"
+                                      VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Body: category sidebar | separator | items panel -->
+            <Grid Grid.Row="1" ColumnDefinitions="220,1,*">
+
+                <!-- Category list -->
+                <ListBox Grid.Column="0"
+                         Classes="selector-categories"
+                         ItemsSource="{Binding Categories}"
+                         SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="4,8">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="local:SelectorCategoryItem">
+                            <TextBlock Text="{Binding Name}"
+                                       Padding="{Binding Depth, Converter={x:Static local:DepthToMarginConverter.Instance}}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Vertical separator -->
+                <Rectangle Grid.Column="1"
+                           Fill="{StaticResource BorderSubtleBrush}" />
+
+                <!-- Items panel — ItemTemplate and ItemsPanel wired in code-behind -->
+                <ListBox x:Name="PART_Items"
+                         Grid.Column="2"
+                         ItemsSource="{Binding FilteredItems}"
+                         SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="8" />
+
+            </Grid>
+
+            <!-- Footer: OK / Cancel -->
+            <Border Grid.Row="2"
+                    Padding="16"
+                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8">
+                    <Button Content="OK"
+                            Command="{Binding ConfirmCommand}"
+                            Classes="accent"
+                            MinWidth="80" />
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            MinWidth="80" />
+                </StackPanel>
+            </Border>
+
+        </Grid>
+    </Border>
+
+</UserControl>

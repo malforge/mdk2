@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Mdk.Hub.Features.NodeScript.NodeSelector"
+             xmlns:selector="clr-namespace:Mdk.Hub.Features.NodeScript.Selector"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="Mdk.Hub.Features.NodeScript.NodeSelector.NodeSelectorView"
+             x:DataType="local:NodeSelectorViewModel"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+
+    <selector:SelectorOverlayView x:Name="Selector"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch">
+        <selector:SelectorOverlayView.ItemTemplate>
+            <DataTemplate DataType="local:NodeSelectorItem">
+                <Border Padding="12,8"
+                        Background="Transparent">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding Name}"
+                                   Classes="semibold" />
+                        <TextBlock Text="{Binding Description}"
+                                   Classes="caption muted"
+                                   IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </selector:SelectorOverlayView.ItemTemplate>
+    </selector:SelectorOverlayView>
+
+</UserControl>
