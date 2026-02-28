@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Mdk.Hub.Framework;
 
-namespace Mdk.Hub.Features.NodeScript.BlockDefinitions;
+namespace Mdk.Hub.Features.SpaceEngineers;
 
 /// <summary>
-///     Provides Space Engineers block definition data parsed from SBC files.
-///     Data is loaded lazily on first request and cached for subsequent calls.
+///     Provides Space Engineers block definition data loaded from the game's SBC files.
+///     Data is loaded on first request, cached on disk, and the cache is automatically
+///     refreshed when source files change.
 /// </summary>
-public interface IBlockDefinitionService
+public interface ISpaceEngineersDataService
 {
     /// <summary>
     ///     Gets all block categories ordered as they appear in the Space Engineers G-menu.

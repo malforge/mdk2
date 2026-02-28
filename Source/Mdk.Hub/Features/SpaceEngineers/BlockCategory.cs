@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Mdk.Hub.Features.NodeScript.BlockDefinitions;
+namespace Mdk.Hub.Features.SpaceEngineers;
 
 /// <summary>
 ///     A block category as shown in the Space Engineers G-menu (Toolbar Config).

@@ -15,3 +15,4 @@ General research documents not tied to a specific project. These are findings, n
 
 - [se-block-categories.md](se-block-categories.md) — How the G-menu block selector is structured; `BlockCategories.sbc` format, ordering, sub-categories, block ID format, and implications for NodeScript block selector
 - [se-cubeblocks-format.md](se-cubeblocks-format.md) — CubeBlock definition SBC format, icon paths, localization (RESX), minimal data model, and full data pipeline for the block selector
+- [se-terminal-block-identification.md](se-terminal-block-identification.md) — How to identify terminal blocks via `MyTerminalInterfaceAttribute` + `MyCubeBlockTypeAttribute`; Cecil approach for static DLL analysis without running SE

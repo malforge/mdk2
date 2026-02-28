@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.CommonDialogs;
@@ -255,13 +256,16 @@ public class ShellViewModel : ViewModel, IShell, ISupportClosing
         void onDismissed(object? sender, EventArgs e)
         {
             model.Dismissed -= onDismissed;
-            OverlayViews.Remove(model);
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (model is IDisposable disposable) disposable.Dispose();
+            Dispatcher.UIThread.Post(() =>
+            {
+                OverlayViews.Remove(model);
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                if (model is IDisposable disposable) disposable.Dispose();
+            });
         }
 
         model.Dismissed += onDismissed;
-        OverlayViews.Add(model);
+        Dispatcher.UIThread.Post(() => OverlayViews.Add(model));
     }
 
     /// <inheritdoc />

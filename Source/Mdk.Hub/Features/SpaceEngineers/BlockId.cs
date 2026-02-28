@@ -1,6 +1,6 @@
 using System;
 
-namespace Mdk.Hub.Features.NodeScript.BlockDefinitions;
+namespace Mdk.Hub.Features.SpaceEngineers;
 
 /// <summary>
 ///     Identifies a Space Engineers block by TypeId and SubtypeId.

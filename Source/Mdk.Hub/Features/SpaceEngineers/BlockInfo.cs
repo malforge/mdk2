@@ -1,4 +1,4 @@
-namespace Mdk.Hub.Features.NodeScript.BlockDefinitions;
+namespace Mdk.Hub.Features.SpaceEngineers;
 
 /// <summary>
 ///     Metadata for a Space Engineers block definition, sourced from SBC files.

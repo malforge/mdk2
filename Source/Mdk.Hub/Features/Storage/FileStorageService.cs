@@ -36,7 +36,7 @@ public class FileStorageService : IFileStorageService
         => subPaths.Length == 0 ? _appData : Path.Combine([_appData, .. subPaths]);
     
     /// <inheritdoc />
-    public string GetLocalApplicationDataPath(params string[] subPaths) 
+    public virtual string GetLocalApplicationDataPath(params string[] subPaths) 
         => subPaths.Length == 0 ? _localAppData : Path.Combine([_localAppData, .. subPaths]);
     
     /// <inheritdoc />
