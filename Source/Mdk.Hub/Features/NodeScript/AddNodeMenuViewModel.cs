@@ -1,7 +1,6 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
-using CommunityToolkit.Mvvm.Input;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.NodeScript;
@@ -9,9 +8,20 @@ namespace Mdk.Hub.Features.NodeScript;
 /// <summary>
 ///     ViewModel for the add node menu overlay.
 /// </summary>
-public partial class AddNodeMenuViewModel : ViewModel
+public class AddNodeMenuViewModel : ViewModel
 {
     Point _position;
+    
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="AddNodeMenuViewModel"/> class.
+    /// </summary>
+    public AddNodeMenuViewModel()
+    {
+        CreateBlocksNodeCommand = new RelayCommand(CreateBlocksNode);
+        CreateOnArgumentNodeCommand = new RelayCommand(CreateOnArgumentNode);
+        CreateWaitForStateNodeCommand = new RelayCommand(CreateWaitForStateNode);
+        CancelCommand = new RelayCommand(Cancel);
+    }
     
     /// <summary>
     ///     Gets or sets the position where the menu should appear.
@@ -23,36 +33,40 @@ public partial class AddNodeMenuViewModel : ViewModel
     }
 
     /// <summary>
-    ///     Creates a Block node (data source).
+    ///     Gets the command to create a Blocks node.
     /// </summary>
-    [RelayCommand]
-    void CreateBlockNode()
-    {
-        NodeCreated?.Invoke("Block");
-    }
+    public RelayCommand CreateBlocksNodeCommand { get; }
 
     /// <summary>
-    ///     Creates an OnArgument trigger node.
+    ///     Gets the command to create an OnArgument node.
     /// </summary>
-    [RelayCommand]
+    public RelayCommand CreateOnArgumentNodeCommand { get; }
+
+    /// <summary>
+    ///     Gets the command to create a WaitForState node.
+    /// </summary>
+    public RelayCommand CreateWaitForStateNodeCommand { get; }
+
+    /// <summary>
+    ///     Gets the command to cancel the menu.
+    /// </summary>
+    public RelayCommand CancelCommand { get; }
+
+    void CreateBlocksNode()
+    {
+        NodeCreated?.Invoke("Blocks");
+    }
+
     void CreateOnArgumentNode()
     {
         NodeCreated?.Invoke("OnArgument");
     }
 
-    /// <summary>
-    ///     Creates a WaitForState flow control node.
-    /// </summary>
-    [RelayCommand]
     void CreateWaitForStateNode()
     {
         NodeCreated?.Invoke("WaitForState");
     }
 
-    /// <summary>
-    ///     Closes the menu without creating a node.
-    /// </summary>
-    [RelayCommand]
     void Cancel()
     {
         Cancelled?.Invoke();

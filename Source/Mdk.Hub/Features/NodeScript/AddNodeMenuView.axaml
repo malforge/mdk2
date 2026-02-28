@@ -27,8 +27,8 @@
             <TextBlock Text="Data Sources"
                        Classes="caption muted"
                        Margin="8,4,8,2" />
-            <Button Content="Block"
-                    Command="{Binding CreateBlockNodeCommand}"
+            <Button Content="Blocks"
+                    Command="{Binding CreateBlocksNodeCommand}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Left"
                     Classes="subtle" />

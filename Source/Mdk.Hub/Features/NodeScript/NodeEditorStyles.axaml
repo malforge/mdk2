@@ -18,8 +18,8 @@
         <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
     </Style>
     
-    <!-- Block Node -->
-    <Style Selector="controls|Node.block-node">
+    <!-- Blocks Node -->
+    <Style Selector="controls|Node.blocks-node">
         <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}"/>
         <Setter Property="BorderThickness" Value="2"/>

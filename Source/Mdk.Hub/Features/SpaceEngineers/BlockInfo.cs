@@ -9,5 +9,6 @@ namespace Mdk.Hub.Features.SpaceEngineers;
 ///     Icon path relative to the <c>Content/</c> directory (e.g., <c>Textures\GUI\Icons\Cubes\light_armor_cube.dds</c>),
 ///     or <c>null</c> if the block has no icon.
 /// </param>
+/// <param name="Dlc">The DLC identifier required to use this block, or <c>null</c> if the block is base-game.</param>
 /// <param name="CubeSize">Grid size: <c>"Large"</c> or <c>"Small"</c>.</param>
-public sealed record BlockInfo(BlockId Id, string DisplayName, string? IconPath, string CubeSize);
+public sealed record BlockInfo(BlockId Id, string DisplayName, string? IconPath, string CubeSize, string? Dlc = null);

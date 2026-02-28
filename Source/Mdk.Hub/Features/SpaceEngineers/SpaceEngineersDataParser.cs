@@ -63,8 +63,9 @@ internal static class SpaceEngineersDataParser
                     var displayName = localization.GetValueOrDefault(displayKey, displayKey);
                     var iconPath = def.Element("Icon")?.Value;
                     var cubeSize = def.Element("CubeSize")?.Value ?? "Large";
+                    var dlc = def.Element("DLC")?.Value;
 
-                    result.TryAdd(id, new BlockInfo(id, displayName, iconPath, cubeSize));
+                    result.TryAdd(id, new BlockInfo(id, displayName, iconPath, cubeSize, dlc));
                 }
             }
             catch (Exception ex)

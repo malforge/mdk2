@@ -1,0 +1,174 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:Mdk.Hub.Features.NodeScript.BlockSelector"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="Mdk.Hub.Features.NodeScript.BlockSelector.BlockSelectorView"
+             x:DataType="local:BlockSelectorViewModel"
+             Background="#CC000000"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch">
+
+    <UserControl.Styles>
+        <!-- Strip default selection/hover chrome from block grid items -->
+        <Style Selector="ListBox.block-grid > ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </ControlTemplate>
+            </Setter>
+        </Style>
+
+        <!-- Block cell default -->
+        <Style Selector="Border.block-cell">
+            <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Margin" Value="4" />
+        </Style>
+
+        <!-- Block cell hover -->
+        <Style Selector="Border.block-cell:pointerover">
+            <Setter Property="Background" Value="{StaticResource BackgroundCardHoverBrush}" />
+        </Style>
+
+        <!-- Block cell selected -->
+        <Style Selector="Border.block-cell.selected">
+            <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Content area: fills the window with breathing room via margin -->
+    <Border Background="{StaticResource BackgroundDialogBrush}"
+            CornerRadius="8"
+            Margin="60,40"
+            BoxShadow="0 8 40 0 #AA000000">
+
+        <Grid RowDefinitions="Auto,*,Auto">
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    Padding="20,16"
+                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="16">
+                    <TextBlock Grid.Column="0"
+                               Text="Select Block Type"
+                               Classes="title2 semibold"
+                               VerticalAlignment="Center" />
+                    <!-- spring -->
+                    <TextBox Grid.Column="2"
+                             Width="220"
+                             Text="{Binding SearchText, Mode=TwoWay}"
+                             Watermark="Search..."
+                             VerticalAlignment="Center" />
+                    <CheckBox Grid.Column="3"
+                              Content="Specific block"
+                              IsChecked="{Binding IsSpecificBlock, Mode=TwoWay}"
+                              IsVisible="{Binding CanToggleTypeOnly}"
+                              VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Main content: category list on left, block grid on right -->
+            <Grid Grid.Row="1" ColumnDefinitions="220,1,*">
+
+                <!-- Category list -->
+                <ListBox Grid.Column="0"
+                         ItemsSource="{Binding Categories}"
+                         SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="4,8">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="local:BlockCategoryItem">
+                            <TextBlock Text="{Binding Name}"
+                                       Padding="8,4" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Vertical separator -->
+                <Rectangle Grid.Column="1"
+                           Fill="{StaticResource BorderSubtleBrush}" />
+
+                <!-- Block grid -->
+                <ListBox Grid.Column="2"
+                         Classes="block-grid"
+                         ItemsSource="{Binding FilteredBlocks}"
+                         SelectedItem="{Binding SelectedBlock, Mode=TwoWay}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="8">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="local:BlockItem">
+                            <Border Classes="block-cell"
+                                    Classes.selected="{Binding $parent[ListBoxItem].IsSelected}"
+                                    Width="110"
+                                    Height="120"
+                                    ToolTip.Tip="{Binding DisplayName}">
+                                <Grid RowDefinitions="*,Auto">
+                                    <!-- Placeholder icon -->
+                                    <Border Grid.Row="0"
+                                            Background="{StaticResource BackgroundSecondaryBrush}"
+                                            CornerRadius="2,2,0,0" />
+                                    <!-- Upper-right: cube size indicator placeholder -->
+                                    <Border Grid.Row="0"
+                                            Width="18" Height="18"
+                                            Background="{StaticResource BackgroundCardBrush}"
+                                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="0,4,4,0" />
+                                    <!-- Block name -->
+                                    <TextBlock Grid.Row="1"
+                                               Text="{Binding DisplayName}"
+                                               FontSize="11"
+                                               Padding="4,3,4,4"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+            </Grid>
+
+            <!-- Footer -->
+            <Border Grid.Row="2"
+                    Padding="16"
+                    BorderBrush="{StaticResource BorderSubtleBrush}"
+                    BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8">
+                    <Button Content="OK"
+                            Command="{Binding OkCommand}"
+                            Classes="accent"
+                            MinWidth="80" />
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            MinWidth="80" />
+                </StackPanel>
+            </Border>
+
+        </Grid>
+    </Border>
+
+</UserControl>

@@ -1,0 +1,127 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:editors="clr-namespace:Mdk.Hub.Features.NodeScript.Editors"
+             xmlns:converters="clr-namespace:Mdk.Hub.Framework.Converters"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
+             x:Class="Mdk.Hub.Features.NodeScript.Editors.BlocksNodeEditorView"
+             x:DataType="editors:BlocksNodeEditorViewModel"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center"
+             MaxWidth="500">
+
+    <!-- Overlay Dialog Card -->
+    <Border Classes="dialog-card"
+            Padding="24"
+            CornerRadius="8"
+            Background="{StaticResource BackgroundDialogBrush}"
+            BorderBrush="{StaticResource BorderDefaultBrush}"
+            BorderThickness="1"
+            Width="500">
+        
+        <DockPanel LastChildFill="True">
+            <!-- Header -->
+            <TextBlock DockPanel.Dock="Top"
+                       Text="Edit Blocks Node"
+                       Classes="subtitle"
+                       Margin="0,0,0,16" />
+
+            <!-- Buttons at bottom -->
+            <StackPanel DockPanel.Dock="Bottom"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8"
+                        Margin="0,16,0,0">
+                <Button Content="Save"
+                        Command="{Binding SaveCommand}"
+                        MinWidth="75" />
+                <Button Content="Cancel"
+                        Command="{Binding CancelCommand}"
+                        Classes="subtle"
+                        MinWidth="75" />
+            </StackPanel>
+
+            <!-- Content -->
+            <StackPanel Spacing="16">
+                
+                <!-- Block Type (Optional) - Dropdown -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Block Type (optional)"
+                               Classes="caption semibold" />
+                    <AutoCompleteBox Text="{Binding BlockType}"
+                                     ItemsSource="{Binding AvailableBlockTypes}"
+                                     Watermark="Type to search..."
+                                     FilterMode="Contains"
+                                     MaxDropDownHeight="200" />
+                    <TextBlock Text="Leave empty to match any block type."
+                               Classes="caption muted" />
+                </StackPanel>
+
+                <!-- Block Name Pattern (Optional) - Wildcard Support -->
+                <StackPanel Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="Block Name Pattern (optional)"
+                                   Classes="caption semibold" />
+                        <TextBlock Text="*"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   FontWeight="Bold"
+                                   ToolTip.Tip="Supports wildcards: * and ?" />
+                    </StackPanel>
+                    <TextBox Text="{Binding Pattern}"
+                             Watermark="e.g., [Reactor]*, * Door"
+                             Width="300"
+                             FontFamily="Consolas,Courier New,monospace"
+                             Background="{StaticResource OverlayLightSubtleBrush}" />
+                    <TextBlock Text="Use * for any characters, ? for single character"
+                               Classes="caption muted" />
+                </StackPanel>
+
+                <!-- Group Name Pattern (Optional) - Wildcard Support -->
+                <StackPanel Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="Group Name Pattern (optional)"
+                                   Classes="caption semibold" />
+                        <TextBlock Text="*"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   FontWeight="Bold"
+                                   ToolTip.Tip="Supports wildcards: * and ?" />
+                    </StackPanel>
+                    <TextBox Text="{Binding GroupName}"
+                             Watermark="e.g., Reactors*, Power *"
+                             Width="300"
+                             FontFamily="Consolas,Courier New,monospace"
+                             Background="{StaticResource OverlayLightSubtleBrush}" />
+                    <TextBlock Text="Use * for any characters, ? for single character"
+                               Classes="caption muted" />
+                </StackPanel>
+
+                <!-- CustomData INI Section (Optional, Advanced) - Plain Text -->
+                <StackPanel Spacing="4">
+                    <TextBlock Text="CustomData INI Section (optional, advanced)"
+                               Classes="caption semibold" />
+                    <TextBox Text="{Binding CustomDataSection}"
+                             Watermark="e.g., Config"/>
+                    <TextBlock Text="Filter by presence of INI section in CustomData."
+                               Classes="caption muted" />
+                </StackPanel>
+
+                <!-- Warning if no filters - Fixed height with opacity to prevent resize -->
+                <Border BorderBrush="{StaticResource BorderWarningBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="8"
+                        Height="40"
+                        Opacity="{Binding HasNoFilters, Converter={x:Static converters:BoolToDoubleConverter.Instance}}">
+                    <Border.Background>
+                        <SolidColorBrush Color="{StaticResource AccentWarningColor}" Opacity="0.2" />
+                    </Border.Background>
+                    <TextBlock Text="⚠ No filters set - this will match ALL blocks"
+                               Classes="caption"
+                               TextWrapping="Wrap" />
+                </Border>
+
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</UserControl>

@@ -1,7 +1,5 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Mal.SourceGeneratedDI;
 
 namespace Mdk.Hub.Features.NodeScript;
@@ -20,12 +18,25 @@ public partial class NodeScriptEditorView : UserControl
         InitializeComponent();
     }
 
-    void OnTestMenuClick(object? sender, RoutedEventArgs e)
+    void OnNodeContentPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        // Test button to verify menu system works
-        if (DataContext is NodeScriptEditorViewModel viewModel)
+        var point = e.GetCurrentPoint(sender as Control);
+        
+        System.Diagnostics.Debug.WriteLine($"[NodeScript] Content clicked! Count: {e.ClickCount}, Left: {point.Properties.IsLeftButtonPressed}");
+        
+        // Check for double-click (ClickCount == 2) with left button
+        if (point.Properties.IsLeftButtonPressed && e.ClickCount == 2)
         {
-            viewModel.OpenAddNodeMenu(new Point(200, 200));
+            System.Diagnostics.Debug.WriteLine($"[NodeScript] Double-click detected on content!");
+            
+            if (sender is Control { DataContext: not null } control)
+            {
+                if (DataContext is NodeScriptEditorViewModel viewModel)
+                {
+                    viewModel.OpenNodeEditor(control.DataContext);
+                    e.Handled = true;
+                }
+            }
         }
     }
 
@@ -43,5 +54,15 @@ public partial class NodeScriptEditorView : UserControl
                 e.Handled = true;
             }
         }
+    }
+
+    void OnNodeContentDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        
+    }
+
+    void OnNodeDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        throw new System.NotImplementedException();
     }
 }

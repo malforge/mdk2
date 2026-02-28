@@ -82,6 +82,7 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>CommonDialogsResources.resx</DependentUpon>
         </Compile>
+        <Compile Remove="Features\NodeScript\Nodes\BlockNodeViewModel.cs" />
     </ItemGroup>
 
     <ItemGroup>

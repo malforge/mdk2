@@ -261,6 +261,53 @@ Standard ignore patterns in `mdk.ini`:
 - `MDK/**/*` - Legacy MDK1 files
 - `**/*.debug.cs` - Debug-only helper files
 
+### Hub (Mdk.Hub) Conventions
+**CRITICAL - MVVM Patterns**:
+- **DO NOT use CommunityToolkit.Mvvm** (ObservableObject, ObservableProperty, RelayCommand attributes, etc.)
+  - CommunityToolkit.Mvvm is a transitive dependency from NodifyM.Avalonia but MUST NOT be used in Hub code
+  - Hub has its own MVVM infrastructure that should be used instead
+- **DO use `Mdk.Hub.Framework.ViewModel`** base class for all ViewModels
+  - Provides `SetProperty()` and `OnPropertyChanged()` methods
+  - Use backing fields with property getters/setters (no source generators)
+- **DO use `Mdk.Hub.Framework.RelayCommand`** for commands
+  - Create command instances in constructor: `MyCommand = new RelayCommand(ExecuteMethod);`
+  - No attributes - explicit instantiation only
+- **DO use `Mal.SourceGeneratedDI` attributes** for dependency injection:
+  - `[Singleton]` - Single instance across app (services, managers)
+  - `[Instance]` - New instance each time (views, view models)
+  - `[ViewModelFor<TView>]` - Associates ViewModel with View
+
+**Example ViewModel Pattern**:
+```csharp
+using Mdk.Hub.Framework;
+using Mal.SourceGeneratedDI;
+
+[Instance]
+[ViewModelFor<MyView>]
+public class MyViewModel : ViewModel
+{
+    string _myProperty;
+    
+    public MyViewModel()
+    {
+        MyCommand = new RelayCommand(ExecuteMyCommand);
+    }
+    
+    public string MyProperty
+    {
+        get => _myProperty;
+        set => SetProperty(ref _myProperty, value);
+    }
+    
+    public RelayCommand MyCommand { get; }
+    
+    void ExecuteMyCommand()
+    {
+        // Implementation
+    }
+}
+```
+
 ### Commit Message Guidelines
 Follow rules in `.hub-commit-message-rules.md`:
 - User-facing descriptions (no implementation details, file paths, or class names)
