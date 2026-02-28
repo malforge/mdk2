@@ -226,6 +226,11 @@ Preprocessors → Combine → Postprocessors → Compose → PostComposition →
 **For Unit Testing**: Set `<SpaceEngineersBinCopyLocal>true</SpaceEngineersBinCopyLocal>` to copy DLLs locally
 - **Important**: Never redistribute these DLLs (Keen Software House copyright)
 
+## Repository Special Folders
+
+- **`.projects/`** - Long-term project planning documents. Each project has its own subfolder (e.g., `.projects/NodeScript/`), containing architecture, design, and research documents specific to that project.
+- **`.research/`** - General research documents not tied to a specific project. Use this for investigating game data formats, external APIs, third-party libraries, or any topic that may inform multiple areas of development. Drop research findings here as markdown files for future reference.
+
 ## Key Conventions
 
 ### Project Versioning
