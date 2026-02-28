@@ -17,8 +17,9 @@ public interface ISpaceEngineersDataService
     Task<ApiResult<IReadOnlyList<BlockCategory>>> GetCategoriesAsync();
 
     /// <summary>
-    ///     Gets metadata for a specific block by its type and subtype IDs.
+    ///     Gets all block definitions, filtered to terminal blocks only.
     /// </summary>
+    Task<ApiResult<IReadOnlyList<BlockInfo>>> GetAllBlocksAsync();
     /// <param name="typeId">The block TypeId without the <c>MyObjectBuilder_</c> prefix.</param>
     /// <param name="subtypeId">The block SubtypeId. May be an empty string.</param>
     Task<ApiResult<BlockInfo>> GetBlockAsync(string typeId, string subtypeId);

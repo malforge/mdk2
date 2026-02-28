@@ -117,16 +117,23 @@
                             <Border Classes="block-cell"
                                     Classes.selected="{Binding $parent[ListBoxItem].IsSelected}"
                                     Width="110"
-                                    Height="120"
+                                    Height="110"
                                     ToolTip.Tip="{Binding DisplayName}">
-                                <Grid RowDefinitions="*,Auto">
-                                    <!-- Placeholder icon -->
-                                    <Border Grid.Row="0"
-                                            Background="{StaticResource BackgroundSecondaryBrush}"
-                                            CornerRadius="2,2,0,0" />
+                                <Grid>
+                                    <!-- Icon fills entire cell -->
+                                    <Border Background="{StaticResource BackgroundSecondaryBrush}"
+                                            CornerRadius="2" />
+                                    <!-- Text at bottom, no scrim -->
+                                    <TextBlock Text="{Binding DisplayName}"
+                                               FontSize="11"
+                                               Padding="4,0,4,4"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap"
+                                               TextAlignment="Center"
+                                               HorizontalAlignment="Stretch"
+                                               VerticalAlignment="Bottom" />
                                     <!-- Upper-right: cube size indicator placeholder -->
-                                    <Border Grid.Row="0"
-                                            Width="18" Height="18"
+                                    <Border Width="18" Height="18"
                                             Background="{StaticResource BackgroundCardBrush}"
                                             BorderBrush="{StaticResource BorderSubtleBrush}"
                                             BorderThickness="1"
@@ -134,14 +141,6 @@
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Top"
                                             Margin="0,4,4,0" />
-                                    <!-- Block name -->
-                                    <TextBlock Grid.Row="1"
-                                               Text="{Binding DisplayName}"
-                                               FontSize="11"
-                                               Padding="4,3,4,4"
-                                               TextTrimming="CharacterEllipsis"
-                                               TextAlignment="Center"
-                                               HorizontalAlignment="Stretch" />
                                 </Grid>
                             </Border>
                         </DataTemplate>

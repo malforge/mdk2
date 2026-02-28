@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.SpaceEngineers;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.NodeScript.BlockSelector;
@@ -20,9 +22,9 @@ public sealed record BlockItem(
     string TypeId,
     string SubtypeId,
     string DisplayName,
-    string Category,
     bool IsLargeGrid = true,
-    bool IsDlc = false)
+    bool IsDlc = false,
+    string? IconPath = null)
 {
     /// <summary>Full definition ID (TypeId/SubtypeId) used when selecting a specific block.</summary>
     public string Id => $"{TypeId}/{SubtypeId}";
@@ -43,57 +45,11 @@ public class BlockSelectorViewModel : OverlayModel
 
     static readonly BlockCategoryItem AllCategory = new("All");
 
-    static readonly List<BlockItem> MockBlocks =
-    [
-        // Power
-        new("WindTurbine",   "LargeBlockWindTurbine",       "Wind Turbine",              "Power"),
-        new("Reactor",       "LargeBlockSmallGenerator",    "Reactor (Small)",            "Power"),
-        new("Reactor",       "LargeBlockLargeGenerator",    "Reactor (Large)",            "Power"),
-        new("Reactor",       "SmallBlockSmallGenerator",    "Reactor",                   "Power",  IsLargeGrid: false),
-        new("BatteryBlock",  "LargeBlockBatteryBlock",      "Battery Block",             "Power"),
-        new("BatteryBlock",  "SmallBlockBatteryBlock",      "Battery Block",             "Power",  IsLargeGrid: false),
-        new("SolarPanel",    "LargeBlockSolarPanel",        "Solar Panel",               "Power"),
-        new("SolarPanel",    "SmallBlockSolarPanel",        "Solar Panel",               "Power",  IsLargeGrid: false),
-        new("Reactor",       "LargeBlockLargeGenerator_Sci","Reactor (Sci-Fi)",          "Power",  IsDlc: true),
-
-        // Production
-        new("Refinery",      "LargeRefineryBlock",          "Refinery",                  "Production"),
-        new("Refinery",      "LargeBlastFurnace",           "Arc Furnace",               "Production"),
-        new("Refinery",      "LargeBlastFurnace2",          "Basic Refinery",            "Production"),
-        new("Assembler",     "LargeAssembler",              "Assembler",                 "Production"),
-        new("Assembler",     "BasicAssembler",              "Basic Assembler",           "Production"),
-        new("Assembler",     "LargeAssembler_SciFi",        "Assembler (Sci-Fi)",        "Production", IsDlc: true),
-        new("SurvivalKit",   "SurvivalKit",                 "Survival Kit",              "Production"),
-
-        // Movement
-        new("Thrust",        "LargeBlockLargeThrust",            "Ion Thruster (Large)",          "Movement"),
-        new("Thrust",        "LargeBlockSmallThrust",            "Ion Thruster (Small)",          "Movement"),
-        new("Thrust",        "LargeBlockLargeHydrogenThrust",    "Hydrogen Thruster (Large)",     "Movement"),
-        new("Thrust",        "LargeBlockSmallHydrogenThrust",    "Hydrogen Thruster (Small)",     "Movement"),
-        new("Thrust",        "LargeBlockLargeAtmosphericThrust", "Atmospheric Thruster (Large)",  "Movement"),
-        new("Thrust",        "LargeBlockSmallAtmosphericThrust", "Atmospheric Thruster (Small)",  "Movement"),
-        new("Gyro",          "LargeBlockGyro",              "Gyroscope",                 "Movement"),
-        new("Gyro",          "SmallBlockGyro",              "Gyroscope",                 "Movement", IsLargeGrid: false),
-
-        // Weapons
-        new("LargeGatlingTurret",   "LargeGatlingTurret",   "Gatling Turret",   "Weapons"),
-        new("LargeRocketTurret",    "LargeRocketTurret",    "Rocket Turret",    "Weapons"),
-        new("InteriorTurret",       "LargeInteriorTurret",  "Interior Turret",  "Weapons"),
-        new("SmallGatlingGun",      "SmallGatlingGun",      "Gatling Gun",      "Weapons"),
-        new("SmallMissileLauncher", "SmallMissileLauncher", "Rocket Launcher",  "Weapons"),
-
-        // Communication
-        new("LaserAntenna",  "LargeBlockLaserAntenna",  "Laser Antenna",  "Communication"),
-        new("RadioAntenna",  "LargeBlockRadioAntenna",  "Antenna",        "Communication"),
-        new("Beacon",        "LargeBlockBeacon",        "Beacon",         "Communication"),
-        new("Beacon",        "SmallBlockBeacon",        "Beacon",         "Communication", IsLargeGrid: false),
-
-        // Utility
-        new("MyProgrammableBlock", "LargeProgrammableBlock",       "Programmable Block", "Utility"),
-        new("TimerBlock",          "LargeTimerBlock",              "Timer Block",        "Utility"),
-        new("SensorBlock",         "LargeBlockSensor",             "Sensor",             "Utility"),
-        new("EventControllerBlock","LargeEventControllerBlock",    "Event Controller",   "Utility"),
-    ];
+    readonly ISpaceEngineersDataService _seData;
+    List<BlockItem> _allBlocks = [];
+    // Maps category display name → set of block IDs in that category.
+    // A block can appear in multiple categories (e.g., DLC Blocks + its functional category).
+    Dictionary<string, HashSet<string>> _categoryBlockIds = new();
 
     BlockCategoryItem? _selectedCategory;
     BlockItem? _selectedBlock;
@@ -105,14 +61,55 @@ public class BlockSelectorViewModel : OverlayModel
     /// <summary>
     ///     Initializes a new instance of <see cref="BlockSelectorViewModel" />.
     /// </summary>
-    public BlockSelectorViewModel()
+    public BlockSelectorViewModel(ISpaceEngineersDataService seData)
     {
+        _seData = seData;
         Categories = [];
         FilteredBlocks = [];
         OkCommand = new RelayCommand(Ok, CanOk);
         CancelCommand = new RelayCommand(Cancel);
-        BuildCategories();
         _searchText = State.SearchText;
+    }
+
+    /// <summary>
+    ///     Loads SE data and populates categories and blocks. Call once after construction.
+    /// </summary>
+    public async Task LoadAsync()
+    {
+        var blocksResult = await _seData.GetAllBlocksAsync();
+        var categoriesResult = await _seData.GetCategoriesAsync();
+
+        if (blocksResult.TryGetValue(out var blocks) && categoriesResult.TryGetValue(out var categories))
+        {
+            _allBlocks = blocks
+                .Select(b => new BlockItem(
+                    TypeId: b.Id.TypeId,
+                    SubtypeId: b.Id.SubtypeId,
+                    DisplayName: b.DisplayName,
+                    IsLargeGrid: b.CubeSize == "Large",
+                    IsDlc: b.Dlc != null,
+                    IconPath: b.IconPath))
+                .ToList();
+
+            // Build category → block ID sets (blocks can belong to multiple categories)
+            _categoryBlockIds = new Dictionary<string, HashSet<string>>();
+            foreach (var cat in categories)
+            {
+                if (!_categoryBlockIds.TryGetValue(cat.DisplayName, out var ids))
+                    _categoryBlockIds[cat.DisplayName] = ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var id in cat.Items)
+                    ids.Add($"{id.TypeId}/{id.SubtypeId}");
+            }
+
+            BuildCategories(categories);
+        }
+        else
+        {
+            // Fall back: empty block list — error state visible via empty grid
+            _allBlocks = [];
+            Categories.Add(AllCategory);
+        }
+
         var restoredCategory = Categories.FirstOrDefault(c => c.Name == State.CategoryName) ?? AllCategory;
         SelectedCategory = restoredCategory;
     }
@@ -232,25 +229,28 @@ public class BlockSelectorViewModel : OverlayModel
     /// </summary>
     public ICommand CancelCommand { get; }
 
-    void BuildCategories()
+    void BuildCategories(IReadOnlyList<SpaceEngineers.BlockCategory> seCategories)
     {
         Categories.Add(AllCategory);
-        foreach (var cat in MockBlocks.Select(b => b.Category).Distinct().Order())
-            Categories.Add(new BlockCategoryItem(cat));
+        foreach (var cat in seCategories)
+            Categories.Add(new BlockCategoryItem(cat.DisplayName, cat.IsSubCategory ? 1 : 0));
     }
 
     void RefreshFilteredBlocks()
     {
         FilteredBlocks.Clear();
         IEnumerable<BlockItem> source = _selectedCategory is null || _selectedCategory == AllCategory
-            ? MockBlocks
-            : MockBlocks.Where(b => b.Category == _selectedCategory.Name);
+            ? _allBlocks
+            : _categoryBlockIds.TryGetValue(_selectedCategory.Name, out var ids)
+                ? _allBlocks.Where(b => ids.Contains($"{b.TypeId}/{b.SubtypeId}"))
+                : [];
         if (!string.IsNullOrWhiteSpace(_searchText))
             source = source.Where(b => b.DisplayName.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
         if (_isTypeOnly)
             source = source
                 .GroupBy(b => b.TypeId)
                 .Select(g => g.OrderBy(b => b.IsDlc).ThenByDescending(b => b.IsLargeGrid).First());
+        source = source.OrderBy(b => b.DisplayName, StringComparer.OrdinalIgnoreCase);
         foreach (var block in source)
             FilteredBlocks.Add(block);
         SelectedBlock = null;

@@ -55,6 +55,9 @@ internal sealed class BlockInfoData
 
     /// <summary>Grid size: <c>"Large"</c> or <c>"Small"</c>.</summary>
     public string CubeSize { get; set; } = "Large";
+
+    /// <summary>DLC identifier required to use this block, or <c>null</c> if base-game.</summary>
+    public string? Dlc { get; set; }
 }
 
 /// <summary>

@@ -6,6 +6,7 @@ using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.NodeScript.BlockSelector;
 using Mdk.Hub.Features.NodeScript.Nodes;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Features.SpaceEngineers;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.NodeScript;
@@ -18,6 +19,7 @@ namespace Mdk.Hub.Features.NodeScript;
 public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHaveATitle, Shell.IFileEditor
 {
     readonly IShell _shell;
+    readonly ISpaceEngineersDataService _seData;
     string _title = "Node Script Editor";
     string? _filePath;
     double _zoom = 1.0;
@@ -28,14 +30,15 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
     /// <summary>
     ///     Design-time constructor.
     /// </summary>
-    public NodeScriptEditorViewModel() : this(null!) { }
+    public NodeScriptEditorViewModel() : this(null!, null!) { }
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="NodeScriptEditorViewModel" /> class.
     /// </summary>
-    public NodeScriptEditorViewModel(IShell shell)
+    public NodeScriptEditorViewModel(IShell shell, ISpaceEngineersDataService seData)
     {
         _shell = shell;
+        _seData = seData;
         Nodes = new ObservableCollection<object>();
         Connections = new ObservableCollection<object>();
         OverlayViews = new ObservableCollection<object>();
@@ -232,7 +235,7 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
 
     async Task TestBlockSelectorAsync()
     {
-        var selector = new BlockSelectorViewModel();
+        var selector = new BlockSelectorViewModel(_seData);
         var view = new BlockSelector.BlockSelectorView { DataContext = selector };
 
         var tcs = new TaskCompletionSource();
@@ -246,6 +249,7 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
         OverlayViews.Add(view);
         OnPropertyChanged(nameof(HasOverlays));
 
+        await selector.LoadAsync();
         await tcs.Task;
     }
 }

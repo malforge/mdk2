@@ -43,6 +43,14 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
     }
 
     /// <inheritdoc />
+    public async Task<ApiResult<IReadOnlyList<BlockInfo>>> GetAllBlocksAsync()
+    {
+        if (!await EnsureLoadedAsync())
+            return ApiResult<IReadOnlyList<BlockInfo>>.Fail(_loadError!, _loadErrorKind);
+        return ApiResult<IReadOnlyList<BlockInfo>>.Ok(_blocks.Values.ToList());
+    }
+
+    /// <inheritdoc />
     public async Task<ApiResult<BlockInfo>> GetBlockAsync(string typeId, string subtypeId)
     {
         if (!await EnsureLoadedAsync())
@@ -230,7 +238,7 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
 
         _blocks = cache.Blocks.ToDictionary(
             b => new BlockId(b.TypeId, b.SubtypeId),
-            b => new BlockInfo(new BlockId(b.TypeId, b.SubtypeId), b.DisplayName, b.IconPath, b.CubeSize));
+            b => new BlockInfo(new BlockId(b.TypeId, b.SubtypeId), b.DisplayName, b.IconPath, b.CubeSize, b.Dlc));
 
         _categories = cache.Categories
             .Select(c => new BlockCategory(
@@ -271,7 +279,8 @@ public class SpaceEngineersDataService(IFileStorageService storage, IShell shell
                         SubtypeId = b.Id.SubtypeId,
                         DisplayName = b.DisplayName,
                         IconPath = b.IconPath,
-                        CubeSize = b.CubeSize
+                        CubeSize = b.CubeSize,
+                        Dlc = b.Dlc
                     }).ToList(),
                     Categories = categories.Select(c => new BlockCategoryData
                     {
