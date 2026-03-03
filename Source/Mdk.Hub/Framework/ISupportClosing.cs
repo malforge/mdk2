@@ -3,19 +3,15 @@ using System.Threading.Tasks;
 namespace Mdk.Hub.Framework;
 
 /// <summary>
-///     Interface for view models that need to handle window close events.
+///     Implemented by view models that need to participate in their host window's close lifecycle.
 /// </summary>
 public interface ISupportClosing
 {
     /// <summary>
-    ///     Called when the window is requested to close.
+    ///     Called before the window closes. Return <c>true</c> to allow the close, <c>false</c> to cancel.
     /// </summary>
-    /// <returns>True if the window can close; false to cancel the close operation.</returns>
     Task<bool> WillCloseAsync();
 
-    /// <summary>
-    /// Called after the window has been closed. Use this for any cleanup that needs to happen after the window is gone.
-    /// </summary>
-    /// <returns></returns>
+    /// <summary>Called after the window has closed.</summary>
     Task DidCloseAsync();
 }

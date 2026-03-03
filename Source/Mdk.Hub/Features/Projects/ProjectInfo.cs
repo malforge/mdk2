@@ -14,32 +14,32 @@ public record ProjectInfo
     ///     Gets the display name of the project.
     /// </summary>
     public required string Name { get; init; }
-    
+
     /// <summary>
     ///     Gets the canonical path to the .csproj file.
     /// </summary>
     public required CanonicalPath ProjectPath { get; init; }
-    
+
     /// <summary>
     ///     Gets the type of project (Programmable Block script or Mod).
     /// </summary>
     public required ProjectType Type { get; init; }
-    
+
     /// <summary>
     ///     Gets the timestamp when the project was last opened or modified.
     /// </summary>
     public required DateTimeOffset LastReferenced { get; init; }
-    
+
     /// <summary>
     ///     Gets behavioral flags for the project (e.g., Simulated for testing).
     /// </summary>
     public ProjectFlags Flags { get; init; } = ProjectFlags.None;
-    
+
     /// <summary>
     ///     Gets whether MDK package updates are available for this project.
     /// </summary>
     public bool NeedsUpdate { get; init; }
-    
+
     /// <summary>
     ///     Gets the number of outdated packages in this project.
     /// </summary>

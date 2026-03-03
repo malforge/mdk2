@@ -1,15 +1,15 @@
 <actions:ActionItemControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
-             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
-             xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
-             xmlns:i="https://github.com/projektanker/icons.avalonia"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
-             x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectManagementActionView"
-             x:DataType="items:ProjectManagementAction"
-             TopEdge="Bare" BottomEdge="Bare">
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                           xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
+                           xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+                           xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
+                           xmlns:i="https://github.com/projektanker/icons.avalonia"
+                           mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+                           x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectManagementActionView"
+                           x:DataType="items:ProjectManagementAction"
+                           TopEdge="Bare" BottomEdge="Bare">
 
     <StackPanel Spacing="8">
         <TextBlock Classes="section-title" Text="Projects" />
@@ -50,27 +50,6 @@
                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
                     <TextBlock Text="New Mod" Classes="body medium" />
                     <TextBlock Text="Create a new Space Engineers mod project" Classes="caption muted" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- Create New Node Script -->
-        <Border Classes="create-hover-row"
-                Padding="10"
-                CornerRadius="4"
-                Cursor="Hand"
-                Tapped="OnCreateNodeScriptTapped">
-            <Grid ColumnDefinitions="Auto,*">
-                <i:Icon Value="fa-solid fa-diagram-project"
-                        FontSize="18"
-                        Width="32"
-                        Height="32"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center" />
-                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="New Node Script Project" Classes="body medium" />
-                    <TextBlock Text="Create a script using the visual node editor" Classes="caption muted" />
                 </StackPanel>
             </Grid>
         </Border>

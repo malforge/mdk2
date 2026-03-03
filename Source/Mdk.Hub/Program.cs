@@ -21,7 +21,7 @@ sealed class Program
     public static int Main(string[] args)
     {
         // Set up Velopack logging before bootstrap
-        var logger = App.Container.Resolve<ILogger>();
+        var logger = App.GetLogger();
 
         // Velopack bootstrap - MUST be first thing that runs
         VelopackApp.Build()
@@ -31,19 +31,18 @@ sealed class Program
 
         // Handle IPC before initializing Avalonia
         // Must stay synchronous with [STAThread] for COM/clipboard to work properly
-        if (args.Length > 0)
+        using (var ipc = new InterProcessCommunication.Standalone())
         {
-            using var ipc = new InterProcessCommunication.Standalone();
-
             // If another instance is running, send message and exit
             if (ipc.IsAlreadyRunning())
             {
-                ipc.SendMessage(args); // Fully synchronous - no deadlock risk
+                if (args.Length > 0)
+                    ipc.SendMessage(args); // Fully synchronous - no deadlock risk
+                else
+                    ipc.SendMessage(["--activate-hub"]);
+
                 return 0; // Exit immediately
             }
-
-            // We are first instance with args - they'll be handled via IPC MessageReceived
-            // after services initialize, so just continue to start UI
         }
 
         // Start Avalonia UI
@@ -55,7 +54,7 @@ sealed class Program
     {
         // This runs once after installation, before the UI starts
         IsFirstRun = true;
-        var logger = App.Container.Resolve<ILogger>();
+        var logger = App.GetLogger();
         logger.Info($"Velopack first run detected for version {version}");
     }
 

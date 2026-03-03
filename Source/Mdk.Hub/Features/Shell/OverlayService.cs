@@ -8,25 +8,20 @@ namespace Mdk.Hub.Features.Shell;
 ///     Manages overlay view models displayed within a single window.
 ///     Each window that hosts overlays should resolve its own instance.
 /// </summary>
-[Instance<IOverlayService>]
+[Singleton<IOverlayService>(Container = "Window")]
 public class OverlayService : IOverlayService
 {
-    readonly ObservableCollection<object> _views = [];
+    /// <inheritdoc />
+    public ObservableCollection<object> Views { get; } = [];
 
     /// <inheritdoc />
-    public ObservableCollection<object> Views => _views;
-
-    /// <inheritdoc />
-    public bool HasViews => _views.Count > 0;
+    public bool HasViews => Views.Count > 0;
 
     /// <inheritdoc />
     public void Show(OverlayModel overlay)
     {
-        _views.Add(overlay);
-        overlay.Dismissed += (_, _) =>
-        {
-            _views.Remove(overlay);
-        };
+        Views.Add(overlay);
+        overlay.Dismissed += (_, _) => { Views.Remove(overlay); };
     }
 
     /// <inheritdoc />

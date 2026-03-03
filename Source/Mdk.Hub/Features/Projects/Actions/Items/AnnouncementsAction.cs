@@ -4,7 +4,6 @@ using System.Windows.Input;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.Diagnostics;
-using Mdk.Hub.Features.Projects.Actions;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
@@ -23,7 +22,7 @@ public class AnnouncementsAction : ActionItem
     Announcement? _currentAnnouncement;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="AnnouncementsAction"/> class.
+    ///     Initializes a new instance of the <see cref="AnnouncementsAction" /> class.
     /// </summary>
     /// <param name="shell">The shell interface for UI interactions.</param>
     /// <param name="announcementService">The service for managing announcements.</param>
@@ -48,32 +47,24 @@ public class AnnouncementsAction : ActionItem
         _shell.RefreshRequested += OnRefreshRequested;
 
         // Check if announcement is already loaded
-        if (_announcementService.LastKnownAnnouncement != null && 
-            !_announcementService.IsAnnouncementDismissed(_announcementService.LastKnownAnnouncement.Id))
+        if (_announcementService.LastKnownAnnouncement != null && !_announcementService.IsAnnouncementDismissed(_announcementService.LastKnownAnnouncement.Id))
         {
             _logger.Info($"Setting initial announcement: {_announcementService.LastKnownAnnouncement.Id}");
             CurrentAnnouncement = _announcementService.LastKnownAnnouncement;
         }
         else
-        {
             _logger.Info("No announcement available at construction time");
-        }
     }
 
     /// <summary>
     ///     Gets the action category (null = no category, appears at top).
     /// </summary>
     public override string? Category => null; // No category - appears at top
-    
+
     /// <summary>
     ///     Gets whether this is a global action (not project-specific).
     /// </summary>
     public override bool IsGlobal => true; // Global action, not project-specific
-
-    /// <summary>
-    ///     Determines whether this action should be shown in the UI.
-    /// </summary>
-    public override bool ShouldShow() => CurrentAnnouncement != null;
 
     /// <summary>
     ///     Gets or sets the current announcement to display.
@@ -96,11 +87,16 @@ public class AnnouncementsAction : ActionItem
     ///     Gets the command to dismiss the current announcement.
     /// </summary>
     public ICommand DismissCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to open the announcement link in a browser.
     /// </summary>
     public ICommand OpenLinkCommand { get; }
+
+    /// <summary>
+    ///     Determines whether this action should be shown in the UI.
+    /// </summary>
+    public override bool ShouldShow() => CurrentAnnouncement != null;
 
     void OnAnnouncementAvailable(Announcement announcement)
     {
@@ -149,4 +145,3 @@ public class AnnouncementsAction : ActionItem
         }
     }
 }
-

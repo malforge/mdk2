@@ -26,13 +26,11 @@
         <When Condition="$([System.String]::Copy('$(TargetFramework)').Contains('-windows'))">
             <PropertyGroup>
                 <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-                <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Linux.cs" />
-                <None Include="**\*.Linux.cs" />
-                <PackageReference Include="DirectXTexNet" Version="1.0.1" />
+                <Compile Remove="**\*.Linux.cs"/>
+                <None Include="**\*.Linux.cs"/>
             </ItemGroup>
         </When>
 
@@ -43,14 +41,14 @@
             </PropertyGroup>
 
             <ItemGroup>
-                <Compile Remove="**\*.Windows.cs" />
-                <None Include="**\*.Windows.cs" />
+                <Compile Remove="**\*.Windows.cs"/>
+                <None Include="**\*.Windows.cs"/>
             </ItemGroup>
         </Otherwise>
     </Choose>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**" />
+        <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -64,14 +62,13 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
-        <PackageReference Include="Mal.SourceGeneratedDI" Version="1.0.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PackageReference Include="Mal.SourceGeneratedDI" Version="2.0.2-pre.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Mono.Cecil" Version="0.11.6" />
-        <PackageReference Include="NodifyM.Avalonia" Version="1.1.9" />
-        <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2" />
-        <PackageReference Include="Velopack" Version="0.0.1298" />
+        <PackageReference Include="Mal.SourceGeneratedDI.Abstractions" Version="2.0.2-pre.1"/>
+        <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2"/>
+        <PackageReference Include="Velopack" Version="0.0.1298"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -84,7 +81,6 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>CommonDialogsResources.resx</DependentUpon>
         </Compile>
-        <Compile Remove="Features\NodeScript\Nodes\BlockNodeViewModel.cs" />
     </ItemGroup>
 
     <ItemGroup>

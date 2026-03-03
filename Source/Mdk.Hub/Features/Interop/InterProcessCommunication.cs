@@ -25,12 +25,12 @@ public class InterProcessCommunication : IInterProcessCommunication
 
     readonly IFileStorageService _fileStorage;
     readonly ILogger _logger;
-    readonly ISettings _settings;
-    readonly CancellationTokenSource? _serverCancellation;
     readonly int _port;
+    readonly CancellationTokenSource? _serverCancellation;
+    readonly ISettings _settings;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="InterProcessCommunication"/> class.
+    ///     Initializes a new instance of the <see cref="InterProcessCommunication" /> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
     /// <param name="fileStorage">The file storage service.</param>
@@ -49,7 +49,7 @@ public class InterProcessCommunication : IInterProcessCommunication
             if (int.TryParse(portText, out var existingPort))
             {
                 _logger.Debug($"Found existing port file with port {existingPort}, checking if instance is alive");
-                
+
                 // Try connecting to verify the instance is still running
                 if (TryConnect(existingPort))
                 {
@@ -58,7 +58,7 @@ public class InterProcessCommunication : IInterProcessCommunication
                     _port = existingPort;
                     return;
                 }
-                
+
                 _logger.Warning($"Port file exists but no instance running on port {existingPort}, starting as first instance");
             }
         }
@@ -101,18 +101,18 @@ public class InterProcessCommunication : IInterProcessCommunication
     }
 
     /// <summary>
-    /// Gets a value indicating whether another instance of the Hub is already running.
+    ///     Gets a value indicating whether another instance of the Hub is already running.
     /// </summary>
     /// <returns><c>true</c> if another instance is running; otherwise, <c>false</c>.</returns>
     public bool IsAlreadyRunning() => !_createdNew;
 
     /// <summary>
-    /// Occurs when an IPC message is received from a client.
+    ///     Occurs when an IPC message is received from a client.
     /// </summary>
     public event EventHandler<MessageReceivedEventArgs>? MessageReceived;
 
     /// <summary>
-    /// Submits a message to the IPC system, either handling it locally or forwarding to the running instance.
+    ///     Submits a message to the IPC system, either handling it locally or forwarding to the running instance.
     /// </summary>
     /// <param name="message">The message to submit.</param>
     public async Task SubmitAsync(InterConnectMessage message)
@@ -168,7 +168,7 @@ public class InterProcessCommunication : IInterProcessCommunication
     }
 
     /// <summary>
-    /// Releases all resources used by the <see cref="InterProcessCommunication"/> instance.
+    ///     Releases all resources used by the <see cref="InterProcessCommunication" /> instance.
     /// </summary>
     public void Dispose()
     {
@@ -184,9 +184,7 @@ public class InterProcessCommunication : IInterProcessCommunication
             using var client = new TcpClient();
             var connectTask = client.ConnectAsync(IPAddress.Loopback, port);
             if (Task.WhenAny(connectTask, Task.Delay(1000)).Result == connectTask)
-            {
                 return connectTask.IsCompletedSuccessfully;
-            }
             return false;
         }
         catch
@@ -279,7 +277,7 @@ public class InterProcessCommunication : IInterProcessCommunication
     void OnMessageReceived(InterConnectMessage message) => MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
 
     string GetPortFilePath() => Path.Combine(_fileStorage.GetLocalApplicationDataPath(), "Hub", PortFileName);
-    
+
     static string GetStandalonePortFilePath()
     {
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -295,13 +293,13 @@ public class InterProcessCommunication : IInterProcessCommunication
         readonly ILogger _logger;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Standalone"/> class.
+        ///     Initializes a new instance of the <see cref="Standalone" /> class.
         /// </summary>
         public Standalone()
         {
             var fileStorage = new FileStorageService(); // Use production implementation for startup
             _logger = new FileLogger(fileStorage);
-            
+
             // Check if another instance is running by checking port file
             var portFilePath = GetStandalonePortFilePath();
             if (File.Exists(portFilePath))
@@ -315,26 +313,19 @@ public class InterProcessCommunication : IInterProcessCommunication
                         _logger.Info($"Found running instance on port {port}");
                 }
                 else
-                {
                     _isFirstInstance = true;
-                }
             }
             else
-            {
                 _isFirstInstance = true;
-            }
         }
 
         /// <summary>
-        /// Releases all resources used by the <see cref="Standalone"/> instance.
+        ///     Releases all resources used by the <see cref="Standalone" /> instance.
         /// </summary>
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
-        }
+        public void Dispose() => GC.SuppressFinalize(this);
 
         /// <summary>
-        /// Gets a value indicating whether another instance of the Hub is already running.
+        ///     Gets a value indicating whether another instance of the Hub is already running.
         /// </summary>
         /// <returns><c>true</c> if another instance is running; otherwise, <c>false</c>.</returns>
         public bool IsAlreadyRunning() => !_isFirstInstance;
@@ -346,9 +337,7 @@ public class InterProcessCommunication : IInterProcessCommunication
                 using var client = new TcpClient();
                 var connectTask = client.ConnectAsync(IPAddress.Loopback, port);
                 if (Task.WhenAny(connectTask, Task.Delay(1000)).Result == connectTask)
-                {
                     return connectTask.IsCompletedSuccessfully;
-                }
                 return false;
             }
             catch
@@ -358,7 +347,7 @@ public class InterProcessCommunication : IInterProcessCommunication
         }
 
         /// <summary>
-        /// Sends an IPC message to the running Hub instance based on command-line arguments.
+        ///     Sends an IPC message to the running Hub instance based on command-line arguments.
         /// </summary>
         /// <param name="args">The command-line arguments containing the message type and data.</param>
         public void SendMessage(string[] args)
@@ -367,14 +356,16 @@ public class InterProcessCommunication : IInterProcessCommunication
             {
                 _logger.Info($"Standalone.SendMessage called with {args.Length} args: {string.Join(" ", args)}");
 
-                // Parse arguments
-                if (args.Length < 1 || !Enum.TryParse<NotificationType>(args[0], true, out var type))
+                if (args.Length < 1)
                 {
                     _logger.Warning($"Invalid arguments: {string.Join(" ", args)}");
                     return;
                 }
 
-                var messageArgs = args.Skip(1).ToArray();
+                // Parse known IPC notification commands; otherwise forward raw startup args.
+                var isKnownNotification = Enum.TryParse<NotificationType>(args[0], true, out var type) && type != NotificationType.StartupArgs;
+                var messageArgs = isKnownNotification ? args.Skip(1).ToArray() : args;
+                type = isKnownNotification ? type : NotificationType.StartupArgs;
                 var message = new InterConnectMessage(type, messageArgs);
 
                 // Read port from file (synchronous) - use static helper for standalone

@@ -1,6 +1,4 @@
-﻿using Mdk.Hub.Features.Projects.Overview;
-
-namespace Mdk.Hub.Features.Projects.NewProjectDialog;
+﻿namespace Mdk.Hub.Features.Projects.NewProjectDialog;
 
 /// <summary>
 ///     Message data for displaying the new project dialog.

@@ -8,7 +8,7 @@ namespace Mdk.Hub.Features.Projects.Configuration;
 public readonly struct ConfigurationValue<T>
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ConfigurationValue{T}"/> struct.
+    ///     Initializes a new instance of the <see cref="ConfigurationValue{T}" /> struct.
     /// </summary>
     /// <param name="value">The configuration value.</param>
     /// <param name="source">The source layer from which the value came.</param>

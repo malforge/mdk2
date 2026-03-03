@@ -44,4 +44,3 @@ public interface IAnnouncementService
     /// </summary>
     bool IsAnnouncementDismissed(string announcementId);
 }
-

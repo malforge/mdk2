@@ -119,7 +119,7 @@ public class Ini
         var sections = new List<Section>();
         Section? currentSection = null;
         StringBuilder comment = new();
-        bool hasTrivia = false;  // Track if we have any trivia (comments or blank lines)
+        var hasTrivia = false; // Track if we have any trivia (comments or blank lines)
 
         bool tryReadLine(string text, ref int index, out ReadOnlySpan<char> line)
         {
@@ -185,7 +185,7 @@ public class Ini
                 }
                 var keyName = trimmed[..equals].Trim().ToString();
                 var keyValue = trimmed[(equals + 1)..].Trim().ToString();
-                
+
                 // Create key with its comment (if any was accumulated before this key)
                 string? keyComment = null;
                 if (hasTrivia)
@@ -196,7 +196,7 @@ public class Ini
                     comment.Clear();
                     hasTrivia = false;
                 }
-                
+
                 var newKey = new Key(keyName, keyValue, keyComment);
                 currentSection = currentSection.Value.WithKey(newKey);
             }
@@ -208,7 +208,7 @@ public class Ini
         }
         if (currentSection is not null)
             sections.Add(currentSection.Value);
-        
+
         // Handle trailing trivia (comments/blank lines after last section)
         if (hasTrivia)
         {
@@ -217,9 +217,7 @@ public class Ini
             result = new Ini(sections, comment.ToString());
         }
         else
-        {
             result = new Ini(sections);
-        }
         return true;
     }
 
@@ -231,7 +229,7 @@ public class Ini
     public Ini WithSection(Section section)
     {
         var builder = ImmutableArray.CreateBuilder<Section>();
-        bool found = false;
+        var found = false;
         foreach (var s in _sections)
         {
             if (string.Equals(s.Name, section.Name, StringComparison.OrdinalIgnoreCase))
@@ -240,9 +238,7 @@ public class Ini
                 found = true;
             }
             else
-            {
                 builder.Add(s);
-            }
         }
         if (!found)
             builder.Add(section);
@@ -258,7 +254,7 @@ public class Ini
     public Ini WithSection(string name, Func<Section, Section> buildSection)
     {
         var builder = ImmutableArray.CreateBuilder<Section>();
-        bool found = false;
+        var found = false;
         foreach (var s in _sections)
         {
             if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
@@ -267,9 +263,7 @@ public class Ini
                 found = true;
             }
             else
-            {
                 builder.Add(s);
-            }
         }
         if (!found)
             builder.Add(buildSection(new Section(name)));
@@ -285,7 +279,7 @@ public class Ini
     public Ini WithSection(string name, IEnumerable<Key> keys)
     {
         var builder = ImmutableArray.CreateBuilder<Section>();
-        bool found = false;
+        var found = false;
         foreach (var s in _sections)
         {
             if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
@@ -294,9 +288,7 @@ public class Ini
                 found = true;
             }
             else
-            {
                 builder.Add(s);
-            }
         }
         if (!found)
             builder.Add(new Section(name, keys));
@@ -345,7 +337,7 @@ public class Ini
     public Ini WithKey(string section, Key key)
     {
         var builder = ImmutableArray.CreateBuilder<Section>();
-        bool found = false;
+        var found = false;
         foreach (var s in _sections)
         {
             if (string.Equals(s.Name, section, StringComparison.OrdinalIgnoreCase))
@@ -354,9 +346,7 @@ public class Ini
                 found = true;
             }
             else
-            {
                 builder.Add(s);
-            }
         }
         if (!found)
             builder.Add(new Section(section, new[] { key }));
@@ -373,7 +363,7 @@ public class Ini
     public Ini WithKey(string section, string name, string value)
     {
         var builder = ImmutableArray.CreateBuilder<Section>();
-        bool found = false;
+        var found = false;
         foreach (var s in _sections)
         {
             if (string.Equals(s.Name, section, StringComparison.OrdinalIgnoreCase))
@@ -382,9 +372,7 @@ public class Ini
                 found = true;
             }
             else
-            {
                 builder.Add(s);
-            }
         }
         if (!found)
             builder.Add(new Section(section, new[] { new Key(name, value, null) }));
@@ -513,13 +501,9 @@ public class Ini
         foreach (var s in _sections)
         {
             if (string.Equals(s.Name, section, StringComparison.OrdinalIgnoreCase))
-            {
                 builder.Add(s.WithoutKey(name));
-            }
             else
-            {
                 builder.Add(s);
-            }
         }
         return new Ini(builder.ToImmutable(), TrailingTrivia);
     }
@@ -533,15 +517,15 @@ public class Ini
             // Write section leading trivia exactly as stored (already includes ; and blank lines)
             if (!string.IsNullOrEmpty(section.LeadingComment))
                 builder.Append(section.LeadingComment);
-                
+
             builder.AppendLine($"[{section.Name}]");
-            
+
             foreach (var key in section.Keys)
             {
                 // Write key trivia exactly as stored (already includes ; and blank lines)
                 if (!string.IsNullOrEmpty(key.Comment))
                     builder.Append(key.Comment);
-                    
+
                 builder.AppendLine($"{key.Name}={key.Value}");
             }
         }
@@ -636,11 +620,11 @@ public class Ini
             }
 
             // Replace existing or append new
-            var newKeys = index >= 0 
-                ? Keys.SetItem(index, key) 
+            var newKeys = index >= 0
+                ? Keys.SetItem(index, key)
                 : Keys.Add(key);
-            
-            return new(Name, newKeys, LeadingComment);
+
+            return new Section(Name, newKeys, LeadingComment);
         }
 
         /// <summary>
@@ -666,11 +650,11 @@ public class Ini
             }
 
             var newKey = new Key(name, value, existingComment);
-            var newKeys = index >= 0 
-                ? Keys.SetItem(index, newKey) 
+            var newKeys = index >= 0
+                ? Keys.SetItem(index, newKey)
                 : Keys.Add(newKey);
-            
-            return new(Name, newKeys, LeadingComment);
+
+            return new Section(Name, newKeys, LeadingComment);
         }
 
         /// <summary>
@@ -693,7 +677,7 @@ public class Ini
             if (index < 0)
                 return this;
 
-            return new(Name, Keys.RemoveAt(index), LeadingComment);
+            return new Section(Name, Keys.RemoveAt(index), LeadingComment);
         }
 
         /// <summary>

@@ -1,14 +1,14 @@
 <actions:ActionItemControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:i="https://github.com/projektanker/icons.avalonia"
-             xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
-             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
-             x:Class="Mdk.Hub.Features.Projects.Actions.Items.AnnouncementsActionView"
-             x:DataType="items:AnnouncementsAction"
-             TopEdge="Contained" BottomEdge="Contained">
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                           xmlns:i="https://github.com/projektanker/icons.avalonia"
+                           xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
+                           xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+                           mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
+                           x:Class="Mdk.Hub.Features.Projects.Actions.Items.AnnouncementsActionView"
+                           x:DataType="items:AnnouncementsAction"
+                           TopEdge="Contained" BottomEdge="Contained">
 
     <actions:ActionItemControl.Styles>
         <!-- Info style -->
@@ -16,13 +16,13 @@
             <Setter Property="Background" Value="{StaticResource BackgroundInfoCardBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}" />
         </Style>
-        
+
         <!-- Success style -->
         <Style Selector="Border.announcement-card[Tag=Success]">
             <Setter Property="Background" Value="{StaticResource BackgroundInfoCardBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderSuccessBrush}" />
         </Style>
-        
+
         <!-- Danger style -->
         <Style Selector="Border.announcement-card[Tag=Danger]">
             <Setter Property="Background" Value="{StaticResource BackgroundInfoCardBrush}" />
@@ -43,7 +43,7 @@
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         Foreground="{StaticResource ForegroundAccentBrush}" />
-                
+
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="4">
                     <TextBlock Text="Announcement" Classes="body medium" />
                     <TextBlock Text="{Binding CurrentAnnouncement.Message}" Classes="caption" TextWrapping="Wrap" />
@@ -68,4 +68,3 @@
     </Border>
 
 </actions:ActionItemControl>
-

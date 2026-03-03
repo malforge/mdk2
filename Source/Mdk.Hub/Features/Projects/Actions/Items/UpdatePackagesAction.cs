@@ -26,7 +26,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
     readonly AsyncRelayCommand _updateThisProjectCommand;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="UpdatePackagesAction"/> class.
+    ///     Initializes a new instance of the <see cref="UpdatePackagesAction" /> class.
     /// </summary>
     /// <param name="shell">The shell interface for UI interactions.</param>
     /// <param name="projectService">The service for managing projects.</param>
@@ -47,11 +47,17 @@ public class UpdatePackagesAction : ActionItem, IDisposable
     ///     Gets the command to update packages in the current project.
     /// </summary>
     public ICommand UpdateThisProjectCommand => _updateThisProjectCommand;
-    
+
     /// <summary>
     ///     Gets the command to update packages in all projects.
     /// </summary>
     public ICommand UpdateAllProjectsCommand => _updateAllProjectsCommand;
+
+    /// <summary>
+    ///     Gets the single selected project, or null if zero or multiple projects are selected.
+    ///     Compatibility property for single-select actions.
+    /// </summary>
+    ProjectModel? Project => SelectedProjects.Length == 1 ? SelectedProjects[0] : null;
 
     /// <summary>
     ///     Disposes resources used by this action.
@@ -64,18 +70,12 @@ public class UpdatePackagesAction : ActionItem, IDisposable
     }
 
     /// <summary>
-    ///     Gets the single selected project, or null if zero or multiple projects are selected.
-    ///     Compatibility property for single-select actions.
-    /// </summary>
-    ProjectModel? Project => SelectedProjects.Length == 1 ? SelectedProjects[0] : null;
-
-    /// <summary>
     ///     Called when the selected projects change to subscribe to property change notifications.
     /// </summary>
     protected override void OnSelectedProjectsChanged()
     {
         base.OnSelectedProjectsChanged();
-        
+
         OnPropertyChanged(nameof(Project));
 
         // Subscribe/unsubscribe to project property changes
@@ -92,7 +92,7 @@ public class UpdatePackagesAction : ActionItem, IDisposable
         // Only show for single selection
         if (!base.ShouldShow())
             return false;
-            
+
         // Show when project is selected and it needs updates
         var project = Project;
         return project != null && project.NeedsUpdate;

@@ -16,8 +16,8 @@ public static class NotificationCommand
     {
         if (args.Length < 3)
             return false;
-        
+
         var command = args[0];
-        return Enum.TryParse<NotificationType>(command, ignoreCase: true, out _);
+        return Enum.TryParse<NotificationType>(command, true, out _);
     }
 }

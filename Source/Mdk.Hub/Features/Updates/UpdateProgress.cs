@@ -9,7 +9,7 @@ public record UpdateProgress
     ///     Gets the current progress message.
     /// </summary>
     public required string Message { get; init; }
-    
+
     /// <summary>
     ///     Gets the completion percentage (0-100), or null if indeterminate.
     /// </summary>

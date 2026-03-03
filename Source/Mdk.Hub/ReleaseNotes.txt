@@ -1,3 +1,17 @@
+v.2.2.1
+   - Added FileInput control for picking files across settings.
+   - Added a new input on Global Settings to choose which executable file will be called on clicking "Open in IDE"
+   - Hub now consistently stays single-instance and activates the running window when launched again.
+   - Launch attempts with first-run-only startup flags while Hub is already running now show a clear in-app message.
+
+v.2.2.0
+   - First public stable Hub release.
+   - Version number aligned with MDK2 CLI/package line (jump from prerelease 1.x to 2.2.x) to reduce cross-tool version confusion.
+   - Hub and CLI are still versioned and released separately.
+
+v.1.0.0-pre.44
+   - New icon by Yellow51
+   
 v.1.0.0-pre.43
    - Added Mixin project template support.
    - Project icons now consistent across the application.
@@ -176,3 +190,4 @@ v.1.0.0-pre.2
 
 v.1.0.0-pre.1
    - First prerelease of the MDK2 Hub application.
+

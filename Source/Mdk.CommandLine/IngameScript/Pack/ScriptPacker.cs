@@ -203,8 +203,28 @@ public class ScriptPacker: ProjectJob
             else
                 project = project.WithCompilationOptions(project.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary));
         }
-        
-        var allDocuments = project.Documents.ToImmutableArray(); // project.Documents.Where(isNotIgnored).ToImmutableArray();
+
+        // Collect source-generated documents and inline them as regular documents so that
+        // processors can modify them normally. The generators are stripped from the project
+        // to prevent duplicate type definitions after the combiner inlines their output.
+        var sourceGeneratedDocuments = (await project.GetSourceGeneratedDocumentsAsync()).ToImmutableArray();
+        if (sourceGeneratedDocuments.Length > 0)
+        {
+            context.Console.Trace($"  {sourceGeneratedDocuments.Length} source-generated documents");
+            foreach (var analyzerRef in project.AnalyzerReferences.ToArray())
+            {
+                if (analyzerRef.GetGenerators(LanguageNames.CSharp).Any())
+                    project = project.RemoveAnalyzerReference(analyzerRef);
+            }
+            foreach (var sgDoc in sourceGeneratedDocuments)
+            {
+                var syntaxRoot = await sgDoc.GetSyntaxRootAsync();
+                if (syntaxRoot != null)
+                    project = project.AddDocument(sgDoc.Name, syntaxRoot).Project;
+            }
+        }
+
+        var allDocuments = project.Documents.ToImmutableArray();
         
         var manager = ScriptProcessingManager.Create().Build();
 

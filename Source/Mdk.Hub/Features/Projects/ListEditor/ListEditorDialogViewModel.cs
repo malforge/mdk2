@@ -1,4 +1,6 @@
+using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
 using Mdk.Hub.Features.Shell;
@@ -7,7 +9,7 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.Projects.ListEditor;
 
 /// <summary>
-/// View model for the list editor dialog.
+///     View model for the list editor dialog.
 /// </summary>
 [ViewModelFor<ListEditorDialogView>]
 public class ListEditorDialogViewModel : OverlayModel
@@ -18,7 +20,7 @@ public class ListEditorDialogViewModel : OverlayModel
     string _validationError = string.Empty;
 
     /// <summary>
-    /// Initializes a new instance of the ListEditorDialogViewModel class.
+    ///     Initializes a new instance of the ListEditorDialogViewModel class.
     /// </summary>
     /// <param name="message">Message containing dialog configuration and initial items.</param>
     public ListEditorDialogViewModel(ListEditorDialogMessage message)
@@ -33,8 +35,8 @@ public class ListEditorDialogViewModel : OverlayModel
         {
             foreach (var item in message.InitialItems)
             {
-                var entry = new ListEntryViewModel 
-                { 
+                var entry = new ListEntryViewModel
+                {
                     Value = item,
                     Watermark = message.FieldWatermark,
                     DeleteCommand = _deleteItemCommand
@@ -49,22 +51,22 @@ public class ListEditorDialogViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets the message containing dialog configuration.
+    ///     Gets the message containing dialog configuration.
     /// </summary>
     public ListEditorDialogMessage Message { get; }
 
     /// <summary>
-    /// Gets the result after user saves or cancels.
+    ///     Gets the result after user saves or cancels.
     /// </summary>
     public ListEditorDialogResult? Result { get; private set; }
 
     /// <summary>
-    /// Gets the collection of list items.
+    ///     Gets the collection of list items.
     /// </summary>
     public ObservableCollection<ListEntryViewModel> Items { get; } = new();
 
     /// <summary>
-    /// Gets the validation error message.
+    ///     Gets the validation error message.
     /// </summary>
     public string ValidationError
     {
@@ -73,17 +75,17 @@ public class ListEditorDialogViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets the command to save changes.
+    ///     Gets the command to save changes.
     /// </summary>
     public ICommand SaveCommand => _saveCommand;
 
     /// <summary>
-    /// Gets the command to cancel editing.
+    ///     Gets the command to cancel editing.
     /// </summary>
     public ICommand CancelCommand => _cancelCommand;
 
     /// <summary>
-    /// Gets the command to delete an item.
+    ///     Gets the command to delete an item.
     /// </summary>
     public ICommand DeleteItemCommand => _deleteItemCommand;
 
@@ -98,7 +100,7 @@ public class ListEditorDialogViewModel : OverlayModel
         _saveCommand.NotifyCanExecuteChanged();
     }
 
-    void OnEntryChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    void OnEntryChanged(object? sender, PropertyChangedEventArgs e)
     {
         // When user types in the empty row, ensure there's a new empty row
         EnsureEmptyRow();
@@ -150,15 +152,12 @@ public class ListEditorDialogViewModel : OverlayModel
 
         // Check for duplicates (case-insensitive)
         var duplicateValue = nonEmptyEntries
-            .GroupBy(e => e.Value, System.StringComparer.OrdinalIgnoreCase)
+            .GroupBy(e => e.Value, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(g => g.Count() > 1)
             ?.Key;
 
         if (duplicateValue != null)
-        {
             ValidationError = $"Duplicate item: {duplicateValue}";
-            return;
-        }
     }
 
     bool CanSave() => string.IsNullOrEmpty(ValidationError);

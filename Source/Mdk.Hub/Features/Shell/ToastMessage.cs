@@ -8,7 +8,7 @@ namespace Mdk.Hub.Features.Shell;
 public class ToastMessage : ViewModel
 {
     bool _isDismissing;
-    
+
     /// <summary>
     ///     Gets or sets the message text to display.
     /// </summary>

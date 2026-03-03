@@ -5,7 +5,8 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.Projects.Options;
 
 /// <summary>
-/// View model for the configuration section of a project, providing options for build settings, paths, and minification.
+///     View model for the configuration section of a project, providing options for build settings, paths, and
+///     minification.
 /// </summary>
 public class ConfigurationSectionViewModel : ViewModel
 {
@@ -26,7 +27,7 @@ public class ConfigurationSectionViewModel : ViewModel
     ComboBoxOption? _trace;
 
     /// <summary>
-    /// Gets the available options for interactive mode settings.
+    ///     Gets the available options for interactive mode settings.
     /// </summary>
     public static List<ComboBoxOption> InteractiveOptionsList { get; } = new()
     {
@@ -36,7 +37,7 @@ public class ConfigurationSectionViewModel : ViewModel
     };
 
     /// <summary>
-    /// Gets the available options for minification levels.
+    ///     Gets the available options for minification levels.
     /// </summary>
     public static List<ComboBoxOption> MinifyOptionsList { get; } = new()
     {
@@ -48,7 +49,7 @@ public class ConfigurationSectionViewModel : ViewModel
     };
 
     /// <summary>
-    /// Gets the available extra options that can be applied during minification.
+    ///     Gets the available extra options that can be applied during minification.
     /// </summary>
     public static List<ComboBoxOption> MinifyExtraOptionsList { get; } = new()
     {
@@ -57,7 +58,7 @@ public class ConfigurationSectionViewModel : ViewModel
     };
 
     /// <summary>
-    /// Gets the available options for trace logging (on/off).
+    ///     Gets the available options for trace logging (on/off).
     /// </summary>
     public static List<ComboBoxOption> TraceOptionsList { get; } = new()
     {
@@ -66,7 +67,7 @@ public class ConfigurationSectionViewModel : ViewModel
     };
 
     /// <summary>
-    /// Gets or sets the selected interactive mode option.
+    ///     Gets or sets the selected interactive mode option.
     /// </summary>
     public ComboBoxOption? Interactive
     {
@@ -75,7 +76,7 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the output path for the built script or mod.
+    ///     Gets or sets the output path for the built script or mod.
     /// </summary>
     public string OutputPath
     {
@@ -84,7 +85,7 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the path to the Space Engineers game binaries.
+    ///     Gets or sets the path to the Space Engineers game binaries.
     /// </summary>
     public string BinaryPath
     {
@@ -93,7 +94,7 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the selected minification level option.
+    ///     Gets or sets the selected minification level option.
     /// </summary>
     public ComboBoxOption? Minify
     {
@@ -102,7 +103,7 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the selected minification extra options.
+    ///     Gets or sets the selected minification extra options.
     /// </summary>
     public ComboBoxOption? MinifyExtraOptions
     {
@@ -111,7 +112,7 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the selected trace logging option.
+    ///     Gets or sets the selected trace logging option.
     /// </summary>
     public ComboBoxOption? Trace
     {
@@ -120,7 +121,7 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the glob patterns for files to ignore during build.
+    ///     Gets or sets the glob patterns for files to ignore during build.
     /// </summary>
     public string Ignores
     {
@@ -129,7 +130,7 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the namespaces to accept without warnings (for programmable block scripts).
+    ///     Gets or sets the namespaces to accept without warnings (for programmable block scripts).
     /// </summary>
     public string Namespaces
     {
@@ -138,12 +139,12 @@ public class ConfigurationSectionViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the custom macros for text replacement.
+    ///     Gets or sets the custom macros for text replacement.
     /// </summary>
     public ImmutableDictionary<string, string>? Macros { get; set; }
 
     /// <summary>
-    /// Resets all configuration options to their default values.
+    ///     Resets all configuration options to their default values.
     /// </summary>
     public void Clear()
     {

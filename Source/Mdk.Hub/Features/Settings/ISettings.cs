@@ -3,43 +3,43 @@ using System;
 namespace Mdk.Hub.Features.Settings;
 
 /// <summary>
-/// Provides access to application settings storage with change notifications.
+///     Provides access to application settings storage with change notifications.
 /// </summary>
 public interface ISettings
 {
     /// <summary>
-    /// Occurs when a setting value changes.
+    ///     Occurs when a setting value changes.
     /// </summary>
     event EventHandler<SettingsChangedEventArgs>? SettingsChanged;
-    
+
     /// <summary>
-    /// Attempts to get a setting value for the specified key.
+    ///     Attempts to get a setting value for the specified key.
     /// </summary>
     /// <typeparam name="T">The value type of the setting.</typeparam>
     /// <param name="key">The setting key.</param>
     /// <param name="value">When this method returns, contains the setting value if found; otherwise, the default value.</param>
     /// <returns>True if the setting was found; otherwise, false.</returns>
     bool TryGetValue<T>(string key, out T value) where T : struct;
-    
+
     /// <summary>
-    /// Gets a setting value for the specified key.
+    ///     Gets a setting value for the specified key.
     /// </summary>
     /// <typeparam name="T">The value type of the setting.</typeparam>
     /// <param name="key">The setting key.</param>
     /// <returns>The setting value.</returns>
     T GetValue<T>(string key) where T : struct;
-    
+
     /// <summary>
-    /// Gets a setting value for the specified key, or returns the default value if the key does not exist.
+    ///     Gets a setting value for the specified key, or returns the default value if the key does not exist.
     /// </summary>
     /// <typeparam name="T">The value type of the setting.</typeparam>
     /// <param name="key">The setting key.</param>
     /// <param name="defaultValue">The default value to return if the key does not exist.</param>
     /// <returns>The setting value or the default value.</returns>
     T GetValue<T>(string key, T defaultValue) where T : struct;
-    
+
     /// <summary>
-    /// Sets a setting value for the specified key.
+    ///     Sets a setting value for the specified key.
     /// </summary>
     /// <typeparam name="T">The value type of the setting.</typeparam>
     /// <param name="key">The setting key.</param>

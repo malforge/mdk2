@@ -7,9 +7,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
-using Mdk.Hub.Features.NodeScript;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
-using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Projects.Overview.Icons;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
@@ -27,44 +25,38 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 public class ProjectManagementAction : ActionItem
 {
     readonly AsyncRelayCommand _addExistingCommand;
+    readonly AsyncRelayCommand _createMixinCommand;
     readonly AsyncRelayCommand _createModCommand;
     readonly AsyncRelayCommand _createScriptCommand;
-    readonly AsyncRelayCommand _createMixinCommand;
-    readonly RelayCommand _createNodeScriptCommand;
     readonly IFileStorageService _fileStorage;
     readonly IProjectService _projectService;
     readonly IShell _shell;
-    readonly IDependencyContainer _container;
-
-    bool _canMakeScript;
     bool _canMakeMod;
 
+    bool _canMakeScript;
+
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ProjectManagementAction"/> class.
+    ///     Initializes a new instance of the <see cref="ProjectManagementAction" /> class.
     /// </summary>
     /// <param name="shell">The shell interface for UI interactions.</param>
     /// <param name="projectService">The service for managing projects.</param>
     /// <param name="fileStorage">The file storage service.</param>
-    /// <param name="container">The dependency container for resolving services.</param>
     public ProjectManagementAction(
         IShell shell,
         IProjectService projectService,
-        IFileStorageService fileStorage,
-        IDependencyContainer container)
+        IFileStorageService fileStorage)
     {
         _shell = shell;
         _projectService = projectService;
         _fileStorage = fileStorage;
-        _container = container;
 
         _createScriptCommand = new AsyncRelayCommand(CreateScriptAsync, () => CanMakeScript);
         _createModCommand = new AsyncRelayCommand(CreateModAsync, () => CanMakeMod);
         _createMixinCommand = new AsyncRelayCommand(CreateMixinAsync, () => true);
-        _createNodeScriptCommand = new RelayCommand(CreateNodeScript);
         _addExistingCommand = new AsyncRelayCommand(AddExistingProjectAsync);
 
         _projectService.StateChanged += OnProjectServiceStateChanged;
-        
+
         // Initialize from current state
         UpdateCanMakeProperties();
     }
@@ -101,11 +93,6 @@ public class ProjectManagementAction : ActionItem
     ///     Gets the command to create a new Mixin.
     /// </summary>
     public ICommand CreateMixinCommand => _createMixinCommand;
-
-    /// <summary>
-    ///     Gets the command to create a new Node Script.
-    /// </summary>
-    public ICommand CreateNodeScriptCommand => _createNodeScriptCommand;
 
     /// <summary>
     ///     Gets the command to add an existing project to the Hub.
@@ -164,12 +151,6 @@ public class ProjectManagementAction : ActionItem
             "Create a new Space Engineers mixin project",
             "MdkMixinProject",
             new MixinSymbol());
-
-    void CreateNodeScript()
-    {
-        var editorViewModel = _container.Resolve<NodeScriptEditorViewModel>();
-        _shell.OpenWindow(editorViewModel);
-    }
 
     async Task CreateProjectAsync(string templateName, string title, string description, string defaultProjectName, object icon)
     {
@@ -250,7 +231,7 @@ public class ProjectManagementAction : ActionItem
             await busyTask;
 
             // Navigate to the new project and open options drawer
-            _projectService.NavigateToProject(projectPath.Value, openOptions: true);
+            _projectService.NavigateToProject(projectPath.Value, true);
         }
         catch (Exception ex)
         {

@@ -3,7 +3,7 @@ using System;
 namespace Mdk.Hub.Features.Projects.ListEditor;
 
 /// <summary>
-/// Message to open the list editor dialog.
+///     Message to open the list editor dialog.
 /// </summary>
 /// <param name="Title">Dialog title.</param>
 /// <param name="Description">Description explaining what is being edited.</param>

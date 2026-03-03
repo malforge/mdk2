@@ -11,47 +11,46 @@ namespace Mdk.Hub.Features.Shell;
 /// </summary>
 public class HostWindow : Window
 {
-    readonly ILogger _logger;
     readonly bool _hasExplicitTitle;
+    readonly ILogger _logger;
+    readonly IWindowScope? _scope;
     bool _isClosing;
-
-    /// <summary>
-    /// Gets whether the window has been closed.
-    /// </summary>
-    public bool IsClosed { get; private set; }
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="HostWindow" /> class.
     /// </summary>
     /// <param name="title">Optional explicit window title.</param>
     /// <param name="logger">Logger for diagnostics.</param>
-    public HostWindow(string? title, ILogger logger)
+    /// <param name="scope">Optional window-scoped DI container. Disposed when the window closes.</param>
+    public HostWindow(string? title, ILogger logger, IWindowScope? scope = null)
     {
         _logger = logger;
+        _scope = scope;
         _hasExplicitTitle = !string.IsNullOrEmpty(title);
-        
+
         CanResize = true;
 
-        // Set explicit title if provided
         if (_hasExplicitTitle)
             Title = title;
 
-        // Use ContentControl to display the view
         Content = new ContentControl
         {
             [!ContentProperty] = this[!DataContextProperty]
         };
     }
 
+    /// <summary>
+    ///     Gets whether the window has been closed.
+    /// </summary>
+    public bool IsClosed { get; private set; }
+
     /// <inheritdoc />
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
 
-        // If no explicit title was set and ViewModel implements IHaveATitle, bind to it
         if (!_hasExplicitTitle && DataContext is IHaveATitle)
         {
-            // Bind to the Title property on the DataContext
             Bind(TitleProperty,
                 new Binding(nameof(IHaveATitle.Title))
                 {
@@ -65,13 +64,9 @@ public class HostWindow : Window
     {
         try
         {
-            // If the ViewModel supports close handling, ask it first
             if (DataContext is ISupportClosing supportClosing && !_isClosing)
             {
-                // Cancel the default close
                 e.Cancel = true;
-
-                // Ask the ViewModel if it's OK to close
                 var canClose = await supportClosing.WillCloseAsync();
                 if (canClose)
                 {
@@ -109,6 +104,8 @@ public class HostWindow : Window
                     await asyncDisposable.DisposeAsync();
                     break;
             }
+
+            _scope?.Dispose();
         }
         catch (Exception exception)
         {

@@ -6,7 +6,7 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.CommonDialogs;
 
 /// <summary>
-/// View model for a busy/loading overlay with progress indication.
+///     View model for a busy/loading overlay with progress indication.
 /// </summary>
 [ViewModelFor<BusyOverlayView>]
 public class BusyOverlayViewModel : OverlayModel
@@ -18,7 +18,7 @@ public class BusyOverlayViewModel : OverlayModel
     double _progress;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BusyOverlayViewModel"/> class.
+    ///     Initializes a new instance of the <see cref="BusyOverlayViewModel" /> class.
     /// </summary>
     public BusyOverlayViewModel(string message)
     {
@@ -27,7 +27,7 @@ public class BusyOverlayViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets or sets the message text to display in the busy overlay.
+    ///     Gets or sets the message text to display in the busy overlay.
     /// </summary>
     public string Message
     {
@@ -36,7 +36,7 @@ public class BusyOverlayViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets or sets the progress value (0.0 to 1.0) for determinate progress indication.
+    ///     Gets or sets the progress value (0.0 to 1.0) for determinate progress indication.
     /// </summary>
     public double Progress
     {
@@ -45,7 +45,7 @@ public class BusyOverlayViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets or sets whether the progress is indeterminate (no specific progress value).
+    ///     Gets or sets whether the progress is indeterminate (no specific progress value).
     /// </summary>
     public bool IsIndeterminate
     {
@@ -54,7 +54,7 @@ public class BusyOverlayViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets or sets whether the operation can be cancelled by the user.
+    ///     Gets or sets whether the operation can be cancelled by the user.
     /// </summary>
     public bool IsCancellable
     {
@@ -63,17 +63,17 @@ public class BusyOverlayViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets the command to cancel the operation.
+    ///     Gets the command to cancel the operation.
     /// </summary>
     public ICommand CancelCommand { get; }
 
     /// <summary>
-    /// Gets the cancellation token for the operation.
+    ///     Gets the cancellation token for the operation.
     /// </summary>
     public CancellationToken CancellationToken => _cancellationTokenSource?.Token ?? CancellationToken.None;
 
     /// <summary>
-    /// Enables cancellation support for this overlay.
+    ///     Enables cancellation support for this overlay.
     /// </summary>
     public void EnableCancellation()
     {

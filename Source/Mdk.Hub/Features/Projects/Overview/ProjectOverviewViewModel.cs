@@ -35,6 +35,8 @@ public class ProjectOverviewViewModel : ViewModel
     string? _pendingNavigationPath;
     string _searchTerm = string.Empty;
     string _searchText = string.Empty;
+
+    ImmutableArray<ProjectModel> _selectedProjects = ImmutableArray<ProjectModel>.Empty;
     ShellViewModel? _shellViewModel;
     bool _showAll = true;
 
@@ -104,9 +106,7 @@ public class ProjectOverviewViewModel : ViewModel
     ///     Gets the collection of projects after applying search and filter criteria.
     /// </summary>
     public ReadOnlyObservableCollection<ProjectModel> FilteredProjects { get; }
-    
-    ImmutableArray<ProjectModel> _selectedProjects = ImmutableArray<ProjectModel>.Empty;
-    
+
     /// <summary>
     ///     Gets or sets the currently selected projects. Contains 0-1 items in single-select mode, 0-N in multi-select mode.
     /// </summary>
@@ -119,20 +119,20 @@ public class ProjectOverviewViewModel : ViewModel
             {
                 // Handle single selection for current behaviors (navigation, save preference, etc.)
                 var project = value[0];
-                
+
                 // Update IsSelected flags for legacy code
                 foreach (var item in _projects)
-                    item.IsSelected = (item == project);
-                
+                    item.IsSelected = item == project;
+
                 // Clear needs attention flag
                 project.NeedsAttention = false;
                 _lastProjectSelectionTime = DateTimeOffset.Now;
-                
+
                 // Save selected project path
                 var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
                 hubSettings.LastSelectedProject = project.ProjectPath.ToString();
                 _settings.SetValue(SettingsKeys.HubSettings, hubSettings);
-                
+
                 UpdateState();
             }
         }
@@ -212,7 +212,7 @@ public class ProjectOverviewViewModel : ViewModel
     ///     Gets the command to select a project.
     /// </summary>
     public ICommand SelectProjectCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to open a project in IDE.
     /// </summary>
@@ -280,7 +280,7 @@ public class ProjectOverviewViewModel : ViewModel
 
         // Select the project (don't toggle when called from state sync)
         project.IsSelected = true;
-        
+
         // Update SelectedProjects - code-behind will sync ListBox
         SelectedProjects = ImmutableArray.Create(project);
 
@@ -420,23 +420,23 @@ public class ProjectOverviewViewModel : ViewModel
     void RestoreSelectedProject()
     {
         var lastSelectedPath = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).LastSelectedProject;
-        
+
         ProjectModel? project = null;
-        
+
         if (!string.IsNullOrEmpty(lastSelectedPath))
         {
             var canonicalPath = new CanonicalPath(lastSelectedPath);
             project = AllProjects.FirstOrDefault(p => p.ProjectPath == canonicalPath);
         }
-        
+
         // If no saved selection or saved project not found, select first project
         if (project == null && AllProjects.Length > 0)
             project = AllProjects[0];
-        
+
         if (project != null)
         {
             // Select the project - filter update will ensure it's visible
-            SelectProject(project, scrollToItem: true);
+            SelectProject(project, true);
         }
     }
 
@@ -571,7 +571,7 @@ public class ProjectOverviewViewModel : ViewModel
         else
             _logger.Warning($"Could not find project model for {e.ProjectPath}");
     }
-    
+
     void OpenProjectInIde(ProjectModel? project)
     {
         if (project == null || project.ProjectPath.IsEmpty())

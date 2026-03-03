@@ -21,7 +21,7 @@
     -->
 
     <!-- Text Color Modifiers -->
-    
+
     <!-- Primary - Pure white for emphasis (H1 titles) -->
     <Style Selector="TextBlock.primary">
         <Setter Property="Foreground" Value="{StaticResource ForegroundPrimaryBrush}" />
@@ -227,7 +227,7 @@
     <!-- Danger MenuItem -->
     <Style Selector="MenuItem.danger">
         <Setter Property="Foreground" Value="{StaticResource ForegroundDangerBrush}" />
-        
+
         <Style Selector="^:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{StaticResource BackgroundSubtleDangerBrush}" />
         </Style>

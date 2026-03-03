@@ -5,25 +5,25 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.CommonDialogs;
 
 /// <summary>
-/// View model for a danger confirmation dialog that requires the user to type a specific key phrase for verification.
+///     View model for a danger confirmation dialog that requires the user to type a specific key phrase for verification.
 /// </summary>
 [ViewModelFor<DangerBoxView>]
 public class DangerBoxViewModel : MessageBoxViewModel
 {
     string? _keyPhrase;
-    
+
     /// <summary>
-    /// Gets or initializes the key phrase that the user must type to confirm the dangerous action.
+    ///     Gets or initializes the key phrase that the user must type to confirm the dangerous action.
     /// </summary>
     public required string? RequiredKeyPhrase { get; init; }
-    
+
     /// <summary>
-    /// Gets or initializes the watermark text displayed in the key phrase input field.
+    ///     Gets or initializes the watermark text displayed in the key phrase input field.
     /// </summary>
     public required string? KeyPhraseWatermark { get; init; }
 
     /// <summary>
-    /// Gets or sets the key phrase entered by the user.
+    ///     Gets or sets the key phrase entered by the user.
     /// </summary>
     public string? KeyPhrase
     {
@@ -32,15 +32,15 @@ public class DangerBoxViewModel : MessageBoxViewModel
     }
 
     /// <summary>
-    /// Occurs when the user enters an incorrect verification phrase.
+    ///     Occurs when the user enters an incorrect verification phrase.
     /// </summary>
     public event EventHandler? BadVerificationPhrase;
 
     /// <summary>
-    /// Verifies that the entered key phrase matches the required key phrase.
+    ///     Verifies that the entered key phrase matches the required key phrase.
     /// </summary>
     /// <returns>
-    /// <see langword="true"/> if the key phrase matches; otherwise, <see langword="false"/>.
+    ///     <see langword="true" /> if the key phrase matches; otherwise, <see langword="false" />.
     /// </returns>
     public bool VerifyKeyPhrase()
     {

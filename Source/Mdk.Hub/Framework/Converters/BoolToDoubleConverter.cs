@@ -19,13 +19,10 @@ public class BoolToDoubleConverter : IValueConverter
     {
         if (value is bool boolValue)
             return boolValue ? 1.0 : 0.0;
-        
+
         return 0.0;
     }
 
     /// <inheritdoc />
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotImplementedException();
 }

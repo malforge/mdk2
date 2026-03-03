@@ -16,13 +16,13 @@ namespace Mdk.Hub.Features.Snackbars;
 public class SnackbarViewModel : ViewModel
 {
     readonly RelayCommand _closeCommand;
+    bool _isPaused;
+    int _remainingTimeout;
     CancellationTokenSource? _timeoutCts;
     Stopwatch? _timeoutStopwatch;
-    int _remainingTimeout;
-    bool _isPaused;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SnackbarViewModel"/> class.
+    ///     Initializes a new instance of the <see cref="SnackbarViewModel" /> class.
     /// </summary>
     public SnackbarViewModel()
     {
@@ -30,34 +30,37 @@ public class SnackbarViewModel : ViewModel
     }
 
     /// <summary>
-    /// Gets or sets the message text to display in the snackbar.
+    ///     Gets or sets the message text to display in the snackbar.
     /// </summary>
     public string Message { get; set; } = string.Empty;
+
     /// <summary>
-    /// Gets or sets the collection of actions available in the snackbar.
+    ///     Gets or sets the collection of actions available in the snackbar.
     /// </summary>
     public IReadOnlyList<SnackbarActionViewModel> Actions { get; set; } = Array.Empty<SnackbarActionViewModel>();
+
     /// <summary>
-    /// Gets or sets the timeout duration in milliseconds before the snackbar auto-closes.
+    ///     Gets or sets the timeout duration in milliseconds before the snackbar auto-closes.
     /// </summary>
     public int Timeout { get; set; }
+
     /// <summary>
-    /// Gets or sets whether this snackbar is in toast mode (no close button, short-lived).
+    ///     Gets or sets whether this snackbar is in toast mode (no close button, short-lived).
     /// </summary>
     public bool IsToast { get; set; }
 
     /// <summary>
-    /// Gets the command to close the snackbar.
+    ///     Gets the command to close the snackbar.
     /// </summary>
     public ICommand CloseCommand => _closeCommand;
 
     /// <summary>
-    /// Event raised when the snackbar should be closed.
+    ///     Event raised when the snackbar should be closed.
     /// </summary>
     public event EventHandler? CloseRequested;
 
     /// <summary>
-    /// Sets the available actions for the snackbar.
+    ///     Sets the available actions for the snackbar.
     /// </summary>
     public void SetActions(IEnumerable<SnackbarAction> actions) => Actions = actions.Select(a => new SnackbarActionViewModel(a, CloseIfRequested)).ToList();
 
@@ -68,7 +71,7 @@ public class SnackbarViewModel : ViewModel
     }
 
     /// <summary>
-    /// Starts the auto-close timeout if a timeout is configured.
+    ///     Starts the auto-close timeout if a timeout is configured.
     /// </summary>
     public void StartTimeout()
     {
@@ -94,7 +97,7 @@ public class SnackbarViewModel : ViewModel
     }
 
     /// <summary>
-    /// Pauses the timeout (when mouse hovers over interactive snackbar).
+    ///     Pauses the timeout (when mouse hovers over interactive snackbar).
     /// </summary>
     public void PauseTimeout()
     {
@@ -108,7 +111,7 @@ public class SnackbarViewModel : ViewModel
     }
 
     /// <summary>
-    /// Resumes the timeout (when mouse leaves interactive snackbar).
+    ///     Resumes the timeout (when mouse leaves interactive snackbar).
     /// </summary>
     public void ResumeTimeout()
     {
@@ -134,7 +137,7 @@ public class SnackbarViewModel : ViewModel
     }
 
     /// <summary>
-    /// Cancels the auto-close timeout.
+    ///     Cancels the auto-close timeout.
     /// </summary>
     public void CancelTimeout()
     {

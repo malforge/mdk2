@@ -41,7 +41,7 @@
             <ScaleTransform />
         </Border.RenderTransform>
         <TextBlock Text="{Binding Message}"
-                   
+
                    Classes="primary"
                    TextAlignment="Center"
                    TextWrapping="Wrap"

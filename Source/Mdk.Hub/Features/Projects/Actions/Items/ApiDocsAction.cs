@@ -25,7 +25,7 @@ public class ApiDocsAction : ActionItem
     string? _title;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ApiDocsAction"/> class.
+    ///     Initializes a new instance of the <see cref="ApiDocsAction" /> class.
     /// </summary>
     /// <param name="projectService">The service for managing projects.</param>
     /// <param name="logger">The logger for diagnostic output.</param>

@@ -361,4 +361,51 @@ public class PathInputTests
         
         window.Close();
     }
+
+    [AvaloniaTest]
+    public void PathInput_RequiresExistingPathWhenAllowNonExistingIsFalse()
+    {
+        var control = new PathInput { AllowNonExisting = false };
+        var window = new Window { Content = control };
+        window.Show();
+
+        Dispatcher.UIThread.RunJobs();
+
+        var textBox = control.GetVisualDescendants().OfType<TextBox>()
+            .FirstOrDefault(tb => tb.Name == "PART_TextBox");
+
+        Assert.That(textBox, Is.Not.Null, "TextBox not found in template");
+
+        var missingPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        textBox!.Text = missingPath;
+        textBox.RaiseEvent(new RoutedEventArgs(InputElement.LostFocusEvent));
+
+        Assert.That(control.HasError, Is.True);
+        Assert.That(control.ValidationError, Is.EqualTo("Path does not exist"));
+
+        window.Close();
+    }
+
+    [AvaloniaTest]
+    public void PathInput_AcceptsExistingPathWhenAllowNonExistingIsFalse()
+    {
+        var control = new PathInput { AllowNonExisting = false };
+        var window = new Window { Content = control };
+        window.Show();
+
+        Dispatcher.UIThread.RunJobs();
+
+        var textBox = control.GetVisualDescendants().OfType<TextBox>()
+            .FirstOrDefault(tb => tb.Name == "PART_TextBox");
+
+        Assert.That(textBox, Is.Not.Null, "TextBox not found in template");
+
+        textBox!.Text = System.IO.Path.GetTempPath();
+        textBox.RaiseEvent(new RoutedEventArgs(InputElement.LostFocusEvent));
+
+        Assert.That(control.HasError, Is.False);
+        Assert.That(control.ValidationError, Is.Null);
+
+        window.Close();
+    }
 }

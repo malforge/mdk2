@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -33,14 +32,19 @@ public class ProjectInfoAction : ActionItem
     string? _deploymentError;
     bool _isDeployed;
     bool _isLoading = true;
+
+    bool _isScript;
+
+    bool _isScriptTooLarge;
     DateTimeOffset? _lastChanged;
     string? _lastChangedError;
     DateTimeOffset? _lastDeployed;
     string? _outputPath;
+    string _projectTypeName = string.Empty;
     int? _scriptSizeCharacters;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ProjectInfoAction"/> class.
+    ///     Initializes a new instance of the <see cref="ProjectInfoAction" /> class.
     /// </summary>
     /// <param name="projectService">The service for managing projects.</param>
     /// <param name="shell">The shell interface for UI interactions.</param>
@@ -61,9 +65,6 @@ public class ProjectInfoAction : ActionItem
         CopyScriptCommand = new AsyncRelayCommand(CopyScriptAsync, CanCopyScript);
         ShowOptionsCommand = new RelayCommand(ShowOptions, CanShowOptions);
     }
-
-    bool _isScript;
-    string _projectTypeName = string.Empty;
 
     /// <summary>
     ///     Gets the single selected project, or null if zero or multiple projects are selected.
@@ -172,8 +173,6 @@ public class ProjectInfoAction : ActionItem
         private set => SetProperty(ref _configurationWarning, value);
     }
 
-    bool _isScriptTooLarge;
-
     /// <summary>
     ///     Gets whether the script exceeds the Space Engineers character limit.
     /// </summary>
@@ -187,22 +186,22 @@ public class ProjectInfoAction : ActionItem
     ///     Gets the command to open the project folder in explorer.
     /// </summary>
     public ICommand OpenProjectFolderCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to open the output/deployment folder.
     /// </summary>
     public ICommand OpenOutputFolderCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to open the project in an IDE.
     /// </summary>
     public ICommand OpenInIdeCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to copy the script to clipboard.
     /// </summary>
     public ICommand CopyScriptCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to show project options.
     /// </summary>
@@ -222,11 +221,11 @@ public class ProjectInfoAction : ActionItem
 
         // Update computed properties
         OnPropertyChanged(nameof(Project));
-        
+
         var project = Project;
         IsScript = project?.Type == ProjectType.ProgrammableBlock;
-        ProjectTypeName = project?.Type == ProjectType.ProgrammableBlock 
-            ? "Programmable Block Script" 
+        ProjectTypeName = project?.Type == ProjectType.ProgrammableBlock
+            ? "Programmable Block Script"
             : "Mod";
 
         // Reload project data for new project
@@ -242,7 +241,7 @@ public class ProjectInfoAction : ActionItem
         // Only show for single selection
         if (!base.ShouldShow())
             return false;
-            
+
         return !_projectService.State.SelectedProject.IsEmpty();
     }
 
@@ -273,7 +272,10 @@ public class ProjectInfoAction : ActionItem
         if (!CanOpenInIde())
             return;
 
-        if (_projectService.OpenProjectInIde(Project!.ProjectPath))
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        if (!string.IsNullOrEmpty(hubSettings.CustomIdePath) && !File.Exists(hubSettings.CustomIdePath))
+            _shell.ShowToast($"IDE executable could not be found at {hubSettings.CustomIdePath}");
+        else if (_projectService.OpenProjectInIde(Project!.ProjectPath))
             _shell.ShowToast($"Opening {Project.Name} in IDE...");
     }
 
@@ -348,7 +350,7 @@ public class ProjectInfoAction : ActionItem
                 var project = Project;
                 if (project == null)
                     return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath, configWarning);
-                    
+
                 var projectPath = project.ProjectPath;
                 if (string.IsNullOrEmpty(projectPath.Value))
                     return (lastChanged, lastChangedError, isDeployed, deploymentError, lastDeployed, scriptSize, outputPath, configWarning);
@@ -387,7 +389,7 @@ public class ProjectInfoAction : ActionItem
                             : config.Type == ProjectType.Mod
                                 ? hubSettings.CustomAutoModOutputPath
                                 : null;
-                        
+
                         if (!string.IsNullOrWhiteSpace(customPath) && !string.Equals(customPath, "auto", StringComparison.OrdinalIgnoreCase))
                         {
                             // Use custom global path + project name
@@ -477,16 +479,16 @@ public class ProjectInfoAction : ActionItem
             // Update properties on UI thread
             LastChanged = result.lastChanged;
             LastChangedError = result.lastChangedError;
-            
+
             var outputPathChanged = _outputPath != result.outputPath;
             _outputPath = result.outputPath;
-            
+
             IsDeployed = result.isDeployed;
             DeploymentError = result.deploymentError;
             LastDeployed = result.lastDeployed;
             ScriptSizeCharacters = result.scriptSize;
             ConfigurationWarning = result.configWarning;
-            
+
             // Notify command if output path changed
             if (outputPathChanged)
                 ((AsyncRelayCommand)CopyScriptCommand).NotifyCanExecuteChanged();

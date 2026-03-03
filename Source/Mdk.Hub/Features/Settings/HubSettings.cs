@@ -10,11 +10,9 @@ namespace Mdk.Hub.Features.Settings;
 public struct HubSettings
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="HubSettings"/> struct.
+    ///     Initializes a new instance of the <see cref="HubSettings" /> struct.
     /// </summary>
-    public HubSettings()
-    {
-    }
+    public HubSettings() { }
 
     /// <summary>
     ///     Gets or sets the custom auto output path for ingame scripts.
@@ -33,6 +31,12 @@ public struct HubSettings
     ///     When null or "auto", uses the default behavior (game bin folder).
     /// </summary>
     public string CustomAutoBinaryPath { get; set; } = "auto";
+
+    /// <summary>
+    ///     Gets or sets the custom IDE path.
+    ///     When empty, uses the default behavior (OS defined file handler).
+    /// </summary>
+    public string CustomIdePath { get; set; } = string.Empty;
 
     /// <summary>
     ///     Gets or sets whether to include prerelease versions when checking for updates.
@@ -85,4 +89,3 @@ public struct HubSettings
     /// </summary>
     public int DeploymentNotificationTimeoutSeconds { get; set; } = 10;
 }
-

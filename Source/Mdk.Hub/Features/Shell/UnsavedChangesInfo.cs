@@ -11,7 +11,7 @@ public readonly struct UnsavedChangesInfo
     ///     Gets a description of the unsaved changes.
     /// </summary>
     public string Description { get; init; }
-    
+
     /// <summary>
     ///     Gets the action to navigate to the location of the unsaved changes.
     /// </summary>

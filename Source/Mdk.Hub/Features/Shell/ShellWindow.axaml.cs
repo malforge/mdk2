@@ -11,35 +11,23 @@ using Mal.SourceGeneratedDI;
 namespace Mdk.Hub.Features.Shell;
 
 /// <summary>
-/// The main application shell window.
+///     The main application shell window.
 /// </summary>
 [Singleton]
 [UsedImplicitly]
 public partial class ShellWindow : Window
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ShellWindow"/> class.
+    ///     Initializes a new instance of the <see cref="ShellWindow" /> class.
     /// </summary>
     public ShellWindow()
     {
         InitializeComponent();
-        
+
         // Subscribe to window state and focus changes
         PropertyChanged += OnWindowPropertyChanged;
-        
-        // Subscribe to window opened event
-        Opened += OnWindowOpened;
     }
-    
-    void OnWindowOpened(object? sender, EventArgs e)
-    {
-        if (DataContext is ShellViewModel viewModel)
-        {
-            Opened -= OnWindowOpened; // Only handle first Opened event
-            viewModel.WindowIsReady();
-        }
-    }
-    
+
     void OnWindowPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
         // Update background state when window state or focus changes
@@ -51,7 +39,7 @@ public partial class ShellWindow : Window
     }
 
     /// <summary>
-    /// Called when the window receives focus.
+    ///     Called when the window receives focus.
     /// </summary>
     /// <param name="e">The event arguments.</param>
     protected override void OnGotFocus(GotFocusEventArgs e)
@@ -64,21 +52,21 @@ public partial class ShellWindow : Window
             viewModel.UpdateWindowState(WindowState == WindowState.Minimized, IsActive);
         }
     }
-    
+
     /// <summary>
-    /// Called when the window loses focus.
+    ///     Called when the window loses focus.
     /// </summary>
     /// <param name="e">The event arguments.</param>
     protected override void OnLostFocus(RoutedEventArgs e)
     {
         base.OnLostFocus(e);
-        
+
         if (DataContext is ShellViewModel viewModel)
             viewModel.UpdateWindowState(WindowState == WindowState.Minimized, IsActive);
     }
 
     /// <summary>
-    /// Called when the data context of the window changes.
+    ///     Called when the data context of the window changes.
     /// </summary>
     /// <param name="e">The event arguments.</param>
     protected override void OnDataContextChanged(EventArgs e)
@@ -97,11 +85,9 @@ public partial class ShellWindow : Window
             try
             {
                 if (viewModel.Settings.TryGetValue("MainWindowSettings", out WindowSettings windowSettings) && !windowSettings.IsEmpty())
-                {
                     windowSettings.Restore(this, viewModel.InitialWindowState);
-                }
                 // else: Let OS/Avalonia use default size and placement
-                
+
                 // Override window state if launched with notification arguments (if Restore didn't already handle it)
                 if (viewModel.InitialWindowState.HasValue && WindowState != viewModel.InitialWindowState.Value)
                     WindowState = viewModel.InitialWindowState.Value;
@@ -127,8 +113,14 @@ public partial class ShellWindow : Window
         // On Linux (and macOS), also use Topmost trick to ensure window comes to front
         if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS() || App.IsLinux)
         {
-            Topmost = true;
-            Topmost = false;
+            try
+            {
+                Topmost = true;
+            }
+            finally
+            {
+                Topmost = false;
+            }
         }
     }
 
@@ -144,7 +136,7 @@ public partial class ShellWindow : Window
     }
 
     /// <summary>
-    /// Called when the window is closing.
+    ///     Called when the window is closing.
     /// </summary>
     /// <param name="e">The event arguments.</param>
     protected override void OnClosing(WindowClosingEventArgs e)
@@ -164,7 +156,7 @@ public partial class ShellWindow : Window
             try
             {
                 var settings = vm.Settings;
-                
+
                 // If closing in Normal state, capture everything
                 if (WindowState == WindowState.Normal)
                 {
@@ -184,7 +176,7 @@ public partial class ShellWindow : Window
                             existingSettings.Height,
                             existingSettings.Top,
                             existingSettings.Left,
-                            isMaximized: WindowState == WindowState.Maximized,
+                            WindowState == WindowState.Maximized,
                             existingSettings.LeftPanelWidth);
                     }
                     else
@@ -192,7 +184,7 @@ public partial class ShellWindow : Window
                         // No existing settings, just save maximized state
                         updatedSettings = new WindowSettings(this);
                     }
-                    
+
                     if (!updatedSettings.IsEmpty())
                         settings.SetValue("MainWindowSettings", updatedSettings);
                 }
@@ -208,7 +200,7 @@ public partial class ShellWindow : Window
 
     async Task CheckCanCloseAsync(ShellViewModel viewModel)
     {
-        if (await viewModel.WillCloseAsync())
+        if (await viewModel.CanCloseAsync())
         {
             // Close programmatically to bypass the check
             Close();
@@ -216,15 +208,15 @@ public partial class ShellWindow : Window
     }
 
     /// <summary>
-    /// Stores window position, size, and state for persistence.
-    /// Position and size are nullable - only stored when window is in Normal state.
+    ///     Stores window position, size, and state for persistence.
+    ///     Position and size are nullable - only stored when window is in Normal state.
     /// </summary>
     readonly struct WindowSettings
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="WindowSettings"/> struct from an existing window.
-        /// Only captures position/size if window is in Normal state.
-        /// When maximized/minimized, we cannot reliably get restore bounds, so position/size are null.
+        ///     Initializes a new instance of the <see cref="WindowSettings" /> struct from an existing window.
+        ///     Only captures position/size if window is in Normal state.
+        ///     When maximized/minimized, we cannot reliably get restore bounds, so position/size are null.
         /// </summary>
         /// <param name="window">The window to capture settings from.</param>
         public WindowSettings(Window window)
@@ -263,7 +255,7 @@ public partial class ShellWindow : Window
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="WindowSettings"/> struct from individual values.
+        ///     Initializes a new instance of the <see cref="WindowSettings" /> struct from individual values.
         /// </summary>
         /// <param name="width">The window width.</param>
         /// <param name="height">The window height.</param>
@@ -283,44 +275,44 @@ public partial class ShellWindow : Window
         }
 
         /// <summary>
-        /// Gets the window width (null if never saved in Normal state).
+        ///     Gets the window width (null if never saved in Normal state).
         /// </summary>
         public double? Width { get; }
 
         /// <summary>
-        /// Gets the window height (null if never saved in Normal state).
+        ///     Gets the window height (null if never saved in Normal state).
         /// </summary>
         public double? Height { get; }
 
         /// <summary>
-        /// Gets the window top position (null if never saved in Normal state).
+        ///     Gets the window top position (null if never saved in Normal state).
         /// </summary>
         public double? Top { get; }
 
         /// <summary>
-        /// Gets the window left position (null if never saved in Normal state).
+        ///     Gets the window left position (null if never saved in Normal state).
         /// </summary>
         public double? Left { get; }
 
         /// <summary>
-        /// Gets whether the window was maximized.
+        ///     Gets whether the window was maximized.
         /// </summary>
         public bool IsMaximized { get; }
 
         /// <summary>
-        /// Gets the left panel width (null if never saved).
+        ///     Gets the left panel width (null if never saved).
         /// </summary>
         public double? LeftPanelWidth { get; }
 
         /// <summary>
-        /// Determines whether settings have meaningful data to restore.
+        ///     Determines whether settings have meaningful data to restore.
         /// </summary>
         /// <returns>True if there are no values to restore; otherwise, false.</returns>
         public bool IsEmpty() => !Width.HasValue && !Height.HasValue && !IsMaximized;
 
         /// <summary>
-        /// Restores the window state from these settings.
-        /// Only applies values that are present (not null).
+        ///     Restores the window state from these settings.
+        ///     Only applies values that are present (not null).
         /// </summary>
         /// <param name="window">The window to restore.</param>
         /// <param name="overrideWindowState">Optional window state that takes precedence over saved state.</param>

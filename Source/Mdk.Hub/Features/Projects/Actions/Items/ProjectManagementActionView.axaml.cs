@@ -44,15 +44,6 @@ public partial class ProjectManagementActionView : ActionItemControl
         }
     }
 
-    void OnCreateNodeScriptTapped(object? sender, TappedEventArgs e)
-    {
-        if (DataContext is ProjectManagementAction action)
-        {
-            if (action.CreateNodeScriptCommand.CanExecute(null))
-                action.CreateNodeScriptCommand.Execute(null);
-        }
-    }
-
     void OnAddExistingTapped(object? sender, TappedEventArgs e)
     {
         if (DataContext is ProjectManagementAction action)

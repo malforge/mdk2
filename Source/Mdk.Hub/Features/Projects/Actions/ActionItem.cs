@@ -49,20 +49,16 @@ public abstract class ActionItem : ViewModel
     ///     Each action determines its own visibility using injected services.
     ///     Default implementation hides the action if more than 1 project is selected (not yet supported).
     /// </summary>
-    public virtual bool ShouldShow()
-    {
+    public virtual bool ShouldShow() =>
         // Default: hide if multiple projects selected (no actions support multi-select yet)
-        return SelectedProjects.Length <= 1;
-    }
+        SelectedProjects.Length <= 1;
 
     /// <summary>
     ///     Called when SelectedProjects changes. Override to react to selection changes.
     /// </summary>
-    protected virtual void OnSelectedProjectsChanged()
-    {
+    protected virtual void OnSelectedProjectsChanged() =>
         // Default: trigger visibility check
         RaiseShouldShowChanged();
-    }
 
     /// <summary>
     ///     Called when user explicitly requests a refresh (e.g., Ctrl+R).
@@ -74,7 +70,7 @@ public abstract class ActionItem : ViewModel
     }
 
     /// <summary>
-    ///     Raises the <see cref="ShouldShowChanged"/> event to indicate visibility state has changed.
+    ///     Raises the <see cref="ShouldShowChanged" /> event to indicate visibility state has changed.
     /// </summary>
     protected void RaiseShouldShowChanged() => ShouldShowChanged?.Invoke(this, EventArgs.Empty);
 }

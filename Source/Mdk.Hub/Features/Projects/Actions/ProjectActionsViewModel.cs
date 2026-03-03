@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Threading;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.About;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Actions.Items;
-using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Options;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
@@ -40,33 +40,33 @@ public partial class ProjectActionsViewModel : ViewModel
     ];
 
     readonly List<ActionItem> _allActions = new();
+    readonly IDependencyContainer _container;
     readonly ILogger _logger;
     readonly Dictionary<CanonicalPath, ProjectContext> _projectContexts = new(CanonicalPathComparer.Instance);
     readonly IProjectService _projectService;
     readonly IShell _shell;
-    readonly IDependencyContainer _container;
     ObservableCollection<ActionItem> _actions = new();
-    ProjectOverviewViewModel? _projectOverviewViewModel;
 
     bool _isOptionsDrawerOpen;
 
     bool _isUpdatingDisplayedActions;
-    bool _updateScheduled;
-    bool _pendingRefreshFilters;
 
     CanonicalPath? _optionsProjectPath;
 
     ProjectOptionsViewModel? _optionsViewModel;
+    bool _pendingRefreshFilters;
+    ProjectOverviewViewModel? _projectOverviewViewModel;
     ShellViewModel? _shellViewModel;
     UnsavedChangesHandle? _unsavedChangesHandle;
+    bool _updateScheduled;
 
     /// <summary>
-    ///     Initializes a new instance of <see cref="ProjectActionsViewModel"/>.
+    ///     Initializes a new instance of <see cref="ProjectActionsViewModel" />.
     /// </summary>
     public ProjectActionsViewModel(
-        IShell shell, 
-        IProjectService projectService, 
-        IEasterEggService easterEggService, 
+        IShell shell,
+        IProjectService projectService,
+        IEasterEggService easterEggService,
         ILogger logger,
         IDependencyContainer container)
     {
@@ -74,7 +74,7 @@ public partial class ProjectActionsViewModel : ViewModel
         _projectService = projectService;
         _logger = logger;
         _container = container;
-        
+
         _projectService.StateChanged += OnProjectStateChanged;
         easterEggService.ActiveChanged += OnEasterEggActiveChanged;
 
@@ -86,7 +86,7 @@ public partial class ProjectActionsViewModel : ViewModel
     ///     Gets whether a script can be created in the current state.
     /// </summary>
     public bool CanMakeScript => _projectService.State.CanMakeScript;
-    
+
     /// <summary>
     ///     Gets whether a mod can be created in the current state.
     /// </summary>
@@ -132,7 +132,7 @@ public partial class ProjectActionsViewModel : ViewModel
     ///     Gets the command to show the About dialog.
     /// </summary>
     public ICommand ShowAboutCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to open global settings.
     /// </summary>
@@ -148,7 +148,7 @@ public partial class ProjectActionsViewModel : ViewModel
 
         // Subscribe to selection changes
         _projectOverviewViewModel.PropertyChanged += OnOverviewPropertyChanged;
-        
+
         // Build all actions once
         BuildAllActions();
 
@@ -204,7 +204,7 @@ public partial class ProjectActionsViewModel : ViewModel
                 }
 
                 // Reuse cached ViewModel if it exists, otherwise create new
-                context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, _logger, saved => CloseOptionsDrawer(projectPath, saved), _container, () => UpdateProjectDirtyState(projectPath));
+                context.OptionsViewModel ??= new ProjectOptionsViewModel(projectPath, _projectService, _shell, _shell, _logger, saved => CloseOptionsDrawer(projectPath, saved), () => UpdateProjectDirtyState(projectPath));
 
                 OptionsViewModel = context.OptionsViewModel;
                 IsOptionsDrawerOpen = true;
@@ -280,26 +280,27 @@ public partial class ProjectActionsViewModel : ViewModel
 
         // Delay cleanup to allow drawer close animation to complete
         Task.Delay(300).ContinueWith(_ =>
-        {
-            var canonicalPath = new CanonicalPath(projectPath);
-
-            // Clear HasUnsavedChanges flag for the current project
-            if (_projectContexts.TryGetValue(canonicalPath, out var context) && context.CachedModel != null)
-                context.CachedModel.HasUnsavedChanges = false;
-
-            // Remove the current project's cached viewmodels (whether saved or cancelled)
-            if (context != null)
             {
-                context.OptionsViewModel = null;
-                context.CachedModel = null;
-            }
+                var canonicalPath = new CanonicalPath(projectPath);
 
-            OptionsViewModel = null;
-            OptionsProjectPath = null;
+                // Clear HasUnsavedChanges flag for the current project
+                if (_projectContexts.TryGetValue(canonicalPath, out var context) && context.CachedModel != null)
+                    context.CachedModel.HasUnsavedChanges = false;
 
-            // Update unsaved changes registration after clearing the OptionsViewModel
-            UpdateUnsavedChangesRegistration();
-        }, TaskScheduler.FromCurrentSynchronizationContext());
+                // Remove the current project's cached viewmodels (whether saved or cancelled)
+                if (context != null)
+                {
+                    context.OptionsViewModel = null;
+                    context.CachedModel = null;
+                }
+
+                OptionsViewModel = null;
+                OptionsProjectPath = null;
+
+                // Update unsaved changes registration after clearing the OptionsViewModel
+                UpdateUnsavedChangesRegistration();
+            },
+            TaskScheduler.FromCurrentSynchronizationContext());
     }
 
     /// <summary>
@@ -348,7 +349,7 @@ public partial class ProjectActionsViewModel : ViewModel
             if (action is IDisposable disposable)
                 disposable.Dispose();
         }
-        
+
         _allActions.Clear();
 
         // Resolve all actions from the registry
@@ -360,13 +361,11 @@ public partial class ProjectActionsViewModel : ViewModel
         }
     }
 
-    void OnActionShouldShowChanged(object? sender, EventArgs e)
-    {
+    void OnActionShouldShowChanged(object? sender, EventArgs e) =>
         // An action's visibility state changed - update filtered list
         UpdateDisplayedActions();
-    }
 
-    void OnOverviewPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    void OnOverviewPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ProjectOverviewViewModel.SelectedProjects))
         {
@@ -374,7 +373,7 @@ public partial class ProjectActionsViewModel : ViewModel
             var selection = _projectOverviewViewModel?.SelectedProjects ?? ImmutableArray<ProjectModel>.Empty;
             foreach (var action in _allActions)
                 action.SelectedProjects = selection;
-            
+
             UpdateDisplayedActions();
         }
     }
@@ -395,7 +394,7 @@ public partial class ProjectActionsViewModel : ViewModel
         _updateScheduled = true;
         _pendingRefreshFilters = refreshFilters;
 
-        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        Dispatcher.UIThread.InvokeAsync(() =>
         {
             _updateScheduled = false;
             PerformDisplayedActionsUpdate(_pendingRefreshFilters);
@@ -414,8 +413,8 @@ public partial class ProjectActionsViewModel : ViewModel
             var desiredActions = _allActions.Where(a => a.ShouldShow()).ToList();
 
             // Sync Actions collection by walking through desired actions and handling category transitions
-            int currentIndex = 0;
-            int desiredIndex = 0;
+            var currentIndex = 0;
+            var desiredIndex = 0;
             string? previousCategory = null;
 
             while (desiredIndex < desiredActions.Count)
@@ -469,12 +468,9 @@ public partial class ProjectActionsViewModel : ViewModel
                         // Don't increment currentIndex, don't increment desiredIndex (retry this desired action)
                         continue;
                     }
-                    else
-                    {
-                        // Current action appears later - insert desired action here
-                        Actions.Insert(currentIndex, desiredAction);
-                        currentIndex++;
-                    }
+                    // Current action appears later - insert desired action here
+                    Actions.Insert(currentIndex, desiredAction);
+                    currentIndex++;
                 }
                 else
                 {
@@ -489,9 +485,7 @@ public partial class ProjectActionsViewModel : ViewModel
 
             // Remove any remaining items
             while (currentIndex < Actions.Count)
-            {
                 Actions.RemoveAt(currentIndex);
-            }
         }
         finally
         {

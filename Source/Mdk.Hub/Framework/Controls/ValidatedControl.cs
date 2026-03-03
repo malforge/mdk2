@@ -1,4 +1,3 @@
-using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -98,18 +97,14 @@ public class ValidatedControl : TemplatedControl
         {
             // Listen for property changes on the validatable control
             if (content is AvaloniaObject avaloniaObject)
-            {
                 avaloniaObject.PropertyChanged += OnContentPropertyChanged;
-            }
         }
     }
 
     void UnsubscribeFromContent(object? content)
     {
         if (content is AvaloniaObject avaloniaObject)
-        {
             avaloniaObject.PropertyChanged -= OnContentPropertyChanged;
-        }
     }
 
     void OnContentPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -123,14 +118,10 @@ public class ValidatedControl : TemplatedControl
     {
         // Priority: ISupportValidation.ValidationError > external ValidationMessage
         if (Content is ISupportValidation validatable)
-        {
             ResolvedValidationMessage = validatable.ValidationError;
-        }
         else
-        {
             ResolvedValidationMessage = ValidationMessage;
-        }
-        
+
         // Update HasValidationMessage property for opacity binding
         HasValidationMessage = !string.IsNullOrEmpty(ResolvedValidationMessage);
     }

@@ -6,7 +6,8 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects.Configuration;
 
 /// <summary>
-/// Represents a single layer of project configuration settings. Multiple layers can be combined to form the final effective configuration.
+///     Represents a single layer of project configuration settings. Multiple layers can be combined to form the final
+///     effective configuration.
 /// </summary>
 public class ProjectConfigLayer : IEquatable<ProjectConfigLayer>
 {
