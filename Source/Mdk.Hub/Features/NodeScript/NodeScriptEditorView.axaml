@@ -69,20 +69,54 @@
                         <controls:Node Location="{Binding Location, Mode=TwoWay}"
                                        Classes="blocks-node">
                             <controls:Node.Header>
-                                <TextBlock Text="{Binding Title}"
-                                           Classes="caption semibold node-header"
-                                           Background="Transparent"
-                                           PointerPressed="OnNodeContentPointerPressed" />
+                                <Button Command="{Binding ToggleExpandCommand}"
+                                        Classes="node-header-toggle"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{Binding Title}"
+                                                   Classes="caption semibold node-header"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding ChevronGlyph}"
+                                                   Classes="caption node-chevron-glyph"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </Button>
                             </controls:Node.Header>
 
-                            <StackPanel Spacing="4"
-                                        Background="Transparent"
-                                        PointerPressed="OnNodeContentPointerPressed">
-                                <TextBlock Text="{Binding Pattern}"
+                            <!-- Collapsed: filter summary -->
+                            <Panel>
+                                <TextBlock IsVisible="{Binding !IsExpanded}"
+                                           Text="{Binding Summary}"
                                            Classes="caption node-content" />
-                                <TextBlock Text="{Binding BlockType, StringFormat='Type: {0}'}"
-                                           Classes="caption node-meta" />
-                            </StackPanel>
+
+                                <!-- Expanded: inline editor -->
+                                <StackPanel IsVisible="{Binding IsExpanded}"
+                                            Spacing="3"
+                                            Margin="0 4 0 0"
+                                            MinWidth="180">
+                                    <Button Content="{Binding BlockTypeDisplay}"
+                                            Command="{Binding BrowseBlockTypeCommand}"
+                                            Classes="node-type-picker"
+                                            HorizontalAlignment="Stretch" />
+                                    <TextBox Text="{Binding Pattern, Mode=TwoWay}"
+                                             Watermark="Name pattern…"
+                                             Classes="node-field"
+                                             ToolTip.Tip="Filter by block name. Supports wildcards: * matches any characters, ? matches one. E.g. [Reactor]* matches all blocks whose name starts with [Reactor]." />
+                                    <TextBox Text="{Binding GroupName, Mode=TwoWay}"
+                                             Watermark="Group name…"
+                                             Classes="node-field"
+                                             ToolTip.Tip="Filter by block group name. Supports wildcards: * matches any characters, ? matches one. E.g. Power* matches all groups whose name starts with Power." />
+                                    <TextBox Text="{Binding CustomDataSection, Mode=TwoWay}"
+                                             Watermark="INI section…"
+                                             Classes="node-field"
+                                             ToolTip.Tip="Filter blocks by the presence of a specific INI section in their Custom Data. Supports wildcards: * matches any characters, ? matches one. E.g. Config* matches blocks that have any section starting with Config." />
+                                    <TextBlock IsVisible="{Binding HasNoFilters}"
+                                               Text="⚠ Matches all blocks"
+                                               Classes="caption node-warning" />
+                                </StackPanel>
+                            </Panel>
                         </controls:Node>
                     </DataTemplate>
                 </controls:NodifyEditor.ItemTemplate>

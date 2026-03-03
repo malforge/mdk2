@@ -3,7 +3,6 @@ using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Mal.SourceGeneratedDI;
-using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub;
@@ -33,10 +32,6 @@ public class ViewLocator : IDataTemplate
         if (param is null)
             return null;
 
-        // Special case for ToastViewModel - use ToastView
-        if (param is ToastViewModel)
-            return new ToastView { DataContext = param };
-
         var viewModelForAttribute = param.GetType().GetCustomAttribute<ViewModelForAttribute>();
         if (viewModelForAttribute is null)
             throw new InvalidOperationException($"ViewModelForAttribute is missing on {param.GetType().FullName}");
@@ -54,6 +49,6 @@ public class ViewLocator : IDataTemplate
     ///     Determines whether this data template can handle the specified data object.
     /// </summary>
     /// <param name="data">The data object to check.</param>
-    /// <returns>True if the data is a ViewModel or ToastViewModel, otherwise false.</returns>
-    public bool Match(object? data) => data is ViewModel || data is ToastViewModel;
+    /// <returns>True if the data is a ViewModel, otherwise false.</returns>
+    public bool Match(object? data) => data is ViewModel;
 }

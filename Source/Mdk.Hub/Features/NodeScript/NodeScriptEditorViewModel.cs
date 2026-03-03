@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Avalonia;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.NodeScript.BlockSelector;
-using Mdk.Hub.Features.NodeScript.Editors;
 using Mdk.Hub.Features.NodeScript.NodeSelector;
 using Mdk.Hub.Features.NodeScript.Nodes;
 using Mdk.Hub.Features.Shell;
@@ -114,21 +113,21 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
         switch (nodeType)
         {
             case "Blocks":
-                Nodes.Add(new BlocksNodeViewModel { Location = position });
+                var node = new BlocksNodeViewModel { Location = position };
+                node.BrowseBlockTypeCommand = new AsyncRelayCommand(async () =>
+                {
+                    var picked = await _blockPicker.PickAsync(_overlayService);
+                    if (picked is not null)
+                        node.BlockType = picked.TypeId;
+                });
+                Nodes.Add(node);
                 break;
         }
         OnPropertyChanged(nameof(HasNodes));
     }
 
-    /// <summary>Opens the property editor for a node.</summary>
-    public void OpenNodeEditor(object nodeViewModel)
-    {
-        if (nodeViewModel is BlocksNodeViewModel blocksNode)
-            _overlayService.Show(new BlocksNodeEditorViewModel(blocksNode, _blockPicker, _overlayService));
-    }
-
     /// <inheritdoc />
-    public Task<bool> WillCloseAsync() => Task.FromResult(true);
+    public Task<bool> WillCloseAsync()=> Task.FromResult(true);
 
     /// <inheritdoc />
     public Task DidCloseAsync() => Task.CompletedTask;

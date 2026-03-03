@@ -1,11 +1,14 @@
 using System.Threading.Tasks;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.CommonDialogs;
 
 /// <summary>
 ///     View model for a toast notification overlay.
 /// </summary>
+[ViewModelFor<ToastView>]
 public class ToastViewModel : OverlayModel
 {
     /// <summary>

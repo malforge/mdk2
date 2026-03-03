@@ -24,7 +24,62 @@
         <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}"/>
         <Setter Property="BorderThickness" Value="2"/>
         <Setter Property="MinWidth" Value="150"/>
-        <Setter Property="Padding" Value="12"/>
+        <Setter Property="Padding" Value="0"/>
+
+        <!-- Override NodifyM's Node template to fix hardcoded header/content padding -->
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}"
+                        CornerRadius="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header: always visible, padding removed, ContentPresenter stretches -->
+                        <Border Background="{TemplateBinding HeaderBrush}"
+                                CornerRadius="3 3 0 0"
+                                Grid.ColumnSpan="3"
+                                Padding="0">
+                            <ContentPresenter Name="HeaderContentPresenter"
+                                              Content="{TemplateBinding Header}"
+                                              HorizontalAlignment="Stretch" />
+                        </Border>
+
+                        <!-- Body -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ItemsControl ItemsSource="{TemplateBinding Input}"
+                                          VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                          ItemTemplate="{TemplateBinding InputConnectorTemplate}"
+                                          Focusable="False" />
+                            <!-- Content: 6px horizontal padding instead of 16px -->
+                            <Border Grid.Column="1"
+                                    Padding="6 4"
+                                    Background="{TemplateBinding ContentBrush}">
+                                <ContentPresenter Content="{TemplateBinding Content}" />
+                            </Border>
+                            <ItemsControl ItemsSource="{TemplateBinding Output}"
+                                          ItemTemplate="{TemplateBinding OutputConnectorTemplate}"
+                                          VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                          Grid.Column="2"
+                                          Focusable="False" />
+                        </Grid>
+
+                        <!-- Footer: omitted (not used by blocks node) -->
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
         
         <Style Selector="^[IsSelected=True]">
             <Setter Property="BorderBrush" Value="{StaticResource ForegroundAccentBrush}"/>
@@ -45,6 +100,60 @@
         
         <Style Selector="^ TextBlock.node-meta">
             <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}"/>
+        </Style>
+
+        <Style Selector="^ TextBlock.node-warning">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundWarningBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+
+        <!-- Full-width header toggle button: strip all Fluent chrome -->
+        <Style Selector="^ Button.node-header-toggle">
+            <Setter Property="Padding" Value="6 4"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Background="{TemplateBinding Background}" />
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Background" Value="Transparent"/>
+            <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Background" Value="{StaticResource OverlayHoverBrush}"/>
+            </Style>
+        </Style>
+
+        <!-- Chevron glyph (right-aligned in header) -->
+        <Style Selector="^ TextBlock.node-chevron-glyph">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="Margin" Value="8 0 0 0"/>
+        </Style>
+
+        <!-- Block type picker button -->
+        <Style Selector="^ Button.node-type-picker">
+            <Setter Property="Padding" Value="4 2"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+
+        <!-- Inline field TextBoxes -->
+        <Style Selector="^ TextBox.node-field">
+            <Setter Property="Padding" Value="4 2"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
         </Style>
     </Style>
     
