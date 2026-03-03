@@ -13,7 +13,7 @@ public class ProjectUpdateAvailableEventArgs : EventArgs
     ///     Gets the canonical path of the project that has updates available.
     /// </summary>
     public required CanonicalPath ProjectPath { get; init; }
-    
+
     /// <summary>
     ///     Gets the list of available package updates for the project.
     /// </summary>

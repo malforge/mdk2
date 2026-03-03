@@ -38,11 +38,11 @@
     <Style Selector="controls|PathInput:error TextBox">
         <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
     </Style>
-    
+
     <Style Selector="controls|PathInput:error TextBox:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
     </Style>
-    
+
     <Style Selector="controls|PathInput:error TextBox:pointerover /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
     </Style>

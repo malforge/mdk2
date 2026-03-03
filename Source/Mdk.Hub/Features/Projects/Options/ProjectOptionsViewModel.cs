@@ -8,6 +8,8 @@ using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects.Configuration;
+using Mdk.Hub.Features.Projects.ListEditor;
+using Mdk.Hub.Features.Projects.MacroEditor;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
@@ -31,6 +33,7 @@ public class ProjectOptionsViewModel : ViewModel
     readonly RelayCommand _clearLocalNamespacesCommand;
     readonly RelayCommand _clearLocalOutputPathCommand;
     readonly RelayCommand _clearLocalTraceCommand;
+    readonly IDependencyContainer _container;
     readonly IShell _dialogShell;
     readonly AsyncRelayCommand _editIgnoresCommand;
     readonly AsyncRelayCommand _editLocalMacrosCommand;
@@ -46,7 +49,6 @@ public class ProjectOptionsViewModel : ViewModel
 
     readonly AsyncRelayCommand _saveCommand;
     readonly IShell _shell;
-    readonly IDependencyContainer _container;
     string? _defaultBinaryPath;
     bool _defaultBinaryPathLoaded;
     ProjectData? _projectData;
@@ -127,7 +129,7 @@ public class ProjectOptionsViewModel : ViewModel
     ///     Gets the view model for main (shared) configuration settings.
     /// </summary>
     public ConfigurationSectionViewModel MainConfig { get; } = new();
-    
+
     /// <summary>
     ///     Gets the view model for local (machine-specific) configuration settings.
     /// </summary>
@@ -137,57 +139,57 @@ public class ProjectOptionsViewModel : ViewModel
     ///     Gets the command to save configuration changes.
     /// </summary>
     public ICommand SaveCommand => _saveCommand;
-    
+
     /// <summary>
     ///     Gets the command to cancel editing and discard changes.
     /// </summary>
     public ICommand CancelCommand => _cancelCommand;
-    
+
     /// <summary>
     ///     Gets the command to reorganize configuration settings into standard layers.
     /// </summary>
     public ICommand NormalizeConfigurationCommand => _normalizeConfigurationCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local Interactive setting override.
     /// </summary>
     public ICommand ClearLocalInteractiveCommand => _clearLocalInteractiveCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local OutputPath setting override.
     /// </summary>
     public ICommand ClearLocalOutputPathCommand => _clearLocalOutputPathCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local BinaryPath setting override.
     /// </summary>
     public ICommand ClearLocalBinaryPathCommand => _clearLocalBinaryPathCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local Minify setting override.
     /// </summary>
     public ICommand ClearLocalMinifyCommand => _clearLocalMinifyCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local MinifyExtraOptions setting override.
     /// </summary>
     public ICommand ClearLocalMinifyExtraOptionsCommand => _clearLocalMinifyExtraOptionsCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local Trace setting override.
     /// </summary>
     public ICommand ClearLocalTraceCommand => _clearLocalTraceCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local Ignores setting override.
     /// </summary>
     public ICommand ClearLocalIgnoresCommand => _clearLocalIgnoresCommand;
-    
+
     /// <summary>
     ///     Gets the command to clear the local Namespaces setting override.
     /// </summary>
     public ICommand ClearLocalNamespacesCommand => _clearLocalNamespacesCommand;
-    
+
     /// <summary>
     ///     Gets the command to open global Hub settings.
     /// </summary>
@@ -374,37 +376,37 @@ public class ProjectOptionsViewModel : ViewModel
     ///     Gets whether the Interactive setting is overridden in the local configuration.
     /// </summary>
     public bool IsInteractiveOverridden => LocalConfig.Interactive != null;
-    
+
     /// <summary>
     ///     Gets whether the OutputPath setting is overridden in the local configuration.
     /// </summary>
     public bool IsOutputOverridden => !string.IsNullOrWhiteSpace(LocalConfig.OutputPath);
-    
+
     /// <summary>
     ///     Gets whether the BinaryPath setting is overridden in the local configuration.
     /// </summary>
     public bool IsBinaryPathOverridden => !string.IsNullOrWhiteSpace(LocalConfig.BinaryPath);
-    
+
     /// <summary>
     ///     Gets whether the Minify setting is overridden in the local configuration.
     /// </summary>
     public bool IsMinifyOverridden => LocalConfig.Minify != null;
-    
+
     /// <summary>
     ///     Gets whether the MinifyExtraOptions setting is overridden in the local configuration.
     /// </summary>
     public bool IsMinifyExtraOptionsOverridden => LocalConfig.MinifyExtraOptions != null;
-    
+
     /// <summary>
     ///     Gets whether the Trace setting is overridden in the local configuration.
     /// </summary>
     public bool IsTraceOverridden => LocalConfig.Trace != null;
-    
+
     /// <summary>
     ///     Gets whether the Ignores setting is overridden in the local configuration.
     /// </summary>
     public bool IsIgnoresOverridden => !string.IsNullOrWhiteSpace(LocalConfig.Ignores);
-    
+
     /// <summary>
     ///     Gets whether the Namespaces setting is overridden in the local configuration.
     /// </summary>
@@ -497,7 +499,7 @@ public class ProjectOptionsViewModel : ViewModel
         MainConfig.Ignores = effective.Ignores.HasValue ? string.Join(",", effective.Ignores.Value) : string.Empty;
         MainConfig.Namespaces = effective.Namespaces.HasValue ? string.Join(",", effective.Namespaces.Value) : "IngameScript";
         MainConfig.Macros = _projectData.Config.Main?.Macros;
-        
+
         // Load Local layer macros separately (not merged)
         LocalConfig.Macros = _projectData.Config.Local?.Macros;
 
@@ -685,13 +687,13 @@ public class ProjectOptionsViewModel : ViewModel
 
     async Task EditMacrosAsync()
     {
-        var message = new MacroEditor.MacroEditorDialogMessage(
-            Description: "Define text replacement macros that will be substituted in your script. Useful for version numbers, constants, or repeated text.",
-            InitialMacros: MainConfig.Macros);
-        var viewModel = new MacroEditor.MacroEditorDialogViewModel(message);
-        
+        var message = new MacroEditorDialogMessage(
+            "Define text replacement macros that will be substituted in your script. Useful for version numbers, constants, or repeated text.",
+            MainConfig.Macros);
+        var viewModel = new MacroEditorDialogViewModel(message);
+
         await _dialogShell.ShowOverlayAsync(viewModel);
-        
+
         if (viewModel.Result != null)
         {
             MainConfig.Macros = viewModel.Result.Macros;
@@ -702,13 +704,13 @@ public class ProjectOptionsViewModel : ViewModel
 
     async Task EditLocalMacrosAsync()
     {
-        var message = new MacroEditor.MacroEditorDialogMessage(
-            Description: "Define local macros for this developer only. Use for personal file paths, test values, or other machine-specific settings.",
-            InitialMacros: LocalConfig.Macros);
-        var viewModel = new MacroEditor.MacroEditorDialogViewModel(message);
-        
+        var message = new MacroEditorDialogMessage(
+            "Define local macros for this developer only. Use for personal file paths, test values, or other machine-specific settings.",
+            LocalConfig.Macros);
+        var viewModel = new MacroEditorDialogViewModel(message);
+
         await _dialogShell.ShowOverlayAsync(viewModel);
-        
+
         if (viewModel.Result != null)
         {
             LocalConfig.Macros = viewModel.Result.Macros;
@@ -720,19 +722,19 @@ public class ProjectOptionsViewModel : ViewModel
     async Task EditNamespacesAsync()
     {
         var currentNamespaces = MainConfig.Namespaces?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        
-        var message = new ListEditor.ListEditorDialogMessage(
-            Title: "Edit Namespaces",
-            Description: "Specify which namespaces are allowed in your script. Prevents type name conflicts when namespaces are stripped in the final script.",
-            FieldLabel: "Namespace",
-            FieldWatermark: "e.g., IngameScript",
-            InitialItems: currentNamespaces,
-            ValidateItem: ValidateNamespace
+
+        var message = new ListEditorDialogMessage(
+            "Edit Namespaces",
+            "Specify which namespaces are allowed in your script. Prevents type name conflicts when namespaces are stripped in the final script.",
+            "Namespace",
+            "e.g., IngameScript",
+            currentNamespaces,
+            ValidateNamespace
         );
-        
-        var viewModel = new ListEditor.ListEditorDialogViewModel(message);
+
+        var viewModel = new ListEditorDialogViewModel(message);
         await _dialogShell.ShowOverlayAsync(viewModel);
-        
+
         if (viewModel.Result != null)
         {
             MainConfig.Namespaces = viewModel.Result.Items != null ? string.Join(",", viewModel.Result.Items) : string.Empty;
@@ -744,19 +746,19 @@ public class ProjectOptionsViewModel : ViewModel
     async Task EditIgnoresAsync()
     {
         var currentIgnores = MainConfig.Ignores?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        
-        var message = new ListEditor.ListEditorDialogMessage(
-            Title: "Edit Ignore Patterns",
-            Description: "Specify files and folders to exclude from the build. Use * to match files in a folder, or ** to match files in any subfolder.",
-            FieldLabel: "Pattern",
-            FieldWatermark: "e.g., obj/**/*",
-            InitialItems: currentIgnores,
-            ValidateItem: null // No validation for glob patterns for now
+
+        var message = new ListEditorDialogMessage(
+            "Edit Ignore Patterns",
+            "Specify files and folders to exclude from the build. Use * to match files in a folder, or ** to match files in any subfolder.",
+            "Pattern",
+            "e.g., obj/**/*",
+            currentIgnores,
+            null // No validation for glob patterns for now
         );
-        
-        var viewModel = new ListEditor.ListEditorDialogViewModel(message);
+
+        var viewModel = new ListEditorDialogViewModel(message);
         await _dialogShell.ShowOverlayAsync(viewModel);
-        
+
         if (viewModel.Result != null)
         {
             MainConfig.Ignores = viewModel.Result.Items != null ? string.Join(",", viewModel.Result.Items) : string.Empty;
@@ -769,21 +771,21 @@ public class ProjectOptionsViewModel : ViewModel
     {
         if (string.IsNullOrWhiteSpace(value))
             return "Namespace cannot be empty.";
-        
+
         // Basic C# namespace validation
         var parts = value.Split('.');
         foreach (var part in parts)
         {
             if (string.IsNullOrWhiteSpace(part))
                 return $"Invalid namespace format: '{value}'";
-            
+
             if (!char.IsLetter(part[0]) && part[0] != '_')
                 return $"Namespace parts must start with a letter or underscore: '{part}'";
-            
+
             if (part.Any(c => !char.IsLetterOrDigit(c) && c != '_'))
                 return $"Namespace parts can only contain letters, digits, and underscores: '{part}'";
         }
-        
+
         return null;
     }
 }

@@ -36,7 +36,7 @@ public class UpdateManager : IUpdateManager
     int _isChecking; // 0 = not checking, 1 = checking
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="UpdateManager"/> class.
+    ///     Initializes a new instance of the <see cref="UpdateManager" /> class.
     /// </summary>
     /// <param name="logger">The logger for diagnostic output.</param>
     /// <param name="nuGetService">The service for interacting with NuGet repositories.</param>
@@ -116,7 +116,7 @@ public class UpdateManager : IUpdateManager
             // Invoke queued callbacks
             foreach (var callback in _completionCallbacks)
                 callback(results);
-            
+
             return true;
         }
         catch (Exception ex)
@@ -396,6 +396,57 @@ public class UpdateManager : IUpdateManager
         }
     }
 
+    // IUpdateManager update execution methods
+
+    /// <summary>
+    ///     Executes a Hub update using the latest version information from the last successful check.
+    /// </summary>
+    public Task<UpdateResult> UpdateHubAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        if (LastKnownVersions?.HubVersion == null)
+        {
+            return Task.FromResult(new UpdateResult
+            {
+                Success = false,
+                ErrorMessage = "No Hub update information available. Run CheckForUpdatesAsync first."
+            });
+        }
+
+        return _hubUpdater.UpdateAsync(LastKnownVersions.HubVersion, progress, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Executes a template package update using the latest version information from the last successful check.
+    /// </summary>
+    public Task<UpdateResult> UpdateTemplatesAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
+    {
+        if (LastKnownVersions?.TemplatePackage == null)
+        {
+            return Task.FromResult(new UpdateResult
+            {
+                Success = false,
+                ErrorMessage = "No template update information available. Run CheckForUpdatesAsync first."
+            });
+        }
+
+        return _templateUpdater.UpdateAsync(LastKnownVersions.TemplatePackage, progress, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Updates all MDK² NuGet packages in the specified project to the latest available versions.
+    /// </summary>
+    public Task<UpdateResult> UpdateProjectPackagesAsync(CanonicalPath projectPath, IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default) => _packageUpdater.UpdateProjectAsync(projectPath, progress, cancellationToken);
+
+    /// <summary>
+    ///     Checks whether the specified project has a package backup available for rollback.
+    /// </summary>
+    public Task<bool> CanRollbackProjectAsync(CanonicalPath projectPath) => _packageUpdater.CanRollbackAsync(projectPath);
+
+    /// <summary>
+    ///     Rolls back NuGet package updates in the specified project to their previous versions.
+    /// </summary>
+    public Task<UpdateResult> RollbackProjectPackagesAsync(CanonicalPath projectPath) => _packageUpdater.RollbackProjectAsync(projectPath);
+
     void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
     {
         // Invalidate cached version check results when HubSettings change
@@ -597,65 +648,5 @@ public class UpdateManager : IUpdateManager
         }
 
         return version ?? "unknown";
-    }
-
-    // IUpdateManager update execution methods
-
-    /// <summary>
-    ///     Executes a Hub update using the latest version information from the last successful check.
-    /// </summary>
-    public Task<UpdateResult> UpdateHubAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
-    {
-        if (LastKnownVersions?.HubVersion == null)
-        {
-            return Task.FromResult(new UpdateResult
-            {
-                Success = false,
-                ErrorMessage = "No Hub update information available. Run CheckForUpdatesAsync first."
-            });
-        }
-
-        return _hubUpdater.UpdateAsync(LastKnownVersions.HubVersion, progress, cancellationToken);
-    }
-
-    /// <summary>
-    ///     Executes a template package update using the latest version information from the last successful check.
-    /// </summary>
-    public Task<UpdateResult> UpdateTemplatesAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
-    {
-        if (LastKnownVersions?.TemplatePackage == null)
-        {
-            return Task.FromResult(new UpdateResult
-            {
-                Success = false,
-                ErrorMessage = "No template update information available. Run CheckForUpdatesAsync first."
-            });
-        }
-
-        return _templateUpdater.UpdateAsync(LastKnownVersions.TemplatePackage, progress, cancellationToken);
-    }
-
-    /// <summary>
-    ///     Updates all MDK² NuGet packages in the specified project to the latest available versions.
-    /// </summary>
-    public Task<UpdateResult> UpdateProjectPackagesAsync(CanonicalPath projectPath, IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
-    {
-        return _packageUpdater.UpdateProjectAsync(projectPath, progress, cancellationToken);
-    }
-
-    /// <summary>
-    ///     Checks whether the specified project has a package backup available for rollback.
-    /// </summary>
-    public Task<bool> CanRollbackProjectAsync(CanonicalPath projectPath)
-    {
-        return _packageUpdater.CanRollbackAsync(projectPath);
-    }
-
-    /// <summary>
-    ///     Rolls back NuGet package updates in the specified project to their previous versions.
-    /// </summary>
-    public Task<UpdateResult> RollbackProjectPackagesAsync(CanonicalPath projectPath)
-    {
-        return _packageUpdater.RollbackProjectAsync(projectPath);
     }
 }

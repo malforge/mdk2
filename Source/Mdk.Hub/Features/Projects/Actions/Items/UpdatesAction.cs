@@ -8,6 +8,7 @@ using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
 using Velopack.Sources;
+using UpdateManager = Velopack.UpdateManager;
 
 namespace Mdk.Hub.Features.Projects.Actions.Items;
 
@@ -31,8 +32,10 @@ public class UpdatesAction : ActionItem
 
     string _statusMessage = "Checking for updates...";
 
+    string _updateHubButtonText = "Update Hub";
+
     /// <summary>
-    ///     Initializes a new instance of the <see cref="UpdatesAction"/> class.
+    ///     Initializes a new instance of the <see cref="UpdatesAction" /> class.
     /// </summary>
     /// <param name="settings">The settings manager for user preferences.</param>
     /// <param name="shell">The shell interface for UI interactions.</param>
@@ -60,7 +63,7 @@ public class UpdatesAction : ActionItem
     ///     Gets the action category (null = no category, appears at top).
     /// </summary>
     public override string? Category => null; // No category - appears at top
-    
+
     /// <summary>
     ///     Gets whether this is a global action (not project-specific).
     /// </summary>
@@ -164,8 +167,6 @@ public class UpdatesAction : ActionItem
         set => SetProperty(ref _statusMessage, value);
     }
 
-    string _updateHubButtonText = "Update Hub";
-
     /// <summary>
     ///     Gets the text for the Update Hub button.
     /// </summary>
@@ -179,12 +180,12 @@ public class UpdatesAction : ActionItem
     ///     Gets the command to update templates.
     /// </summary>
     public ICommand UpdateTemplatesCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to download a Hub update.
     /// </summary>
     public ICommand UpdateHubCommand { get; }
-    
+
     /// <summary>
     ///     Gets the command to install a downloaded Hub update.
     /// </summary>
@@ -290,12 +291,12 @@ public class UpdatesAction : ActionItem
             // ONLY download - do not install automatically (user agency)
             // UpdateHubAsync will download but not restart since we're not calling ApplyUpdatesAndRestart
             // We need to refactor HubUpdater to support download-only mode
-            
+
             // For now, use direct Velopack for two-step flow
             var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
             _logger.Info($"Creating Velopack UpdateManager (includePrerelease={includePrerelease})");
-            var mgr = new Velopack.UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
-            
+            var mgr = new UpdateManager(new GithubSource(EnvironmentMetadata.GitHubRepoUrl, null, includePrerelease));
+
             _logger.Info("Checking for Hub updates via Velopack");
             var newVersion = await mgr.CheckForUpdatesAsync();
 
@@ -308,12 +309,14 @@ public class UpdatesAction : ActionItem
             }
 
             _logger.Info($"Downloading Hub update: {newVersion.TargetFullRelease.Version}");
-            _logger.Info($"Calling DownloadUpdatesAsync with progress callback...");
-            await mgr.DownloadUpdatesAsync(newVersion, p => { 
-                DownloadProgress = p / 100.0;
-                _logger.Debug($"Download progress: {p}%");
-            });
-            _logger.Info($"DownloadUpdatesAsync completed successfully");
+            _logger.Info("Calling DownloadUpdatesAsync with progress callback...");
+            await mgr.DownloadUpdatesAsync(newVersion,
+                p =>
+                {
+                    DownloadProgress = p / 100.0;
+                    _logger.Debug($"Download progress: {p}%");
+                });
+            _logger.Info("DownloadUpdatesAsync completed successfully");
 
             IsDownloading = false;
             IsHubUpdateAvailable = false; // Clear the update flag now that download is complete

@@ -45,7 +45,7 @@
                                 Margin="0,0,16,0"
                                 VerticalAlignment="Top"
                                 HorizontalAlignment="Center" />
-                
+
                 <!-- Content on right -->
                 <StackPanel Grid.Column="1"
                             Grid.Row="0"
@@ -77,7 +77,7 @@
                         <controls:ValidatedControl>
                             <controls:ValidatedControl.Content>
                                 <controls:PathInput Path="{Binding Location}"
-                                                   Watermark="Select a folder..." />
+                                                    Watermark="Select a folder..." />
                             </controls:ValidatedControl.Content>
                         </controls:ValidatedControl>
                     </StackPanel>

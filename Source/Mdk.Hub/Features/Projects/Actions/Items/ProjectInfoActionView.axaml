@@ -1,15 +1,15 @@
 <actions:ActionItemControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
-             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
-             xmlns:i="https://github.com/projektanker/icons.avalonia"
-             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
-             x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectInfoActionView"
-             x:DataType="items:ProjectInfoAction"
-             TopEdge="Bare" BottomEdge="Contained">
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                           xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
+                           xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
+                           xmlns:i="https://github.com/projektanker/icons.avalonia"
+                           xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+                           mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+                           x:Class="Mdk.Hub.Features.Projects.Actions.Items.ProjectInfoActionView"
+                           x:DataType="items:ProjectInfoAction"
+                           TopEdge="Bare" BottomEdge="Contained">
 
     <UserControl.Resources>
         <actions:BoolToDeploymentStatusConverter x:Key="BoolToDeploymentStatusConverter" />
@@ -130,7 +130,8 @@
                                     <i:Icon Value="fa-solid fa-circle-xmark" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="Delete Project" Command="{Binding Project.DeleteCommand}" Classes="danger">
+                            <MenuItem Header="Delete Project" Command="{Binding Project.DeleteCommand}"
+                                      Classes="danger">
                                 <MenuItem.Icon>
                                     <i:Icon Value="fa-solid fa-trash" />
                                 </MenuItem.Icon>

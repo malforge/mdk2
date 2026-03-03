@@ -1,7 +1,6 @@
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
-using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Framework;
 
@@ -127,7 +126,7 @@ public class NewProjectDialogViewModel : OverlayModel
     ///     Gets the command to create the project.
     /// </summary>
     public ICommand OkCommand => _okCommand;
-    
+
     /// <summary>
     ///     Gets the command to cancel project creation.
     /// </summary>

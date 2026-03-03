@@ -6,7 +6,8 @@ using Mdk.Hub.Utility;
 namespace Mdk.Hub.Features.Projects.Configuration;
 
 /// <summary>
-/// Represents a complete project configuration with multiple layers (Default, Main, Local) that can be combined to determine effective settings.
+///     Represents a complete project configuration with multiple layers (Default, Main, Local) that can be combined to
+///     determine effective settings.
 /// </summary>
 public class ProjectConfig
 {
@@ -100,7 +101,7 @@ public class ProjectConfig
     }
 
     /// <summary>
-    /// Compares two namespace arrays for equality using case-sensitive ordinal comparison.
+    ///     Compares two namespace arrays for equality using case-sensitive ordinal comparison.
     /// </summary>
     /// <param name="a">The first namespace array to compare.</param>
     /// <param name="b">The second namespace array to compare.</param>
@@ -122,11 +123,14 @@ public class ProjectConfig
     }
 
     /// <summary>
-    /// Compares two ignore pattern arrays for equality using case-insensitive ordinal comparison.
+    ///     Compares two ignore pattern arrays for equality using case-insensitive ordinal comparison.
     /// </summary>
     /// <param name="a">The first ignore pattern array to compare.</param>
     /// <param name="b">The second ignore pattern array to compare.</param>
-    /// <returns>True if both arrays are null or contain the same patterns in the same order (case-insensitive); otherwise, false.</returns>
+    /// <returns>
+    ///     True if both arrays are null or contain the same patterns in the same order (case-insensitive); otherwise,
+    ///     false.
+    /// </returns>
     public static bool CompareIgnores(ImmutableArray<string>? a, ImmutableArray<string>? b)
     {
         if (a == null && b == null)
@@ -144,7 +148,7 @@ public class ProjectConfig
     }
 
     /// <summary>
-    /// Compares two canonical paths for equality.
+    ///     Compares two canonical paths for equality.
     /// </summary>
     /// <param name="a">The first path to compare.</param>
     /// <param name="b">The second path to compare.</param>
@@ -160,25 +164,25 @@ public class ProjectConfig
     }
 
     /// <summary>
-    /// Compares two macro dictionaries for equality (null-safe, case-insensitive keys).
+    ///     Compares two macro dictionaries for equality (null-safe, case-insensitive keys).
     /// </summary>
     public static bool CompareMacros(ImmutableDictionary<string, string>? a, ImmutableDictionary<string, string>? b)
     {
         if (a == null && b == null) return true;
         if (a == null || b == null) return false;
         if (a.Count != b.Count) return false;
-        
+
         foreach (var (key, value) in a)
         {
             if (!b.TryGetValue(key, out var otherValue) || value != otherValue)
                 return false;
         }
-        
+
         return true;
     }
 
     /// <summary>
-    /// Merges macros from multiple layers (Default, Main, Local) with Local taking precedence.
+    ///     Merges macros from multiple layers (Default, Main, Local) with Local taking precedence.
     /// </summary>
     static ImmutableDictionary<string, string>? MergeMacros(
         ImmutableDictionary<string, string>? defaultMacros,
@@ -186,19 +190,19 @@ public class ProjectConfig
         ImmutableDictionary<string, string>? localMacros)
     {
         var result = defaultMacros ?? ImmutableDictionary<string, string>.Empty;
-        
+
         if (mainMacros != null)
         {
             foreach (var (key, value) in mainMacros)
                 result = result.SetItem(key, value);
         }
-        
+
         if (localMacros != null)
         {
             foreach (var (key, value) in localMacros)
                 result = result.SetItem(key, value);
         }
-        
+
         return result.Count > 0 ? result : null;
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -9,12 +8,12 @@ using Avalonia.Interactivity;
 namespace Mdk.Hub.Framework.Controls;
 
 /// <summary>
-/// Base control for path-like inputs that own a textbox, browse button, and reset button.
+///     Base control for path-like inputs that own a textbox, browse button, and reset button.
 /// </summary>
 public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
 {
     /// <summary>
-    /// Defines the <see cref="Path" /> property.
+    ///     Defines the <see cref="Path" /> property.
     /// </summary>
     public static readonly StyledProperty<string> PathProperty =
         AvaloniaProperty.Register<PathTextInputBase, string>(
@@ -23,61 +22,61 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
             defaultBindingMode: BindingMode.TwoWay);
 
     /// <summary>
-    /// Defines the <see cref="DefaultPath" /> property.
+    ///     Defines the <see cref="DefaultPath" /> property.
     /// </summary>
     public static readonly StyledProperty<string?> DefaultPathProperty =
         AvaloniaProperty.Register<PathTextInputBase, string?>(nameof(DefaultPath));
 
     /// <summary>
-    /// Defines the <see cref="CanReset" /> property.
+    ///     Defines the <see cref="CanReset" /> property.
     /// </summary>
     public static readonly StyledProperty<bool> CanResetProperty =
-        AvaloniaProperty.Register<PathTextInputBase, bool>(nameof(CanReset), false);
+        AvaloniaProperty.Register<PathTextInputBase, bool>(nameof(CanReset));
 
     /// <summary>
-    /// Defines the <see cref="ResetTooltip" /> property.
+    ///     Defines the <see cref="ResetTooltip" /> property.
     /// </summary>
     public static readonly StyledProperty<string?> ResetTooltipProperty =
         AvaloniaProperty.Register<PathTextInputBase, string?>(nameof(ResetTooltip));
 
     /// <summary>
-    /// Defines the <see cref="Watermark" /> property.
+    ///     Defines the <see cref="Watermark" /> property.
     /// </summary>
     public static readonly StyledProperty<string?> WatermarkProperty =
         AvaloniaProperty.Register<PathTextInputBase, string?>(nameof(Watermark));
 
     /// <summary>
-    /// Defines the <see cref="HasError" /> property.
+    ///     Defines the <see cref="HasError" /> property.
     /// </summary>
     public static readonly StyledProperty<bool> HasErrorProperty =
-        AvaloniaProperty.Register<PathTextInputBase, bool>(nameof(HasError), false);
+        AvaloniaProperty.Register<PathTextInputBase, bool>(nameof(HasError));
 
     /// <summary>
-    /// Defines the <see cref="ValidationError" /> property.
+    ///     Defines the <see cref="ValidationError" /> property.
     /// </summary>
     public static readonly StyledProperty<string?> ValidationErrorProperty =
         AvaloniaProperty.Register<PathTextInputBase, string?>(nameof(ValidationError));
 
     /// <summary>
-    /// Defines the <see cref="ResolvedResetTooltip" /> property.
+    ///     Defines the <see cref="ResolvedResetTooltip" /> property.
     /// </summary>
     public static readonly StyledProperty<string> ResolvedResetTooltipProperty =
         AvaloniaProperty.Register<PathTextInputBase, string>(nameof(ResolvedResetTooltip), "Reset to default");
 
     /// <summary>
-    /// Defines the <see cref="ResolvedWatermark" /> property.
+    ///     Defines the <see cref="ResolvedWatermark" /> property.
     /// </summary>
     public static readonly StyledProperty<string> ResolvedWatermarkProperty =
         AvaloniaProperty.Register<PathTextInputBase, string>(nameof(ResolvedWatermark), "Enter path or leave empty for default");
 
     /// <summary>
-    /// Defines the <see cref="CanResetToDefault" /> property.
+    ///     Defines the <see cref="CanResetToDefault" /> property.
     /// </summary>
     public static readonly StyledProperty<bool> CanResetToDefaultProperty =
-        AvaloniaProperty.Register<PathTextInputBase, bool>(nameof(CanResetToDefault), false);
+        AvaloniaProperty.Register<PathTextInputBase, bool>(nameof(CanResetToDefault));
 
     /// <summary>
-    /// Defines the <see cref="AllowNonExisting" /> property.
+    ///     Defines the <see cref="AllowNonExisting" /> property.
     /// </summary>
     public static readonly StyledProperty<bool> AllowNonExistingProperty =
         AvaloniaProperty.Register<PathTextInputBase, bool>(nameof(AllowNonExisting), true);
@@ -87,7 +86,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     TextBox? _textBox;
 
     /// <summary>
-    /// Gets or sets the current input value.
+    ///     Gets or sets the current input value.
     /// </summary>
     public string Path
     {
@@ -96,7 +95,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets or sets the default value used by reset operations.
+    ///     Gets or sets the default value used by reset operations.
     /// </summary>
     public string? DefaultPath
     {
@@ -105,7 +104,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets or sets whether the reset button is visible.
+    ///     Gets or sets whether the reset button is visible.
     /// </summary>
     public bool CanReset
     {
@@ -114,7 +113,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets or sets the reset button tooltip text.
+    ///     Gets or sets the reset button tooltip text.
     /// </summary>
     public string? ResetTooltip
     {
@@ -123,7 +122,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets or sets the textbox watermark text.
+    ///     Gets or sets the textbox watermark text.
     /// </summary>
     public string? Watermark
     {
@@ -132,7 +131,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets or sets whether the control is currently in an error state.
+    ///     Gets or sets whether the control is currently in an error state.
     /// </summary>
     public bool HasError
     {
@@ -141,16 +140,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets or sets the current validation message.
-    /// </summary>
-    public string? ValidationError
-    {
-        get => GetValue(ValidationErrorProperty);
-        set => SetValue(ValidationErrorProperty, value);
-    }
-
-    /// <summary>
-    /// Gets the resolved reset tooltip text with fallback logic.
+    ///     Gets the resolved reset tooltip text with fallback logic.
     /// </summary>
     public string ResolvedResetTooltip
     {
@@ -159,7 +149,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets the resolved watermark text with fallback logic.
+    ///     Gets the resolved watermark text with fallback logic.
     /// </summary>
     public string ResolvedWatermark
     {
@@ -168,7 +158,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets whether resetting to default is currently possible.
+    ///     Gets whether resetting to default is currently possible.
     /// </summary>
     public bool CanResetToDefault
     {
@@ -177,7 +167,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets or sets whether non-existing targets are considered valid.
+    ///     Gets or sets whether non-existing targets are considered valid.
     /// </summary>
     public bool AllowNonExisting
     {
@@ -186,9 +176,28 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Gets the current textbox text value.
+    ///     Gets the current textbox text value.
     /// </summary>
     protected string CurrentText => _textBox?.Text ?? string.Empty;
+
+    /// <summary>
+    ///     Gets the error message shown when a missing path is rejected.
+    /// </summary>
+    protected virtual string MissingPathMessage => "Path does not exist";
+
+    /// <summary>
+    ///     Gets the error message shown for invalid input format.
+    /// </summary>
+    protected virtual string InvalidPathMessage => "Invalid path format";
+
+    /// <summary>
+    ///     Gets or sets the current validation message.
+    /// </summary>
+    public string? ValidationError
+    {
+        get => GetValue(ValidationErrorProperty);
+        set => SetValue(ValidationErrorProperty, value);
+    }
 
     /// <inheritdoc />
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -242,46 +251,27 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
                 _textBox.Text = Path;
             UpdateResolvedProperties();
         }
-        else if (change.Property == DefaultPathProperty ||
-                 change.Property == ResetTooltipProperty ||
-                 change.Property == WatermarkProperty ||
-                 change.Property == CanResetProperty)
+        else if (change.Property == DefaultPathProperty || change.Property == ResetTooltipProperty || change.Property == WatermarkProperty || change.Property == CanResetProperty)
             UpdateResolvedProperties();
     }
 
     /// <summary>
-    /// Normalizes user-entered text before format and existence checks.
+    ///     Normalizes user-entered text before format and existence checks.
     /// </summary>
-    protected virtual string NormalizeInput(string? path)
-    {
-        return path?.Trim() ?? string.Empty;
-    }
+    protected virtual string NormalizeInput(string? path) => path?.Trim() ?? string.Empty;
 
     /// <summary>
-    /// Returns whether the normalized input has a valid format.
+    ///     Returns whether the normalized input has a valid format.
     /// </summary>
     protected abstract bool IsValidPathFormat(string? path);
 
     /// <summary>
-    /// Returns whether the normalized input exists in storage.
+    ///     Returns whether the normalized input exists in storage.
     /// </summary>
-    protected virtual bool PathExists(string normalizedPath)
-    {
-        return true;
-    }
+    protected virtual bool PathExists(string normalizedPath) => true;
 
     /// <summary>
-    /// Gets the error message shown when a missing path is rejected.
-    /// </summary>
-    protected virtual string MissingPathMessage => "Path does not exist";
-
-    /// <summary>
-    /// Gets the error message shown for invalid input format.
-    /// </summary>
-    protected virtual string InvalidPathMessage => "Invalid path format";
-
-    /// <summary>
-    /// Updates textbox content without bypassing template-part checks.
+    ///     Updates textbox content without bypassing template-part checks.
     /// </summary>
     protected void SetCurrentText(string value)
     {
@@ -290,7 +280,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Commits textbox content into <see cref="Path" /> if validation succeeds.
+    ///     Commits textbox content into <see cref="Path" /> if validation succeeds.
     /// </summary>
     protected virtual void CommitText()
     {
@@ -326,14 +316,11 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
     }
 
     /// <summary>
-    /// Opens a picker appropriate for the derived control.
+    ///     Opens a picker appropriate for the derived control.
     /// </summary>
     protected abstract void OnBrowseClick(object? sender, RoutedEventArgs e);
 
-    void OnResetClick(object? sender, RoutedEventArgs e)
-    {
-        Path = DefaultPath ?? string.Empty;
-    }
+    void OnResetClick(object? sender, RoutedEventArgs e) => Path = DefaultPath ?? string.Empty;
 
     void OnTextChanged(object? sender, TextChangedEventArgs e)
     {
@@ -351,10 +338,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
         ValidationError = isValid ? null : InvalidPathMessage;
     }
 
-    void OnTextBoxLostFocus(object? sender, RoutedEventArgs e)
-    {
-        CommitText();
-    }
+    void OnTextBoxLostFocus(object? sender, RoutedEventArgs e) => CommitText();
 
     void OnTextBoxKeyDown(object? sender, KeyEventArgs e)
     {
@@ -362,10 +346,7 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
             CommitText();
     }
 
-    void UpdatePseudoClasses()
-    {
-        PseudoClasses.Set(":error", HasError);
-    }
+    void UpdatePseudoClasses() => PseudoClasses.Set(":error", HasError);
 
     void UpdateResolvedProperties()
     {
@@ -381,6 +362,6 @@ public abstract class PathTextInputBase : TemplatedControl, ISupportValidation
         else
             ResolvedWatermark = "Enter path or leave empty for default";
 
-        CanResetToDefault = CanReset && (Path != DefaultPath);
+        CanResetToDefault = CanReset && Path != DefaultPath;
     }
 }

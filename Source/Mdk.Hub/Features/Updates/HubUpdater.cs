@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Settings;
-using Velopack;
 using Velopack.Sources;
 
 namespace Mdk.Hub.Features.Updates;
@@ -50,15 +49,16 @@ internal class HubUpdater
 
             progress?.Report(new UpdateProgress { Message = "Downloading update...", PercentComplete = 20 });
 
-            await mgr.DownloadUpdatesAsync(newVersion, p =>
-            {
-                var percent = 20 + (p * 0.7); // 20% to 90%
-                progress?.Report(new UpdateProgress
+            await mgr.DownloadUpdatesAsync(newVersion,
+                p =>
                 {
-                    Message = $"Downloading update... {p}%",
-                    PercentComplete = percent
+                    var percent = 20 + p * 0.7; // 20% to 90%
+                    progress?.Report(new UpdateProgress
+                    {
+                        Message = $"Downloading update... {p}%",
+                        PercentComplete = percent
+                    });
                 });
-            });
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -73,7 +73,7 @@ internal class HubUpdater
             progress?.Report(new UpdateProgress { Message = "Applying update and restarting...", PercentComplete = 95 });
 
             _logger.Info($"Applying Hub update to version {newVersion.TargetFullRelease.Version}");
-            
+
             // This will restart the application - does not return
             mgr.ApplyUpdatesAndRestart(newVersion);
 
@@ -105,4 +105,3 @@ internal class HubUpdater
         }
     }
 }
-

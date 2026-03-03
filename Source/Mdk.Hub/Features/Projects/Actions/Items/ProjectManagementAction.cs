@@ -8,7 +8,6 @@ using Avalonia.Platform.Storage;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
-using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Projects.Overview.Icons;
 using Mdk.Hub.Features.Settings;
 using Mdk.Hub.Features.Shell;
@@ -26,18 +25,18 @@ namespace Mdk.Hub.Features.Projects.Actions.Items;
 public class ProjectManagementAction : ActionItem
 {
     readonly AsyncRelayCommand _addExistingCommand;
+    readonly AsyncRelayCommand _createMixinCommand;
     readonly AsyncRelayCommand _createModCommand;
     readonly AsyncRelayCommand _createScriptCommand;
-    readonly AsyncRelayCommand _createMixinCommand;
     readonly IFileStorageService _fileStorage;
     readonly IProjectService _projectService;
     readonly IShell _shell;
-
-    bool _canMakeScript;
     bool _canMakeMod;
 
+    bool _canMakeScript;
+
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ProjectManagementAction"/> class.
+    ///     Initializes a new instance of the <see cref="ProjectManagementAction" /> class.
     /// </summary>
     /// <param name="shell">The shell interface for UI interactions.</param>
     /// <param name="projectService">The service for managing projects.</param>
@@ -57,7 +56,7 @@ public class ProjectManagementAction : ActionItem
         _addExistingCommand = new AsyncRelayCommand(AddExistingProjectAsync);
 
         _projectService.StateChanged += OnProjectServiceStateChanged;
-        
+
         // Initialize from current state
         UpdateCanMakeProperties();
     }
@@ -232,7 +231,7 @@ public class ProjectManagementAction : ActionItem
             await busyTask;
 
             // Navigate to the new project and open options drawer
-            _projectService.NavigateToProject(projectPath.Value, openOptions: true);
+            _projectService.NavigateToProject(projectPath.Value, true);
         }
         catch (Exception ex)
         {

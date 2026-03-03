@@ -18,7 +18,7 @@ public partial class DangerBoxView : UserControl
     DangerBoxViewModel? _trackedDataContext;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="DangerBoxView"/> class.
+    ///     Initializes a new instance of the <see cref="DangerBoxView" /> class.
     /// </summary>
     public DangerBoxView()
     {

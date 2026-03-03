@@ -37,7 +37,7 @@
     <!-- Error state for FileInput -->
     <Style Selector="controls|FileInput:error TextBox">
         <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
-        
+
         <Style Selector="^:focus /template/ Border#PART_BorderElement">
             <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
         </Style>
@@ -46,19 +46,19 @@
             <Setter Property="BorderBrush" Value="{StaticResource BorderDangerBrush}" />
         </Style>
     </Style>
-    
+
     <Style Selector="controls|FileInput /template/ Button#PART_BrowseButton > i|Icon">
-        <Setter Property="Value" Value="fa-solid fa-file-import"/>
+        <Setter Property="Value" Value="fa-solid fa-file-import" />
     </Style>
 
     <Style Selector="controls|FileInput.executable">
         <!-- Pre-set for File Pickers for Executable Files -->
         <Style Selector="^ /template/ Button#PART_BrowseButton > i|Icon">
-            <Setter Property="Value" Value="fa-solid fa-file-code"/>
+            <Setter Property="Value" Value="fa-solid fa-file-code" />
         </Style>
         <Style Selector="^:not(.linux)">
             <!-- List of possible extensions a user may want to execute... except .jar, I don't like .jar -->
-            <Setter Property="Patterns" Value="*.exe;*.com;*.bat;*.cmd;*.ps1;*.vbs;*.js;*.wsf"/>
+            <Setter Property="Patterns" Value="*.exe;*.com;*.bat;*.cmd;*.ps1;*.vbs;*.js;*.wsf" />
         </Style>
     </Style>
 </Styles>

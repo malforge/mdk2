@@ -9,7 +9,7 @@ namespace Mdk.Hub.Features.Projects;
 public readonly struct ProjectStateData : IEquatable<ProjectStateData>
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ProjectStateData"/> struct.
+    ///     Initializes a new instance of the <see cref="ProjectStateData" /> struct.
     /// </summary>
     /// <param name="selectedProject">The currently selected project path.</param>
     /// <param name="canMakeScript">Whether Script projects can be created.</param>
@@ -37,7 +37,7 @@ public readonly struct ProjectStateData : IEquatable<ProjectStateData>
     public bool CanMakeMod { get; }
 
     /// <summary>
-    ///     Determines whether this instance is equal to another <see cref="ProjectStateData"/>.
+    ///     Determines whether this instance is equal to another <see cref="ProjectStateData" />.
     /// </summary>
     /// <param name="other">The other instance to compare.</param>
     /// <returns>True if equal; otherwise, false.</returns>
@@ -58,7 +58,7 @@ public readonly struct ProjectStateData : IEquatable<ProjectStateData>
     public override int GetHashCode() => HashCode.Combine(SelectedProject, CanMakeScript, CanMakeMod);
 
     /// <summary>
-    ///     Determines whether two <see cref="ProjectStateData"/> instances are equal.
+    ///     Determines whether two <see cref="ProjectStateData" /> instances are equal.
     /// </summary>
     /// <param name="left">The left operand.</param>
     /// <param name="right">The right operand.</param>
@@ -66,7 +66,7 @@ public readonly struct ProjectStateData : IEquatable<ProjectStateData>
     public static bool operator ==(ProjectStateData left, ProjectStateData right) => left.Equals(right);
 
     /// <summary>
-    ///     Determines whether two <see cref="ProjectStateData"/> instances are not equal.
+    ///     Determines whether two <see cref="ProjectStateData" /> instances are not equal.
     /// </summary>
     /// <param name="left">The left operand.</param>
     /// <param name="right">The right operand.</param>

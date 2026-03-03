@@ -38,7 +38,7 @@
                                       Margin="0,0,0,8">
                                     <!-- Value input -->
                                     <TextBox Grid.Column="0"
-                                             Text="{Binding Value}" 
+                                             Text="{Binding Value}"
                                              Watermark="{Binding Watermark}" />
 
                                     <!-- Delete button (only visible for non-empty rows) -->

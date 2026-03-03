@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Styling;
 using Avalonia.Threading;
 
@@ -47,13 +48,13 @@ public partial class SnackbarWindow : Window
         }
     }
 
-    void OnPointerEntered(object? sender, Avalonia.Input.PointerEventArgs e)
+    void OnPointerEntered(object? sender, PointerEventArgs e)
     {
         if (DataContext is SnackbarViewModel vm)
             vm.PauseTimeout();
     }
 
-    void OnPointerExited(object? sender, Avalonia.Input.PointerEventArgs e)
+    void OnPointerExited(object? sender, PointerEventArgs e)
     {
         if (DataContext is SnackbarViewModel vm)
             vm.ResumeTimeout();

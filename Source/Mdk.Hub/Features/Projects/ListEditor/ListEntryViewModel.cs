@@ -4,14 +4,14 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.Projects.ListEditor;
 
 /// <summary>
-/// View model for a single list item in the editor.
+///     View model for a single list item in the editor.
 /// </summary>
 public class ListEntryViewModel : Model
 {
     string _value = string.Empty;
 
     /// <summary>
-    /// Gets or sets the item value.
+    ///     Gets or sets the item value.
     /// </summary>
     public string Value
     {
@@ -24,17 +24,17 @@ public class ListEntryViewModel : Model
     }
 
     /// <summary>
-    /// Gets whether this entry is empty.
+    ///     Gets whether this entry is empty.
     /// </summary>
     public bool IsEmpty => string.IsNullOrWhiteSpace(Value);
 
     /// <summary>
-    /// Gets or sets the watermark text for the value field.
+    ///     Gets or sets the watermark text for the value field.
     /// </summary>
     public string Watermark { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the delete command.
+    ///     Gets or sets the delete command.
     /// </summary>
     public ICommand? DeleteCommand { get; set; }
 }

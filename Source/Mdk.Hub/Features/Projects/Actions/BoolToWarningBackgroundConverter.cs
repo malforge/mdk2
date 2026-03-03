@@ -5,12 +5,12 @@ using Avalonia.Data.Converters;
 namespace Mdk.Hub.Features.Projects.Actions;
 
 /// <summary>
-/// Converts a boolean value to a warning background color. True values produce a semi-transparent red background.
+///     Converts a boolean value to a warning background color. True values produce a semi-transparent red background.
 /// </summary>
 public class BoolToWarningBackgroundConverter : IValueConverter
 {
     /// <summary>
-    /// Converts a boolean value to a background color string.
+    ///     Converts a boolean value to a background color string.
     /// </summary>
     /// <param name="value">The boolean value to convert.</param>
     /// <param name="targetType">The target type (not used).</param>
@@ -25,7 +25,7 @@ public class BoolToWarningBackgroundConverter : IValueConverter
     }
 
     /// <summary>
-    /// Not supported. Throws <see cref="NotImplementedException"/>.
+    ///     Not supported. Throws <see cref="NotImplementedException" />.
     /// </summary>
     /// <param name="value">The value (not used).</param>
     /// <param name="targetType">The target type (not used).</param>

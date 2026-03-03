@@ -11,12 +11,12 @@ public record PackageVersionInfo
     ///     Gets the package identifier.
     /// </summary>
     public required string PackageId { get; init; }
-    
+
     /// <summary>
     ///     Gets the latest available version.
     /// </summary>
     public required string LatestVersion { get; init; }
-    
+
     /// <summary>
     ///     Gets when the version information was retrieved.
     /// </summary>

@@ -8,12 +8,12 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub;
 
 /// <summary>
-/// Locates and instantiates the appropriate view for a given view model using the ViewModelFor attribute.
+///     Locates and instantiates the appropriate view for a given view model using the ViewModelFor attribute.
 /// </summary>
 public class ViewLocator : IDataTemplate
 {
     /// <summary>
-    /// Builds a control instance for the specified view model.
+    ///     Builds a control instance for the specified view model.
     /// </summary>
     /// <param name="param">The view model instance to build a view for.</param>
     /// <returns>A control instance with the view model set as its DataContext, or null if param is null.</returns>
@@ -41,7 +41,7 @@ public class ViewLocator : IDataTemplate
     }
 
     /// <summary>
-    /// Determines whether this data template can handle the specified data object.
+    ///     Determines whether this data template can handle the specified data object.
     /// </summary>
     /// <param name="data">The data object to check.</param>
     /// <returns>True if the data is a ViewModel or ToastViewModel, otherwise false.</returns>

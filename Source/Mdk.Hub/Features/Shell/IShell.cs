@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.CommonDialogs;
-using Mdk.Hub.Features.Projects.NewProjectDialog;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -15,11 +14,16 @@ public interface IShell
     ///     Gets the collection of active toast notification messages.
     /// </summary>
     ObservableCollection<ToastMessage> ToastMessages { get; }
-    
+
     /// <summary>
     ///     Gets the collection of overlay view models currently displayed as dialogs.
     /// </summary>
     ObservableCollection<OverlayModel> OverlayViews { get; }
+
+    /// <summary>
+    ///     Gets whether the main window is currently in the background (minimized or not active).
+    /// </summary>
+    bool IsInBackground { get; }
 
     /// <summary>
     ///     Starts the shell with the provided command-line arguments.
@@ -33,7 +37,7 @@ public interface IShell
     /// </summary>
     /// <param name="callback">Callback receiving the startup arguments.</param>
     void WhenStarted(Action<string[]> callback);
-    
+
     /// <summary>
     ///     Registers a callback to be invoked when the shell is ready for operation.
     ///     On Linux, this means required paths are configured. Otherwise, ready immediately after start.
@@ -82,15 +86,13 @@ public interface IShell
     /// <summary>
     ///     Tries to get unsaved changes information for display in dialogs.
     /// </summary>
-    /// <param name="info">Output parameter with unsaved changes info including description and navigation. For multiple registrations, navigation action is empty.</param>
+    /// <param name="info">
+    ///     Output parameter with unsaved changes info including description and navigation. For multiple
+    ///     registrations, navigation action is empty.
+    /// </param>
     /// <returns>True if there are unsaved changes, false otherwise.</returns>
     bool TryGetUnsavedChangesInfo(out UnsavedChangesInfo info);
 
-    /// <summary>
-    ///     Gets whether the main window is currently in the background (minimized or not active).
-    /// </summary>
-    bool IsInBackground { get; }
-    
     /// <summary>
     ///     Requests the application to shut down gracefully.
     /// </summary>
@@ -107,28 +109,28 @@ public interface IShell
     /// <param name="model">The overlay view model to display.</param>
     /// <returns>A task that completes when the overlay is dismissed.</returns>
     Task ShowOverlayAsync(OverlayModel model);
-    
+
     /// <summary>
     ///     Shows a confirmation dialog and returns the user's response.
     /// </summary>
     /// <param name="message">The confirmation message with title, text, and button labels.</param>
     /// <returns>True if user confirmed (OK), false if cancelled.</returns>
     Task<bool> ShowOverlayAsync(ConfirmationMessage message);
-    
+
     /// <summary>
     ///     Shows an information dialog and waits for user acknowledgment.
     /// </summary>
     /// <param name="message">The information message with title and text.</param>
     /// <returns>A task that completes when the user acknowledges the message.</returns>
     Task ShowOverlayAsync(InformationMessage message);
-    
+
     /// <summary>
     ///     Shows a key phrase validation dialog requiring user to type a phrase to confirm a dangerous operation.
     /// </summary>
     /// <param name="message">The validation message with key phrase and instructions.</param>
     /// <returns>True if the user correctly typed the key phrase, false if cancelled.</returns>
     Task<bool> ShowOverlayAsync(KeyPhraseValidationMessage message);
-    
+
     /// <summary>
     ///     Shows a busy overlay with progress indication.
     /// </summary>

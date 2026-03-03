@@ -63,7 +63,7 @@ internal class PackageUpdater
                 };
             }
 
-            progress?.Report(new UpdateProgress { Message = $"Backing up project file...", PercentComplete = 20 });
+            progress?.Report(new UpdateProgress { Message = "Backing up project file...", PercentComplete = 20 });
 
             // Create backup before modification
             if (!CreateBackup(projectPath))
@@ -166,12 +166,10 @@ internal class PackageUpdater
         catch (OperationCanceledException)
         {
             _logger.Info($"Package update cancelled for {projectPath}");
-            
+
             // Attempt to rollback on cancellation
             if (File.Exists(GetBackupPath(projectPath)))
-            {
                 RestoreFromBackup(projectPath);
-            }
 
             return new UpdateResult
             {
@@ -182,12 +180,10 @@ internal class PackageUpdater
         catch (Exception ex)
         {
             _logger.Error($"Failed to update packages for {projectPath}", ex);
-            
+
             // Attempt to rollback on error
             if (File.Exists(GetBackupPath(projectPath)))
-            {
                 RestoreFromBackup(projectPath);
-            }
 
             return new UpdateResult
             {
@@ -252,7 +248,7 @@ internal class PackageUpdater
             {
                 _logger.Info($"Package rollback complete for {projectPath.Value}");
                 DeleteBackup(projectPath); // Clean up backup after successful rollback
-                
+
                 return new UpdateResult
                 {
                     Success = true,
@@ -376,18 +372,16 @@ internal class PackageUpdater
         }
     }
 
-    string GetBackupPath(CanonicalPath projectPath)
-    {
+    string GetBackupPath(CanonicalPath projectPath) =>
         // Use platform-agnostic path operations
-        return projectPath.Value + ".backup";
-    }
+        projectPath.Value + ".backup";
 
     bool CreateBackup(CanonicalPath projectPath)
     {
         try
         {
             var backupPath = GetBackupPath(projectPath);
-            File.Copy(projectPath.Value!, backupPath, overwrite: true);
+            File.Copy(projectPath.Value!, backupPath, true);
             _logger.Info($"Created backup: {backupPath}");
             return true;
         }
@@ -409,7 +403,7 @@ internal class PackageUpdater
                 return false;
             }
 
-            File.Copy(backupPath, projectPath.Value!, overwrite: true);
+            File.Copy(backupPath, projectPath.Value!, true);
             _logger.Info($"Restored from backup: {backupPath}");
             return true;
         }
@@ -437,4 +431,3 @@ internal class PackageUpdater
         }
     }
 }
-

@@ -10,11 +10,9 @@ namespace Mdk.Hub.Features.Settings;
 public struct HubSettings
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="HubSettings"/> struct.
+    ///     Initializes a new instance of the <see cref="HubSettings" /> struct.
     /// </summary>
-    public HubSettings()
-    {
-    }
+    public HubSettings() { }
 
     /// <summary>
     ///     Gets or sets the custom auto output path for ingame scripts.
@@ -91,4 +89,3 @@ public struct HubSettings
     /// </summary>
     public int DeploymentNotificationTimeoutSeconds { get; set; } = 10;
 }
-

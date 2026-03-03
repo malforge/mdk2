@@ -18,7 +18,7 @@ public static class CollectionExtensions
     /// <param name="match">The predicate that defines the conditions of the element to search for.</param>
     /// <returns>
     ///     The zero-based index of the first occurrence of an element that matches the conditions
-    ///     defined by <paramref name="match"/>, if found; otherwise, -1.
+    ///     defined by <paramref name="match" />, if found; otherwise, -1.
     /// </returns>
     public static int FindIndex<T>(this IReadOnlyList<T> list, int startIndex, Predicate<T> match)
     {
@@ -29,7 +29,7 @@ public static class CollectionExtensions
         if (startIndex < 0 || startIndex > list.Count)
             throw new ArgumentOutOfRangeException(nameof(startIndex));
 
-        for (int i = startIndex; i < list.Count; i++)
+        for (var i = startIndex; i < list.Count; i++)
         {
             if (match(list[i]))
                 return i;
@@ -38,4 +38,3 @@ public static class CollectionExtensions
         return -1;
     }
 }
-

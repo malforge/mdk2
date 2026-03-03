@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Input;
 using JetBrains.Annotations;
 using Mal.SourceGeneratedDI;
 
@@ -34,26 +34,24 @@ public partial class ProjectOverviewView : UserControl
         {
             viewModel.PropertyChanged += OnViewModelPropertyChanged;
             viewModel.ShowProjectRequested += OnShowProjectRequested;
-            
+
             // Sync initial selection if one exists
             if (viewModel.SelectedProjects.Length > 0)
                 SyncListBoxSelection();
         }
     }
-    
+
     void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ProjectOverviewViewModel.SelectedProjects))
-        {
             SyncListBoxSelection();
-        }
     }
-    
-    void OnSelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
+
+    void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_updatingSelection || DataContext is not ProjectOverviewViewModel viewModel)
             return;
-            
+
         _updatingSelection = true;
         try
         {
@@ -65,22 +63,20 @@ public partial class ProjectOverviewView : UserControl
             _updatingSelection = false;
         }
     }
-    
+
     void SyncListBoxSelection()
     {
         if (_updatingSelection || DataContext is not ProjectOverviewViewModel viewModel || ProjectListBox == null)
             return;
-            
+
         _updatingSelection = true;
         try
         {
             var selected = viewModel.SelectedProjects;
-            
+
             // Single-select mode: set SelectedItem
             if (ProjectListBox.SelectionMode == SelectionMode.Single)
-            {
                 ProjectListBox.SelectedItem = selected.Length > 0 ? selected[0] : null;
-            }
             // Multi-select mode: sync SelectedItems
             else
             {
@@ -104,20 +100,18 @@ public partial class ProjectOverviewView : UserControl
 
         ProjectListBox.ScrollIntoView(item);
     }
-    
-    void OnProjectListBoxDoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
+
+    void OnProjectListBoxDoubleTapped(object? sender, TappedEventArgs e)
     {
         if (DataContext is not ProjectOverviewViewModel viewModel)
             return;
-            
+
         // Get the project that was double-tapped
         if (e.Source is Control control)
         {
             var project = control.DataContext as ProjectModel ?? ProjectListBox.SelectedItem as ProjectModel;
             if (project != null && viewModel.OpenProjectInIdeCommand.CanExecute(project))
-            {
                 viewModel.OpenProjectInIdeCommand.Execute(project);
-            }
         }
     }
 }

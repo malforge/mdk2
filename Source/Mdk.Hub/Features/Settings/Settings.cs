@@ -9,23 +9,18 @@ using Mdk.Hub.Features.Storage;
 namespace Mdk.Hub.Features.Settings;
 
 /// <summary>
-/// JSON-based settings store with caching support for application configuration.
+///     JSON-based settings store with caching support for application configuration.
 /// </summary>
 [Singleton<ISettings>]
 public class Settings : ISettings
 {
-    readonly JsonObject _settings = new();
     readonly Dictionary<string, object> _cache = new();
-    readonly string _settingsFileName;
     readonly IFileStorageService _fileStorage;
+    readonly JsonObject _settings = new();
+    readonly string _settingsFileName;
 
     /// <summary>
-    /// Occurs when a setting value is changed.
-    /// </summary>
-    public event EventHandler<SettingsChangedEventArgs>? SettingsChanged;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Settings"/> class and loads settings from disk.
+    ///     Initializes a new instance of the <see cref="Settings" /> class and loads settings from disk.
     /// </summary>
     public Settings(IFileStorageService fileStorage)
     {
@@ -46,7 +41,12 @@ public class Settings : ISettings
     }
 
     /// <summary>
-    /// Attempts to get a setting value of the specified type.
+    ///     Occurs when a setting value is changed.
+    /// </summary>
+    public event EventHandler<SettingsChangedEventArgs>? SettingsChanged;
+
+    /// <summary>
+    ///     Attempts to get a setting value of the specified type.
     /// </summary>
     /// <typeparam name="T">The type of the setting value.</typeparam>
     /// <param name="key">The setting key.</param>
@@ -73,9 +73,9 @@ public class Settings : ISettings
         value = default!;
         return false;
     }
-    
+
     /// <summary>
-    /// Gets a setting value of the specified type, or the default value if not found.
+    ///     Gets a setting value of the specified type, or the default value if not found.
     /// </summary>
     /// <typeparam name="T">The type of the setting value.</typeparam>
     /// <param name="key">The setting key.</param>
@@ -93,17 +93,17 @@ public class Settings : ISettings
             _cache[key] = deserialized;
             return deserialized;
         }
-        
+
         return default;
     }
 
     /// <summary>
-    /// Gets a setting value of the specified type, or a custom default value if not found.
+    ///     Gets a setting value of the specified type, or a custom default value if not found.
     /// </summary>
     /// <typeparam name="T">The type of the setting value.</typeparam>
     /// <param name="key">The setting key.</param>
     /// <param name="defaultValue">The default value to return if the setting is not found.</param>
-    /// <returns>The setting value if found; otherwise, <paramref name="defaultValue"/>.</returns>
+    /// <returns>The setting value if found; otherwise, <paramref name="defaultValue" />.</returns>
     public T GetValue<T>(string key, T defaultValue) where T : struct
     {
         // Check cache first - only use if type matches exactly (struct is copied by value)
@@ -117,14 +117,14 @@ public class Settings : ISettings
             _cache[key] = deserialized;
             return deserialized;
         }
-        
+
         // Not found, cache and return default (struct is copied by value)
         _cache[key] = defaultValue;
         return defaultValue;
     }
 
     /// <summary>
-    /// Sets a setting value and persists it to disk.
+    ///     Sets a setting value and persists it to disk.
     /// </summary>
     /// <typeparam name="T">The type of the setting value.</typeparam>
     /// <param name="key">The setting key.</param>

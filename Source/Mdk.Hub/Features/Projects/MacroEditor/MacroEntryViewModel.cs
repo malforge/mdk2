@@ -4,7 +4,7 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.Projects.MacroEditor;
 
 /// <summary>
-/// View model for a single macro key-value pair in the editor.
+///     View model for a single macro key-value pair in the editor.
 /// </summary>
 public class MacroEntryViewModel : Model
 {
@@ -12,7 +12,7 @@ public class MacroEntryViewModel : Model
     string _value = string.Empty;
 
     /// <summary>
-    /// Gets or sets the macro key (without $ delimiters).
+    ///     Gets or sets the macro key (without $ delimiters).
     /// </summary>
     public string Key
     {
@@ -25,7 +25,7 @@ public class MacroEntryViewModel : Model
     }
 
     /// <summary>
-    /// Gets or sets the macro value.
+    ///     Gets or sets the macro value.
     /// </summary>
     public string Value
     {
@@ -38,12 +38,12 @@ public class MacroEntryViewModel : Model
     }
 
     /// <summary>
-    /// Gets whether this entry is empty (both key and value are empty).
+    ///     Gets whether this entry is empty (both key and value are empty).
     /// </summary>
     public bool IsEmpty => string.IsNullOrWhiteSpace(Key) && string.IsNullOrWhiteSpace(Value);
 
     /// <summary>
-    /// Gets or sets the delete command.
+    ///     Gets or sets the delete command.
     /// </summary>
     public ICommand? DeleteCommand { get; set; }
 }

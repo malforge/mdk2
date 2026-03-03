@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -11,7 +10,7 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.About;
 
 /// <summary>
-/// View model for the About dialog that shows version and links to logs/data/GitHub.
+///     View model for the About dialog that shows version and links to logs/data/GitHub.
 /// </summary>
 [Instance]
 [ViewModelFor<AboutView>]
@@ -20,7 +19,7 @@ public class AboutViewModel : OverlayModel
     readonly IFileStorageService _fileStorage;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AboutViewModel"/> class.
+    ///     Initializes a new instance of the <see cref="AboutViewModel" /> class.
     /// </summary>
     public AboutViewModel(IFileStorageService fileStorage)
     {
@@ -32,24 +31,27 @@ public class AboutViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets the version string for the application.
+    ///     Gets the version string for the application.
     /// </summary>
     public string Version { get; } = GetVersion();
 
     /// <summary>
-    /// Gets the command to close the About dialog.
+    ///     Gets the command to close the About dialog.
     /// </summary>
     public ICommand CloseCommand { get; }
+
     /// <summary>
-    /// Gets the command to open the logs folder.
+    ///     Gets the command to open the logs folder.
     /// </summary>
     public ICommand OpenLogsCommand { get; }
+
     /// <summary>
-    /// Gets the command to open the application data folder.
+    ///     Gets the command to open the application data folder.
     /// </summary>
     public ICommand OpenDataCommand { get; }
+
     /// <summary>
-    /// Gets the command to open the GitHub repository in a browser.
+    ///     Gets the command to open the GitHub repository in a browser.
     /// </summary>
     public ICommand OpenGitHubCommand { get; }
 
@@ -57,7 +59,7 @@ public class AboutViewModel : OverlayModel
     {
         var assembly = Assembly.GetExecutingAssembly();
         var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        
+
         if (version != null)
         {
             // Strip git metadata (everything after +)
@@ -65,7 +67,7 @@ public class AboutViewModel : OverlayModel
             if (plusIndex >= 0)
                 version = version.Substring(0, plusIndex);
         }
-        
+
         return version ?? assembly.GetName().Version?.ToString() ?? "Unknown";
     }
 
