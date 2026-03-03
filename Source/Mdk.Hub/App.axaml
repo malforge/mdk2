@@ -6,10 +6,6 @@
              RequestedThemeVariant="Dark">
     <!-- Force dark mode for starfield easter egg -->
 
-    <Application.DataTemplates>
-        <local:ViewLocator />
-
-    </Application.DataTemplates>
 
     <Application.Resources>
         <ResourceDictionary>

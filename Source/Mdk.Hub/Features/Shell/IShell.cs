@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -51,6 +52,14 @@ public interface IShell
     /// </summary>
     /// <param name="model">The overlay view model to display.</param>
     void AddOverlay(OverlayModel model);
+
+    /// <summary>
+    ///     Resolves <typeparamref name="TViewModel" /> from the container, optionally configures it,
+    ///     then adds it as an overlay.
+    /// </summary>
+    /// <typeparam name="TViewModel">The overlay view model type to resolve and display.</typeparam>
+    /// <param name="configure">Optional callback to configure the resolved view model before showing it.</param>
+    void AddOverlay<TViewModel>(Action<TViewModel>? configure = null) where TViewModel : OverlayModel;
 
     /// <summary>
     ///     Shows a non-blocking toast notification message that auto-dismisses after a duration.
@@ -137,4 +146,26 @@ public interface IShell
     /// <param name="busyOverlay">The busy overlay view model with message and progress.</param>
     /// <returns>A task that completes when the overlay is dismissed.</returns>
     Task ShowBusyOverlayAsync(BusyOverlayViewModel busyOverlay);
+
+    /// <summary>
+    ///     Opens a new window hosting the specified view model.
+    /// </summary>
+    /// <param name="viewModel">The view model to display in the window.</param>
+    /// <param name="title">
+    ///     Optional window title. If not provided and the ViewModel implements IHaveATitle, binds to its
+    ///     Title property.
+    /// </param>
+    /// <param name="setParent">Whether to set the shell as the parent window. Defaults to true.</param>
+    void OpenWindow(ViewModel viewModel, string? title = null, bool setParent = true);
+
+    /// <summary>
+    ///     Creates a window-scoped DI container, resolves <typeparamref name="TViewModel" /> from it,
+    ///     optionally configures it, and opens a new window hosting the resolved view model.
+    ///     The scope is disposed when the window closes.
+    /// </summary>
+    /// <typeparam name="TViewModel">The view model type to resolve and display.</typeparam>
+    /// <param name="configure">Optional callback to configure the resolved view model before showing the window.</param>
+    /// <param name="title">Optional window title.</param>
+    /// <param name="setParent">Whether to set the shell as the parent window. Defaults to true.</param>
+    void OpenWindow<TViewModel>(Action<TViewModel>? configure = null, string? title = null, bool setParent = true) where TViewModel : ViewModel;
 }

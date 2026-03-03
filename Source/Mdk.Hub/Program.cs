@@ -21,7 +21,7 @@ sealed class Program
     public static int Main(string[] args)
     {
         // Set up Velopack logging before bootstrap
-        var logger = App.Container.Resolve<ILogger>();
+        var logger = App.GetLogger();
 
         // Velopack bootstrap - MUST be first thing that runs
         VelopackApp.Build()
@@ -54,7 +54,7 @@ sealed class Program
     {
         // This runs once after installation, before the UI starts
         IsFirstRun = true;
-        var logger = App.Container.Resolve<ILogger>();
+        var logger = App.GetLogger();
         logger.Info($"Velopack first run detected for version {version}");
     }
 

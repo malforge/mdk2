@@ -42,12 +42,14 @@ public class ShellViewModel : ViewModel, IShell
     readonly Lazy<IProjectService> _lazyProjectService;
     readonly Lazy<IUpdateManager> _lazyUpdateManager;
     readonly ILogger _logger;
+    readonly List<HostWindow> _openWindows = new();
     readonly Lazy<ProjectActionsViewModel> _projectActionsViewModel;
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
     readonly Lazy<ProjectOverviewViewModel> _projectOverviewViewModel;
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
+    readonly IWindowScopeFactory _windowScopeFactory;
     ViewModel? _currentView;
     bool _hasStarted;
     bool _isInBackground;
@@ -58,7 +60,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -75,6 +77,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <param name="lazyUpdateManager">Update manager service for monitoring MDK versions.</param>
     /// <param name="fileStorage">File storage service for filesystem operations.</param>
     /// <param name="container">Dependency container for resolving additional services as needed.</param>
+    /// <param name="windowScopeFactory">Factory for creating window-scoped DI containers.</param>
     public ShellViewModel(
         ISettings settings,
         Lazy<IProjectService> lazyProjectService,
@@ -84,7 +87,8 @@ public class ShellViewModel : ViewModel, IShell
         Lazy<ProjectOverviewViewModel> projectOverviewViewModel,
         Lazy<ProjectActionsViewModel> projectActionsViewModel,
         IFileStorageService fileStorage,
-        IDependencyContainer container)
+        IDependencyContainer container,
+        IWindowScopeFactory windowScopeFactory)
     {
         _lazyProjectService = lazyProjectService;
         _lazyUpdateManager = lazyUpdateManager;
@@ -94,6 +98,7 @@ public class ShellViewModel : ViewModel, IShell
         _projectOverviewViewModel = projectOverviewViewModel;
         _projectActionsViewModel = projectActionsViewModel;
         _container = container;
+        _windowScopeFactory = windowScopeFactory;
         Settings = settings;
         // NavigationView = projectOverviewViewModel;
         // CurrentView = projectActionsViewModel;
@@ -242,6 +247,45 @@ public class ShellViewModel : ViewModel, IShell
 
         model.Dismissed += onDismissed;
         OverlayViews.Add(model);
+    }
+
+    /// <inheritdoc />
+    public void AddOverlay<TViewModel>(Action<TViewModel>? configure = null) where TViewModel : OverlayModel
+    {
+        var vm = _container.Resolve<TViewModel>();
+        configure?.Invoke(vm);
+        AddOverlay(vm);
+    }
+
+    /// <inheritdoc />
+    public void OpenWindow(ViewModel viewModel, string? title = null, bool setParent = true)
+        => OpenWindowCore(viewModel, scope: null, title, setParent);
+
+    /// <inheritdoc />
+    public void OpenWindow<TViewModel>(Action<TViewModel>? configure = null, string? title = null, bool setParent = true) where TViewModel : ViewModel
+    {
+        var scope = _windowScopeFactory.Create();
+        var vm = scope.Container.Resolve<TViewModel>();
+        configure?.Invoke(vm);
+        OpenWindowCore(vm, scope, title, setParent);
+    }
+
+    void OpenWindowCore(ViewModel viewModel, IWindowScope? scope, string? title, bool setParent)
+    {
+        var window = new HostWindow(title, _logger, scope)
+        {
+            DataContext = viewModel
+        };
+        _openWindows.Add(window);
+        window.Closed += (_, _) => _openWindows.Remove(window);
+
+        var mainWindow = setParent
+            ? (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow
+            : null;
+        if (mainWindow != null)
+            window.Show(mainWindow);
+        else
+            window.Show();
     }
 
     /// <inheritdoc />

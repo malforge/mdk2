@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Framework;
 
@@ -12,6 +13,16 @@ namespace Mdk.Hub;
 /// </summary>
 public class ViewLocator : IDataTemplate
 {
+    readonly IDependencyContainer _container;
+
+    /// <summary>
+    ///     Initializes a new <see cref="ViewLocator" /> with the application container.
+    /// </summary>
+    public ViewLocator(IDependencyContainer container)
+    {
+        _container = container;
+    }
+
     /// <summary>
     ///     Builds a control instance for the specified view model.
     /// </summary>
@@ -31,11 +42,10 @@ public class ViewLocator : IDataTemplate
             throw new InvalidOperationException($"ViewModelForAttribute is missing on {param.GetType().FullName}");
 
         var viewType = viewModelForAttribute.ViewType;
-        var container = App.Container;
-        if (!container.TryResolve(viewType, out var viewObj))
+        if (!_container.TryResolve(viewType, out var viewObj))
             throw new InvalidOperationException($"Could not resolve view of type {viewType.FullName}");
         if (viewObj is not Control view)
-            throw new InvalidOperationException($"Resolved view is not a Control. Type: {viewObj.GetType().FullName}");
+            throw new InvalidOperationException($"Resolved view is not a Control. Type: {viewObj?.GetType().FullName ?? "null"}");
         view.DataContext = param;
         return view;
     }

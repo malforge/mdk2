@@ -20,10 +20,7 @@ namespace Mdk.Hub;
 /// </summary>
 public class App : Application
 {
-    /// <summary>
-    ///     Gets the dependency injection container for the application.
-    /// </summary>
-    public static IDependencyContainer Container { get; } = new DependencyContainer();
+    static readonly IDependencyContainer _container = CreateContainer();
 
     /// <summary>
     ///     When true, simulates Linux behavior on Windows for testing purposes.
@@ -35,10 +32,26 @@ public class App : Application
     /// </summary>
     public static bool IsLinux => SimulateLinux || OperatingSystem.IsLinux();
 
+    internal static ILogger GetLogger() => _container.Resolve<ILogger>();
+
+    static IDependencyContainer CreateContainer()
+    {
+        IDependencyContainer? container = null;
+        container = new DependencyContainerBuilder()
+            .AddRegistry<GeneratedRegistry>()
+            .RegisterSingleton<IDependencyContainer>(() => container!)
+            .Build();
+        return container;
+    }
+
     /// <summary>
     ///     Initializes the application by loading XAML resources.
     /// </summary>
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        DataTemplates.Add(new ViewLocator(_container));
+    }
 
     /// <summary>
     ///     Called when the framework initialization is completed, sets up services, exception handlers, and the main window.
@@ -47,7 +60,7 @@ public class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var logger = Container.Resolve<ILogger>();
+            var logger = _container.Resolve<ILogger>();
             logger.Info("MDK Hub application starting");
 
             // Set up global exception handlers
@@ -64,14 +77,14 @@ public class App : Application
             };
 
             // Initialize services (ProjectService subscribes to IPC internally)
-            Container.Resolve<IInterProcessCommunication>();
-            Container.Resolve<IProjectService>();
+            _container.Resolve<IInterProcessCommunication>();
+            _container.Resolve<IProjectService>();
 
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
-            var shellViewModel = Container.Resolve<ShellViewModel>();
-            var shellWindow = Container.Resolve<ShellWindow>();
+            var shellViewModel = _container.Resolve<ShellViewModel>();
+            var shellWindow = _container.Resolve<ShellWindow>();
 
             // Parse command line arguments
             var args = desktop.Args ?? Array.Empty<string>();
@@ -90,12 +103,14 @@ public class App : Application
             desktop.MainWindow = shellWindow;
 
             // Initialize snackbar service with main window for screen detection
-            var snackbarService = Container.Resolve<ISnackbarService>();
+            var snackbarService = _container.Resolve<ISnackbarService>();
             if (snackbarService is SnackbarService ss)
                 ss.SetMainWindow(shellWindow);
 
-            var shell = Container.Resolve<IShell>();
+            var shell = _container.Resolve<IShell>();
             shell.Start(args);
+
+            EasterEggBehavior.Service = _container.Resolve<IEasterEggService>();
 
             logger.Info("MDK Hub application started successfully");
         }
