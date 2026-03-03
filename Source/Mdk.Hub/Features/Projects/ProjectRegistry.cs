@@ -18,8 +18,8 @@ namespace Mdk.Hub.Features.Projects;
 [Singleton<IProjectRegistry>]
 public class ProjectRegistry : IProjectRegistry
 {
-    readonly ILogger _logger;
     readonly IFileStorageService _fileStorage;
+    readonly ILogger _logger;
     readonly string _registryPath;
     readonly string _versionFilesPath;
     List<ProjectInfo> _projects = new();
@@ -37,7 +37,7 @@ public class ProjectRegistry : IProjectRegistry
         _versionFilesPath = fileStorage.GetApplicationDataPath();
         Load();
     }
-    
+
     /// <inheritdoc />
     public IReadOnlyList<ProjectInfo> GetProjects()
     {

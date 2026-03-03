@@ -12,7 +12,7 @@ public class ProjectNavigationRequestedEventArgs : EventArgs
     ///     Gets the canonical path of the project to navigate to.
     /// </summary>
     public required CanonicalPath ProjectPath { get; init; }
-    
+
     /// <summary>
     ///     Gets a value indicating whether to open the project options view.
     /// </summary>

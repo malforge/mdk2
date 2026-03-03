@@ -11,12 +11,12 @@
                 <StackPanel>
                     <!-- Content -->
                     <ContentPresenter Content="{TemplateBinding Content}" />
-                    
+
                     <!-- Validation message - always reserves space -->
-                    <StackPanel Orientation="Horizontal" 
-                                Spacing="4" 
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="4"
                                 Margin="0,4,0,0">
-                        <i:Icon Value="fa-solid fa-triangle-exclamation" 
+                        <i:Icon Value="fa-solid fa-triangle-exclamation"
                                 Foreground="{DynamicResource ForegroundDangerBrush}"
                                 FontSize="12"
                                 VerticalAlignment="Top"
@@ -37,23 +37,23 @@
     <Style Selector="TextBox.error">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
     </Style>
-    
+
     <Style Selector="TextBox.error:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
     </Style>
-    
+
     <Style Selector="TextBox.error:pointerover /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
     </Style>
-    
+
     <Style Selector="ComboBox.error">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
     </Style>
-    
+
     <Style Selector="ComboBox.error:focus /template/ Border#Background">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
     </Style>
-    
+
     <Style Selector="ComboBox.error:pointerover /template/ Border#Background">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderDangerBrush}" />
     </Style>

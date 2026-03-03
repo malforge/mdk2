@@ -16,4 +16,3 @@ public partial class UpdatesActionView : ActionItemControl
         InitializeComponent();
     }
 }
-

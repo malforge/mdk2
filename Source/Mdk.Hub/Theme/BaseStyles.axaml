@@ -15,7 +15,8 @@
                     <SolidColorBrush x:Key="ButtonBackgroundPressed"
                                      Color="{StaticResource BackgroundCardSelectedColor}" />
                     <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource BorderDefaultColor}" />
-                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource AccentInteractiveColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver"
+                                     Color="{StaticResource AccentInteractiveColor}" />
                     <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource TextBodyColor}" />
@@ -30,7 +31,8 @@
                     <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource BorderDefaultColor}" />
                     <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"
                                      Color="{StaticResource BorderDefaultColor}" />
-                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource AccentInteractiveColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused"
+                                     Color="{StaticResource AccentInteractiveColor}" />
                     <SolidColorBrush x:Key="TextControlForeground" Color="{StaticResource TextPrimaryColor}" />
                     <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="{StaticResource TextMutedColor}" />
                     <SolidColorBrush x:Key="TextControlSelectionHighlightColor"
@@ -126,11 +128,12 @@
     <Style Selector="UserControl">
         <Setter Property="Background" Value="Transparent" />
     </Style>
-    
+
     <!-- Textbox Style -->
     <Style Selector="TextBox">
         <!-- Override for "clearButton" style -->
-        <Style Selector="^.clearButton[AcceptsReturn=False][IsReadOnly=False]:focus:not(TextBox:empty) Button /template/ ContentPresenter">
+        <Style
+            Selector="^.clearButton[AcceptsReturn=False][IsReadOnly=False]:focus:not(TextBox:empty) Button /template/ ContentPresenter">
             <Setter Property="BorderThickness" Value="2" />
             <Setter Property="CornerRadius" Value="0 2 2 0" />
         </Style>

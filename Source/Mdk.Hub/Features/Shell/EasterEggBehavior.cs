@@ -10,7 +10,7 @@ using Avalonia.Threading;
 namespace Mdk.Hub.Features.Shell;
 
 /// <summary>
-/// Attached property behavior that displays the easter egg on a control.
+///     Attached property behavior that displays the easter egg on a control.
 /// </summary>
 public static class EasterEggBehavior
 {
@@ -22,6 +22,17 @@ public static class EasterEggBehavior
 
     static readonly AttachedProperty<EasterEggAttachment?> _attachmentProperty =
         AvaloniaProperty.RegisterAttached<Control, EasterEggAttachment?>("Attachment", typeof(EasterEggBehavior));
+
+    static EasterEggBehavior()
+    {
+        IsEnabledProperty.Changed.AddClassHandler<Control>(OnIsEnabledChanged);
+    }
+
+    /// <summary>
+    ///     Service used by <see cref="EasterEggAttachment" /> instances created via XAML attached property.
+    ///     Set by <see cref="App" /> during framework initialization.
+    /// </summary>
+    internal static IEasterEggService? Service { get; set; }
 
     /// <summary>
     ///     Gets the value of the IsEnabled attached property for the specified control.
@@ -36,11 +47,6 @@ public static class EasterEggBehavior
     /// <param name="control">The control to set the property value on.</param>
     /// <param name="value">True to enable the easter egg behavior.</param>
     public static void SetIsEnabled(Control control, bool value) => control.SetValue(IsEnabledProperty, value);
-
-    static EasterEggBehavior()
-    {
-        IsEnabledProperty.Changed.AddClassHandler<Control>(OnIsEnabledChanged);
-    }
 
     static void OnIsEnabledChanged(Control control, AvaloniaPropertyChangedEventArgs args)
     {
@@ -74,13 +80,49 @@ public static class EasterEggBehavior
         public EasterEggAttachment(Control host)
         {
             _host = host;
-            _service = App.Container.Resolve<IEasterEggService>();
+            _service = Service ?? throw new InvalidOperationException("EasterEggBehavior.Service is not initialized.");
 
             // Subscribe to service changes
             _service.ActiveChanged += OnActiveChanged;
-            
+
             // Wait for control to be loaded, then show
             _host.AttachedToVisualTree += OnHostAttachedToVisualTree;
+        }
+
+        public void Dispose()
+        {
+            if (_isDisposed)
+                return;
+
+            _isDisposed = true;
+            _host.AttachedToVisualTree -= OnHostAttachedToVisualTree;
+            _service.ActiveChanged -= OnActiveChanged;
+
+            if (_easterEgg == null)
+                return;
+
+            // Remove from visual tree
+            if (_host is Panel panel)
+                panel.Children.Remove(_easterEgg);
+            else if (_host is ContentControl contentControl && Equals(contentControl.Content, _easterEgg))
+                contentControl.Content = null;
+            else if (_host is Decorator { Child: Grid grid } decorator)
+            {
+                // Restore original structure
+                Control? originalChild = null;
+                foreach (var child in grid.Children)
+                {
+                    if (child != _easterEgg)
+                    {
+                        originalChild = child;
+                        break;
+                    }
+                }
+                grid.Children.Clear();
+                decorator.Child = originalChild;
+            }
+
+            _easterEgg = null;
         }
 
         void OnHostAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
@@ -116,9 +158,7 @@ public static class EasterEggBehavior
                     panel.Children.Insert(0, _easterEgg);
                 }
                 else if (_host is ContentControl { Content: null } contentControl)
-                {
                     contentControl.Content = _easterEgg;
-                }
                 else if (_host is Decorator decorator)
                 {
                     // Store existing child and wrap in a Grid
@@ -147,11 +187,11 @@ public static class EasterEggBehavior
                     return;
 
                 var shouldBeVisible = _service.IsActive;
-                
+
                 if (shouldBeVisible)
                 {
                     _easterEgg.IsVisible = true;
-                    
+
                     if (_easterEgg.Opacity < 1)
                     {
                         // Fade in
@@ -212,52 +252,9 @@ public static class EasterEggBehavior
                         });
                     }
                     else
-                    {
                         _easterEgg.IsVisible = false;
-                    }
                 }
             });
         }
-
-        public void Dispose()
-        {
-            if (_isDisposed)
-                return;
-
-            _isDisposed = true;
-            _host.AttachedToVisualTree -= OnHostAttachedToVisualTree;
-            _service.ActiveChanged -= OnActiveChanged;
-
-            if (_easterEgg == null)
-                return;
-
-            // Remove from visual tree
-            if (_host is Panel panel)
-            {
-                panel.Children.Remove(_easterEgg);
-            }
-            else if (_host is ContentControl contentControl && Equals(contentControl.Content, _easterEgg))
-            {
-                contentControl.Content = null;
-            }
-            else if (_host is Decorator { Child: Grid grid } decorator)
-            {
-                // Restore original structure
-                Control? originalChild = null;
-                foreach (var child in grid.Children)
-                {
-                    if (child != _easterEgg)
-                    {
-                        originalChild = child;
-                        break;
-                    }
-                }
-                grid.Children.Clear();
-                decorator.Child = originalChild;
-            }
-
-            _easterEgg = null;
-        }
     }
 }
-

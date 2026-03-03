@@ -1,9 +1,7 @@
-using System;
 using System.IO;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Mal.SourceGeneratedDI;
-using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Projects.Overview.Icons;
 using Mdk.Hub.Features.Storage;
 
@@ -33,7 +31,7 @@ public partial class NewProjectDialogView : UserControl
         get
         {
             var fileStorage = new FileStorageService();
-            return new()
+            return new NewProjectDialogMessage
             {
                 Title = "Create New Project",
                 Message = "Enter a name and location for your new project.",

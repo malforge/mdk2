@@ -1,6 +1,7 @@
-using System.Collections.Generic;
+using System;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
@@ -10,7 +11,7 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.Projects.MacroEditor;
 
 /// <summary>
-/// View model for the macro editor dialog.
+///     View model for the macro editor dialog.
 /// </summary>
 [ViewModelFor<MacroEditorDialogView>]
 public partial class MacroEditorDialogViewModel : OverlayModel
@@ -23,7 +24,7 @@ public partial class MacroEditorDialogViewModel : OverlayModel
     string _validationError = string.Empty;
 
     /// <summary>
-    /// Initializes a new instance of the MacroEditorDialogViewModel class.
+    ///     Initializes a new instance of the MacroEditorDialogViewModel class.
     /// </summary>
     /// <param name="message">Message containing initial macro values.</param>
     public MacroEditorDialogViewModel(MacroEditorDialogMessage message)
@@ -54,22 +55,22 @@ public partial class MacroEditorDialogViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets the message containing initial macro values.
+    ///     Gets the message containing initial macro values.
     /// </summary>
     public MacroEditorDialogMessage Message { get; }
 
     /// <summary>
-    /// Gets the result after user saves or cancels.
+    ///     Gets the result after user saves or cancels.
     /// </summary>
     public MacroEditorDialogResult? Result { get; private set; }
 
     /// <summary>
-    /// Gets the collection of macro entries.
+    ///     Gets the collection of macro entries.
     /// </summary>
     public ObservableCollection<MacroEntryViewModel> Macros { get; } = new();
 
     /// <summary>
-    /// Gets the validation error message.
+    ///     Gets the validation error message.
     /// </summary>
     public string ValidationError
     {
@@ -78,17 +79,17 @@ public partial class MacroEditorDialogViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets the command to save changes.
+    ///     Gets the command to save changes.
     /// </summary>
     public ICommand SaveCommand => _saveCommand;
 
     /// <summary>
-    /// Gets the command to cancel editing.
+    ///     Gets the command to cancel editing.
     /// </summary>
     public ICommand CancelCommand => _cancelCommand;
 
     /// <summary>
-    /// Gets the command to delete a macro entry.
+    ///     Gets the command to delete a macro entry.
     /// </summary>
     public ICommand DeleteMacroCommand => _deleteMacroCommand;
 
@@ -103,7 +104,7 @@ public partial class MacroEditorDialogViewModel : OverlayModel
         _saveCommand.NotifyCanExecuteChanged();
     }
 
-    void OnEntryChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    void OnEntryChanged(object? sender, PropertyChangedEventArgs e)
     {
         // When user types in the empty row, ensure there's a new empty row
         EnsureEmptyRow();
@@ -149,15 +150,12 @@ public partial class MacroEditorDialogViewModel : OverlayModel
 
         // Check for duplicate keys (case-insensitive)
         var duplicateKey = nonEmptyEntries
-            .GroupBy(m => m.Key, System.StringComparer.OrdinalIgnoreCase)
+            .GroupBy(m => m.Key, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(g => g.Count() > 1)
             ?.Key;
 
         if (duplicateKey != null)
-        {
             ValidationError = $"Duplicate macro key: {duplicateKey}";
-            return;
-        }
     }
 
     bool CanSave() => string.IsNullOrEmpty(ValidationError);
@@ -174,12 +172,10 @@ public partial class MacroEditorDialogViewModel : OverlayModel
         ImmutableDictionary<string, string>? resultDict = null;
         if (nonEmptyEntries.Count > 0)
         {
-            var builder = ImmutableDictionary.CreateBuilder<string, string>(System.StringComparer.OrdinalIgnoreCase);
+            var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in nonEmptyEntries)
-            {
                 // Add $ delimiters when saving
                 builder.Add(AddDelimiters(entry.Key), entry.Value);
-            }
             resultDict = builder.ToImmutable();
         }
 

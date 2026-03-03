@@ -36,21 +36,22 @@ namespace Mdk.Hub.Features.Shell;
 [ViewModelFor<ShellWindow>]
 public class ShellViewModel : ViewModel, IShell
 {
+    readonly IDependencyContainer _container;
+    readonly IFileStorageService _fileStorage;
     readonly Lazy<IAnnouncementService> _lazyAnnouncementService;
     readonly Lazy<IProjectService> _lazyProjectService;
     readonly Lazy<IUpdateManager> _lazyUpdateManager;
-    readonly IFileStorageService _fileStorage;
     readonly ILogger _logger;
+    readonly List<HostWindow> _openWindows = new();
     readonly Lazy<ProjectActionsViewModel> _projectActionsViewModel;
     readonly Dictionary<CanonicalPath, ProjectModel> _projectModels = new();
     readonly Lazy<ProjectOverviewViewModel> _projectOverviewViewModel;
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
-    readonly IDependencyContainer _container;
+    readonly IWindowScopeFactory _windowScopeFactory;
     ViewModel? _currentView;
     bool _hasStarted;
-    WindowState? _initialWindowState;
     bool _isInBackground;
     bool _isReady;
     ViewModel? _navigationView;
@@ -59,7 +60,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -76,6 +77,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <param name="lazyUpdateManager">Update manager service for monitoring MDK versions.</param>
     /// <param name="fileStorage">File storage service for filesystem operations.</param>
     /// <param name="container">Dependency container for resolving additional services as needed.</param>
+    /// <param name="windowScopeFactory">Factory for creating window-scoped DI containers.</param>
     public ShellViewModel(
         ISettings settings,
         Lazy<IProjectService> lazyProjectService,
@@ -85,7 +87,8 @@ public class ShellViewModel : ViewModel, IShell
         Lazy<ProjectOverviewViewModel> projectOverviewViewModel,
         Lazy<ProjectActionsViewModel> projectActionsViewModel,
         IFileStorageService fileStorage,
-        IDependencyContainer container)
+        IDependencyContainer container,
+        IWindowScopeFactory windowScopeFactory)
     {
         _lazyProjectService = lazyProjectService;
         _lazyUpdateManager = lazyUpdateManager;
@@ -95,6 +98,7 @@ public class ShellViewModel : ViewModel, IShell
         _projectOverviewViewModel = projectOverviewViewModel;
         _projectActionsViewModel = projectActionsViewModel;
         _container = container;
+        _windowScopeFactory = windowScopeFactory;
         Settings = settings;
         // NavigationView = projectOverviewViewModel;
         // CurrentView = projectActionsViewModel;
@@ -144,10 +148,16 @@ public class ShellViewModel : ViewModel, IShell
     public bool HasOverlays => OverlayViews.Count > 0;
 
     /// <summary>
+    ///     Gets the initial window state to use when launching with notification arguments.
+    ///     Null means use the saved window settings.
+    /// </summary>
+    public WindowState? InitialWindowState { get; private set; }
+
+    /// <summary>
     ///     Raised when the window gains keyboard focus.
     /// </summary>
     public event EventHandler? WindowFocusGained;
-    
+
     /// <summary>
     ///     Raised when a UI refresh has been requested (e.g., Ctrl+R).
     /// </summary>
@@ -157,17 +167,11 @@ public class ShellViewModel : ViewModel, IShell
     ///     Gets the collection of currently displayed toast messages.
     /// </summary>
     public ObservableCollection<ToastMessage> ToastMessages { get; } = new();
-    
+
     /// <summary>
     ///     Gets the collection of overlay views (dialogs, popups) currently shown over the main content.
     /// </summary>
     public ObservableCollection<OverlayModel> OverlayViews { get; } = new();
-
-    /// <summary>
-    ///     Gets the initial window state to use when launching with notification arguments.
-    ///     Null means use the saved window settings.
-    /// </summary>
-    public WindowState? InitialWindowState => _initialWindowState;
 
     /// <inheritdoc />
     public bool IsInBackground
@@ -191,12 +195,12 @@ public class ShellViewModel : ViewModel, IShell
     {
         _startupArgs = args;
         _hasStarted = true;
-        
+
         // Start minimized if launched with notification arguments
         // HandleBuildNotificationAsync will call BringToFront() if InteractiveMode is OpenHub
         if (NotificationCommand.IsNotificationCommand(args))
-            _initialWindowState = WindowState.Minimized;
-        
+            InitialWindowState = WindowState.Minimized;
+
         NavigationView = _projectOverviewViewModel.Value;
         CurrentView = _projectActionsViewModel.Value;
 
@@ -243,6 +247,45 @@ public class ShellViewModel : ViewModel, IShell
 
         model.Dismissed += onDismissed;
         OverlayViews.Add(model);
+    }
+
+    /// <inheritdoc />
+    public void AddOverlay<TViewModel>(Action<TViewModel>? configure = null) where TViewModel : OverlayModel
+    {
+        var vm = _container.Resolve<TViewModel>();
+        configure?.Invoke(vm);
+        AddOverlay(vm);
+    }
+
+    /// <inheritdoc />
+    public void OpenWindow(ViewModel viewModel, string? title = null, bool setParent = true)
+        => OpenWindowCore(viewModel, scope: null, title, setParent);
+
+    /// <inheritdoc />
+    public void OpenWindow<TViewModel>(Action<TViewModel>? configure = null, string? title = null, bool setParent = true) where TViewModel : ViewModel
+    {
+        var scope = _windowScopeFactory.Create();
+        var vm = scope.Container.Resolve<TViewModel>();
+        configure?.Invoke(vm);
+        OpenWindowCore(vm, scope, title, setParent);
+    }
+
+    void OpenWindowCore(ViewModel viewModel, IWindowScope? scope, string? title, bool setParent)
+    {
+        var window = new HostWindow(title, _logger, scope)
+        {
+            DataContext = viewModel
+        };
+        _openWindows.Add(window);
+        window.Closed += (_, _) => _openWindows.Remove(window);
+
+        var mainWindow = setParent
+            ? (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow
+            : null;
+        if (mainWindow != null)
+            window.Show(mainWindow);
+        else
+            window.Show();
     }
 
     /// <inheritdoc />
@@ -482,10 +525,7 @@ public class ShellViewModel : ViewModel, IShell
     /// </summary>
     /// <param name="isMinimized">True if window is minimized.</param>
     /// <param name="isFocused">True if window has focus.</param>
-    public void UpdateWindowState(bool isMinimized, bool isFocused)
-    {
-        IsInBackground = isMinimized || !isFocused;
-    }
+    public void UpdateWindowState(bool isMinimized, bool isFocused) => IsInBackground = isMinimized || !isFocused;
 
     /// <summary>
     ///     Checks if the window can close. Returns false if there are unsaved changes and user cancels.
@@ -710,7 +750,7 @@ public class ShellViewModel : ViewModel, IShell
         try
         {
             string? exePath;
-            
+
             // On Linux AppImages, check environment variables in order of preference:
             // 1. APPIMAGE - absolute path to .AppImage file (normal launch)
             // 2. ARGV0 - path used to execute (works for extract-and-run mode)
@@ -718,12 +758,12 @@ public class ShellViewModel : ViewModel, IShell
             if (App.IsLinux)
             {
                 exePath = Environment.GetEnvironmentVariable("APPIMAGE");
-                
+
                 if (string.IsNullOrEmpty(exePath))
                 {
                     // Try ARGV0 (works even in extract-and-run mode)
                     exePath = Environment.GetEnvironmentVariable("ARGV0");
-                    
+
                     if (string.IsNullOrEmpty(exePath))
                     {
                         // Fall back to process path
@@ -754,9 +794,7 @@ public class ShellViewModel : ViewModel, IShell
                     }
                 }
                 else
-                {
                     _logger.Debug($"Detected AppImage via APPIMAGE env var: {exePath}");
-                }
             }
             else
             {
@@ -774,17 +812,17 @@ public class ShellViewModel : ViewModel, IShell
 
             // Write to %AppData%/MDK2/hub.path or ~/.config/MDK2/hub.path
             var pathFile = _fileStorage.GetApplicationDataPath("hub.path");
-            
+
             // Only write if path has changed to avoid unnecessary I/O
             if (_fileStorage.FileExists(pathFile))
             {
                 var existingPath = _fileStorage.ReadAllText(pathFile);
                 if (existingPath == exePath)
                     return;
-                
+
                 _logger.Info($"Hub path changed from {existingPath} to {exePath}");
             }
-            
+
             _fileStorage.WriteAllText(pathFile, exePath);
 
             _logger.Info($"Hub path written to: {pathFile}");

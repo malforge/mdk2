@@ -15,7 +15,7 @@ using Mdk.Hub.Features.Storage;
 namespace Mdk.Hub.Features.Announcements;
 
 /// <summary>
-/// Service that checks for and manages announcements from the MDK² project.
+///     Service that checks for and manages announcements from the MDK² project.
 /// </summary>
 [Singleton<IAnnouncementService>]
 public class AnnouncementService : IAnnouncementService
@@ -26,12 +26,12 @@ public class AnnouncementService : IAnnouncementService
     readonly Timer _autoCheckTimer;
     readonly List<Action<Announcement>> _callbacks = new();
     readonly IFileStorageService _fileStorage;
-    readonly ISettings _settings;
     readonly ILogger _logger;
+    readonly ISettings _settings;
     int _isChecking; // 0 = not checking, 1 = checking
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AnnouncementService"/> class.
+    ///     Initializes a new instance of the <see cref="AnnouncementService" /> class.
     /// </summary>
     public AnnouncementService(ILogger logger, ISettings settings, IFileStorageService fileStorage)
     {
@@ -48,17 +48,17 @@ public class AnnouncementService : IAnnouncementService
     }
 
     /// <summary>
-    /// Gets the last known announcement that was fetched from the server.
+    ///     Gets the last known announcement that was fetched from the server.
     /// </summary>
     public Announcement? LastKnownAnnouncement { get; private set; }
 
     /// <summary>
-    /// Event raised when a new announcement is available.
+    ///     Event raised when a new announcement is available.
     /// </summary>
     public event EventHandler<Announcement>? AnnouncementChanged;
 
     /// <summary>
-    /// Registers a callback to be invoked when an announcement is available.
+    ///     Registers a callback to be invoked when an announcement is available.
     /// </summary>
     public void WhenAnnouncementAvailable(Action<Announcement> callback)
     {
@@ -76,7 +76,7 @@ public class AnnouncementService : IAnnouncementService
     }
 
     /// <summary>
-    /// Checks for announcements, respecting the cache expiry time.
+    ///     Checks for announcements, respecting the cache expiry time.
     /// </summary>
     public async Task<bool> CheckForAnnouncementsAsync()
     {
@@ -91,7 +91,7 @@ public class AnnouncementService : IAnnouncementService
     }
 
     /// <summary>
-    /// Forces an immediate check for announcements, bypassing the cache.
+    ///     Forces an immediate check for announcements, bypassing the cache.
     /// </summary>
     public async Task<bool> ForceCheckAsync()
     {
@@ -100,7 +100,7 @@ public class AnnouncementService : IAnnouncementService
     }
 
     /// <summary>
-    /// Dismisses an announcement by its ID so it won't be shown again.
+    ///     Dismisses an announcement by its ID so it won't be shown again.
     /// </summary>
     public void DismissAnnouncement(string announcementId)
     {
@@ -117,7 +117,7 @@ public class AnnouncementService : IAnnouncementService
     }
 
     /// <summary>
-    /// Checks whether an announcement has been dismissed.
+    ///     Checks whether an announcement has been dismissed.
     /// </summary>
     public bool IsAnnouncementDismissed(string announcementId) => _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).DismissedAnnouncementIds.Contains(announcementId);
 

@@ -11,7 +11,7 @@ public record TemplateVersionInfo
     ///     Gets the latest available template version.
     /// </summary>
     public required string LatestVersion { get; init; }
-    
+
     /// <summary>
     ///     Gets when the version information was retrieved.
     /// </summary>

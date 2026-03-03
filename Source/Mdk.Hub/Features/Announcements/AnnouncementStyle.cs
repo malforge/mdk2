@@ -9,12 +9,12 @@ public enum AnnouncementStyle
     ///     Informational announcement style.
     /// </summary>
     Info,
-    
+
     /// <summary>
     ///     Success announcement style.
     /// </summary>
     Success,
-    
+
     /// <summary>
     ///     Danger/warning announcement style.
     /// </summary>

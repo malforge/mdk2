@@ -8,7 +8,7 @@ namespace Mdk.Hub.Features.Interop;
 public class MessageReceivedEventArgs : EventArgs
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="MessageReceivedEventArgs"/> class.
+    ///     Initializes a new instance of the <see cref="MessageReceivedEventArgs" /> class.
     /// </summary>
     /// <param name="message">The message that was received.</param>
     public MessageReceivedEventArgs(InterConnectMessage message)

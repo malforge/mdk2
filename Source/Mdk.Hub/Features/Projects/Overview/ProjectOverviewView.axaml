@@ -5,8 +5,6 @@
              xmlns:overview="clr-namespace:Mdk.Hub.Features.Projects.Overview"
              xmlns:m="clr-namespace:Mdk.Hub.Markup"
              xmlns:icons="clr-namespace:Mdk.Hub.Features.Projects.Overview.Icons"
-             xmlns:avalonia="https://github.com/projektanker/icons.avalonia"
-             xmlns:controls="clr-namespace:Mdk.Hub.Framework.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Mdk.Hub.Features.Projects.Overview.ProjectOverviewView"
              x:DataType="overview:ProjectOverviewViewModel">
@@ -43,7 +41,7 @@
                                IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}"
                                Margin="2"
                                ClipToBounds="True" />
-                        
+
                         <!-- Fallback icon (shown when no thumbnail) -->
                         <ContentControl Classes="project-icon"
                                         Content="{Binding Type}"
@@ -55,17 +53,17 @@
                         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,4">
                             <!-- Small type icon before name -->
                             <ContentControl Grid.Column="0"
-                                          Classes="project-icon-inline"
-                                          Content="{Binding Type}"
-                                          VerticalAlignment="Center"
-                                          Margin="0,0,4,0" />
-                            
+                                            Classes="project-icon-inline"
+                                            Content="{Binding Type}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,4,0" />
+
                             <TextBlock
                                 Grid.Column="1"
                                 Classes="title"
                                 VerticalAlignment="Center"
                                 Text="{Binding Name}" />
-                            
+
                             <!-- Indicator dots horizontally aligned on right -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" Margin="8,0,0,0">
                                 <Ellipse Width="8"
@@ -73,7 +71,7 @@
                                          Classes="warning-indicator"
                                          IsVisible="{Binding HasUnsavedChanges}"
                                          ToolTip.Tip="Unsaved changes" />
-                                
+
                                 <Ellipse Width="10"
                                          Height="10"
                                          Fill="{StaticResource ForegroundWarningBrush}"
@@ -134,7 +132,7 @@
             Margin="8"
             Watermark="Search..."
             Classes="clearButton"
-            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
 
         <RadioButton
             Grid.Row="0"

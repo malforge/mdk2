@@ -10,7 +10,7 @@ using Mdk.Hub.Framework;
 namespace Mdk.Hub.Features.CommonDialogs;
 
 /// <summary>
-/// A behavior that provides a shaking animation effect for Avalonia controls.
+///     A behavior that provides a shaking animation effect for Avalonia controls.
 /// </summary>
 /// <param name="control">The control to apply the shaking behavior to.</param>
 public class ShakingBehavior(Control control) : Behavior(control)
@@ -52,7 +52,7 @@ public class ShakingBehavior(Control control) : Behavior(control)
     CancellationTokenSource? _cancelAnimation;
 
     /// <summary>
-    /// Executes the shaking animation asynchronously.
+    ///     Executes the shaking animation asynchronously.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task ShakeAsync()
@@ -75,7 +75,7 @@ public class ShakingBehavior(Control control) : Behavior(control)
     }
 
     /// <summary>
-    /// Called when the control is unloaded. Cancels any running animation.
+    ///     Called when the control is unloaded. Cancels any running animation.
     /// </summary>
     protected override void OnControlUnloaded()
     {

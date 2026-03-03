@@ -4,18 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Threading;
 using Mal.SourceGeneratedDI;
-
-using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.CommonDialogs;
 using Mdk.Hub.Features.Diagnostics;
+using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Updates;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Settings;
 
 /// <summary>
-/// View model for the global settings overlay dialog.
+///     View model for the global settings overlay dialog.
 /// </summary>
 [Instance]
 [ViewModelFor<GlobalSettingsView>]
@@ -23,23 +23,23 @@ public class GlobalSettingsViewModel : OverlayModel
 {
     readonly AsyncRelayCommand _cancelCommand;
     readonly AsyncRelayCommand _checkPrerequisitesCommand;
-    readonly ISettings _settings;
+    readonly HubSettings _hubSettings;
     readonly RelayCommand _saveCommand;
+    readonly ISettings _settings;
     readonly IShell _shell;
     readonly IUpdateManager _updateManager;
-    readonly HubSettings _hubSettings;
     string _customAutoBinaryPath = "";
-    string _customIdePath = "";
     string _customAutoModOutputPath = "";
     string _customAutoScriptOutputPath = "";
-    string _ipcPort = "";
-    string _originalIpcPort = "";
+    string _customIdePath = "";
     int? _deploymentNotificationTimeoutSeconds;
     bool _includePrereleaseUpdates;
+    string _ipcPort = "";
     bool _openedForLinuxValidation;
+    string _originalIpcPort = "";
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GlobalSettingsViewModel"/> class.
+    ///     Initializes a new instance of the <see cref="GlobalSettingsViewModel" /> class.
     /// </summary>
     public GlobalSettingsViewModel(ISettings settings, IUpdateManager updateManager, IShell shell, ILogger logger)
     {
@@ -47,83 +47,35 @@ public class GlobalSettingsViewModel : OverlayModel
         _updateManager = updateManager;
         _shell = shell;
         _hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
-        
+
         // Load initial values
         LoadFromSettings();
-        
+
         // Subscribe to external settings changes
         _settings.SettingsChanged += OnSettingsChanged;
-        
+
         _saveCommand = new RelayCommand(Save);
         _cancelCommand = new AsyncRelayCommand(CancelAsync, logger: logger);
         _checkPrerequisitesCommand = new AsyncRelayCommand(CheckPrerequisitesAsync);
     }
-    
-    void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
-    {
-        // Reload if HubSettings changed externally (not by us during Save)
-        if (e.Key == SettingsKeys.HubSettings)
-        {
-            LoadFromSettings();
-        }
-    }
-    
-    void LoadFromSettings()
-    {
-        var settings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
-        
-        // On Linux, "auto" is not valid - convert to empty string for editing
-        var scriptPath = settings.CustomAutoScriptOutputPath;
-        var modPath = settings.CustomAutoModOutputPath;
-        var binPath = settings.CustomAutoBinaryPath;
-        
-        CustomAutoScriptOutputPath = (App.IsLinux && scriptPath == "auto") ? "" : scriptPath;
-        CustomAutoModOutputPath = (App.IsLinux && modPath == "auto") ? "" : modPath;
-        CustomAutoBinaryPath = (App.IsLinux && binPath == "auto") ? "" : binPath;
-        CustomIdePath = settings.CustomIdePath;
-        IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
-        DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
-        IpcPort = settings.IpcPort?.ToString() ?? "";
-        _originalIpcPort = IpcPort; // Track original for change detection
-    }
 
     /// <summary>
-    /// Gets the command to save settings changes.
+    ///     Gets the command to save settings changes.
     /// </summary>
     public ICommand SaveCommand => _saveCommand;
-    /// <summary>
-    /// Gets the command to cancel settings changes.
-    /// </summary>
-    public ICommand CancelCommand => _cancelCommand;
-    /// <summary>
-    /// Gets the command to check prerequisites (SDK, templates).
-    /// </summary>
-    public ICommand CheckPrerequisitesCommand => _checkPrerequisitesCommand;
-    
-    /// <summary>
-    /// Event raised when the first invalid field should be focused.
-    /// </summary>
-    public event EventHandler? FocusFirstInvalidField;
-    
-    /// <summary>
-    /// Marks the dialog as having been opened for Linux validation purposes.
-    /// </summary>
-    public void MarkAsOpenedForLinuxValidation()
-    {
-        _openedForLinuxValidation = true;
-        
-        // Delay to let the UI render, then focus the first invalid field
-        Task.Delay(600).ContinueWith(_ =>
-        {
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                FocusFirstInvalidField?.Invoke(this, EventArgs.Empty);
-            });
-        });
-    }
 
     /// <summary>
-    /// Gets or sets the custom script output path. Required on Linux.
+    ///     Gets the command to cancel settings changes.
+    /// </summary>
+    public ICommand CancelCommand => _cancelCommand;
+
+    /// <summary>
+    ///     Gets the command to check prerequisites (SDK, templates).
+    /// </summary>
+    public ICommand CheckPrerequisitesCommand => _checkPrerequisitesCommand;
+
+    /// <summary>
+    ///     Gets or sets the custom script output path. Required on Linux.
     /// </summary>
     public string CustomAutoScriptOutputPath
     {
@@ -131,14 +83,12 @@ public class GlobalSettingsViewModel : OverlayModel
         set
         {
             if (SetProperty(ref _customAutoScriptOutputPath, value))
-            {
                 OnPropertyChanged(nameof(ScriptPathValidationError));
-            }
         }
     }
 
     /// <summary>
-    /// Gets or sets the custom mod output path. Required on Linux.
+    ///     Gets or sets the custom mod output path. Required on Linux.
     /// </summary>
     public string CustomAutoModOutputPath
     {
@@ -146,14 +96,12 @@ public class GlobalSettingsViewModel : OverlayModel
         set
         {
             if (SetProperty(ref _customAutoModOutputPath, value))
-            {
                 OnPropertyChanged(nameof(ModPathValidationError));
-            }
         }
     }
 
     /// <summary>
-    /// Gets or sets the custom Space Engineers binary path. Required on Linux.
+    ///     Gets or sets the custom Space Engineers binary path. Required on Linux.
     /// </summary>
     public string CustomAutoBinaryPath
     {
@@ -161,14 +109,12 @@ public class GlobalSettingsViewModel : OverlayModel
         set
         {
             if (SetProperty(ref _customAutoBinaryPath, value))
-            {
                 OnPropertyChanged(nameof(BinaryPathValidationError));
-            }
         }
     }
 
     /// <summary>
-    /// Gets or sets the custom IDE executable path.
+    ///     Gets or sets the custom IDE executable path.
     /// </summary>
     public string CustomIdePath
     {
@@ -177,7 +123,7 @@ public class GlobalSettingsViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets or sets whether to include prerelease updates when checking for updates.
+    ///     Gets or sets whether to include prerelease updates when checking for updates.
     /// </summary>
     public bool IncludePrereleaseUpdates
     {
@@ -186,7 +132,7 @@ public class GlobalSettingsViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets or sets the custom IPC port. Leave empty for auto-assign.
+    ///     Gets or sets the custom IPC port. Leave empty for auto-assign.
     /// </summary>
     public string IpcPort
     {
@@ -199,7 +145,7 @@ public class GlobalSettingsViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets or sets the deployment notification timeout duration in seconds.
+    ///     Gets or sets the deployment notification timeout duration in seconds.
     /// </summary>
     public int? DeploymentNotificationTimeoutSeconds
     {
@@ -210,40 +156,40 @@ public class GlobalSettingsViewModel : OverlayModel
                 OnPropertyChanged(nameof(DeploymentNotificationTimeoutValidationError));
         }
     }
-    
+
     /// <summary>
-    /// Gets whether the application is running on Linux.
+    ///     Gets whether the application is running on Linux.
     /// </summary>
     public bool IsLinux => App.IsLinux;
-    
+
     /// <summary>
-    /// Gets the validation error message for the script path, if any.
+    ///     Gets the validation error message for the script path, if any.
     /// </summary>
     public string? ScriptPathValidationError =>
         App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoScriptOutputPath) || _customAutoScriptOutputPath == "auto")
-            ? "Please set a valid path" 
-            : null;
-    
-    /// <summary>
-    /// Gets the validation error message for the mod path, if any.
-    /// </summary>
-    public string? ModPathValidationError =>
-        App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoModOutputPath) || _customAutoModOutputPath == "auto")
-            ? "Please set a valid path" 
-            : null;
-    
-    /// <summary>
-    /// Gets the validation error message for the binary path, if any.
-    /// </summary>
-    public string? BinaryPathValidationError =>
-        App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoBinaryPath) || _customAutoBinaryPath == "auto")
-            ? "Please set a valid path" 
-            : App.IsLinux && !string.IsNullOrWhiteSpace(_customAutoBinaryPath) && !IsValidBinaryPath(_customAutoBinaryPath)
-            ? "Path does not contain Space Engineers binaries"
+            ? "Please set a valid path"
             : null;
 
     /// <summary>
-    /// Gets the validation error message for the IPC port, if any.
+    ///     Gets the validation error message for the mod path, if any.
+    /// </summary>
+    public string? ModPathValidationError =>
+        App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoModOutputPath) || _customAutoModOutputPath == "auto")
+            ? "Please set a valid path"
+            : null;
+
+    /// <summary>
+    ///     Gets the validation error message for the binary path, if any.
+    /// </summary>
+    public string? BinaryPathValidationError =>
+        App.IsLinux && (string.IsNullOrWhiteSpace(_customAutoBinaryPath) || _customAutoBinaryPath == "auto")
+            ? "Please set a valid path"
+            : App.IsLinux && !string.IsNullOrWhiteSpace(_customAutoBinaryPath) && !IsValidBinaryPath(_customAutoBinaryPath)
+                ? "Path does not contain Space Engineers binaries"
+                : null;
+
+    /// <summary>
+    ///     Gets the validation error message for the IPC port, if any.
     /// </summary>
     public string? IpcPortValidationError
     {
@@ -266,7 +212,7 @@ public class GlobalSettingsViewModel : OverlayModel
     }
 
     /// <summary>
-    /// Gets the validation error message for the deployment notification timeout, if any.
+    ///     Gets the validation error message for the deployment notification timeout, if any.
     /// </summary>
     public string? DeploymentNotificationTimeoutValidationError
     {
@@ -276,7 +222,7 @@ public class GlobalSettingsViewModel : OverlayModel
                 return "Please enter a valid number";
 
             var value = _deploymentNotificationTimeoutSeconds.Value;
-            
+
             if (value < 0)
                 return "Timeout cannot be negative";
 
@@ -286,15 +232,57 @@ public class GlobalSettingsViewModel : OverlayModel
             return null;
         }
     }
-    
+
+    void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
+    {
+        // Reload if HubSettings changed externally (not by us during Save)
+        if (e.Key == SettingsKeys.HubSettings)
+            LoadFromSettings();
+    }
+
+    void LoadFromSettings()
+    {
+        var settings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+
+        // On Linux, "auto" is not valid - convert to empty string for editing
+        var scriptPath = settings.CustomAutoScriptOutputPath;
+        var modPath = settings.CustomAutoModOutputPath;
+        var binPath = settings.CustomAutoBinaryPath;
+
+        CustomAutoScriptOutputPath = App.IsLinux && scriptPath == "auto" ? "" : scriptPath;
+        CustomAutoModOutputPath = App.IsLinux && modPath == "auto" ? "" : modPath;
+        CustomAutoBinaryPath = App.IsLinux && binPath == "auto" ? "" : binPath;
+        CustomIdePath = settings.CustomIdePath;
+        IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
+        DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
+        IpcPort = settings.IpcPort?.ToString() ?? "";
+        _originalIpcPort = IpcPort; // Track original for change detection
+    }
+
+    /// <summary>
+    ///     Event raised when the first invalid field should be focused.
+    /// </summary>
+    public event EventHandler? FocusFirstInvalidField;
+
+    /// <summary>
+    ///     Marks the dialog as having been opened for Linux validation purposes.
+    /// </summary>
+    public void MarkAsOpenedForLinuxValidation()
+    {
+        _openedForLinuxValidation = true;
+
+        // Delay to let the UI render, then focus the first invalid field
+        Task.Delay(600).ContinueWith(_ => { Dispatcher.UIThread.Post(() => { FocusFirstInvalidField?.Invoke(this, EventArgs.Empty); }); });
+    }
+
     static bool IsValidBinaryPath(string path)
     {
         if (string.IsNullOrWhiteSpace(path) || path == "auto")
             return false;
-            
+
         if (!Directory.Exists(path))
             return false;
-        
+
         // Check for key SE binaries that MDK projects reference
         var requiredBinaries = new[]
         {
@@ -303,14 +291,14 @@ public class GlobalSettingsViewModel : OverlayModel
             "SpaceEngineers.Game.dll",
             "VRage.dll"
         };
-        
+
         // At least one must exist
         foreach (var binary in requiredBinaries)
         {
             if (File.Exists(Path.Combine(path, binary)))
                 return true;
         }
-        
+
         return false;
     }
 
@@ -320,16 +308,16 @@ public class GlobalSettingsViewModel : OverlayModel
         if (App.IsLinux)
         {
             var errors = new List<string>();
-            
+
             if (string.IsNullOrWhiteSpace(_customAutoBinaryPath) || _customAutoBinaryPath == "auto")
                 errors.Add("Space Engineers binary path is required on Linux");
-                
+
             if (string.IsNullOrWhiteSpace(_customAutoScriptOutputPath) || _customAutoScriptOutputPath == "auto")
                 errors.Add("Script output path is required on Linux");
-                
+
             if (string.IsNullOrWhiteSpace(_customAutoModOutputPath) || _customAutoModOutputPath == "auto")
                 errors.Add("Mod output path is required on Linux");
-            
+
             if (errors.Count > 0)
             {
                 _shell.ShowToast("Please set all required paths for Linux");
@@ -350,7 +338,7 @@ public class GlobalSettingsViewModel : OverlayModel
             _shell.ShowToast(DeploymentNotificationTimeoutValidationError);
             return;
         }
-        
+
         var updatedSettings = _hubSettings with
         {
             CustomAutoScriptOutputPath = _customAutoScriptOutputPath,
@@ -362,13 +350,11 @@ public class GlobalSettingsViewModel : OverlayModel
             IpcPort = string.IsNullOrWhiteSpace(_ipcPort) || !int.TryParse(_ipcPort, out var port) ? null : port
         };
         _settings.SetValue(SettingsKeys.HubSettings, updatedSettings);
-        
+
         // Notify if IPC port changed
         if (_ipcPort != _originalIpcPort)
-        {
             _shell.ShowToast("IPC Port changed. Restart MDK Hub for this change to take effect.");
-        }
-        
+
         Dismiss();
     }
 
@@ -382,10 +368,10 @@ public class GlobalSettingsViewModel : OverlayModel
             var savedBinPath = savedSettings.CustomAutoBinaryPath;
             var savedScriptPath = savedSettings.CustomAutoScriptOutputPath;
             var savedModPath = savedSettings.CustomAutoModOutputPath;
-            
-            var hasErrors = 
+
+            var hasErrors =
                 savedBinPath == "auto" || savedScriptPath == "auto" || savedModPath == "auto";
-            
+
             if (hasErrors)
             {
                 var result = await _shell.ShowOverlayAsync(new ConfirmationMessage
@@ -400,7 +386,7 @@ public class GlobalSettingsViewModel : OverlayModel
                 if (!result) return;
             }
         }
-        
+
         Dismiss();
     }
 
@@ -442,9 +428,7 @@ public class GlobalSettingsViewModel : OverlayModel
                 });
             }
             else
-            {
                 _shell.ShowToast("All prerequisites installed ✓");
-            }
         }
         catch (Exception ex)
         {

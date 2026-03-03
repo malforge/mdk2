@@ -9,7 +9,7 @@ public enum ProjectType
     ///     A programmable block script that deploys to in-game programmable blocks.
     /// </summary>
     ProgrammableBlock,
-    
+
     /// <summary>
     ///     A full game modification that extends Space Engineers.
     /// </summary>

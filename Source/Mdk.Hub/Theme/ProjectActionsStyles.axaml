@@ -7,7 +7,7 @@
         <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}" />
         <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}" />
     </Style>
-    
+
     <!-- Section Title -->
     <Style Selector="TextBlock.section-title">
         <Setter Property="FontSize" Value="16" />

@@ -48,245 +48,246 @@
                 <TabControl Classes="vertical-tabs"
                             TabStripPlacement="Left">
 
-                        <!-- Projects Tab -->
-                        <TabItem Header="Projects">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel Spacing="16" Margin="16">
-                                    <!-- Custom Auto Script Output Path -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
-                                                   Classes="h3 heading" />
+                    <!-- Projects Tab -->
+                    <TabItem Header="Projects">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="16" Margin="16">
+                                <!-- Custom Auto Script Output Path -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Custom Auto Output Path (Ingame Scripts)"
+                                               Classes="h3 heading" />
 
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,0,0,4">
-                                            When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
-                                        </TextBlock>
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,0,0,4">
+                                        When an ingame script project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\IngameScripts\local. Leave as "Default" to use the standard behavior.
+                                    </TextBlock>
 
-                                        <!-- Windows: PathInput with reset to default -->
-                                        <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
-                                            <controls:ValidatedControl.Content>
-                                                <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
-                                                                   DefaultPath=""
-                                                                   CanReset="True"
-                                                                   ResetTooltip="Reset to Default"
-                                                                   Watermark="Leave empty to use default location"
-                                                                   HorizontalAlignment="Stretch" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                        
-                                        <!-- Linux: PathInput (required path, no reset) -->
-                                        <controls:ValidatedControl ValidationMessage="{Binding ScriptPathValidationError}"
-                                                                   IsVisible="{Binding IsLinux}">
-                                            <controls:ValidatedControl.Content>
-                                                <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
-                                                                   Watermark="Select script output folder (required)"
-                                                                   HorizontalAlignment="Stretch" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                    </StackPanel>
+                                    <!-- Windows: PathInput with reset to default -->
+                                    <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
+                                        <controls:ValidatedControl.Content>
+                                            <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
+                                                                DefaultPath=""
+                                                                CanReset="True"
+                                                                ResetTooltip="Reset to Default"
+                                                                Watermark="Leave empty to use default location"
+                                                                HorizontalAlignment="Stretch" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
 
-                                    <!-- Custom Auto Mod Output Path -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Custom Auto Output Path (Mods)"
-                                                   Classes="h3 heading" />
-
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,0,0,4">
-                                            When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
-                                        </TextBlock>
-
-                                        <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
-                                            <controls:ValidatedControl.Content>
-                                                <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
-                                                                   DefaultPath=""
-                                                                   CanReset="True"
-                                                                   ResetTooltip="Reset to Default"
-                                                                   Watermark="Leave empty to use default location"
-                                                                   HorizontalAlignment="Stretch" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                        
-                                        <controls:ValidatedControl ValidationMessage="{Binding ModPathValidationError}"
-                                                                   IsVisible="{Binding IsLinux}">
-                                            <controls:ValidatedControl.Content>
-                                                <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
-                                                                   Watermark="Select mod output folder (required)"
-                                                                   HorizontalAlignment="Stretch" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                    </StackPanel>
-
-                                    <!-- Custom Auto Binary Path -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Custom Auto Binary Path"
-                                                   Classes="h3 heading" />
-
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,0,0,4">
-                                            When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
-                                        </TextBlock>
-
-                                        <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
-                                            <controls:ValidatedControl.Content>
-                                                <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
-                                                                   DefaultPath=""
-                                                                   CanReset="True"
-                                                                   ResetTooltip="Reset to Default"
-                                                                   Watermark="Leave empty to use default location"
-                                                                   HorizontalAlignment="Stretch" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                        
-                                        <controls:ValidatedControl ValidationMessage="{Binding BinaryPathValidationError}"
-                                                                   IsVisible="{Binding IsLinux}">
-                                            <controls:ValidatedControl.Content>
-                                                <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
-                                                                    Watermark="Select Space Engineers binary folder (required)"
-                                                                    HorizontalAlignment="Stretch" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                    </StackPanel>
-                                    
-                                    <!-- Custom IDE Exe -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Custom IDE Executable Path"
-                                                   Classes="h3 heading" />
-
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,0,0,4">
-                                            Select which executable should be used when clicking “Open in IDE.”. Leave as "Default" to use the OS handler.
-                                        </TextBlock>
-
-                                        <controls:ValidatedControl>
-                                            <controls:ValidatedControl.Content>
-                                                <controls:FileInput Path="{Binding CustomIdePath}"
-                                                                    DefaultPath=""
-                                                                    AllowNonExisting="False"
-                                                                    CanReset="True"
-                                                                    Classes="executable"
-                                                                    Classes.linux="{Binding IsLinux}"
-                                                                    TypeName="IDE executable file"
-                                                                    ResetTooltip="Reset to Default"
-                                                                    Watermark="Leave empty to use default handler"
-                                                                    HorizontalAlignment="Stretch" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                    </StackPanel>
+                                    <!-- Linux: PathInput (required path, no reset) -->
+                                    <controls:ValidatedControl ValidationMessage="{Binding ScriptPathValidationError}"
+                                                               IsVisible="{Binding IsLinux}">
+                                        <controls:ValidatedControl.Content>
+                                            <controls:PathInput Path="{Binding CustomAutoScriptOutputPath}"
+                                                                Watermark="Select script output folder (required)"
+                                                                HorizontalAlignment="Stretch" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
                                 </StackPanel>
-                            </ScrollViewer>
-                        </TabItem>
 
-                        <!-- Updates Tab -->
-                        <TabItem Header="Updates">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel Spacing="16" Margin="16">
-                                    <!-- Prerelease Updates -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Hub Updates"
-                                                   Classes="h3 heading" />
+                                <!-- Custom Auto Mod Output Path -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Custom Auto Output Path (Mods)"
+                                               Classes="h3 heading" />
 
-                                        <controls:ValidatedControl>
-                                            <controls:ValidatedControl.Content>
-                                                <CheckBox IsChecked="{Binding IncludePrereleaseUpdates}"
-                                                          Content="Include prerelease versions"
-                                                          Margin="0,4,0,0" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,0,0,4">
+                                        When a mod project's output path is set to "Auto", use this custom path instead of %AppData%\SpaceEngineers\Mods. Leave as "Default" to use the standard behavior.
+                                    </TextBlock>
 
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,4,0,0">
-                                            When enabled, MDK Hub will check for and notify you about prerelease (beta) versions. Prereleases may contain experimental features and bugs. Notifications will clearly indicate when an update is a prerelease.
-                                        </TextBlock>
-                                    </StackPanel>
+                                    <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
+                                        <controls:ValidatedControl.Content>
+                                            <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
+                                                                DefaultPath=""
+                                                                CanReset="True"
+                                                                ResetTooltip="Reset to Default"
+                                                                Watermark="Leave empty to use default location"
+                                                                HorizontalAlignment="Stretch" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
 
-                                    <!-- Prerequisites Check -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Prerequisites"
-                                                   Classes="h3 heading" />
-
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,0,0,4">
-                                            Check if .NET SDK 9.0 and MDK² template package are installed.
-                                        </TextBlock>
-
-                                        <controls:ValidatedControl>
-                                            <controls:ValidatedControl.Content>
-                                                <Button Content="Check Prerequisites"
-                                                        Command="{Binding CheckPrerequisitesCommand}"
-                                                        HorizontalAlignment="Left"
-                                                        MinWidth="150" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                    </StackPanel>
+                                    <controls:ValidatedControl ValidationMessage="{Binding ModPathValidationError}"
+                                                               IsVisible="{Binding IsLinux}">
+                                        <controls:ValidatedControl.Content>
+                                            <controls:PathInput Path="{Binding CustomAutoModOutputPath}"
+                                                                Watermark="Select mod output folder (required)"
+                                                                HorizontalAlignment="Stretch" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
                                 </StackPanel>
-                            </ScrollViewer>
-                        </TabItem>
 
-                        <!-- Advanced Tab -->
-                        <TabItem Header="Advanced">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <StackPanel Spacing="16" Margin="16">
-                                    <!-- Deployment Notification Timeout -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Deployment Notification Timeout"
-                                                   Classes="h3 heading" />
+                                <!-- Custom Auto Binary Path -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Custom Auto Binary Path"
+                                               Classes="h3 heading" />
 
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,0,0,4">
-                                            How long (in seconds) to display deployment notification snackbars before they auto-dismiss. Range: 0-300 seconds.
-                                        </TextBlock>
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,0,0,4">
+                                        When a project's binary path is set to "Auto", use this custom path instead of the default game bin folder. Leave as "Default" to use the standard behavior.
+                                    </TextBlock>
 
-                                        <controls:ValidatedControl ValidationMessage="{Binding DeploymentNotificationTimeoutValidationError}">
-                                            <controls:ValidatedControl.Content>
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <NumericUpDown Value="{Binding DeploymentNotificationTimeoutSeconds}"
-                                                                  Minimum="0"
-                                                                  Maximum="300"
-                                                                  Increment="1"
-                                                                  FormatString="0"
-                                                                  Width="150"
-                                                                  HorizontalAlignment="Left" />
-                                                    <TextBlock Text="Never auto-dismiss"
-                                                              Classes="caption muted"
-                                                              FontStyle="Italic"
-                                                              VerticalAlignment="Center"
-                                                              IsVisible="{Binding !DeploymentNotificationTimeoutSeconds}" />
-                                                </StackPanel>
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                    </StackPanel>
+                                    <controls:ValidatedControl IsVisible="{Binding !IsLinux}">
+                                        <controls:ValidatedControl.Content>
+                                            <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
+                                                                DefaultPath=""
+                                                                CanReset="True"
+                                                                ResetTooltip="Reset to Default"
+                                                                Watermark="Leave empty to use default location"
+                                                                HorizontalAlignment="Stretch" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
 
-                                    <!-- IPC Port -->
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Inter-Process Communication Port"
-                                                   Classes="h3 heading" />
-
-                                        <TextBlock TextWrapping="Wrap"
-                                                   Classes="caption muted"
-                                                   Margin="0,0,0,4">
-                                            Customize the port used for communication between MDK Hub and build tools. Leave empty to automatically assign and reuse a port. Only change this if you experience port conflicts.
-                                        </TextBlock>
-
-                                        <controls:ValidatedControl ValidationMessage="{Binding IpcPortValidationError}">
-                                            <controls:ValidatedControl.Content>
-                                                <TextBox Text="{Binding IpcPort}"
-                                                         Watermark="Auto-assign"
-                                                         Width="150"
-                                                         HorizontalAlignment="Left" />
-                                            </controls:ValidatedControl.Content>
-                                        </controls:ValidatedControl>
-                                    </StackPanel>
+                                    <controls:ValidatedControl ValidationMessage="{Binding BinaryPathValidationError}"
+                                                               IsVisible="{Binding IsLinux}">
+                                        <controls:ValidatedControl.Content>
+                                            <controls:PathInput Path="{Binding CustomAutoBinaryPath}"
+                                                                Watermark="Select Space Engineers binary folder (required)"
+                                                                HorizontalAlignment="Stretch" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
                                 </StackPanel>
-                            </ScrollViewer>
-                        </TabItem>
-                    </TabControl>
+
+                                <!-- Custom IDE Exe -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Custom IDE Executable Path"
+                                               Classes="h3 heading" />
+
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,0,0,4">
+                                        Select which executable should be used when clicking “Open in IDE.”. Leave as "Default" to use the OS handler.
+                                    </TextBlock>
+
+                                    <controls:ValidatedControl>
+                                        <controls:ValidatedControl.Content>
+                                            <controls:FileInput Path="{Binding CustomIdePath}"
+                                                                DefaultPath=""
+                                                                AllowNonExisting="False"
+                                                                CanReset="True"
+                                                                Classes="executable"
+                                                                Classes.linux="{Binding IsLinux}"
+                                                                TypeName="IDE executable file"
+                                                                ResetTooltip="Reset to Default"
+                                                                Watermark="Leave empty to use default handler"
+                                                                HorizontalAlignment="Stretch" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Updates Tab -->
+                    <TabItem Header="Updates">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="16" Margin="16">
+                                <!-- Prerelease Updates -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Hub Updates"
+                                               Classes="h3 heading" />
+
+                                    <controls:ValidatedControl>
+                                        <controls:ValidatedControl.Content>
+                                            <CheckBox IsChecked="{Binding IncludePrereleaseUpdates}"
+                                                      Content="Include prerelease versions"
+                                                      Margin="0,4,0,0" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
+
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,4,0,0">
+                                        When enabled, MDK Hub will check for and notify you about prerelease (beta) versions. Prereleases may contain experimental features and bugs. Notifications will clearly indicate when an update is a prerelease.
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <!-- Prerequisites Check -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Prerequisites"
+                                               Classes="h3 heading" />
+
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,0,0,4">
+                                        Check if .NET SDK 9.0 and MDK² template package are installed.
+                                    </TextBlock>
+
+                                    <controls:ValidatedControl>
+                                        <controls:ValidatedControl.Content>
+                                            <Button Content="Check Prerequisites"
+                                                    Command="{Binding CheckPrerequisitesCommand}"
+                                                    HorizontalAlignment="Left"
+                                                    MinWidth="150" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Advanced Tab -->
+                    <TabItem Header="Advanced">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="16" Margin="16">
+                                <!-- Deployment Notification Timeout -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Deployment Notification Timeout"
+                                               Classes="h3 heading" />
+
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,0,0,4">
+                                        How long (in seconds) to display deployment notification snackbars before they auto-dismiss. Range: 0-300 seconds.
+                                    </TextBlock>
+
+                                    <controls:ValidatedControl
+                                        ValidationMessage="{Binding DeploymentNotificationTimeoutValidationError}">
+                                        <controls:ValidatedControl.Content>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <NumericUpDown Value="{Binding DeploymentNotificationTimeoutSeconds}"
+                                                               Minimum="0"
+                                                               Maximum="300"
+                                                               Increment="1"
+                                                               FormatString="0"
+                                                               Width="150"
+                                                               HorizontalAlignment="Left" />
+                                                <TextBlock Text="Never auto-dismiss"
+                                                           Classes="caption muted"
+                                                           FontStyle="Italic"
+                                                           VerticalAlignment="Center"
+                                                           IsVisible="{Binding !DeploymentNotificationTimeoutSeconds}" />
+                                            </StackPanel>
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
+                                </StackPanel>
+
+                                <!-- IPC Port -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Inter-Process Communication Port"
+                                               Classes="h3 heading" />
+
+                                    <TextBlock TextWrapping="Wrap"
+                                               Classes="caption muted"
+                                               Margin="0,0,0,4">
+                                        Customize the port used for communication between MDK Hub and build tools. Leave empty to automatically assign and reuse a port. Only change this if you experience port conflicts.
+                                    </TextBlock>
+
+                                    <controls:ValidatedControl ValidationMessage="{Binding IpcPortValidationError}">
+                                        <controls:ValidatedControl.Content>
+                                            <TextBox Text="{Binding IpcPort}"
+                                                     Watermark="Auto-assign"
+                                                     Width="150"
+                                                     HorizontalAlignment="Left" />
+                                        </controls:ValidatedControl.Content>
+                                    </controls:ValidatedControl>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
             </DockPanel>
         </Border>
     </Grid>

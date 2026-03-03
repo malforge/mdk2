@@ -12,7 +12,7 @@ public class ProjectAddedEventArgs : EventArgs
     ///     Gets the canonical path of the project that was added.
     /// </summary>
     public required CanonicalPath ProjectPath { get; init; }
-    
+
     /// <summary>
     ///     Gets the source from which the project was added.
     /// </summary>

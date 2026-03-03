@@ -41,7 +41,7 @@ public class DateTimeDisplay : TemplatedControl
     ///     Defines the <see cref="CurrentMode" /> property.
     /// </summary>
     public static readonly StyledProperty<DateTimeDisplayMode> CurrentModeProperty =
-        AvaloniaProperty.Register<DateTimeDisplay, DateTimeDisplayMode>(nameof(CurrentMode), DateTimeDisplayMode.Relative);
+        AvaloniaProperty.Register<DateTimeDisplay, DateTimeDisplayMode>(nameof(CurrentMode));
 
     /// <summary>
     ///     Defines the <see cref="DisplayText" /> property.

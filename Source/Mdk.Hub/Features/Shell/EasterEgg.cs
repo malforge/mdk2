@@ -11,7 +11,7 @@ using Avalonia.Threading;
 namespace Mdk.Hub.Features.Shell;
 
 /// <summary>
-/// A control that displays an animated starfield background with an avatar overlay.
+///     A control that displays an animated starfield background with an avatar overlay.
 /// </summary>
 public class EasterEgg : Control
 {
@@ -24,7 +24,7 @@ public class EasterEgg : Control
     Size _lastSize;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="EasterEgg"/> class.
+    ///     Initializes a new instance of the <see cref="EasterEgg" /> class.
     /// </summary>
     public EasterEgg()
     {
@@ -40,7 +40,7 @@ public class EasterEgg : Control
     }
 
     /// <summary>
-    /// Called when the control is attached to the visual tree.
+    ///     Called when the control is attached to the visual tree.
     /// </summary>
     /// <param name="e">The event arguments.</param>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -61,7 +61,7 @@ public class EasterEgg : Control
     }
 
     /// <summary>
-    /// Called when the control is detached from the visual tree.
+    ///     Called when the control is detached from the visual tree.
     /// </summary>
     /// <param name="e">The event arguments.</param>
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -71,14 +71,14 @@ public class EasterEgg : Control
     }
 
     /// <summary>
-    /// Measures the desired size of the control.
+    ///     Measures the desired size of the control.
     /// </summary>
     /// <param name="availableSize">The available size.</param>
     /// <returns>The available size.</returns>
     protected override Size MeasureOverride(Size availableSize) => availableSize;
 
     /// <summary>
-    /// Arranges the control and initializes stars if the size has changed.
+    ///     Arranges the control and initializes stars if the size has changed.
     /// </summary>
     /// <param name="finalSize">The final size allocated to the control.</param>
     /// <returns>The final size used.</returns>
@@ -102,11 +102,11 @@ public class EasterEgg : Control
         var starCount = (int)(size.Width * size.Height / 8000);
 
         // Calculate avatar exclusion zone (will be calculated based on actual avatar size if loaded)
-        double avatarLeft = size.Width;
-        double avatarTop = size.Height;
-        double avatarRight = size.Width;
-        double avatarBottom = size.Height;
-        
+        var avatarLeft = size.Width;
+        var avatarTop = size.Height;
+        var avatarRight = size.Width;
+        var avatarBottom = size.Height;
+
         if (_avatar != null)
         {
             var aspectRatio = (double)_avatar.PixelSize.Width / _avatar.PixelSize.Height;
@@ -146,7 +146,7 @@ public class EasterEgg : Control
     }
 
     /// <summary>
-    /// Renders the starfield and avatar overlay.
+    ///     Renders the starfield and avatar overlay.
     /// </summary>
     /// <param name="context">The drawing context.</param>
     public override void Render(DrawingContext context)
@@ -168,7 +168,7 @@ public class EasterEgg : Control
         {
             var aspectRatio = (double)_avatar.PixelSize.Width / _avatar.PixelSize.Height;
             var avatarWidth = AvatarHeight * aspectRatio;
-            
+
             var destRect = new Rect(
                 Bounds.Width - avatarWidth - AvatarMargin,
                 Bounds.Height - AvatarHeight - AvatarMargin,

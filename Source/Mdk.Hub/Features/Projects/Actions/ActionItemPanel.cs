@@ -1,84 +1,9 @@
 using System;
-using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Presenters;
-using Avalonia.Layout;
 using Avalonia.VisualTree;
 
 namespace Mdk.Hub.Features.Projects.Actions;
-
-/// <summary>
-///     Describes the visual edge characteristics of an action item for spacing calculations.
-/// </summary>
-[Flags]
-public enum ActionEdgeType
-{
-    /// <summary>
-    ///     The edge is bare - no visual container, needs less spacing.
-    /// </summary>
-    Bare = 0,
-    
-    /// <summary>
-    ///     The edge is contained - has a visual container (card, padding), needs more spacing when adjacent to another contained edge.
-    /// </summary>
-    Contained = 1
-}
-
-/// <summary>
-///     Base control for action item views. Replaces UserControl with edge metadata for intelligent spacing.
-/// </summary>
-public class ActionItemControl : UserControl
-{
-    /// <summary>
-    ///     Identifies the <see cref="TopEdge"/> styled property.
-    /// </summary>
-    public static readonly StyledProperty<ActionEdgeType> TopEdgeProperty =
-        AvaloniaProperty.Register<ActionItemControl, ActionEdgeType>(
-            nameof(TopEdge), 
-            ActionEdgeType.Bare);
-
-    /// <summary>
-    ///     Identifies the <see cref="BottomEdge"/> styled property.
-    /// </summary>
-    public static readonly StyledProperty<ActionEdgeType> BottomEdgeProperty =
-        AvaloniaProperty.Register<ActionItemControl, ActionEdgeType>(
-            nameof(BottomEdge), 
-            ActionEdgeType.Bare);
-
-    static ActionItemControl()
-    {
-        TopEdgeProperty.Changed.AddClassHandler<ActionItemControl>((control, args) =>
-        {
-            if (control.Parent is ActionItemPanel panel)
-                panel.InvalidateMeasure();
-        });
-        
-        BottomEdgeProperty.Changed.AddClassHandler<ActionItemControl>((control, args) =>
-        {
-            if (control.Parent is ActionItemPanel panel)
-                panel.InvalidateMeasure();
-        });
-    }
-
-    /// <summary>
-    ///     The visual edge type of this action's top edge.
-    /// </summary>
-    public ActionEdgeType TopEdge
-    {
-        get => GetValue(TopEdgeProperty);
-        set => SetValue(TopEdgeProperty, value);
-    }
-
-    /// <summary>
-    ///     The visual edge type of this action's bottom edge.
-    /// </summary>
-    public ActionEdgeType BottomEdge
-    {
-        get => GetValue(BottomEdgeProperty);
-        set => SetValue(BottomEdgeProperty, value);
-    }
-}
 
 /// <summary>
 ///     Custom panel that arranges action items vertically with intelligent spacing.
@@ -87,13 +12,13 @@ public class ActionItemControl : UserControl
 public class ActionItemPanel : Panel
 {
     /// <summary>
-    ///     Identifies the <see cref="BareSpacing"/> styled property.
+    ///     Identifies the <see cref="BareSpacing" /> styled property.
     /// </summary>
     public static readonly StyledProperty<double> BareSpacingProperty =
         AvaloniaProperty.Register<ActionItemPanel, double>(nameof(BareSpacing), 8.0);
 
     /// <summary>
-    ///     Identifies the <see cref="ContainedSpacing"/> styled property.
+    ///     Identifies the <see cref="ContainedSpacing" /> styled property.
     /// </summary>
     public static readonly StyledProperty<double> ContainedSpacingProperty =
         AvaloniaProperty.Register<ActionItemPanel, double>(nameof(ContainedSpacing), 16.0);
@@ -137,7 +62,7 @@ public class ActionItemPanel : Panel
         {
             var currentBottomEdge = GetBottomEdge(Children[i]);
             var nextTopEdge = GetTopEdge(Children[i + 1]);
-            height += (currentBottomEdge == ActionEdgeType.Contained && nextTopEdge == ActionEdgeType.Contained)
+            height += currentBottomEdge == ActionEdgeType.Contained && nextTopEdge == ActionEdgeType.Contained
                 ? ContainedSpacing
                 : BareSpacing;
         }
@@ -163,7 +88,7 @@ public class ActionItemPanel : Panel
             {
                 var currentBottomEdge = GetBottomEdge(child);
                 var nextTopEdge = GetTopEdge(Children[i + 1]);
-                y += (currentBottomEdge == ActionEdgeType.Contained && nextTopEdge == ActionEdgeType.Contained)
+                y += currentBottomEdge == ActionEdgeType.Contained && nextTopEdge == ActionEdgeType.Contained
                     ? ContainedSpacing
                     : BareSpacing;
             }
@@ -189,7 +114,7 @@ public class ActionItemPanel : Panel
         // Check if it's directly an ActionItemControl
         if (control is ActionItemControl actionItem)
             return actionItem;
-        
+
         // Recursively search visual children
         foreach (var child in control.GetVisualChildren())
         {
@@ -200,8 +125,7 @@ public class ActionItemPanel : Panel
                     return found;
             }
         }
-        
+
         return null;
     }
 }
-

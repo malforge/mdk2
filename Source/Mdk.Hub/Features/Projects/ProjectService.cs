@@ -80,12 +80,16 @@ public class ProjectService : IProjectService
 
     /// <inheritdoc />
     public event EventHandler<ProjectAddedEventArgs>? ProjectAdded;
+
     /// <inheritdoc />
     public event EventHandler<CanonicalPath>? ProjectRemoved;
+
     /// <inheritdoc />
     public event EventHandler<ProjectNavigationRequestedEventArgs>? ProjectNavigationRequested;
+
     /// <inheritdoc />
     public event EventHandler<ProjectUpdateAvailableEventArgs>? ProjectUpdateAvailable;
+
     /// <inheritdoc />
     public event EventHandler? StateChanged;
 
@@ -272,7 +276,7 @@ public class ProjectService : IProjectService
         mainIni = mainIni.WithoutKey("mdk", "binarypath");
         mainIni = mainIni.WithoutKey("mdk", "interactive");
         // Update known "main" keys
-        mainIni = UpdateIniFromLayer(mainIni, "mdk", newMain, false);
+        mainIni = UpdateIniFromLayer(mainIni, "mdk", newMain);
 
         var localIni = projectData.LocalIni ?? new Ini();
         // Remove known "main" keys from local
@@ -284,7 +288,7 @@ public class ProjectService : IProjectService
         localIni = localIni.WithoutKey("mdk", "trace");
         // Note: macros can exist in both Main and Local
         // Update known "local" keys
-        localIni = UpdateIniFromLayer(localIni, "mdk", newLocal, false);
+        localIni = UpdateIniFromLayer(localIni, "mdk", newLocal);
 
         // Normalization is complete - keys are in the right files with their existing comments preserved
 
@@ -406,7 +410,7 @@ public class ProjectService : IProjectService
                 // Check global custom settings first
                 var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
                 var customPath = hubSettings.CustomAutoScriptOutputPath;
-                
+
                 if (!string.IsNullOrWhiteSpace(customPath) && !string.Equals(customPath, "auto", StringComparison.OrdinalIgnoreCase))
                 {
                     // Use custom global path
@@ -422,12 +426,12 @@ public class ProjectService : IProjectService
                     outputPath = config.Type == ProjectType.ProgrammableBlock
                         ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "IngameScripts", "local", projectName)
                         : null;
-                    
+
                     if (string.IsNullOrEmpty(outputPath))
                         return false;
                 }
             }
-            
+
             // For non-auto paths, append project name as subfolder
             if (!string.IsNullOrEmpty(outputPath))
             {
@@ -522,7 +526,7 @@ public class ProjectService : IProjectService
                     : config.Type == ProjectType.Mod
                         ? hubSettings.CustomAutoModOutputPath
                         : null;
-                
+
                 if (!string.IsNullOrWhiteSpace(customPath) && !string.Equals(customPath, "auto", StringComparison.OrdinalIgnoreCase))
                 {
                     // Use custom global path
@@ -540,12 +544,12 @@ public class ProjectService : IProjectService
                         : config.Type == ProjectType.Mod
                             ? Path.Combine(_fileStorage.GetSpaceEngineersDataPath(), "Mods", projectName)
                             : null;
-                    
+
                     if (string.IsNullOrEmpty(outputPath))
                         return false;
                 }
             }
-            
+
             // For non-auto paths, append project name as subfolder
             if (!string.IsNullOrEmpty(outputPath))
             {
@@ -583,9 +587,9 @@ public class ProjectService : IProjectService
         {
             if (!File.Exists(projectPath.Value))
                 return false;
-            
+
             string executablePath;
-            string arguments = string.Empty;
+            var arguments = string.Empty;
             var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
             if (string.IsNullOrEmpty(hubSettings.CustomIdePath))
             {
@@ -638,10 +642,10 @@ public class ProjectService : IProjectService
         State = new ProjectStateData(projectPath, _state.CanMakeScript, _state.CanMakeMod);
 
         _logger.Info($"Navigated to project: {projectPath}{(openOptions ? " (with options)" : "")}{(bringToFront ? " (bringing to front)" : "")}");
-        
+
         // Prioritize update check for selected project
-        _updateChecker.QueueProjectCheck(projectPath, priority: true);
-        
+        _updateChecker.QueueProjectCheck(projectPath, true);
+
         // Bring window to front if requested
         if (bringToFront)
             _shell.BringToFront();
@@ -882,6 +886,65 @@ public class ProjectService : IProjectService
         }
     }
 
+    /// <inheritdoc />
+    public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProjectAsync(string projectName, string location, string templateName)
+    {
+        try
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(projectName))
+                return (null, "Project name cannot be empty.");
+
+            if (string.IsNullOrWhiteSpace(location) || !Directory.Exists(location))
+                return (null, "Invalid location specified.");
+
+            var projectPath = Path.Combine(location, projectName);
+            if (Directory.Exists(projectPath))
+                return (null, $"A directory named '{projectName}' already exists at this location.");
+
+            // Create the project using dotnet new
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"new {templateName} -n \"{projectName}\" -o \"{projectPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process == null)
+                return (null, "Failed to start dotnet process.");
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                var error = await process.StandardError.ReadToEndAsync();
+                _logger.Error($"Failed to create project '{projectName}': {error}");
+                return (null, $"dotnet new failed: {error}");
+            }
+
+            // Find the .csproj file - get actual casing from disk
+            var csprojFiles = Directory.GetFiles(projectPath, "*.csproj", SearchOption.TopDirectoryOnly);
+            if (csprojFiles.Length == 0)
+            {
+                _logger.Error($"Created project but cannot find .csproj in: {projectPath}");
+                return (null, "Project was created but .csproj file not found.");
+            }
+
+            var csprojPath = csprojFiles[0]; // Use the actual file path from disk (preserves casing)
+            _logger.Info($"Successfully created project: {csprojPath}");
+            return (new CanonicalPath(csprojPath), null);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Exception while creating project: {ex}");
+            return (null, $"Unexpected error: {ex.Message}");
+        }
+    }
+
     static ProjectConfigLayer ParseLayer(Ini? ini)
     {
         if (ini == null)
@@ -1018,23 +1081,24 @@ public class ProjectService : IProjectService
             _updateStates[e.ProjectPath] = (true, e.AvailableUpdates.Count, e.AvailableUpdates);
 
         // If this is the currently selected project, has updates, and hub is in background, show a snackbar
-        if (e.AvailableUpdates.Count > 0 && 
-            _state.SelectedProject == e.ProjectPath && 
-            _shell.IsInBackground)
+        if (e.AvailableUpdates.Count > 0 && _state.SelectedProject == e.ProjectPath && _shell.IsInBackground)
         {
             var projectName = _registry.GetProjects().FirstOrDefault(p => p.ProjectPath == e.ProjectPath)?.Name ?? "Project";
             var updateCount = e.AvailableUpdates.Count;
-            
+
             _logger.Info($"Showing update notification for selected project {projectName}: {updateCount} update(s) available (hub in background)");
-            
+
             _snackbarService.Show(
                 $"{updateCount} package update{(updateCount > 1 ? "s" : "")} available for {projectName}",
-                new[] { new SnackbarAction
+                new[]
                 {
-                    Text = "Show Me",
-                    Action = _ => NavigateToProject(e.ProjectPath, bringToFront: true)
-                }},
-                timeout: 8000);
+                    new SnackbarAction
+                    {
+                        Text = "Show Me",
+                        Action = _ => NavigateToProject(e.ProjectPath, bringToFront: true)
+                    }
+                },
+                8000);
         }
 
         // Forward event to subscribers (view models, etc.)
@@ -1079,7 +1143,7 @@ public class ProjectService : IProjectService
             return;
         }
 
-        if (args.Any(arg => string.Equals(arg, "--force-first-run-setup", StringComparison.OrdinalIgnoreCase)))        
+        if (args.Any(arg => string.Equals(arg, "--force-first-run-setup", StringComparison.OrdinalIgnoreCase)))
         {
             const string warningMessage = "Cannot run first-run setup while MDK Hub is already running. Close Hub and launch it again with --force-first-run-setup.";
             _logger.Warning($"Rejected forwarded startup arguments: {string.Join(" ", args)}");
@@ -1107,7 +1171,7 @@ public class ProjectService : IProjectService
         // Check for --simulate flag in arguments
         var isSimulated = message.Arguments.Any(arg =>
             string.Equals(arg, "--simulate", StringComparison.OrdinalIgnoreCase));
-        
+
         // Extract --interactive argument if present
         string? interactionModeOverride = null;
         for (var i = 0; i < message.Arguments.Length - 1; i++)
@@ -1302,7 +1366,7 @@ public class ProjectService : IProjectService
     {
         // Determine preference: command-line override takes precedence over INI setting
         string preference;
-        
+
         if (!string.IsNullOrWhiteSpace(interactionModeOverride))
         {
             preference = interactionModeOverride;
@@ -1326,7 +1390,7 @@ public class ProjectService : IProjectService
 
         // Determine if we should bring hub to front
         var bringToFront = preference.Equals("OpenHub", StringComparison.OrdinalIgnoreCase);
-        
+
         // Always navigate to the project (select it) to trigger update check prioritization
         NavigateToProject(new CanonicalPath(projectPath), bringToFront: bringToFront);
 
@@ -1389,7 +1453,7 @@ public class ProjectService : IProjectService
             if (ctx is string path)
             {
                 var projectPath = new CanonicalPath(path);
-                
+
                 // Check if this is a simulated project
                 var project = _registry.GetProjects().FirstOrDefault(p => p.IsPath(path));
                 if (project?.Flags.HasFlag(ProjectFlags.Simulated) == true)
@@ -1398,7 +1462,7 @@ public class ProjectService : IProjectService
                     _snackbarService.Show("Script copied to clipboard.", 2000);
                     return;
                 }
-                
+
                 var success = await CopyScriptToClipboardAsync(projectPath);
                 if (success)
                     _snackbarService.Show("Script copied to clipboard.", 2000);
@@ -1408,65 +1472,6 @@ public class ProjectService : IProjectService
         {
             _logger.Error($"Failed to copy script to clipboard: {e.Message}");
             _shell.ShowToast("Failed to copy script to clipboard.");
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<(CanonicalPath? ProjectPath, string? ErrorMessage)> CreateProjectAsync(string projectName, string location, string templateName)
-    {
-        try
-        {
-            // Validate inputs
-            if (string.IsNullOrWhiteSpace(projectName))
-                return (null, "Project name cannot be empty.");
-
-            if (string.IsNullOrWhiteSpace(location) || !Directory.Exists(location))
-                return (null, "Invalid location specified.");
-
-            var projectPath = Path.Combine(location, projectName);
-            if (Directory.Exists(projectPath))
-                return (null, $"A directory named '{projectName}' already exists at this location.");
-
-            // Create the project using dotnet new
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"new {templateName} -n \"{projectName}\" -o \"{projectPath}\"",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true
-            };
-
-            using var process = Process.Start(startInfo);
-            if (process == null)
-                return (null, "Failed to start dotnet process.");
-
-            await process.WaitForExitAsync();
-
-            if (process.ExitCode != 0)
-            {
-                var error = await process.StandardError.ReadToEndAsync();
-                _logger.Error($"Failed to create project '{projectName}': {error}");
-                return (null, $"dotnet new failed: {error}");
-            }
-
-            // Find the .csproj file - get actual casing from disk
-            var csprojFiles = Directory.GetFiles(projectPath, "*.csproj", SearchOption.TopDirectoryOnly);
-            if (csprojFiles.Length == 0)
-            {
-                _logger.Error($"Created project but cannot find .csproj in: {projectPath}");
-                return (null, "Project was created but .csproj file not found.");
-            }
-
-            var csprojPath = csprojFiles[0]; // Use the actual file path from disk (preserves casing)
-            _logger.Info($"Successfully created project: {csprojPath}");
-            return (new CanonicalPath(csprojPath), null);
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"Exception while creating project: {ex}");
-            return (null, $"Unexpected error: {ex.Message}");
         }
     }
 

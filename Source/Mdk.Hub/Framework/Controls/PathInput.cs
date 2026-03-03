@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -15,7 +14,7 @@ namespace Mdk.Hub.Framework.Controls;
 public class PathInput : PathTextInputBase
 {
     /// <summary>
-    /// Open Directory Browser on Click.
+    ///     Open Directory Browser on Click.
     /// </summary>
     protected override async void OnBrowseClick(object? sender, RoutedEventArgs e)
     {
@@ -119,7 +118,7 @@ public class PathInput : PathTextInputBase
             {
                 if (firstColonIndex != 1)
                     return false;
-                
+
                 // Check for additional colons after the first one
                 if (path.IndexOf(':', firstColonIndex + 1) != -1)
                     return false;
@@ -130,9 +129,12 @@ public class PathInput : PathTextInputBase
                 return false;
 
             // Check for reserved names (CON, PRN, AUX, NUL, COM1-9, LPT1-9)
-            var reservedNames = new[] { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5",
-                "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
-            
+            var reservedNames = new[]
+            {
+                "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5",
+                "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+            };
+
             var segments = path.Split('\\', '/');
             foreach (var segment in segments)
             {
@@ -141,19 +143,14 @@ public class PathInput : PathTextInputBase
                     return false;
             }
         }
-        else // Unix/Linux/Mac
-        {
-            // Only null byte is invalid (already checked above)
-        }
 
+        // Unix/Linux/Mac
+        // Only null byte is invalid (already checked above)
         return true;
     }
 
     /// <summary>
-    /// Validates that the selected path exists when existence checks are enabled.
+    ///     Validates that the selected path exists when existence checks are enabled.
     /// </summary>
-    protected override bool PathExists(string normalizedPath)
-    {
-        return Directory.Exists(normalizedPath);
-    }
+    protected override bool PathExists(string normalizedPath) => Directory.Exists(normalizedPath);
 }

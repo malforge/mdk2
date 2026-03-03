@@ -1,14 +1,14 @@
 <actions:ActionItemControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:i="https://github.com/projektanker/icons.avalonia"
-             xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
-             xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
-             x:Class="Mdk.Hub.Features.Projects.Actions.Items.UpdatesActionView"
-             x:DataType="items:UpdatesAction"
-             TopEdge="Contained" BottomEdge="Contained">
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                           xmlns:i="https://github.com/projektanker/icons.avalonia"
+                           xmlns:actions="clr-namespace:Mdk.Hub.Features.Projects.Actions"
+                           xmlns:items="clr-namespace:Mdk.Hub.Features.Projects.Actions.Items"
+                           mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
+                           x:Class="Mdk.Hub.Features.Projects.Actions.Items.UpdatesActionView"
+                           x:DataType="items:UpdatesAction"
+                           TopEdge="Contained" BottomEdge="Contained">
 
     <Border Background="{StaticResource BackgroundInfoCardBrush}"
             BorderBrush="{StaticResource BorderAccentBrush}"
@@ -23,7 +23,7 @@
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         Foreground="{StaticResource ForegroundAccentBrush}" />
-                
+
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="4">
                     <TextBlock Text="Updates Available" Classes="body medium" />
                     <TextBlock Text="{Binding StatusMessage}" Classes="caption" TextWrapping="Wrap" />
@@ -63,4 +63,3 @@
     </Border>
 
 </actions:ActionItemControl>
-

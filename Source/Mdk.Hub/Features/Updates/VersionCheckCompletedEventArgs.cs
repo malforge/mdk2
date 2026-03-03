@@ -12,12 +12,12 @@ public class VersionCheckCompletedEventArgs : EventArgs
     ///     Gets the list of available package versions.
     /// </summary>
     public required IReadOnlyList<PackageVersionInfo> Packages { get; init; }
-    
+
     /// <summary>
     ///     Gets the available template version information, if any.
     /// </summary>
     public TemplateVersionInfo? TemplatePackage { get; init; }
-    
+
     /// <summary>
     ///     Gets the available Hub version information, if any.
     /// </summary>

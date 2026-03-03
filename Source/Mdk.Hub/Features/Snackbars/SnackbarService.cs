@@ -26,7 +26,7 @@ public class SnackbarService : ISnackbarService
     /// </summary>
     /// <param name="message">The message to display.</param>
     /// <param name="timeout">How long to display the snackbar in milliseconds (default: 15000).</param>
-    public void Show(string message, int timeout = 15000) => Show(message, Array.Empty<SnackbarAction>(), timeout, isToast: true);
+    public void Show(string message, int timeout = 15000) => Show(message, Array.Empty<SnackbarAction>(), timeout, true);
 
     /// <summary>
     ///     Displays a snackbar notification with the specified message and actions.
@@ -34,7 +34,7 @@ public class SnackbarService : ISnackbarService
     /// <param name="message">The message to display.</param>
     /// <param name="actions">Action buttons to display on the snackbar.</param>
     /// <param name="timeout">How long to display the snackbar in milliseconds (default: 15000).</param>
-    public void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout = 15000) => Show(message, actions, timeout, isToast: false);
+    public void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout = 15000) => Show(message, actions, timeout, false);
 
     void Show(string message, IReadOnlyList<SnackbarAction> actions, int timeout, bool isToast) => _ = Dispatcher.UIThread.InvokeAsync(() => ShowAsync(message, actions, timeout, isToast));
 

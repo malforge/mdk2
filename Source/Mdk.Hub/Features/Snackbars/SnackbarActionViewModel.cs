@@ -28,7 +28,7 @@ public partial class SnackbarActionViewModel : ViewModel
     ///     Gets the display text for the action button.
     /// </summary>
     public string Text => _action.Text;
-    
+
     /// <summary>
     ///     Gets the command to execute when the action button is clicked.
     /// </summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -9,19 +10,19 @@ using Mdk.Hub.Features.Storage;
 namespace Mdk.Hub.Features.Diagnostics;
 
 /// <summary>
-/// File-based logger that writes log entries to disk and maintains log rotation.
+///     File-based logger that writes log entries to disk and maintains log rotation.
 /// </summary>
 [Singleton<ILogger>]
 public class FileLogger : ILogger
 {
-    readonly Lock _lock = new();
     readonly IFileStorageService _fileStorage;
+    readonly Lock _lock = new();
     readonly string _logDirectory;
     readonly string _logFilePath;
     readonly int _maxLogFiles = 7; // Keep last 7 days
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FileLogger"/> class and sets up log file rotation.
+    ///     Initializes a new instance of the <see cref="FileLogger" /> class and sets up log file rotation.
     /// </summary>
     public FileLogger(IFileStorageService fileStorage)
     {
@@ -46,24 +47,20 @@ public class FileLogger : ILogger
         {
             var executablePath = Environment.ProcessPath ?? AppContext.BaseDirectory;
             if (!string.IsNullOrEmpty(executablePath) && _fileStorage.FileExists(executablePath))
-            {
-                productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(executablePath).ProductVersion ?? version;
-            }
+                productVersion = FileVersionInfo.GetVersionInfo(executablePath).ProductVersion ?? version;
             else
-            {
                 productVersion = version;
-            }
         }
         catch
         {
             productVersion = version;
         }
-        
+
         WriteLog(new LogEntry
         {
             Timestamp = DateTimeOffset.Now,
             Level = LogLevel.Info,
-            Message = $"========================================",
+            Message = "========================================",
             FilePath = "",
             LineNumber = 0,
             MemberName = ""
@@ -81,7 +78,7 @@ public class FileLogger : ILogger
         {
             Timestamp = DateTimeOffset.Now,
             Level = LogLevel.Info,
-            Message = $"========================================",
+            Message = "========================================",
             FilePath = "",
             LineNumber = 0,
             MemberName = ""
@@ -89,7 +86,7 @@ public class FileLogger : ILogger
     }
 
     /// <summary>
-    /// Logs a debug message.
+    ///     Logs a debug message.
     /// </summary>
     /// <param name="message">The message to log.</param>
     /// <param name="filePath">The source file path (automatically captured).</param>
@@ -99,7 +96,7 @@ public class FileLogger : ILogger
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Debug, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
     /// <summary>
-    /// Logs an informational message.
+    ///     Logs an informational message.
     /// </summary>
     /// <param name="message">The message to log.</param>
     /// <param name="filePath">The source file path (automatically captured).</param>
@@ -109,7 +106,7 @@ public class FileLogger : ILogger
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Info, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
     /// <summary>
-    /// Logs a warning message.
+    ///     Logs a warning message.
     /// </summary>
     /// <param name="message">The message to log.</param>
     /// <param name="filePath">The source file path (automatically captured).</param>
@@ -119,7 +116,7 @@ public class FileLogger : ILogger
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Warning, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
     /// <summary>
-    /// Logs an error message.
+    ///     Logs an error message.
     /// </summary>
     /// <param name="message">The message to log.</param>
     /// <param name="filePath">The source file path (automatically captured).</param>
@@ -129,7 +126,7 @@ public class FileLogger : ILogger
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Error, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
     /// <summary>
-    /// Logs an error message with an associated exception.
+    ///     Logs an error message with an associated exception.
     /// </summary>
     /// <param name="message">The message to log.</param>
     /// <param name="exception">The exception to log.</param>
@@ -143,7 +140,7 @@ public class FileLogger : ILogger
     }
 
     /// <summary>
-    /// Gets the full path to the current log file.
+    ///     Gets the full path to the current log file.
     /// </summary>
     /// <returns>The log file path.</returns>
     public string GetLogFilePath() => _logFilePath;
