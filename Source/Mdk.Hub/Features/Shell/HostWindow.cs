@@ -33,6 +33,9 @@ public class HostWindow : Window
         if (_hasExplicitTitle)
             Title = title;
 
+        if (scope != null)
+            WindowContainer.SetContainer(this, scope.Container);
+
         Content = new ContentControl
         {
             [!ContentProperty] = this[!DataContextProperty]

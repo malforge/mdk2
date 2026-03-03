@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using JetBrains.Annotations;
 using Mal.SourceGeneratedDI;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -18,13 +19,17 @@ namespace Mdk.Hub.Features.Shell;
 public partial class ShellWindow : Window
 {
     /// <summary>
+    ///     Design-time constructor.
+    /// </summary>
+    public ShellWindow() : this(null!) { }
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="ShellWindow" /> class.
     /// </summary>
-    public ShellWindow()
+    public ShellWindow(IDependencyContainer container)
     {
         InitializeComponent();
-
-        // Subscribe to window state and focus changes
+        WindowContainer.SetContainer(this, container);
         PropertyChanged += OnWindowPropertyChanged;
     }
 
@@ -100,6 +105,15 @@ public partial class ShellWindow : Window
     }
 
     void OnCloseRequested(object? sender, EventArgs e) => Close();
+
+    /// <inheritdoc />
+    protected override void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+
+        if (DataContext is ShellViewModel viewModel)
+            viewModel.WindowIsReady();
+    }
 
     void OnBringToFrontRequested(object? sender, EventArgs e)
     {

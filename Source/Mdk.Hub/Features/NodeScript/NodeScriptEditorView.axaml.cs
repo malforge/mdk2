@@ -30,12 +30,9 @@ public partial class NodeScriptEditorView : UserControl
     {
         var point = e.GetCurrentPoint(sender as Control);
         
-        System.Diagnostics.Debug.WriteLine($"[NodeScript] Content clicked! Count: {e.ClickCount}, Left: {point.Properties.IsLeftButtonPressed}");
-        
         // Check for double-click (ClickCount == 2) with left button
         if (point.Properties.IsLeftButtonPressed && e.ClickCount == 2)
         {
-            System.Diagnostics.Debug.WriteLine($"[NodeScript] Double-click detected on content!");
             
             if (sender is Control { DataContext: not null } control)
             {

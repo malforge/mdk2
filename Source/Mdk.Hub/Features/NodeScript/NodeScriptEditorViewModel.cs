@@ -14,13 +14,14 @@ namespace Mdk.Hub.Features.NodeScript;
 /// <summary>
 ///     ViewModel for the node-based script editor.
 /// </summary>
-[Instance]
+[Instance(Container = "Window")]
 [ViewModelFor<NodeScriptEditorView>]
 public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHaveATitle, Shell.IFileEditor
 {
     readonly IShell _shell;
     readonly IOverlayService _overlayService;
     readonly IBlockPickerService _blockPicker;
+    readonly IDependencyContainer _container;
     string _title = "Node Script Editor";
     string? _filePath;
     double _zoom = 1.0;
@@ -28,16 +29,17 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
     /// <summary>
     ///     Design-time constructor.
     /// </summary>
-    public NodeScriptEditorViewModel() : this(null!, null!, null!) { }
+    public NodeScriptEditorViewModel() : this(null!, null!, null!, null!) { }
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="NodeScriptEditorViewModel" /> class.
     /// </summary>
-    public NodeScriptEditorViewModel(IShell shell, IOverlayService overlayService, IBlockPickerService blockPicker)
+    public NodeScriptEditorViewModel(IShell shell, IOverlayService overlayService, IBlockPickerService blockPicker, IDependencyContainer container)
     {
         _shell = shell;
         _overlayService = overlayService;
         _blockPicker = blockPicker;
+        _container = container;
         Nodes = new ObservableCollection<object>();
         Connections = new ObservableCollection<object>();
         _overlayService.Views.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasOverlays));
@@ -98,7 +100,7 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
     /// <summary>Opens the node selector overlay at the specified canvas position.</summary>
     public void OpenAddNodeMenu(Point position)
     {
-        var selector = App.Container.Resolve<NodeSelectorViewModel>();
+        var selector = _container.Resolve<NodeSelectorViewModel>();
         selector.Dismissed += (_, _) =>
         {
             if (selector.SelectedNodeTypeId is { } nodeType)

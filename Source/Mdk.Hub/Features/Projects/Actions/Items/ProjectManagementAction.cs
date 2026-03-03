@@ -7,6 +7,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.CommonDialogs;
+using Mdk.Hub.Features.NodeScript;
 using Mdk.Hub.Features.Projects.NewProjectDialog;
 using Mdk.Hub.Features.Projects.Overview.Icons;
 using Mdk.Hub.Features.Settings;
@@ -28,6 +29,7 @@ public class ProjectManagementAction : ActionItem
     readonly AsyncRelayCommand _createMixinCommand;
     readonly AsyncRelayCommand _createModCommand;
     readonly AsyncRelayCommand _createScriptCommand;
+    readonly RelayCommand _createNodeScriptCommand;
     readonly IFileStorageService _fileStorage;
     readonly IProjectService _projectService;
     readonly IShell _shell;
@@ -53,6 +55,7 @@ public class ProjectManagementAction : ActionItem
         _createScriptCommand = new AsyncRelayCommand(CreateScriptAsync, () => CanMakeScript);
         _createModCommand = new AsyncRelayCommand(CreateModAsync, () => CanMakeMod);
         _createMixinCommand = new AsyncRelayCommand(CreateMixinAsync, () => true);
+        _createNodeScriptCommand = new RelayCommand(CreateNodeScript);
         _addExistingCommand = new AsyncRelayCommand(AddExistingProjectAsync);
 
         _projectService.StateChanged += OnProjectServiceStateChanged;
@@ -93,6 +96,11 @@ public class ProjectManagementAction : ActionItem
     ///     Gets the command to create a new Mixin.
     /// </summary>
     public ICommand CreateMixinCommand => _createMixinCommand;
+
+    /// <summary>
+    ///     Gets the command to open the Node Script editor.
+    /// </summary>
+    public ICommand CreateNodeScriptCommand => _createNodeScriptCommand;
 
     /// <summary>
     ///     Gets the command to add an existing project to the Hub.
@@ -151,6 +159,8 @@ public class ProjectManagementAction : ActionItem
             "Create a new Space Engineers mixin project",
             "MdkMixinProject",
             new MixinSymbol());
+
+    void CreateNodeScript() => _shell.OpenWindow<NodeScriptEditorViewModel>();
 
     async Task CreateProjectAsync(string templateName, string title, string description, string defaultProjectName, object icon)
     {

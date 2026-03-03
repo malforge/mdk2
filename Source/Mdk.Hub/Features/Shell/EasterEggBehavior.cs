@@ -6,6 +6,7 @@ using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.Shell;
 
@@ -27,12 +28,6 @@ public static class EasterEggBehavior
     {
         IsEnabledProperty.Changed.AddClassHandler<Control>(OnIsEnabledChanged);
     }
-
-    /// <summary>
-    ///     Service used by <see cref="EasterEggAttachment" /> instances created via XAML attached property.
-    ///     Set by <see cref="App" /> during framework initialization.
-    /// </summary>
-    internal static IEasterEggService? Service { get; set; }
 
     /// <summary>
     ///     Gets the value of the IsEnabled attached property for the specified control.
@@ -73,19 +68,13 @@ public static class EasterEggBehavior
     class EasterEggAttachment : IDisposable
     {
         readonly Control _host;
-        readonly IEasterEggService _service;
+        IEasterEggService? _service;
         EasterEgg? _easterEgg;
         bool _isDisposed;
 
         public EasterEggAttachment(Control host)
         {
             _host = host;
-            _service = Service ?? throw new InvalidOperationException("EasterEggBehavior.Service is not initialized.");
-
-            // Subscribe to service changes
-            _service.ActiveChanged += OnActiveChanged;
-
-            // Wait for control to be loaded, then show
             _host.AttachedToVisualTree += OnHostAttachedToVisualTree;
         }
 
@@ -96,7 +85,9 @@ public static class EasterEggBehavior
 
             _isDisposed = true;
             _host.AttachedToVisualTree -= OnHostAttachedToVisualTree;
-            _service.ActiveChanged -= OnActiveChanged;
+
+            if (_service != null)
+                _service.ActiveChanged -= OnActiveChanged;
 
             if (_easterEgg == null)
                 return;
@@ -128,6 +119,12 @@ public static class EasterEggBehavior
         void OnHostAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
         {
             _host.AttachedToVisualTree -= OnHostAttachedToVisualTree;
+
+            _service = WindowContainer.GetContainerForVisual(_host)?.Resolve<IEasterEggService>();
+            if (_service == null)
+                return;
+
+            _service.ActiveChanged += OnActiveChanged;
             _ = ShowAfterDelayAsync();
         }
 
@@ -139,7 +136,7 @@ public static class EasterEggBehavior
             // Wait 1 second before showing
             await Task.Delay(1000);
 
-            if (_isDisposed || !_service.IsActive)
+            if (_isDisposed || _service == null || !_service.IsActive)
                 return;
 
             // Must run on UI thread
@@ -183,7 +180,7 @@ public static class EasterEggBehavior
 
             Dispatcher.UIThread.Post(() =>
             {
-                if (_easterEgg == null || _isDisposed)
+                if (_easterEgg == null || _isDisposed || _service == null)
                     return;
 
                 var shouldBeVisible = _service.IsActive;

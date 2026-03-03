@@ -110,8 +110,6 @@ public class App : Application
             var shell = _container.Resolve<IShell>();
             shell.Start(args);
 
-            EasterEggBehavior.Service = _container.Resolve<IEasterEggService>();
-
             logger.Info("MDK Hub application started successfully");
         }
 

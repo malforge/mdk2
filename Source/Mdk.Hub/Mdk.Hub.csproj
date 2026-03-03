@@ -10,6 +10,8 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <ApplicationIcon>Assets\hub.ico</ApplicationIcon>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
         <InformationalVersion>$(Version)</InformationalVersion>
@@ -67,6 +69,9 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Mal.SourceGeneratedDI.Abstractions" Version="2.0.2-pre.1"/>
+        <PackageReference Include="DirectXTexNet" Version="1.0.1" />
+        <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+        <PackageReference Include="NodifyM.Avalonia" Version="1.1.9" />
         <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2"/>
         <PackageReference Include="Velopack" Version="0.0.1298"/>
     </ItemGroup>

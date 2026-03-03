@@ -33,14 +33,17 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://NodifyM.Avalonia/Styles/ControlStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/BaseStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/Typography.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/SemanticStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/DateTimeDisplayStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/PathInputStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Theme/TextWithButtonStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/FileInputStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/ValidatedControlStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/ProjectOverviewStyles.axaml" />
         <StyleInclude Source="avares://Mdk.Hub/Theme/ProjectActionsStyles.axaml" />
+        <StyleInclude Source="avares://Mdk.Hub/Features/NodeScript/NodeEditorStyles.axaml" />
     </Application.Styles>
 </Application>

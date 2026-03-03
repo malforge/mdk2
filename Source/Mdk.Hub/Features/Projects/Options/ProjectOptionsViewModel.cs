@@ -352,7 +352,7 @@ public class ProjectOptionsViewModel : ViewModel
             {
                 try
                 {
-                    var se = new SpaceEngineers();
+                    var se = new Mdk.Hub.Utility.SpaceEngineers();
                     _defaultBinaryPath = se.GetInstallPath("Bin64");
                 }
                 catch

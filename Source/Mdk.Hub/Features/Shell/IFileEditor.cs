@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Mdk.Hub.Features.Shell;
 
 /// <summary>
@@ -6,4 +8,9 @@ namespace Mdk.Hub.Features.Shell;
 /// </summary>
 public interface IFileEditor
 {
+    /// <summary>
+    ///     Opens the specified file in this editor.
+    /// </summary>
+    /// <param name="filePath">Path to the file to open.</param>
+    Task OpenFileAsync(string filePath);
 }

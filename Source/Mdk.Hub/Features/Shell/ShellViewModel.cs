@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using Mal.SourceGeneratedDI;
 using Mdk.Hub.Features.Announcements;
 using Mdk.Hub.Features.CommonDialogs;
@@ -37,6 +41,7 @@ namespace Mdk.Hub.Features.Shell;
 public class ShellViewModel : ViewModel, IShell
 {
     readonly IDependencyContainer _container;
+    readonly FileEditorRegistry _fileEditorRegistry;
     readonly IFileStorageService _fileStorage;
     readonly Lazy<IAnnouncementService> _lazyAnnouncementService;
     readonly Lazy<IProjectService> _lazyProjectService;
@@ -49,18 +54,20 @@ public class ShellViewModel : ViewModel, IShell
     readonly List<Action<string[]>> _readyCallbacks = new();
     readonly List<Action<string[]>> _startupCallbacks = new();
     readonly List<UnsavedChangesRegistration> _unsavedChangesRegistrations = new();
+    readonly List<Action<string[]>> _windowReadyCallbacks = new();
     readonly IWindowScopeFactory _windowScopeFactory;
     ViewModel? _currentView;
     bool _hasStarted;
     bool _isInBackground;
     bool _isReady;
+    bool _windowIsReady;
     ViewModel? _navigationView;
     string[]? _startupArgs;
 
     /// <summary>
     ///     Parameterless constructor intended for design-time tooling. Initializes the instance in design mode.
     /// </summary>
-    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!)
+    public ShellViewModel() : this(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!)
     {
         IsDesignMode = true;
     }
@@ -78,6 +85,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <param name="fileStorage">File storage service for filesystem operations.</param>
     /// <param name="container">Dependency container for resolving additional services as needed.</param>
     /// <param name="windowScopeFactory">Factory for creating window-scoped DI containers.</param>
+    /// <param name="fileEditorRegistry">Registry for file type to editor mappings.</param>
     public ShellViewModel(
         ISettings settings,
         Lazy<IProjectService> lazyProjectService,
@@ -88,7 +96,8 @@ public class ShellViewModel : ViewModel, IShell
         Lazy<ProjectActionsViewModel> projectActionsViewModel,
         IFileStorageService fileStorage,
         IDependencyContainer container,
-        IWindowScopeFactory windowScopeFactory)
+        IWindowScopeFactory windowScopeFactory,
+        FileEditorRegistry fileEditorRegistry)
     {
         _lazyProjectService = lazyProjectService;
         _lazyUpdateManager = lazyUpdateManager;
@@ -99,13 +108,18 @@ public class ShellViewModel : ViewModel, IShell
         _projectActionsViewModel = projectActionsViewModel;
         _container = container;
         _windowScopeFactory = windowScopeFactory;
+        _fileEditorRegistry = fileEditorRegistry;
         Settings = settings;
-        // NavigationView = projectOverviewViewModel;
-        // CurrentView = projectActionsViewModel;
 
         // Subscribe to overlay collection changes for HasOverlays property
         if (!IsDesignMode)
+        {
             OverlayViews.CollectionChanged += OnOverlayViewsCollectionChanged;
+
+            // Subscribe to IPC messages for .mdknodes files from other instances
+            var ipc = container.Resolve<IInterProcessCommunication>();
+            ipc.MessageReceived += OnIpcMessageReceived;
+        }
     }
 
     /// <summary>
@@ -207,6 +221,9 @@ public class ShellViewModel : ViewModel, IShell
         // Write Hub executable path for MDK CLI to discover
         WriteHubPath();
 
+        // Check for editable files in arguments
+        CheckForEditableFiles(args);
+
         BeginStartup();
     }
 
@@ -225,6 +242,7 @@ public class ShellViewModel : ViewModel, IShell
     /// <summary>
     ///     Registers a callback to be invoked when the shell is fully ready (all async initialization complete).
     /// </summary>
+    /// <seealso cref="WhenWindowReady" />
     /// <param name="callback">Action to invoke with startup arguments.</param>
     public void WhenReady(Action<string[]> callback)
     {
@@ -232,6 +250,33 @@ public class ShellViewModel : ViewModel, IShell
             callback(_startupArgs!);
         else
             _readyCallbacks.Add(callback);
+    }
+
+    /// <summary>
+    ///     Registers a callback to be invoked when the shell window is ready (opened and visible).
+    ///     Use this for operations that require the window handle or need the UI to be responsive first.
+    /// </summary>
+    /// <seealso cref="WhenReady" />
+    /// <param name="callback">Action to invoke with startup arguments.</param>
+    public void WhenWindowReady(Action<string[]> callback)
+    {
+        if (_windowIsReady)
+            callback(_startupArgs!);
+        else
+            _windowReadyCallbacks.Add(callback);
+    }
+
+    /// <summary>
+    ///     Called when the shell window has been opened and is visible.
+    /// </summary>
+    public void WindowIsReady()
+    {
+        _windowIsReady = true;
+        _logger.Info("Window is ready");
+
+        foreach (var callback in _windowReadyCallbacks)
+            callback(_startupArgs!);
+        _windowReadyCallbacks.Clear();
     }
 
     /// <inheritdoc />
@@ -938,6 +983,89 @@ public class ShellViewModel : ViewModel, IShell
         catch (Exception ex)
         {
             _logger.Error($"Error checking prerelease prompt: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Checks command-line arguments for file paths that can be opened in editors.
+    /// </summary>
+    void CheckForEditableFiles(string[] args)
+    {
+        if (args == null || args.Length == 0)
+            return;
+
+        foreach (var arg in args)
+        {
+            if (_fileEditorRegistry.HasEditorFor(arg))
+            {
+                WhenWindowReady(_ => OpenFileEditor(arg, false));
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Opens the appropriate editor for the specified file.
+    /// </summary>
+    /// <param name="filePath">Path to the file to edit.</param>
+    /// <param name="setParent">Whether to set the shell as the parent window.</param>
+    async void OpenFileEditor(string filePath, bool setParent = true)
+    {
+        try
+        {
+            var editorType = _fileEditorRegistry.GetEditorType(filePath);
+            if (editorType == null)
+            {
+                _logger.Warning($"No editor registered for file: {filePath}");
+                return;
+            }
+
+            _logger.Info($"Opening editor for: {filePath}");
+
+            var scope = _windowScopeFactory.Create();
+            var editorViewModel = (IFileEditor)scope.Container.Resolve(editorType);
+
+            if (editorViewModel is ViewModel viewModel)
+                OpenWindowCore(viewModel, scope, null, setParent);
+            else
+            {
+                scope.Dispose();
+                _logger.Error($"Editor type does not extend ViewModel: {editorType.Name}");
+                return;
+            }
+
+            await editorViewModel.OpenFileAsync(filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Failed to open file editor: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    ///     Handles IPC messages from other instances, checking for editable files.
+    /// </summary>
+    void OnIpcMessageReceived(object? sender, MessageReceivedEventArgs e)
+    {
+        try
+        {
+            if (e.Message.Arguments == null || e.Message.Arguments.Length == 0)
+                return;
+
+            foreach (var arg in e.Message.Arguments)
+            {
+                if (_fileEditorRegistry.HasEditorFor(arg))
+                {
+                    _logger.Info($"Received editable file via IPC: {arg}");
+                    Dispatcher.UIThread.Post(() => OpenFileEditor(arg));
+                    BringToFront();
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"Error handling IPC message: {ex.Message}");
         }
     }
 

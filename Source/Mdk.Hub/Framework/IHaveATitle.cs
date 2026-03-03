@@ -1,10 +1,14 @@
+using System.ComponentModel;
+
 namespace Mdk.Hub.Framework;
 
 /// <summary>
-///     Implemented by view models that provide a title for their host window.
+///     Interface for view models that provide a dynamic window title.
 /// </summary>
-public interface IHaveATitle
+public interface IHaveATitle : INotifyPropertyChanged
 {
-    /// <summary>Gets the title to display on the host window.</summary>
+    /// <summary>
+    ///     Gets the window title.
+    /// </summary>
     string Title { get; }
 }

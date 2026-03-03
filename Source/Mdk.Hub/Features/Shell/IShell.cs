@@ -48,6 +48,13 @@ public interface IShell
     void WhenReady(Action<string[]> callback);
 
     /// <summary>
+    ///     Registers a callback to be invoked when the shell window is ready (opened and visible).
+    ///     Use this for operations that require the window handle or need the UI to be responsive first.
+    /// </summary>
+    /// <param name="callback">Callback receiving the startup arguments.</param>
+    void WhenWindowReady(Action<string[]> callback);
+
+    /// <summary>
     ///     Adds an overlay view model to the shell's overlay collection for display.
     /// </summary>
     /// <param name="model">The overlay view model to display.</param>
