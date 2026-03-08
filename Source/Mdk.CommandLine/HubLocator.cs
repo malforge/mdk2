@@ -212,7 +212,7 @@ public static class HubLocator
             <div class="solution">
                 <h3>Option 2: Disable Interactive Mode</h3>
                 <p>If you prefer working without the Hub, you can disable interactive mode by adding this line to your <code>mdk.local.ini</code> file:</p>
-                <p><code>interactive=off</code></p>
+                <p><code>interactive=DoNothing</code></p>
             </div>
         </div>
         
