@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Input;
-using Avalonia;
 using Mdk.Hub.Framework;
 
 namespace Mdk.Hub.Features.NodeScript.Nodes;
@@ -8,27 +7,16 @@ namespace Mdk.Hub.Features.NodeScript.Nodes;
 /// <summary>
 ///     ViewModel for a Blocks node (data source for blocks in Space Engineers).
 /// </summary>
-public class BlocksNodeViewModel : ViewModel
+[ViewModelFor<BlocksNodeView>]
+public class BlocksNodeViewModel : ComplexNodeViewModel
 {
-    Point _location;
     string? _pattern;
     string? _blockType;
     string? _groupName;
     string? _customDataSection;
-    bool _isExpanded;
 
-    /// <summary>Initializes a new instance of the <see cref="BlocksNodeViewModel"/> class.</summary>
-    public BlocksNodeViewModel()
-    {
-        ToggleExpandCommand = new RelayCommand(() => IsExpanded = !IsExpanded);
-    }
-
-    /// <summary>Gets or sets the node location on the canvas.</summary>
-    public Point Location
-    {
-        get => _location;
-        set => SetProperty(ref _location, value);
-    }
+    /// <inheritdoc />
+    public override string Title => "Blocks";
 
     /// <summary>Gets or sets the block name pattern filter (optional).</summary>
     public string? Pattern
@@ -87,31 +75,12 @@ public class BlocksNodeViewModel : ViewModel
         }
     }
 
-    /// <summary>Gets the command that toggles the expanded/collapsed state.</summary>
-    public RelayCommand ToggleExpandCommand { get; }
-
-    /// <summary>Gets the node type title.</summary>
-    public string Title => "Blocks";
-
-    /// <summary>Gets the chevron glyph indicating collapsed/expanded state.</summary>
-    public string ChevronGlyph => _isExpanded ? "▼" : "▶";
-
-    /// <summary>Gets or sets whether the node is in expanded (edit) mode.</summary>
-    public bool IsExpanded
-    {
-        get => _isExpanded;
-        set
-        {
-            if (SetProperty(ref _isExpanded, value))
-                OnPropertyChanged(nameof(ChevronGlyph));
-        }
-    }
-
     /// <summary>Gets or sets the command to open the block type picker. Set by the editor when the node is created.</summary>
     public ICommand? BrowseBlockTypeCommand { get; set; }
 
     /// <summary>Gets the display label for the block type picker button.</summary>
     public string BlockTypeDisplay => string.IsNullOrWhiteSpace(BlockType) ? "Any type" : BlockType;
+
     /// <summary>Gets whether no filters are set (meaning the node will match all blocks).</summary>
     public bool HasNoFilters =>
         string.IsNullOrWhiteSpace(Pattern) &&
@@ -119,8 +88,12 @@ public class BlocksNodeViewModel : ViewModel
         string.IsNullOrWhiteSpace(GroupName) &&
         string.IsNullOrWhiteSpace(CustomDataSection);
 
-    /// <summary>Gets a compact summary of active filters for the collapsed node view.</summary>
-    public string Summary
+    /// <summary>Gets the output connectors for this node (one: the block collection).</summary>
+    public IReadOnlyList<ConnectorViewModel> Outputs { get; } =
+        [new ConnectorViewModel { IsOutput = true }];
+
+    /// <inheritdoc />
+    public override string Summary
     {
         get
         {

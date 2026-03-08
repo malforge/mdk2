@@ -17,6 +17,7 @@ public class NodeSelectorViewModel : SelectorViewModel<NodeSelectorItem>
     static readonly List<NodeSelectorItem> AllNodes =
     [
         new("Blocks",          "Data Sources",  "Blocks",         "References a set of terminal blocks."),
+        new("Combine",         "Data Sources",  "Combine",        "Merges multiple block sources into one."),
         new("On Argument",     "Triggers",      "OnArgument",     "Fires when the script receives a specific argument."),
         new("Wait For State",  "Flow Control",  "WaitForState",   "Pauses execution until a condition is met."),
     ];

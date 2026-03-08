@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Mal.SourceGeneratedDI;
@@ -43,6 +44,8 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
         Connections = new ObservableCollection<object>();
         _overlayService.Views.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasOverlays));
         TestBlockSelectorCommand = new AsyncRelayCommand(TestBlockSelectorAsync);
+        PendingConnection = new PendingConnectionViewModel(this);
+        DisconnectConnectorCommand = new RelayCommand<ConnectorViewModel>(DisconnectConnector);
     }
 
     /// <inheritdoc />
@@ -70,6 +73,12 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
             ? "Node Script Editor"
             : $"Node Script Editor - {System.IO.Path.GetFileName(_filePath)}";
     }
+
+    /// <summary>Gets the pending connection view model (in-progress drag).</summary>
+    public PendingConnectionViewModel PendingConnection { get; }
+
+    /// <summary>Gets the command that disconnects all connections on a given connector.</summary>
+    public RelayCommand<ConnectorViewModel> DisconnectConnectorCommand { get; }
 
     /// <summary>Gets the command that opens the block selector overlay for testing.</summary>
     public AsyncRelayCommand TestBlockSelectorCommand { get; }
@@ -122,8 +131,41 @@ public partial class NodeScriptEditorViewModel : ViewModel, ISupportClosing, IHa
                 });
                 Nodes.Add(node);
                 break;
+            case "Combine":
+                Nodes.Add(new CombineNodeViewModel { Location = position });
+                break;
         }
         OnPropertyChanged(nameof(HasNodes));
+    }
+
+    /// <summary>Creates a connection between two connectors, normalising to output→input order.</summary>
+    public void Connect(ConnectorViewModel source, ConnectorViewModel target)
+    {
+        var (output, input) = source.IsOutput ? (source, target) : (target, source);
+        Connections.Add(new ConnectionViewModel(output, input, this));
+        output.IsConnected = true;
+        input.IsConnected = true;
+    }
+
+    /// <summary>Removes a specific connection and updates IsConnected on both endpoints.</summary>
+    public void RemoveConnection(ConnectionViewModel connection)
+    {
+        Connections.Remove(connection);
+        var remaining = Connections.OfType<ConnectionViewModel>().ToList();
+        if (!remaining.Any(c => c.Source == connection.Source || c.Target == connection.Source))
+            connection.Source.IsConnected = false;
+        if (!remaining.Any(c => c.Source == connection.Target || c.Target == connection.Target))
+            connection.Target.IsConnected = false;
+    }
+
+    void DisconnectConnector(ConnectorViewModel? connector)
+    {
+        if (connector == null) return;
+        var toRemove = Connections.OfType<ConnectionViewModel>()
+            .Where(c => c.Source == connector || c.Target == connector)
+            .ToList();
+        foreach (var conn in toRemove)
+            RemoveConnection(conn);
     }
 
     /// <inheritdoc />

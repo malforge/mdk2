@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:nodes="clr-namespace:Mdk.Hub.Features.NodeScript.Nodes"
+             x:Class="Mdk.Hub.Features.NodeScript.Nodes.CombineNodeView"
+             x:DataType="nodes:CombineNodeViewModel">
+
+    <TextBlock Text="Merges block sources"
+               Classes="caption node-meta" />
+
+</UserControl>

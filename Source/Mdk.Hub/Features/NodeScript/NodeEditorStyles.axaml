@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:controls="clr-namespace:NodifyM.Avalonia.Controls;assembly=NodifyM.Avalonia">
+        xmlns:controls="clr-namespace:NodifyM.Avalonia.Controls;assembly=NodifyM.Avalonia"
+        xmlns:nodes="clr-namespace:Mdk.Hub.Features.NodeScript.Nodes">
 
     <!-- NodeScript Editor Styles -->
     
@@ -18,17 +19,31 @@
         <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
     </Style>
     
-    <!-- Blocks Node -->
-    <Style Selector="controls|Node.blocks-node">
+    <!-- Complex Node (expandable inline editor) -->
+    <Style Selector="controls|Node.complex-node">
         <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}"/>
         <Setter Property="BorderThickness" Value="2"/>
-        <Setter Property="MinWidth" Value="150"/>
+        <Setter Property="Width" Value="200"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="OutputConnectorTemplate">
+            <DataTemplate DataType="nodes:ConnectorViewModel">
+                <controls:NodeOutput IsConnected="{Binding IsConnected}"
+                                     Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                     ToolTip.Tip="Drag to connect. Alt+Click to disconnect all." />
+            </DataTemplate>
+        </Setter>
+        <Setter Property="InputConnectorTemplate">
+            <DataTemplate DataType="nodes:ConnectorViewModel">
+                <controls:NodeInput IsConnected="{Binding IsConnected}"
+                                    Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                    ToolTip.Tip="Drag to connect. Alt+Click to disconnect all." />
+            </DataTemplate>
+        </Setter>
 
         <!-- Override NodifyM's Node template to fix hardcoded header/content padding -->
         <Setter Property="Template">
-            <ControlTemplate>
+            <ControlTemplate x:DataType="nodes:ComplexNodeViewModel">
                 <Border Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
@@ -37,22 +52,29 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Header: always visible, padding removed, ContentPresenter stretches -->
+                        <!-- Header -->
                         <Border Background="{TemplateBinding HeaderBrush}"
                                 CornerRadius="3 3 0 0"
-                                Grid.ColumnSpan="3"
                                 Padding="0">
-                            <ContentPresenter Name="HeaderContentPresenter"
-                                              Content="{TemplateBinding Header}"
-                                              HorizontalAlignment="Stretch" />
+                            <TextBlock Text="{Binding Title}"
+                                       Classes="caption semibold node-header"
+                                       Padding="6 4"
+                                       VerticalAlignment="Center" />
                         </Border>
 
+                        <!-- Expand/collapse strip: full node width, binds to DataContext -->
+                        <Button Grid.Row="1"
+                                Command="{Binding ToggleExpandCommand}"
+                                Content="{Binding ChevronGlyph}"
+                                Classes="node-expand-strip"
+                                HorizontalAlignment="Stretch" />
+
                         <!-- Body -->
-                        <Grid Grid.Row="1">
+                        <Grid Grid.Row="2">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -62,11 +84,17 @@
                                           VerticalAlignment="{TemplateBinding VerticalAlignment}"
                                           ItemTemplate="{TemplateBinding InputConnectorTemplate}"
                                           Focusable="False" />
-                            <!-- Content: 6px horizontal padding instead of 16px -->
                             <Border Grid.Column="1"
                                     Padding="6 4"
                                     Background="{TemplateBinding ContentBrush}">
-                                <ContentPresenter Content="{TemplateBinding Content}" />
+                                <Panel>
+                                    <TextBlock IsVisible="{Binding !IsExpanded}"
+                                               Text="{Binding Summary}"
+                                               TextTrimming="CharacterEllipsis"
+                                               Classes="caption node-content" />
+                                    <ContentPresenter IsVisible="{Binding IsExpanded}"
+                                                      Content="{TemplateBinding Content}" />
+                                </Panel>
                             </Border>
                             <ItemsControl ItemsSource="{TemplateBinding Output}"
                                           ItemTemplate="{TemplateBinding OutputConnectorTemplate}"
@@ -74,8 +102,6 @@
                                           Grid.Column="2"
                                           Focusable="False" />
                         </Grid>
-
-                        <!-- Footer: omitted (not used by blocks node) -->
                     </Grid>
                 </Border>
             </ControlTemplate>
@@ -107,33 +133,33 @@
             <Setter Property="FontSize" Value="11"/>
         </Style>
 
-        <!-- Full-width header toggle button: strip all Fluent chrome -->
-        <Style Selector="^ Button.node-header-toggle">
-            <Setter Property="Padding" Value="6 4"/>
+        <!-- Thin expand/collapse strip below the header -->
+        <Style Selector="^ Button.node-expand-strip">
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Template">
                 <ControlTemplate>
-                    <ContentPresenter Name="PART_ContentPresenter"
-                                      Content="{TemplateBinding Content}"
-                                      ContentTemplate="{TemplateBinding ContentTemplate}"
-                                      Padding="{TemplateBinding Padding}"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      Background="{TemplateBinding Background}" />
+                    <Border Name="PART_Border"
+                            Background="{TemplateBinding Background}"
+                            Height="8">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
                 </ControlTemplate>
             </Setter>
-            <Setter Property="Background" Value="Transparent"/>
-            <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style Selector="^:pointerover /template/ Border#PART_Border">
                 <Setter Property="Background" Value="{StaticResource OverlayHoverBrush}"/>
             </Style>
         </Style>
 
-        <!-- Chevron glyph (right-aligned in header) -->
+        <!-- Chevron glyph -->
         <Style Selector="^ TextBlock.node-chevron-glyph">
             <Setter Property="Foreground" Value="{StaticResource ForegroundMutedBrush}"/>
             <Setter Property="FontSize" Value="9"/>
-            <Setter Property="Margin" Value="8 0 0 0"/>
         </Style>
 
         <!-- Block type picker button -->
@@ -154,6 +180,84 @@
             <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
+        </Style>
+    </Style>
+
+    <!-- Simple Node (header + connectors, no expand strip) -->
+    <Style Selector="controls|Node.simple-node">
+        <Setter Property="Background" Value="{StaticResource BackgroundCardBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Width" Value="160"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="OutputConnectorTemplate">
+            <DataTemplate DataType="nodes:ConnectorViewModel">
+                <controls:NodeOutput IsConnected="{Binding IsConnected}"
+                                     Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                     ToolTip.Tip="Drag to connect. Alt+Click to disconnect all." />
+            </DataTemplate>
+        </Setter>
+        <Setter Property="InputConnectorTemplate">
+            <DataTemplate DataType="nodes:ConnectorViewModel">
+                <controls:NodeInput IsConnected="{Binding IsConnected}"
+                                    Anchor="{Binding Anchor, Mode=OneWayToSource}"
+                                    ToolTip.Tip="Drag to connect. Alt+Click to disconnect all." />
+            </DataTemplate>
+        </Setter>
+        <Setter Property="Template">
+            <ControlTemplate x:DataType="nodes:SimpleNodeViewModel">
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        Padding="{TemplateBinding Padding}"
+                        CornerRadius="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Border Background="{TemplateBinding HeaderBrush}"
+                                CornerRadius="3 3 0 0"
+                                Padding="0">
+                            <TextBlock Text="{Binding Title}"
+                                       Classes="caption semibold node-header"
+                                       Padding="6 4"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ItemsControl ItemsSource="{TemplateBinding Input}"
+                                          VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                          ItemTemplate="{TemplateBinding InputConnectorTemplate}"
+                                          Focusable="False" />
+                            <Border Grid.Column="1"
+                                    Padding="6 4"
+                                    Background="{TemplateBinding ContentBrush}">
+                                <ContentPresenter Content="{TemplateBinding Content}" />
+                            </Border>
+                            <ItemsControl ItemsSource="{TemplateBinding Output}"
+                                          ItemTemplate="{TemplateBinding OutputConnectorTemplate}"
+                                          VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                          Grid.Column="2"
+                                          Focusable="False" />
+                        </Grid>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^[IsSelected=True]">
+            <Setter Property="BorderBrush" Value="{StaticResource ForegroundAccentBrush}"/>
+        </Style>
+        <Style Selector="^[IsSelected=False]:pointerover">
+            <Setter Property="BorderBrush" Value="{StaticResource BorderAccentBrush}"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundCardHoverBrush}"/>
+        </Style>
+        <Style Selector="^ TextBlock.node-header">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundAccentBrush}"/>
         </Style>
     </Style>
     

@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:nodes="clr-namespace:Mdk.Hub.Features.NodeScript.Nodes"
+             x:Class="Mdk.Hub.Features.NodeScript.Nodes.BlocksNodeView"
+             x:DataType="nodes:BlocksNodeViewModel">
+
+    <StackPanel Spacing="3" Margin="0 4 0 0">
+        <Button Content="{Binding BlockTypeDisplay}"
+                Command="{Binding BrowseBlockTypeCommand}"
+                Classes="node-type-picker"
+                HorizontalAlignment="Stretch" />
+        <TextBox Text="{Binding Pattern, Mode=TwoWay}"
+                 Watermark="Name pattern..."
+                 Classes="node-field"
+                 ToolTip.Tip="Filter by block name. Supports wildcards: * matches any characters, ? matches one. E.g. [Reactor]* matches all blocks whose name starts with [Reactor]." />
+        <TextBox Text="{Binding GroupName, Mode=TwoWay}"
+                 Watermark="Group name..."
+                 Classes="node-field"
+                 ToolTip.Tip="Filter by block group name. Supports wildcards: * matches any characters, ? matches one. E.g. Power* matches all groups whose name starts with Power." />
+        <TextBox Text="{Binding CustomDataSection, Mode=TwoWay}"
+                 Watermark="INI section..."
+                 Classes="node-field"
+                 ToolTip.Tip="Filter blocks by the presence of a specific INI section in their Custom Data. Supports wildcards: * matches any characters, ? matches one. E.g. Config* matches blocks that have any section starting with Config." />
+        <TextBlock IsVisible="{Binding HasNoFilters}"
+                   Text="&#x26A0; Matches all blocks"
+                   Classes="caption node-warning" />
+    </StackPanel>
+
+</UserControl>

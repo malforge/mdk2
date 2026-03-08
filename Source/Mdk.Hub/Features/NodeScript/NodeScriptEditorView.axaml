@@ -9,6 +9,24 @@
              x:Class="Mdk.Hub.Features.NodeScript.NodeScriptEditorView"
              x:DataType="nodeScript:NodeScriptEditorViewModel">
 
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="nodes:BlocksNodeViewModel">
+            <controls:Node Location="{Binding Location, Mode=TwoWay}"
+                           Classes="complex-node"
+                           Output="{Binding Outputs}">
+                <nodes:BlocksNodeView />
+            </controls:Node>
+        </DataTemplate>
+        <DataTemplate DataType="nodes:CombineNodeViewModel">
+            <controls:Node Location="{Binding Location, Mode=TwoWay}"
+                           Classes="simple-node"
+                           Input="{Binding Inputs}"
+                           Output="{Binding Outputs}">
+                <nodes:CombineNodeView />
+            </controls:Node>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
     <UserControl.Styles>
         <StyleInclude Source="NodeEditorStyles.axaml" />
 
@@ -45,6 +63,8 @@
                 PointerPressed="OnCanvasPointerPressed"
                 ItemsSource="{Binding Nodes}"
                 Connections="{Binding Connections}"
+                PendingConnection="{Binding PendingConnection}"
+                DisconnectConnectorCommand="{Binding DisconnectConnectorCommand}"
                 Zoom="{Binding Zoom, Mode=TwoWay}">
 
                 <!-- Grid Lines -->
@@ -63,63 +83,28 @@
                     </DataTemplate>
                 </controls:NodifyEditor.GridLineTemplate>
 
-                <!-- Node Template -->
-                <controls:NodifyEditor.ItemTemplate>
-                    <DataTemplate DataType="nodes:BlocksNodeViewModel">
-                        <controls:Node Location="{Binding Location, Mode=TwoWay}"
-                                       Classes="blocks-node">
-                            <controls:Node.Header>
-                                <Button Command="{Binding ToggleExpandCommand}"
-                                        Classes="node-header-toggle"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Stretch">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="{Binding Title}"
-                                                   Classes="caption semibold node-header"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding ChevronGlyph}"
-                                                   Classes="caption node-chevron-glyph"
-                                                   VerticalAlignment="Center" />
-                                    </Grid>
-                                </Button>
-                            </controls:Node.Header>
-
-                            <!-- Collapsed: filter summary -->
-                            <Panel>
-                                <TextBlock IsVisible="{Binding !IsExpanded}"
-                                           Text="{Binding Summary}"
-                                           Classes="caption node-content" />
-
-                                <!-- Expanded: inline editor -->
-                                <StackPanel IsVisible="{Binding IsExpanded}"
-                                            Spacing="3"
-                                            Margin="0 4 0 0"
-                                            MinWidth="180">
-                                    <Button Content="{Binding BlockTypeDisplay}"
-                                            Command="{Binding BrowseBlockTypeCommand}"
-                                            Classes="node-type-picker"
-                                            HorizontalAlignment="Stretch" />
-                                    <TextBox Text="{Binding Pattern, Mode=TwoWay}"
-                                             Watermark="Name pattern…"
-                                             Classes="node-field"
-                                             ToolTip.Tip="Filter by block name. Supports wildcards: * matches any characters, ? matches one. E.g. [Reactor]* matches all blocks whose name starts with [Reactor]." />
-                                    <TextBox Text="{Binding GroupName, Mode=TwoWay}"
-                                             Watermark="Group name…"
-                                             Classes="node-field"
-                                             ToolTip.Tip="Filter by block group name. Supports wildcards: * matches any characters, ? matches one. E.g. Power* matches all groups whose name starts with Power." />
-                                    <TextBox Text="{Binding CustomDataSection, Mode=TwoWay}"
-                                             Watermark="INI section…"
-                                             Classes="node-field"
-                                             ToolTip.Tip="Filter blocks by the presence of a specific INI section in their Custom Data. Supports wildcards: * matches any characters, ? matches one. E.g. Config* matches blocks that have any section starting with Config." />
-                                    <TextBlock IsVisible="{Binding HasNoFilters}"
-                                               Text="⚠ Matches all blocks"
-                                               Classes="caption node-warning" />
-                                </StackPanel>
-                            </Panel>
-                        </controls:Node>
+                <!-- Connection line template -->
+                <controls:NodifyEditor.ConnectionTemplate>
+                    <DataTemplate DataType="nodeScript:ConnectionViewModel">
+                        <controls:Connection Source="{Binding Source.Anchor}"
+                                             Target="{Binding Target.Anchor}"
+                                             DisconnectCommand="{Binding DisconnectCommand}"
+                                             Stroke="{StaticResource ForegroundAccentBrush}"
+                                             StrokeThickness="1.5"
+                                             ToolTip.Tip="Alt+Click to remove this connection." />
                     </DataTemplate>
-                </controls:NodifyEditor.ItemTemplate>
+                </controls:NodifyEditor.ConnectionTemplate>
+
+                <!-- Pending (in-progress) connection preview -->
+                <controls:NodifyEditor.PendingConnectionTemplate>
+                    <DataTemplate DataType="nodeScript:PendingConnectionViewModel">
+                        <controls:PendingConnection StartedCommand="{Binding StartCommand}"
+                                                    CompletedCommand="{Binding FinishCommand}"
+                                                    Stroke="{StaticResource ForegroundAccentBrush}"
+                                                    StrokeThickness="1.5"
+                                                    StrokeDashArray="4,2" />
+                    </DataTemplate>
+                </controls:NodifyEditor.PendingConnectionTemplate>
 
             </controls:NodifyEditor>
 
@@ -144,3 +129,4 @@
     </Grid>
 
 </UserControl>
+
