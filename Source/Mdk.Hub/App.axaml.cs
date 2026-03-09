@@ -83,7 +83,7 @@ public class App : Application
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
-            EasterEggBehavior.Service = _container.Resolve<IEasterEggService>();
+            EasterEggBehavior.Service = new Lazy<IEasterEggService>(_container.Resolve<IEasterEggService>);
             var shellViewModel = _container.Resolve<ShellViewModel>();
             var shellWindow = _container.Resolve<ShellWindow>();
 
