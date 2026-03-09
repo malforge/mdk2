@@ -1,3 +1,6 @@
+v.2.2.2
+   - Fixed a crash on launch caused by the easter egg service being resolved before it was ready.
+
 v.2.2.1
    - Added FileInput control for picking files across settings.
    - Added a new input on Global Settings to choose which executable file will be called on clicking "Open in IDE"

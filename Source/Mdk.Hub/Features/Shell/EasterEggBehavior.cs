@@ -29,10 +29,10 @@ public static class EasterEggBehavior
     }
 
     /// <summary>
-    ///     Service used by <see cref="EasterEggAttachment" /> instances created via XAML attached property.
-    ///     Set by <see cref="App" /> during framework initialization.
+    ///     Lazy service factory used by <see cref="EasterEggAttachment" /> instances created via XAML attached property.
+    ///     Set by <see cref="App" /> during framework initialization. The value is resolved on first access.
     /// </summary>
-    internal static IEasterEggService? Service { get; set; }
+    internal static Lazy<IEasterEggService>? Service { get; set; }
 
     /// <summary>
     ///     Gets the value of the IsEnabled attached property for the specified control.
@@ -80,7 +80,7 @@ public static class EasterEggBehavior
         public EasterEggAttachment(Control host)
         {
             _host = host;
-            _service = Service ?? throw new InvalidOperationException("EasterEggBehavior.Service is not initialized.");
+            _service = Service?.Value ?? throw new InvalidOperationException("EasterEggBehavior.Service is not initialized.");
 
             // Subscribe to service changes
             _service.ActiveChanged += OnActiveChanged;

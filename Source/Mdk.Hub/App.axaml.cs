@@ -83,6 +83,7 @@ public class App : Application
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
             DisableAvaloniaDataAnnotationValidation();
+            EasterEggBehavior.Service = new Lazy<IEasterEggService>(_container.Resolve<IEasterEggService>);
             var shellViewModel = _container.Resolve<ShellViewModel>();
             var shellWindow = _container.Resolve<ShellWindow>();
 
@@ -109,8 +110,6 @@ public class App : Application
 
             var shell = _container.Resolve<IShell>();
             shell.Start(args);
-
-            EasterEggBehavior.Service = _container.Resolve<IEasterEggService>();
 
             logger.Info("MDK Hub application started successfully");
         }
