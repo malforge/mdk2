@@ -405,7 +405,7 @@ public class GlobalSettingsViewModel : OverlayModel
             if (sdkInstalled)
                 messages.Add($"✓ .NET SDK {sdkVersion} is installed");
             else
-                messages.Add("✗ .NET SDK 9.0 or later is not installed");
+                messages.Add("✗ .NET SDK 9.x is not installed (MDK requires .NET SDK 9 specifically)");
 
             // Check template package
             busyOverlay.Message = "Checking template package...";

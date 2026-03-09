@@ -225,7 +225,8 @@ public class UpdateManager : IUpdateManager
     }
 
     /// <summary>
-    ///     Checks whether the .NET SDK is installed and returns its version.
+    ///     Checks whether a .NET 9 SDK is installed and returns its version.
+    ///     MDK requires .NET SDK 9.x specifically; versions 10 and above are not compatible.
     /// </summary>
     public async Task<(bool IsInstalled, string? Version)> CheckDotNetSdkAsync()
     {
@@ -236,7 +237,7 @@ public class UpdateManager : IUpdateManager
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = "--version",
+                Arguments = "--list-sdks",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -253,14 +254,23 @@ public class UpdateManager : IUpdateManager
             var output = await process.StandardOutput.ReadToEndAsync();
             await process.WaitForExitAsync();
 
-            if (process.ExitCode == 0)
+            if (process.ExitCode != 0)
             {
-                var version = output.Trim();
-                _logger.Info($".NET SDK found: {version}");
-                return (true, version);
+                _logger.Info(".NET SDK not found");
+                return (false, null);
             }
 
-            _logger.Info(".NET SDK not found");
+            // Each line is of the form: "9.0.101 [/path/to/sdk]"
+            // Find the highest 9.x version installed
+            var bestVersion = ParseBestSdk9Version(output);
+
+            if (bestVersion != null)
+            {
+                _logger.Info($".NET SDK 9.x found: {bestVersion}");
+                return (true, bestVersion);
+            }
+
+            _logger.Info(".NET 9 SDK not found");
             return (false, null);
         }
         catch (Exception ex)
@@ -268,6 +278,35 @@ public class UpdateManager : IUpdateManager
             _logger.Error($"Failed to check .NET SDK: {ex.Message}");
             return (false, null);
         }
+    }
+
+    /// <summary>
+    ///     Parses the output of <c>dotnet --list-sdks</c> and returns the highest .NET 9.x version string found,
+    ///     or <c>null</c> if no 9.x SDK is listed.
+    /// </summary>
+    internal static string? ParseBestSdk9Version(string output)
+    {
+        string? bestVersion = null;
+        Version? bestParsedVersion = null;
+        foreach (var line in output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrEmpty(trimmed))
+                continue;
+
+            var spaceIndex = trimmed.IndexOf(' ');
+            var versionStr = spaceIndex >= 0 ? trimmed[..spaceIndex] : trimmed;
+
+            if (!Version.TryParse(versionStr, out var parsedVersion) || parsedVersion.Major != 9)
+                continue;
+
+            if (bestParsedVersion == null || parsedVersion > bestParsedVersion)
+            {
+                bestVersion = versionStr;
+                bestParsedVersion = parsedVersion;
+            }
+        }
+        return bestVersion;
     }
 
     /// <summary>
