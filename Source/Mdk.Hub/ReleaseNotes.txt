@@ -1,3 +1,6 @@
+v.2.2.3
+   - Prerequisites check now correctly requires .NET SDK 9.x specifically; .NET SDK 10 or later is no longer reported as compatible.
+
 v.2.2.2
    - Fixed a crash on launch caused by the easter egg service being resolved before it was ready.
 
