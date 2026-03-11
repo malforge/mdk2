@@ -257,11 +257,10 @@ Standard ignore patterns in `mdk.ini`:
 - `**/*.debug.cs` - Debug-only helper files
 
 ### Commit Message Guidelines
-Follow rules in `.hub-commit-message-rules.md`:
-- User-facing descriptions (no implementation details, file paths, or class names)
-- Focus on capabilities, not components
-- Short subject line (<72 chars), brief body (1-3 sentences)
-- Never list files changed or describe how new features work internally
+See the "Commit Message Guidelines (Developer-Focused)" section at the top of this file for rules.
+- Developer-facing: technical details and class names are welcome
+- Specific and concise: describe what changed and why, not how
+- Short subject line (<72 chars), optional body (2-3 sentences max)
 
 ### CI/CD Workflows
 - **buildwithartefacts.yml** - Builds tools for win-x64, then builds packages
