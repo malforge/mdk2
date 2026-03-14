@@ -1263,7 +1263,80 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
             .Where(ctor => ctor.Identifier.ValueText == "Derived")
             .ToArray();
 
-        Assert.That(derivedConstructors.Length, Is.GreaterThanOrEqualTo(1));
+        Assert.That(derivedConstructors, Has.Length.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenOneDerivedConstructorIsUsedAndBaseHasNoDefault_TrimsOtherUnusedConstructors()
+    {
+        const string testCode =
+            """
+            class Derived : Base
+            {
+                public Derived(int value)
+                    : base(value)
+                {
+                }
+
+                public Derived(string value)
+                    : base(value.Length)
+                {
+                }
+            }
+
+            class Base
+            {
+                public Base(int value)
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                readonly Derived _item = new Derived(1);
+
+                void Main()
+                {
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var derivedConstructors = root!.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .Where(ctor => ctor.Identifier.ValueText == "Derived")
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(derivedConstructors, Has.Length.EqualTo(1));
+            Assert.That(derivedConstructors[0].ParameterList.Parameters[0].Type!.ToString(), Is.EqualTo("int"));
+        });
     }
 
     [Test]

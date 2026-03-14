@@ -253,13 +253,17 @@ public class TypeTrimmer : IDocumentProcessor
                 }
 
                 // Identify unused constructors
+                var removableConstructors = new List<ConstructorTrimCandidate>();
                 var allConstructorDeclarations = rootNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
                 foreach (var constructorDeclaration in allConstructorDeclarations)
                 {
-                    if (constructorDeclaration.ShouldBePreserved())
-                        continue;
                     if (semanticModel.GetDeclaredSymbol(constructorDeclaration) is not IMethodSymbol ctorSymbol)
                         continue;
+                    if (constructorDeclaration.ShouldBePreserved())
+                        continue;
+                    if (!IsEligibleForRemoval(ctorSymbol))
+                        continue;
+
                     // If this is a parameterless ctor on a base type, derived types might call it implicitly
                     // We keep it when the type has derived classes to avoid trimming required base initialization.
                     if (ctorSymbol.Parameters.Length == 0
@@ -274,14 +278,11 @@ public class TypeTrimmer : IDocumentProcessor
                         if (hasDerivedTypes)
                             continue;
                     }
-                    // Generic new() constraints require a public parameterless ctor even without direct references.
+
+                    // Generic new() constraints require a public parameterless ctor even without direct ctor references.
                     if (ctorSymbol.Parameters.Length == 0
                         && ctorSymbol.ContainingType != null
                         && constructorConstrainedTypes.Contains(ctorSymbol.ContainingType))
-                        continue;
-                    if (MustPreserveConstructorWithoutAccessibleBaseDefault(ctorSymbol))
-                        continue;
-                    if (!IsEligibleForRemoval(ctorSymbol))
                         continue;
 
                     var references = (await SymbolFinder.FindReferencesAsync(ctorSymbol, solution)).ToList();
@@ -291,9 +292,38 @@ public class TypeTrimmer : IDocumentProcessor
                     if (references.Count > 0 || HasConstructorReferenceInCurrentTree(ctorSymbol, rootNode, semanticModel, constructorDeclaration))
                         continue;
 
-                    unusedMembers.Add(constructorDeclaration);
-                    var containingTypeName = ctorSymbol.ContainingType?.Name ?? "<unknown>";
-                    context.Console.Trace($"Unused constructor: {containingTypeName}({string.Join(", ", ctorSymbol.Parameters.Select(p => p.Type.Name))})");
+                    removableConstructors.Add(new ConstructorTrimCandidate(constructorDeclaration, ctorSymbol));
+                }
+
+                var removableConstructorsByType = new Dictionary<INamedTypeSymbol, List<ConstructorTrimCandidate>>(SymbolEqualityComparer.Default);
+                foreach (var removableConstructor in removableConstructors)
+                {
+                    var containingType = removableConstructor.Symbol.ContainingType;
+                    if (containingType == null)
+                        continue;
+                    if (!removableConstructorsByType.TryGetValue(containingType, out var constructors))
+                    {
+                        constructors = [];
+                        removableConstructorsByType[containingType] = constructors;
+                    }
+                    constructors.Add(removableConstructor);
+                }
+
+                foreach (var (containingType, constructors) in removableConstructorsByType)
+                {
+                    if (RequiresDeclaredConstructorBecauseBaseHasNoAccessibleDefault(containingType)
+                        && constructors.Count == containingType.InstanceConstructors.Count(ctor => !ctor.IsImplicitlyDeclared))
+                    {
+                        var constructorToKeep = ChooseConstructorToKeep(constructors);
+                        removableConstructors.Remove(constructorToKeep);
+                    }
+                }
+
+                foreach (var removableConstructor in removableConstructors)
+                {
+                    unusedMembers.Add(removableConstructor.Declaration);
+                    var containingTypeName = removableConstructor.Symbol.ContainingType?.Name ?? "<unknown>";
+                    context.Console.Trace($"Unused constructor: {containingTypeName}({string.Join(", ", removableConstructor.Symbol.Parameters.Select(p => p.Type.Name))})");
                 }
             }
 
@@ -428,6 +458,10 @@ public class TypeTrimmer : IDocumentProcessor
 
     static bool ConstructorLooksLikeReference(ObjectCreationExpressionSyntax objectCreation, SemanticModel semanticModel, IMethodSymbol symbol)
     {
+        var symbolInfo = semanticModel.GetSymbolInfo(objectCreation);
+        if (symbolInfo.Symbol != null || symbolInfo.CandidateSymbols.Length > 0)
+            return false;
+
         if (symbol.ContainingType == null
             || !TryGetTypeName(objectCreation.Type, out var typeName)
             || !string.Equals(typeName, symbol.ContainingType.Name, StringComparison.Ordinal)
@@ -499,20 +533,17 @@ public class TypeTrimmer : IDocumentProcessor
         }
     }
 
-    static bool MustPreserveConstructorWithoutAccessibleBaseDefault(IMethodSymbol ctorSymbol)
+    static bool RequiresDeclaredConstructorBecauseBaseHasNoAccessibleDefault(INamedTypeSymbol containingType)
     {
-        var containingType = ctorSymbol.ContainingType;
-        if (containingType == null)
-            return false;
-
-        var declaredInstanceConstructors = containingType.InstanceConstructors.Where(ctor => !ctor.IsImplicitlyDeclared).ToArray();
-        if (declaredInstanceConstructors.Length == 0
-            || !declaredInstanceConstructors.Any(ctor => SymbolEqualityComparer.Default.Equals(ctor, ctorSymbol)))
-            return false;
-
         var baseType = containingType.BaseType;
         return baseType != null && !HasAccessibleParameterlessConstructor(baseType, containingType);
     }
+
+    static ConstructorTrimCandidate ChooseConstructorToKeep(IEnumerable<ConstructorTrimCandidate> constructors)
+        => constructors
+            .OrderBy(candidate => candidate.Declaration.Span.Length)
+            .ThenBy(candidate => candidate.Symbol.Parameters.Length)
+            .First();
 
     static bool HasAccessibleParameterlessConstructor(INamedTypeSymbol type, INamedTypeSymbol accessingType)
         => type.SpecialType == SpecialType.System_Object
@@ -533,6 +564,8 @@ public class TypeTrimmer : IDocumentProcessor
             _ => false
         };
     }
+
+    sealed record ConstructorTrimCandidate(ConstructorDeclarationSyntax Declaration, IMethodSymbol Symbol);
 
     static bool IsEligibleForRemoval(VariableDeclaratorSyntax variableDeclarator, IFieldSymbol symbol)
     {
