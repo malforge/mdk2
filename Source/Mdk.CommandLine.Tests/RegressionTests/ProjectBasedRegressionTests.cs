@@ -23,6 +23,28 @@ public class ProjectBasedRegressionTests
     }
 
     [Test]
+    public async Task Pack_ForIssue90_KeepsTrailingPreservedCommentWithField()
+    {
+        var project = await PackProjectAsync("TestData/Issue90/Issue90.csproj");
+        var script = project.ProducedFiles.Single(f => f.Id == "script.cs").Content;
+
+        Assert.That(script, Is.Not.Null);
+
+        var fieldCommentIndex = script!.IndexOf("// This is comment after test var", StringComparison.Ordinal);
+        var mainIndex = script.IndexOf("Main(", StringComparison.Ordinal);
+        var fieldIndex = script.IndexOf("test = true", StringComparison.Ordinal);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(fieldCommentIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(fieldIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(mainIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(fieldCommentIndex, Is.LessThan(mainIndex));
+            Assert.That(fieldCommentIndex, Is.GreaterThan(fieldIndex));
+        });
+    }
+
+    [Test]
     public async Task Pack_ForIssue129_ShouldNotThrow()
     {
         var project = await PackProjectAsync("TestData/Issue129/Issue129.csproj");

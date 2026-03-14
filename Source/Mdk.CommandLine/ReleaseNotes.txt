@@ -2,6 +2,7 @@ v.2.2.2
     - Full minification now keeps enum and enum member names intact inside `#region mdk preserve`.
     - Full minification no longer breaks Whip's Scheduler by trimming required derived constructors.
     - Full minification now correctly keeps preserved unused members inside `#region mdk preserve`.
+    - Full minification now keeps preserved trailing comments with the correct partial-class members instead of moving them to the end of `Program`.
 
 v.2.2.1
     - Fixed "missing hub" web page showing the wrong way to disable the hub.
