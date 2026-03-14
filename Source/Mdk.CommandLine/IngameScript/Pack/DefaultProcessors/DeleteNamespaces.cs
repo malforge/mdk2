@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,12 +38,12 @@ public class DeleteNamespaces : IDocumentProcessor
         {
             var current = namespaceDeclarations[0];
             var unindentedMembers = new MemberDeclarationSyntax[current.Members.Count];
-            var preserveActive = false;
+            var regionStack = new Stack<bool>();
             for (var i = 0; i < current.Members.Count; i++)
             {
                 var member = current.Members[i];
-                if (ContainsPreserveRegionStart(member.GetLeadingTrivia().ToFullString()))
-                    preserveActive = true;
+                UpdateRegionStack(regionStack, member.GetLeadingTrivia());
+                var preserveActive = regionStack.Contains(true);
 
                 var unindentedMember = await UnindentAsync(member, IndentSize);
                 if (preserveActive)
@@ -53,12 +54,9 @@ public class DeleteNamespaces : IDocumentProcessor
 
                 unindentedMembers[i] = unindentedMember;
 
-                var trailingDirectives = member.GetTrailingTrivia().ToFullString();
+                UpdateRegionStack(regionStack, member.GetTrailingTrivia());
                 if (i == current.Members.Count - 1)
-                    trailingDirectives += current.CloseBraceToken.LeadingTrivia.ToFullString();
-
-                if (ContainsEndRegion(trailingDirectives))
-                    preserveActive = false;
+                    UpdateRegionStack(regionStack, current.CloseBraceToken.LeadingTrivia);
             }
 
             var newRoot = root.ReplaceNode(current, unindentedMembers);
@@ -95,8 +93,39 @@ public class DeleteNamespaces : IDocumentProcessor
         return (MemberDeclarationSyntax)(await CSharpSyntaxTree.ParseText(buffer.ToString()).GetRootAsync()).ChildNodes().First();
     }
 
-    static bool ContainsPreserveRegionStart(string text) => text.Contains("#region mdk preserve");
-    static bool ContainsEndRegion(string text) => text.Contains("#endregion");
+    static void UpdateRegionStack(Stack<bool> regionStack, SyntaxTriviaList triviaList)
+    {
+        foreach (var trivia in triviaList)
+        {
+            if (!trivia.HasStructure)
+                continue;
+
+            switch (trivia.GetStructure())
+            {
+                case RegionDirectiveTriviaSyntax regionDirective:
+                    regionStack.Push(IsPreserveRegion(regionDirective.ToFullString()));
+                    break;
+                case EndRegionDirectiveTriviaSyntax:
+                    if (regionStack.Count > 0)
+                        regionStack.Pop();
+                    break;
+            }
+        }
+    }
+
+    static bool IsPreserveRegion(string text)
+    {
+        var trimmed = text.Trim();
+        if (!trimmed.StartsWith("#region", System.StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var content = trimmed["#region".Length..].Trim();
+        if (content.StartsWith("mdk", System.StringComparison.OrdinalIgnoreCase))
+            content = content["mdk".Length..].Trim();
+
+        return content.Split([' '], System.StringSplitOptions.RemoveEmptyEntries)
+            .Any(part => string.Equals(part, "preserve", System.StringComparison.OrdinalIgnoreCase));
+    }
 
     sealed class PreserveAnnotator : CSharpSyntaxRewriter
     {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Runtime.CompilerServices;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
@@ -16,9 +17,10 @@ static class PreservedDeclarationRegistry
         var entries = Entries.GetOrCreateValue(context);
         foreach (var enumDeclaration in member.DescendantNodesAndSelf().OfType<EnumDeclarationSyntax>())
         {
-            entries.Add(GetEnumKey(enumDeclaration.Identifier.ValueText));
+            var enumName = GetEnumIdentity(enumDeclaration);
+            entries.Add(GetEnumKey(enumName));
             foreach (var enumMember in enumDeclaration.Members)
-                entries.Add(GetEnumMemberKey(enumMember.Identifier.ValueText));
+                entries.Add(GetEnumMemberKey(enumName, enumMember.Identifier.ValueText));
         }
     }
 
@@ -29,12 +31,34 @@ static class PreservedDeclarationRegistry
 
         return symbol switch
         {
-            INamedTypeSymbol { TypeKind: TypeKind.Enum } enumSymbol => entries.Contains(GetEnumKey(enumSymbol.Name)),
-            IFieldSymbol { ContainingType.TypeKind: TypeKind.Enum } enumMemberSymbol => entries.Contains(GetEnumMemberKey(enumMemberSymbol.Name)),
+            INamedTypeSymbol { TypeKind: TypeKind.Enum } enumSymbol => entries.Contains(GetEnumKey(enumSymbol.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName))),
+            IFieldSymbol { ContainingType.TypeKind: TypeKind.Enum } enumMemberSymbol => entries.Contains(GetEnumMemberKey(enumMemberSymbol.ContainingType.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName), enumMemberSymbol.Name)),
             _ => false
         };
     }
 
     static string GetEnumKey(string name) => $"enum:{name}";
-    static string GetEnumMemberKey(string name) => $"enum-member:{name}";
+    static string GetEnumMemberKey(string enumName, string memberName) => $"enum-member:{enumName}.{memberName}";
+
+    static string GetEnumIdentity(EnumDeclarationSyntax enumDeclaration)
+    {
+        var parts = new Stack<string>();
+        parts.Push(enumDeclaration.Identifier.ValueText);
+
+        for (var parent = enumDeclaration.Parent; parent != null; parent = parent.Parent)
+        {
+            if (parent is TypeDeclarationSyntax typeDeclaration)
+                parts.Push(typeDeclaration.Identifier.ValueText);
+        }
+
+        var builder = new StringBuilder();
+        while (parts.Count > 0)
+        {
+            if (builder.Length > 0)
+                builder.Append('.');
+            builder.Append(parts.Pop());
+        }
+
+        return builder.ToString();
+    }
 }

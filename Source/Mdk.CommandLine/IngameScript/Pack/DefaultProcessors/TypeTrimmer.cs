@@ -279,7 +279,7 @@ public class TypeTrimmer : IDocumentProcessor
                         && ctorSymbol.ContainingType != null
                         && constructorConstrainedTypes.Contains(ctorSymbol.ContainingType))
                         continue;
-                    if (MustPreserveSoleConstructorWithoutAccessibleBaseDefault(ctorSymbol))
+                    if (MustPreserveConstructorWithoutAccessibleBaseDefault(ctorSymbol))
                         continue;
                     if (!IsEligibleForRemoval(ctorSymbol))
                         continue;
@@ -499,17 +499,15 @@ public class TypeTrimmer : IDocumentProcessor
         }
     }
 
-    static bool MustPreserveSoleConstructorWithoutAccessibleBaseDefault(IMethodSymbol ctorSymbol)
+    static bool MustPreserveConstructorWithoutAccessibleBaseDefault(IMethodSymbol ctorSymbol)
     {
         var containingType = ctorSymbol.ContainingType;
         if (containingType == null)
             return false;
 
-        var declaredInstanceConstructors = containingType.InstanceConstructors
-            .Where(ctor => !ctor.IsImplicitlyDeclared)
-            .ToArray();
-        if (declaredInstanceConstructors.Length != 1
-            || !SymbolEqualityComparer.Default.Equals(declaredInstanceConstructors[0], ctorSymbol))
+        var declaredInstanceConstructors = containingType.InstanceConstructors.Where(ctor => !ctor.IsImplicitlyDeclared).ToArray();
+        if (declaredInstanceConstructors.Length == 0
+            || !declaredInstanceConstructors.Any(ctor => SymbolEqualityComparer.Default.Equals(ctor, ctorSymbol)))
             return false;
 
         var baseType = containingType.BaseType;

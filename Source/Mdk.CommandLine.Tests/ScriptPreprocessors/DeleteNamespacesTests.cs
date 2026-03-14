@@ -216,4 +216,60 @@ public class DeleteNamespacesTests : DocumentProcessorTests<DeleteNamespaces>
         Assert.That(preservedEnum.ShouldBePreserved(), Is.True);
         Assert.That(preservedEnum.Members.Single().ShouldBePreserved(), Is.True);
     }
+
+    [Test]
+    public async Task ProcessAsync_WhenPreserveRegionEndsBeforeNextMember_DoesNotLeakPreserveAnnotation()
+    {
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument",
+            """
+            namespace TestNamespace
+            {
+                #region mdk preserve
+                enum PreservedEnum
+                {
+                    Alpha
+                }
+                #endregion
+                enum UnpreservedEnum
+                {
+                    Alpha
+                }
+            }
+            """);
+        var processor = new DeleteNamespaces();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var enums = root!.DescendantNodes().OfType<EnumDeclarationSyntax>().ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(enums[0].Identifier.Text, Is.EqualTo("PreservedEnum"));
+            Assert.That(enums[0].ShouldBePreserved(), Is.True);
+            Assert.That(enums[1].Identifier.Text, Is.EqualTo("UnpreservedEnum"));
+            Assert.That(enums[1].ShouldBePreserved(), Is.False);
+            Assert.That(enums[1].Members.Single().ShouldBePreserved(), Is.False);
+        });
+    }
 }

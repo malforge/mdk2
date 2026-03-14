@@ -140,6 +140,81 @@ public class SymbolRenamerTests : DocumentProcessorTests<SymbolRenamer>
         });
     }
 
+    [Test]
+    public async Task ProcessAsync_WithPreservedAndUnpreservedEnums_SharedMemberNames_OnlyKeepsPreservedOne()
+    {
+        const string testCode =
+            """
+            namespace TestNamespace
+            {
+                #region mdk preserve
+                enum PreservedEnum
+                {
+                    Alpha
+                }
+                #endregion
+
+                enum OtherEnum
+                {
+                    Alpha
+                }
+
+                class Program
+                {
+                    void Test()
+                    {
+                        var a = PreservedEnum.Alpha;
+                        var b = OtherEnum.Alpha;
+                    }
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var deleteNamespaces = new DeleteNamespaces();
+        var processor = new SymbolRenamer();
+        var context = CreateContext();
+        var flattenedDocument = await deleteNamespaces.ProcessAsync(document, context);
+        var result = await processor.ProcessAsync(flattenedDocument, context);
+        var resultRoot = await result.GetSyntaxRootAsync();
+        var enums = resultRoot!.DescendantNodes().OfType<EnumDeclarationSyntax>().ToArray();
+        var preservedResult = enums.Single(e => e.Identifier.ValueText == "PreservedEnum");
+        var otherResult = enums.Single(e => e.Identifier.ValueText != "PreservedEnum");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(preservedResult.Members.Single().Identifier.ValueText, Is.EqualTo("Alpha"));
+            Assert.That(otherResult.Identifier.ValueText, Is.Not.EqualTo("OtherEnum"));
+            Assert.That(otherResult.Members.Single().Identifier.ValueText, Is.Not.EqualTo("Alpha"));
+        });
+    }
+
+    static PackContext CreateContext()
+    {
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Full,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+
+        return new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+    }
+
 //     [Test]
 //     public async Task Regression__InheritedSymbolDidNotRename()
 //     {
