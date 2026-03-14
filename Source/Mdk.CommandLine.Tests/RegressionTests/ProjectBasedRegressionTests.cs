@@ -93,8 +93,11 @@ public class ProjectBasedRegressionTests
             };
             using var process = System.Diagnostics.Process.Start(startInfo);
             Assert.That(process, Is.Not.Null);
-            process!.WaitForExit();
-            Assert.That(process.ExitCode, Is.EqualTo(0), await process.StandardError.ReadToEndAsync());
+            var standardOutputTask = process!.StandardOutput.ReadToEndAsync();
+            var standardErrorTask = process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+            await Task.WhenAll(standardOutputTask, standardErrorTask);
+            Assert.That(process.ExitCode, Is.EqualTo(0), $"{standardErrorTask.Result}{standardOutputTask.Result}");
         }
 
         var peripherals = Program.Peripherals.Create()
