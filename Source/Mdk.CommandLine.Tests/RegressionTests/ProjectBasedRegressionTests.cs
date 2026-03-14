@@ -23,7 +23,6 @@ public class ProjectBasedRegressionTests
     }
 
     [Test]
-    [Ignore("Issue #130 is still open. Enable this regression once preserve regions correctly keep enum names under full minification.")]
     public async Task Pack_ForIssue130_PreservesEnumNamesInsidePreserveRegion()
     {
         var project = await PackProjectAsync("TestData/Issue130/Issue130.csproj");

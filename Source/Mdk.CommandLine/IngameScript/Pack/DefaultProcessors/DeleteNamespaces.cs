@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -23,6 +23,7 @@ public class DeleteNamespaces : IDocumentProcessor
 {
     // The default indent size. _Maybe_ we will make this configurable in the future.
     const int IndentSize = 4;
+    static readonly SyntaxAnnotation PreserveAnnotation = new("MDK", "preserve");
 
     /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext metadata)
@@ -35,8 +36,30 @@ public class DeleteNamespaces : IDocumentProcessor
         while (namespaceDeclarations.Length > 0)
         {
             var current = namespaceDeclarations[0];
+            var unindentedMembers = new MemberDeclarationSyntax[current.Members.Count];
+            var preserveActive = false;
+            for (var i = 0; i < current.Members.Count; i++)
+            {
+                var member = current.Members[i];
+                if (ContainsPreserveRegionStart(member.GetLeadingTrivia().ToFullString()))
+                    preserveActive = true;
 
-            var unindentedMembers = await Task.WhenAll(current.Members.Select(m => UnindentAsync(m, IndentSize)));
+                var unindentedMember = await UnindentAsync(member, IndentSize);
+                if (preserveActive)
+                {
+                    PreservedDeclarationRegistry.Register(member, metadata);
+                    unindentedMember = (MemberDeclarationSyntax)PreserveAnnotator.Instance.Visit(unindentedMember)!;
+                }
+
+                unindentedMembers[i] = unindentedMember;
+
+                var trailingDirectives = member.GetTrailingTrivia().ToFullString();
+                if (i == current.Members.Count - 1)
+                    trailingDirectives += current.CloseBraceToken.LeadingTrivia.ToFullString();
+
+                if (ContainsEndRegion(trailingDirectives))
+                    preserveActive = false;
+            }
 
             var newRoot = root.ReplaceNode(current, unindentedMembers);
             root = newRoot;
@@ -63,7 +86,6 @@ public class DeleteNamespaces : IDocumentProcessor
         var needsEndOfLine = endOfLine < text.Length && text[endOfLine] == '\n';
 
         var alteredSpan = new TextSpan(startOfLine, endOfLine - startOfLine);
-        
         buffer.Append(text.ToString(alteredSpan).TrimEnd());
         if (needsEndOfLine)
             buffer.Append('\n');
@@ -71,5 +93,25 @@ public class DeleteNamespaces : IDocumentProcessor
             .Unindent(indentation);
 
         return (MemberDeclarationSyntax)(await CSharpSyntaxTree.ParseText(buffer.ToString()).GetRootAsync()).ChildNodes().First();
+    }
+
+    static bool ContainsPreserveRegionStart(string text) => text.Contains("#region mdk preserve");
+    static bool ContainsEndRegion(string text) => text.Contains("#endregion");
+
+    sealed class PreserveAnnotator : CSharpSyntaxRewriter
+    {
+        public static PreserveAnnotator Instance { get; } = new();
+
+        public override SyntaxNode? Visit(SyntaxNode? node)
+        {
+            var visited = base.Visit(node);
+            return visited?.WithAdditionalAnnotations(PreserveAnnotation);
+        }
+
+        public override SyntaxToken VisitToken(SyntaxToken token)
+            => base.VisitToken(token).WithAdditionalAnnotations(PreserveAnnotation);
+
+        public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
+            => base.VisitTrivia(trivia).WithAdditionalAnnotations(PreserveAnnotation);
     }
 }

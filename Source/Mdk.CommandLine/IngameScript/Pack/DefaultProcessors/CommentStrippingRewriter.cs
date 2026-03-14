@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Simplification;
 
 namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
@@ -89,12 +88,10 @@ class CommentStrippingRewriter() : ProgramRewriter(true)
     /// <exception cref="InvalidOperationException"></exception>
     public async Task<Document> ProcessAsync(Document document)
     {
-        var newDocument = await Simplifier.ReduceAsync(document).ConfigureAwait(false);
-
-        var root = await newDocument.GetSyntaxRootAsync();
+        var root = await document.GetSyntaxRootAsync().ConfigureAwait(false);
         root = Visit(root);
         if (root is null)
             throw new InvalidOperationException("Failed to rewrite the script.");
-        return newDocument.WithSyntaxRoot(root);
+        return document.WithSyntaxRoot(root);
     }
 }
