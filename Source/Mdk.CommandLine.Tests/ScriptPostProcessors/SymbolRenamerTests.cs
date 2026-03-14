@@ -70,6 +70,76 @@ public class SymbolRenamerTests : DocumentProcessorTests<SymbolRenamer>
         Assert.That(orderByIdentifier, Is.EqualTo(fromIdentifier));
     }
 
+    [Test]
+    public async Task ProcessAsync_WhenSymbolProtectionAnnotatesProgram_KeepsProtectedNames()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                public Program()
+                {
+                }
+
+                public void Main()
+                {
+                    Helper();
+                }
+
+                public void Save()
+                {
+                }
+
+                void Helper()
+                {
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var annotator = new SymbolProtectionAnnotator();
+        var processor = new SymbolRenamer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Full,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var protectedDocument = await annotator.ProcessAsync(document, context);
+        var result = await processor.ProcessAsync(protectedDocument, context);
+        var root = await result.GetSyntaxRootAsync();
+
+        Assert.That(root, Is.Not.Null);
+        var programClass = root!.DescendantNodes().OfType<ClassDeclarationSyntax>().Single();
+        var constructor = programClass.Members.OfType<ConstructorDeclarationSyntax>().Single();
+        var methods = programClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(programClass.Identifier.ValueText, Is.EqualTo("Program"));
+            Assert.That(constructor.Identifier.ValueText, Is.EqualTo("Program"));
+            Assert.That(methods.Single(m => m.Identifier.ValueText == "Main"), Is.Not.Null);
+            Assert.That(methods.Single(m => m.Identifier.ValueText == "Save"), Is.Not.Null);
+            Assert.That(methods.Any(m => m.Identifier.ValueText == "Helper"), Is.False);
+        });
+    }
+
 //     [Test]
 //     public async Task Regression__InheritedSymbolDidNotRename()
 //     {

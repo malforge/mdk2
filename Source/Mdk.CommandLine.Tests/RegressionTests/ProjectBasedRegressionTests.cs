@@ -1,6 +1,9 @@
-﻿using FakeItEasy;
+﻿using System.Linq;
+using FakeItEasy;
 using Mdk.CommandLine;
 using Mdk.CommandLine.Shared.Api;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.RegressionTests;
@@ -13,7 +16,40 @@ public class ProjectBasedRegressionTests
     [TestCase("TestData/Issue98/Issue98.csproj")]
     public async Task Pack_ForProject_ShouldNotThrow(string path)
     {
-        // Ensure the test project dependencies are restored
+        var project = await PackProjectAsync(path);
+        Assert.That(project.Name, Is.Not.Null.Or.Empty);
+        Assert.That(project.ProducedFiles, Is.Not.Empty);
+        Assert.That(project.ProducedFiles.Count(f => f.Id == "script.cs"), Is.EqualTo(1));
+    }
+
+    [Test]
+    [Ignore("Issue #130 is still open. Enable this regression once preserve regions correctly keep enum names under full minification.")]
+    public async Task Pack_ForIssue130_PreservesEnumNamesInsidePreserveRegion()
+    {
+        var project = await PackProjectAsync("TestData/Issue130/Issue130.csproj");
+        var script = project.ProducedFiles.Single(f => f.Id == "script.cs").Content;
+
+        Assert.That(script, Is.Not.Null);
+
+        var syntaxRoot = CSharpSyntaxTree.ParseText(script!).GetRoot();
+        var enumDeclaration = syntaxRoot.DescendantNodes().OfType<EnumDeclarationSyntax>().Single();
+        var enumMembers = enumDeclaration.Members.Select(m => m.Identifier.ValueText).ToArray();
+        var enumReferences = syntaxRoot.DescendantNodes()
+            .OfType<MemberAccessExpressionSyntax>()
+            .Where(m => m.Expression is IdentifierNameSyntax { Identifier.ValueText: "Beans" })
+            .Select(m => m.Name.Identifier.ValueText)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(enumDeclaration.Identifier.ValueText, Is.EqualTo("Beans"));
+            Assert.That(enumMembers, Is.EqualTo(new[] { "Pinto", "Kidney", "Red" }));
+            Assert.That(enumReferences, Is.EqualTo(new[] { "Pinto", "Kidney" }));
+        });
+    }
+
+    static async Task<PackedProject> PackProjectAsync(string path)
+    {
         var fullPath = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
         if (File.Exists(fullPath))
         {
@@ -26,10 +62,12 @@ public class ProjectBasedRegressionTests
                 RedirectStandardError = true,
                 CreateNoWindow = true
             };
-            var process = System.Diagnostics.Process.Start(startInfo);
-            process?.WaitForExit();
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            Assert.That(process, Is.Not.Null);
+            process!.WaitForExit();
+            Assert.That(process.ExitCode, Is.EqualTo(0), await process.StandardError.ReadToEndAsync());
         }
-        
+
         var peripherals = Program.Peripherals.Create()
             .WithInteraction(A.Fake<IInteraction>())
             .WithHttpClient(A.Fake<IHttpClient>(o => o.Strict()))
@@ -44,9 +82,6 @@ public class ProjectBasedRegressionTests
         var result = await Program.RunAsync(peripherals);
         Assert.That(result.HasValue, Is.True);
         Assert.That(result!.Value.Length, Is.EqualTo(1));
-        var project = result.Value[0];
-        Assert.That(project.Name, Is.Not.Null.Or.Empty);
-        Assert.That(project.ProducedFiles, Is.Not.Empty);
-        Assert.That(project.ProducedFiles.Count(f => f.Id == "script.cs"), Is.EqualTo(1));
+        return result.Value[0];
     }
 }

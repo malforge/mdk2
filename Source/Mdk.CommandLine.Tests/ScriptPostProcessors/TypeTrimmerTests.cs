@@ -6,6 +6,7 @@ using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.ScriptPostProcessors;
@@ -1239,5 +1240,71 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var actual = await result.GetTextAsync();
 
         Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    [Ignore("Preserve regions should keep unused members from being trimmed. Enable this once TypeTrimmer respects preserve annotations for methods.")]
+    public async Task ProcessAsync_WithPreservedUnusedMembers_KeepsOnlyPreservedOnes()
+    {
+        const string testCode =
+            """
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                }
+
+                #region mdk preserve
+                void PreservedUnusedMethod()
+                {
+                }
+                #endregion
+
+                void TrimmedUnusedMethod()
+                {
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var regionAnnotator = new RegionAnnotator();
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var annotatedDocument = await regionAnnotator.ProcessAsync(document, context);
+        var result = await processor.ProcessAsync(annotatedDocument, context);
+        var root = await result.GetSyntaxRootAsync();
+
+        Assert.That(root, Is.Not.Null);
+        var methodNames = root!.DescendantNodes().OfType<MethodDeclarationSyntax>()
+            .Select(m => m.Identifier.ValueText)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(methodNames, Does.Contain("Main"));
+            Assert.That(methodNames, Does.Contain("PreservedUnusedMethod"));
+            Assert.That(methodNames, Does.Not.Contain("TrimmedUnusedMethod"));
+        });
     }
 }
