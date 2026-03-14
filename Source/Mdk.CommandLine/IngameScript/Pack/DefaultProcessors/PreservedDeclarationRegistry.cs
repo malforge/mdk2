@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
 static class PreservedDeclarationRegistry
 {
-    static readonly ConditionalWeakTable<IPackContext, HashSet<string>> Entries = new();
+    static readonly ConditionalWeakTable<IPackContext, ConcurrentDictionary<string, byte>> Entries = new();
 
     public static void Register(MemberDeclarationSyntax member, IPackContext context)
     {
@@ -18,9 +19,9 @@ static class PreservedDeclarationRegistry
         foreach (var enumDeclaration in member.DescendantNodesAndSelf().OfType<EnumDeclarationSyntax>())
         {
             var enumName = GetEnumIdentity(enumDeclaration);
-            entries.Add(GetEnumKey(enumName));
+            entries.TryAdd(GetEnumKey(enumName), 0);
             foreach (var enumMember in enumDeclaration.Members)
-                entries.Add(GetEnumMemberKey(enumName, enumMember.Identifier.ValueText));
+                entries.TryAdd(GetEnumMemberKey(enumName, enumMember.Identifier.ValueText), 0);
         }
     }
 
@@ -31,8 +32,8 @@ static class PreservedDeclarationRegistry
 
         return symbol switch
         {
-            INamedTypeSymbol { TypeKind: TypeKind.Enum } enumSymbol => entries.Contains(GetEnumKey(enumSymbol.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName))),
-            IFieldSymbol { ContainingType.TypeKind: TypeKind.Enum } enumMemberSymbol => entries.Contains(GetEnumMemberKey(enumMemberSymbol.ContainingType.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName), enumMemberSymbol.Name)),
+            INamedTypeSymbol { TypeKind: TypeKind.Enum } enumSymbol => entries.ContainsKey(GetEnumKey(enumSymbol.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName))),
+            IFieldSymbol { ContainingType.TypeKind: TypeKind.Enum } enumMemberSymbol => entries.ContainsKey(GetEnumMemberKey(enumMemberSymbol.ContainingType.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName), enumMemberSymbol.Name)),
             _ => false
         };
     }
