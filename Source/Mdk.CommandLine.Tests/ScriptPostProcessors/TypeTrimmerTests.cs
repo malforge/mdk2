@@ -1395,7 +1395,6 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
-    [Ignore("Preserve regions should keep unused members from being trimmed. Enable this once TypeTrimmer respects preserve annotations for methods.")]
     public async Task ProcessAsync_WithPreservedUnusedMembers_KeepsOnlyPreservedOnes()
     {
         const string testCode =
@@ -1444,6 +1443,10 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         );
 
         var annotatedDocument = await regionAnnotator.ProcessAsync(document, context);
+        var annotatedRoot = await annotatedDocument.GetSyntaxRootAsync();
+        var annotatedPreservedMethod = annotatedRoot!.DescendantNodes()
+            .OfType<MethodDeclarationSyntax>()
+            .Single(method => method.Identifier.ValueText == "PreservedUnusedMethod");
         var result = await processor.ProcessAsync(annotatedDocument, context);
         var root = await result.GetSyntaxRootAsync();
 
@@ -1454,6 +1457,7 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
 
         Assert.Multiple(() =>
         {
+            Assert.That(annotatedPreservedMethod.ShouldBePreserved(), Is.True);
             Assert.That(methodNames, Does.Contain("Main"));
             Assert.That(methodNames, Does.Contain("PreservedUnusedMethod"));
             Assert.That(methodNames, Does.Not.Contain("TrimmedUnusedMethod"));

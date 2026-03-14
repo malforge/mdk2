@@ -71,6 +71,9 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
             {
             #region mdk preserve
             public string AnnotatedProperty { get; set; }
+            void AnnotatedMethod()
+            {
+            }
             #endregion
             }
             """);
@@ -116,6 +119,9 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
         Assert.That(annotations, Is.Empty);
         var annotatedProperty = classWithInternalRegion.DescendantNodes().OfType<PropertyDeclarationSyntax>().First(p => p.Identifier.Text == "AnnotatedProperty");
         annotations = annotatedProperty.GetAnnotations("MDK");
+        Assert.That(annotations, Is.Not.Empty);
+        var annotatedMethod = classWithInternalRegion.DescendantNodes().OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "AnnotatedMethod");
+        annotations = annotatedMethod.GetAnnotations("MDK");
         Assert.That(annotations, Is.Not.Empty);
     }
 
