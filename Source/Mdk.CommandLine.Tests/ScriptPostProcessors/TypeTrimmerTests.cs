@@ -1041,6 +1041,158 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenMethodUsesOptionalParametersAndNestedConstructor_KeepsBoth()
+    {
+        const string testCode =
+            """
+            using System;
+
+            class Scheduler
+            {
+                public void AddScheduledAction(Action action, double updateFrequency, bool disposeAfterRun = false, double timeOffset = 0)
+                {
+                    var scheduledAction = new QueuedAction(action, updateFrequency, disposeAfterRun);
+                }
+
+                public void AddScheduledAction(QueuedAction scheduledAction)
+                {
+                }
+            }
+
+            class QueuedAction : ScheduledAction
+            {
+                public QueuedAction(Action action, double runInterval, bool removeAfterRun = false)
+                    : base(action, 1.0 / runInterval, removeAfterRun, 0)
+                {
+                }
+            }
+
+            class ScheduledAction
+            {
+                public ScheduledAction(Action action, double runFrequency, bool removeAfterRun = false, double timeOffset = 0)
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                readonly Scheduler _scheduler = new Scheduler();
+
+                void Main()
+                {
+                    _scheduler.AddScheduledAction(() => { }, 0.1);
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var addScheduledActionOverload = root!.DescendantNodes()
+            .OfType<MethodDeclarationSyntax>()
+            .SingleOrDefault(method => method.Identifier.ValueText == "AddScheduledAction"
+                && method.ParameterList.Parameters.Count == 4);
+        var queuedActionConstructor = root.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .SingleOrDefault(ctor => ctor.Identifier.ValueText == "QueuedAction"
+                && ctor.ParameterList.Parameters.Count == 3);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(addScheduledActionOverload, Is.Not.Null);
+            Assert.That(queuedActionConstructor, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenDerivedTypeHasOnlyConstructorAndBaseHasNoDefault_PreservesConstructor()
+    {
+        const string testCode =
+            """
+            using System.Collections.Generic;
+
+            class Derived : Base
+            {
+                public Derived(int value)
+                    : base(value)
+                {
+                }
+            }
+
+            class Base
+            {
+                public Base(int value)
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                readonly Queue<Derived> _items = new Queue<Derived>();
+
+                void Main()
+                {
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var derivedConstructor = root!.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .SingleOrDefault(ctor => ctor.Identifier.ValueText == "Derived");
+
+        Assert.That(derivedConstructor, Is.Not.Null);
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenStaticFieldInitializerHasSideEffects_PreservesField()
     {
         const string testCode =

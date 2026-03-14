@@ -245,7 +245,7 @@ public class TypeTrimmer : IDocumentProcessor
                     references.RemoveAll(reference => !reference.Locations.Any());
                     references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, methodDeclaration, location)));
 
-                    if (references.Count > 0)
+                    if (references.Count > 0 || HasMethodReferenceInCurrentTree(methodSymbol, rootNode, semanticModel, methodDeclaration))
                         continue;
 
                     unusedMembers.Add(methodDeclaration);
@@ -279,6 +279,8 @@ public class TypeTrimmer : IDocumentProcessor
                         && ctorSymbol.ContainingType != null
                         && constructorConstrainedTypes.Contains(ctorSymbol.ContainingType))
                         continue;
+                    if (MustPreserveSoleConstructorWithoutAccessibleBaseDefault(ctorSymbol))
+                        continue;
                     if (!IsEligibleForRemoval(ctorSymbol))
                         continue;
 
@@ -286,7 +288,7 @@ public class TypeTrimmer : IDocumentProcessor
                     references.RemoveAll(reference => !reference.Locations.Any());
                     references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, constructorDeclaration, location)));
 
-                    if (references.Count > 0)
+                    if (references.Count > 0 || HasConstructorReferenceInCurrentTree(ctorSymbol, rootNode, semanticModel, constructorDeclaration))
                         continue;
 
                     unusedMembers.Add(constructorDeclaration);
@@ -366,6 +368,159 @@ public class TypeTrimmer : IDocumentProcessor
         var referenceNode = root.FindNode(referenceLocation.Location.SourceSpan);
         return referenceNode.AncestorsAndSelf().Any(node => node == declarationNode);
     }
+
+    static bool HasMethodReferenceInCurrentTree(IMethodSymbol symbol, SyntaxNode root, SemanticModel semanticModel, SyntaxNode declarationNode)
+        => root.DescendantNodes()
+            .OfType<InvocationExpressionSyntax>()
+            .Where(invocation => !invocation.AncestorsAndSelf().Any(node => node == declarationNode))
+            .Any(invocation => SymbolInfoMatches(semanticModel.GetSymbolInfo(invocation), symbol)
+                || SymbolInfoMatches(semanticModel.GetSymbolInfo(invocation.Expression), symbol)
+                || InvocationLooksLikeMethodReference(invocation, semanticModel, symbol));
+
+    static bool HasConstructorReferenceInCurrentTree(IMethodSymbol symbol, SyntaxNode root, SemanticModel semanticModel, SyntaxNode declarationNode)
+        => root.DescendantNodes()
+            .Where(node => !node.AncestorsAndSelf().Any(ancestor => ancestor == declarationNode))
+            .Any(node => node switch
+            {
+                ObjectCreationExpressionSyntax objectCreation => SymbolInfoMatches(semanticModel.GetSymbolInfo(objectCreation), symbol)
+                    || ConstructorLooksLikeReference(objectCreation, semanticModel, symbol),
+                ConstructorInitializerSyntax constructorInitializer => SymbolInfoMatches(semanticModel.GetSymbolInfo(constructorInitializer), symbol),
+                _ => false
+            });
+
+    static bool SymbolInfoMatches(SymbolInfo symbolInfo, ISymbol target)
+    {
+        if (SymbolMatches(symbolInfo.Symbol, target))
+            return true;
+
+        foreach (var candidate in symbolInfo.CandidateSymbols)
+        {
+            if (SymbolMatches(candidate, target))
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool SymbolMatches(ISymbol? candidate, ISymbol target)
+    {
+        if (candidate == null)
+            return false;
+
+        return SymbolEqualityComparer.Default.Equals(NormalizeSymbol(candidate), NormalizeSymbol(target));
+    }
+
+    static ISymbol NormalizeSymbol(ISymbol symbol) => symbol switch
+    {
+        IMethodSymbol { ReducedFrom: not null } methodSymbol => methodSymbol.ReducedFrom.OriginalDefinition,
+        _ => symbol.OriginalDefinition
+    };
+
+    static bool InvocationLooksLikeMethodReference(InvocationExpressionSyntax invocation, SemanticModel semanticModel, IMethodSymbol symbol)
+    {
+        if (!TryGetInvokedName(invocation.Expression, out var invokedName)
+            || !string.Equals(invokedName, symbol.Name, StringComparison.Ordinal)
+            || !ArgumentsCanBind(invocation.ArgumentList.Arguments.Count, symbol))
+            return false;
+
+        return ReceiverTypeMatches(invocation.Expression, semanticModel, symbol.ContainingType);
+    }
+
+    static bool ConstructorLooksLikeReference(ObjectCreationExpressionSyntax objectCreation, SemanticModel semanticModel, IMethodSymbol symbol)
+    {
+        if (symbol.ContainingType == null
+            || !TryGetTypeName(objectCreation.Type, out var typeName)
+            || !string.Equals(typeName, symbol.ContainingType.Name, StringComparison.Ordinal)
+            || !ArgumentsCanBind(objectCreation.ArgumentList?.Arguments.Count ?? 0, symbol))
+            return false;
+
+        var createdType = semanticModel.GetTypeInfo(objectCreation).Type;
+        return createdType == null || SymbolEqualityComparer.Default.Equals(createdType, symbol.ContainingType);
+    }
+
+    static bool ReceiverTypeMatches(ExpressionSyntax expression, SemanticModel semanticModel, INamedTypeSymbol? targetType)
+    {
+        if (targetType == null)
+            return false;
+
+        if (expression is not MemberAccessExpressionSyntax memberAccess)
+            return true;
+
+        var receiverType = semanticModel.GetTypeInfo(memberAccess.Expression).Type;
+        return receiverType == null || SymbolEqualityComparer.Default.Equals(receiverType, targetType);
+    }
+
+    static bool ArgumentsCanBind(int argumentCount, IMethodSymbol symbol)
+    {
+        var minimum = symbol.Parameters.Count(p => !p.IsOptional && !p.IsParams);
+        if (argumentCount < minimum)
+            return false;
+
+        if (symbol.Parameters.Length == 0)
+            return argumentCount == 0;
+
+        return symbol.Parameters[^1].IsParams || argumentCount <= symbol.Parameters.Length;
+    }
+
+    static bool TryGetInvokedName(ExpressionSyntax expression, out string? name)
+    {
+        switch (expression)
+        {
+            case MemberAccessExpressionSyntax memberAccess:
+                name = memberAccess.Name.Identifier.ValueText;
+                return true;
+            case IdentifierNameSyntax identifierName:
+                name = identifierName.Identifier.ValueText;
+                return true;
+            case GenericNameSyntax genericName:
+                name = genericName.Identifier.ValueText;
+                return true;
+            default:
+                name = null;
+                return false;
+        }
+    }
+
+    static bool TryGetTypeName(TypeSyntax type, out string? name)
+    {
+        switch (type)
+        {
+            case IdentifierNameSyntax identifierName:
+                name = identifierName.Identifier.ValueText;
+                return true;
+            case GenericNameSyntax genericName:
+                name = genericName.Identifier.ValueText;
+                return true;
+            case QualifiedNameSyntax qualifiedName:
+                return TryGetTypeName(qualifiedName.Right, out name);
+            default:
+                name = null;
+                return false;
+        }
+    }
+
+    static bool MustPreserveSoleConstructorWithoutAccessibleBaseDefault(IMethodSymbol ctorSymbol)
+    {
+        var containingType = ctorSymbol.ContainingType;
+        if (containingType == null)
+            return false;
+
+        var declaredInstanceConstructors = containingType.InstanceConstructors
+            .Where(ctor => !ctor.IsImplicitlyDeclared)
+            .ToArray();
+        if (declaredInstanceConstructors.Length != 1
+            || !SymbolEqualityComparer.Default.Equals(declaredInstanceConstructors[0], ctorSymbol))
+            return false;
+
+        var baseType = containingType.BaseType;
+        return baseType != null && !HasAccessibleParameterlessConstructor(baseType);
+    }
+
+    static bool HasAccessibleParameterlessConstructor(INamedTypeSymbol type)
+        => type.SpecialType == SpecialType.System_Object
+           || type.InstanceConstructors.Any(ctor =>
+            ctor.Parameters.Length == 0
+            && ctor.DeclaredAccessibility != Accessibility.Private);
 
     static bool IsEligibleForRemoval(VariableDeclaratorSyntax variableDeclarator, IFieldSymbol symbol)
     {

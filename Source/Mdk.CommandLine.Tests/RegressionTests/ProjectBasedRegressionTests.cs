@@ -23,6 +23,14 @@ public class ProjectBasedRegressionTests
     }
 
     [Test]
+    public async Task Pack_ForIssue129_ShouldNotThrow()
+    {
+        var project = await PackProjectAsync("TestData/Issue129/Issue129.csproj");
+        Assert.That(project.Name, Is.Not.Null.Or.Empty);
+        Assert.That(project.ProducedFiles.Count(f => f.Id == "script.cs"), Is.EqualTo(1));
+    }
+
+    [Test]
     public async Task Pack_ForIssue130_PreservesEnumNamesInsidePreserveRegion()
     {
         var project = await PackProjectAsync("TestData/Issue130/Issue130.csproj");
