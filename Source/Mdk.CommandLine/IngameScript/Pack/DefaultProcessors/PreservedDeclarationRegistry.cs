@@ -49,7 +49,7 @@ static class PreservedDeclarationRegistry
         for (var parent = enumDeclaration.Parent; parent != null; parent = parent.Parent)
         {
             if (parent is TypeDeclarationSyntax typeDeclaration)
-                parts.Push(typeDeclaration.Identifier.ValueText);
+                parts.Push($"{typeDeclaration.Identifier}{typeDeclaration.TypeParameterList}");
         }
 
         var builder = new StringBuilder();

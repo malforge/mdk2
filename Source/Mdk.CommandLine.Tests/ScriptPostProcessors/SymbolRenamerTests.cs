@@ -191,6 +191,62 @@ public class SymbolRenamerTests : DocumentProcessorTests<SymbolRenamer>
         });
     }
 
+    [Test]
+    public async Task ProcessAsync_WithPreservedEnumInsideGenericOuterType_KeepsEnumAndMembers()
+    {
+        const string testCode =
+            """
+            namespace TestNamespace
+            {
+                #region mdk preserve
+                class Outer<T>
+                {
+                    enum PreservedEnum
+                    {
+                        Alpha,
+                        Beta
+                    }
+
+                    public PreservedEnum Value = PreservedEnum.Alpha;
+                }
+                #endregion
+
+                class Program
+                {
+                    void Test()
+                    {
+                        var outer = new Outer<int>();
+                        _ = outer.Value;
+                    }
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var deleteNamespaces = new DeleteNamespaces();
+        var processor = new SymbolRenamer();
+        var context = CreateContext();
+        var flattenedDocument = await deleteNamespaces.ProcessAsync(document, context);
+        var result = await processor.ProcessAsync(flattenedDocument, context);
+        var resultRoot = await result.GetSyntaxRootAsync();
+        var preservedEnum = resultRoot!.DescendantNodes().OfType<EnumDeclarationSyntax>().Single();
+        var enumMemberNames = preservedEnum.Members.Select(m => m.Identifier.ValueText).ToArray();
+        var enumReferences = resultRoot.DescendantNodes()
+            .OfType<MemberAccessExpressionSyntax>()
+            .Where(m => m.Expression is IdentifierNameSyntax { Identifier.ValueText: "PreservedEnum" })
+            .Select(m => m.Name.Identifier.ValueText)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(preservedEnum.Identifier.ValueText, Is.EqualTo("PreservedEnum"));
+            Assert.That(enumMemberNames, Is.EqualTo(new[] { "Alpha", "Beta" }));
+            Assert.That(enumReferences, Is.EqualTo(new[] { "Alpha" }));
+        });
+    }
+
     static PackContext CreateContext()
     {
         var parameters = new Parameters
