@@ -71,6 +71,9 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
             {
             #region mdk preserve
             public string AnnotatedProperty { get; set; }
+            void AnnotatedMethod()
+            {
+            }
             #endregion
             }
             """);
@@ -116,6 +119,9 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
         Assert.That(annotations, Is.Empty);
         var annotatedProperty = classWithInternalRegion.DescendantNodes().OfType<PropertyDeclarationSyntax>().First(p => p.Identifier.Text == "AnnotatedProperty");
         annotations = annotatedProperty.GetAnnotations("MDK");
+        Assert.That(annotations, Is.Not.Empty);
+        var annotatedMethod = classWithInternalRegion.DescendantNodes().OfType<MethodDeclarationSyntax>().First(m => m.Identifier.Text == "AnnotatedMethod");
+        annotations = annotatedMethod.GetAnnotations("MDK");
         Assert.That(annotations, Is.Not.Empty);
     }
 
@@ -183,5 +189,62 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
         Assert.That(text, Does.Contain("var plainString = \"REPLACED\";"));
         Assert.That(text, Does.Contain("var notMacroString = \"$UNMATCHED$\";"));
         Assert.That(text, Does.Contain("public string InsideRegion = \"REPLACED\";"));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WithPreservedEnum_AnnotatesEnumAndMembers()
+    {
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument",
+            """
+            #region mdk preserve
+            enum PreservedEnum
+            {
+                Alpha,
+                Beta
+            }
+            #endregion
+            """);
+        var processor = new RegionAnnotator();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+
+        Assert.That(root, Is.Not.Null);
+        var enumDeclaration = root!.DescendantNodes().OfType<EnumDeclarationSyntax>().Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(enumDeclaration.GetAnnotations("MDK"), Is.Not.Empty);
+            Assert.That(enumDeclaration.Identifier.GetAnnotations("MDK"), Is.Not.Empty);
+        });
+
+        foreach (var member in enumDeclaration.Members)
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(member.GetAnnotations("MDK"), Is.Not.Empty);
+                Assert.That(member.Identifier.GetAnnotations("MDK"), Is.Not.Empty);
+            });
+        }
     }
 }

@@ -233,4 +233,60 @@ public class PartialMergerTests : DocumentProcessorTests<PartialMerger>
 
                 """.Replace("\r\n", "\n")));
     }
+
+    [Test]
+    public async Task ProcessAsync_WithTrailingCommentOnPartialCloseBrace_KeepsCommentWithPartMembers()
+    {
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument",
+            """
+            partial class Program
+            {
+                // This is just a test
+                bool test = true;
+
+                // This is comment after test var
+            }
+            partial class Program : MyGridProgram
+            {
+                public Program()
+                {
+                }
+            }
+            """);
+        var processor = new PartialMerger();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var text = (await result.GetTextAsync()).ToString().Replace("\r\n", "\n");
+        var fieldIndex = text.IndexOf("bool test = true;", StringComparison.Ordinal);
+        var commentIndex = text.IndexOf("// This is comment after test var", StringComparison.Ordinal);
+        var constructorIndex = text.IndexOf("public Program()", StringComparison.Ordinal);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(fieldIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(commentIndex, Is.GreaterThan(fieldIndex));
+            Assert.That(constructorIndex, Is.GreaterThan(commentIndex));
+        });
+    }
 }

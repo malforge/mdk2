@@ -1,4 +1,5 @@
-﻿using System.Linq;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -23,6 +24,7 @@ public class DeleteNamespaces : IDocumentProcessor
 {
     // The default indent size. _Maybe_ we will make this configurable in the future.
     const int IndentSize = 4;
+    static readonly SyntaxAnnotation PreserveAnnotation = new("MDK", "preserve");
 
     /// <inheritdoc />
     public async Task<Document> ProcessAsync(Document document, IPackContext metadata)
@@ -35,8 +37,27 @@ public class DeleteNamespaces : IDocumentProcessor
         while (namespaceDeclarations.Length > 0)
         {
             var current = namespaceDeclarations[0];
+            var unindentedMembers = new MemberDeclarationSyntax[current.Members.Count];
+            var regionStack = new Stack<bool>();
+            for (var i = 0; i < current.Members.Count; i++)
+            {
+                var member = current.Members[i];
+                UpdateRegionStack(regionStack, member.GetLeadingTrivia());
+                var preserveActive = regionStack.Contains(true);
 
-            var unindentedMembers = await Task.WhenAll(current.Members.Select(m => UnindentAsync(m, IndentSize)));
+                var unindentedMember = await UnindentAsync(member, IndentSize);
+                if (preserveActive)
+                {
+                    PreservedDeclarationRegistry.Register(member, metadata);
+                    unindentedMember = (MemberDeclarationSyntax)PreserveAnnotator.Instance.Visit(unindentedMember)!;
+                }
+
+                unindentedMembers[i] = unindentedMember;
+
+                UpdateRegionStack(regionStack, member.GetTrailingTrivia());
+                if (i == current.Members.Count - 1)
+                    UpdateRegionStack(regionStack, current.CloseBraceToken.LeadingTrivia);
+            }
 
             var newRoot = root.ReplaceNode(current, unindentedMembers);
             root = newRoot;
@@ -63,7 +84,6 @@ public class DeleteNamespaces : IDocumentProcessor
         var needsEndOfLine = endOfLine < text.Length && text[endOfLine] == '\n';
 
         var alteredSpan = new TextSpan(startOfLine, endOfLine - startOfLine);
-        
         buffer.Append(text.ToString(alteredSpan).TrimEnd());
         if (needsEndOfLine)
             buffer.Append('\n');
@@ -71,5 +91,56 @@ public class DeleteNamespaces : IDocumentProcessor
             .Unindent(indentation);
 
         return (MemberDeclarationSyntax)(await CSharpSyntaxTree.ParseText(buffer.ToString()).GetRootAsync()).ChildNodes().First();
+    }
+
+    static void UpdateRegionStack(Stack<bool> regionStack, SyntaxTriviaList triviaList)
+    {
+        foreach (var trivia in triviaList)
+        {
+            if (!trivia.HasStructure)
+                continue;
+
+            switch (trivia.GetStructure())
+            {
+                case RegionDirectiveTriviaSyntax regionDirective:
+                    regionStack.Push(IsPreserveRegion(regionDirective.ToFullString()));
+                    break;
+                case EndRegionDirectiveTriviaSyntax:
+                    if (regionStack.Count > 0)
+                        regionStack.Pop();
+                    break;
+            }
+        }
+    }
+
+    static bool IsPreserveRegion(string text)
+    {
+        var trimmed = text.Trim();
+        if (!trimmed.StartsWith("#region", System.StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var content = trimmed["#region".Length..].Trim();
+        if (content.StartsWith("mdk", System.StringComparison.OrdinalIgnoreCase))
+            content = content["mdk".Length..].Trim();
+
+        return content.Split([' '], System.StringSplitOptions.RemoveEmptyEntries)
+            .Any(part => string.Equals(part, "preserve", System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    sealed class PreserveAnnotator : CSharpSyntaxRewriter
+    {
+        public static PreserveAnnotator Instance { get; } = new();
+
+        public override SyntaxNode? Visit(SyntaxNode? node)
+        {
+            var visited = base.Visit(node);
+            return visited?.WithAdditionalAnnotations(PreserveAnnotation);
+        }
+
+        public override SyntaxToken VisitToken(SyntaxToken token)
+            => base.VisitToken(token).WithAdditionalAnnotations(PreserveAnnotation);
+
+        public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
+            => base.VisitTrivia(trivia).WithAdditionalAnnotations(PreserveAnnotation);
     }
 }

@@ -135,4 +135,55 @@ public class CombinerTests
         Assert.That(usingDirectives, Has.Count.EqualTo(5));
         Assert.That(usingDirectives, Is.EquivalentTo(new[] { "System", "System.Collections.Generic", "System.Linq", "System.Text", "System.Threading.Tasks" }));
     }
+
+    [Test]
+    public async Task CombineAsync_WithPreservedMember_KeepsPreserveAnnotations()
+    {
+        var workspace = new AdhocWorkspace();
+
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var document = project.AddDocument("TestDocument",
+            """
+            enum PreservedEnum
+            {
+                Alpha
+            }
+            """);
+
+        var root = await document.GetSyntaxRootAsync();
+        var enumDeclaration = root!.DescendantNodes().OfType<EnumDeclarationSyntax>().Single();
+        document = document.WithSyntaxRoot(root.ReplaceNode(enumDeclaration,
+            enumDeclaration.WithAdditionalAnnotations(new SyntaxAnnotation("MDK", "preserve"))));
+
+        project = document.Project;
+        var combiner = new Combiner();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await combiner.CombineAsync(project, [document], context);
+        var combinedRoot = await result.GetSyntaxRootAsync();
+        var combinedEnum = combinedRoot!.DescendantNodes().OfType<EnumDeclarationSyntax>().Single();
+
+        Assert.That(combinedEnum.ShouldBePreserved(), Is.True);
+    }
 }

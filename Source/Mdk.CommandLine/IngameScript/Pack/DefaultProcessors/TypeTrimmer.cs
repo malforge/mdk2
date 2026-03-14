@@ -245,7 +245,7 @@ public class TypeTrimmer : IDocumentProcessor
                     references.RemoveAll(reference => !reference.Locations.Any());
                     references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, methodDeclaration, location)));
 
-                    if (references.Count > 0)
+                    if (references.Count > 0 || HasMethodReferenceInCurrentTree(methodSymbol, rootNode, semanticModel, methodDeclaration))
                         continue;
 
                     unusedMembers.Add(methodDeclaration);
@@ -253,13 +253,17 @@ public class TypeTrimmer : IDocumentProcessor
                 }
 
                 // Identify unused constructors
+                var removableConstructors = new List<ConstructorTrimCandidate>();
                 var allConstructorDeclarations = rootNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
                 foreach (var constructorDeclaration in allConstructorDeclarations)
                 {
-                    if (constructorDeclaration.ShouldBePreserved())
-                        continue;
                     if (semanticModel.GetDeclaredSymbol(constructorDeclaration) is not IMethodSymbol ctorSymbol)
                         continue;
+                    if (constructorDeclaration.ShouldBePreserved())
+                        continue;
+                    if (!IsEligibleForRemoval(ctorSymbol))
+                        continue;
+
                     // If this is a parameterless ctor on a base type, derived types might call it implicitly
                     // We keep it when the type has derived classes to avoid trimming required base initialization.
                     if (ctorSymbol.Parameters.Length == 0
@@ -274,24 +278,52 @@ public class TypeTrimmer : IDocumentProcessor
                         if (hasDerivedTypes)
                             continue;
                     }
-                    // Generic new() constraints require a public parameterless ctor even without direct references.
+
+                    // Generic new() constraints require a public parameterless ctor even without direct ctor references.
                     if (ctorSymbol.Parameters.Length == 0
                         && ctorSymbol.ContainingType != null
                         && constructorConstrainedTypes.Contains(ctorSymbol.ContainingType))
-                        continue;
-                    if (!IsEligibleForRemoval(ctorSymbol))
                         continue;
 
                     var references = (await SymbolFinder.FindReferencesAsync(ctorSymbol, solution)).ToList();
                     references.RemoveAll(reference => !reference.Locations.Any());
                     references.RemoveAll(reference => reference.Locations.All(location => IsSelfReferencingMember(rootNode, constructorDeclaration, location)));
 
-                    if (references.Count > 0)
+                    if (references.Count > 0 || HasConstructorReferenceInCurrentTree(ctorSymbol, rootNode, semanticModel, constructorDeclaration))
                         continue;
 
-                    unusedMembers.Add(constructorDeclaration);
-                    var containingTypeName = ctorSymbol.ContainingType?.Name ?? "<unknown>";
-                    context.Console.Trace($"Unused constructor: {containingTypeName}({string.Join(", ", ctorSymbol.Parameters.Select(p => p.Type.Name))})");
+                    removableConstructors.Add(new ConstructorTrimCandidate(constructorDeclaration, ctorSymbol));
+                }
+
+                var removableConstructorsByType = new Dictionary<INamedTypeSymbol, List<ConstructorTrimCandidate>>(SymbolEqualityComparer.Default);
+                foreach (var removableConstructor in removableConstructors)
+                {
+                    var containingType = removableConstructor.Symbol.ContainingType;
+                    if (containingType == null)
+                        continue;
+                    if (!removableConstructorsByType.TryGetValue(containingType, out var constructors))
+                    {
+                        constructors = [];
+                        removableConstructorsByType[containingType] = constructors;
+                    }
+                    constructors.Add(removableConstructor);
+                }
+
+                foreach (var (containingType, constructors) in removableConstructorsByType)
+                {
+                    if (RequiresDeclaredConstructorBecauseBaseHasNoAccessibleDefault(containingType)
+                        && constructors.Count == containingType.InstanceConstructors.Count(ctor => !ctor.IsImplicitlyDeclared))
+                    {
+                        var constructorToKeep = ChooseConstructorToKeep(constructors);
+                        removableConstructors.Remove(constructorToKeep);
+                    }
+                }
+
+                foreach (var removableConstructor in removableConstructors)
+                {
+                    unusedMembers.Add(removableConstructor.Declaration);
+                    var containingTypeName = removableConstructor.Symbol.ContainingType?.Name ?? "<unknown>";
+                    context.Console.Trace($"Unused constructor: {containingTypeName}({string.Join(", ", removableConstructor.Symbol.Parameters.Select(p => p.Type.Name))})");
                 }
             }
 
@@ -366,6 +398,174 @@ public class TypeTrimmer : IDocumentProcessor
         var referenceNode = root.FindNode(referenceLocation.Location.SourceSpan);
         return referenceNode.AncestorsAndSelf().Any(node => node == declarationNode);
     }
+
+    static bool HasMethodReferenceInCurrentTree(IMethodSymbol symbol, SyntaxNode root, SemanticModel semanticModel, SyntaxNode declarationNode)
+        => root.DescendantNodes()
+            .OfType<InvocationExpressionSyntax>()
+            .Where(invocation => !invocation.AncestorsAndSelf().Any(node => node == declarationNode))
+            .Any(invocation => SymbolInfoMatches(semanticModel.GetSymbolInfo(invocation), symbol)
+                || SymbolInfoMatches(semanticModel.GetSymbolInfo(invocation.Expression), symbol)
+                || InvocationLooksLikeMethodReference(invocation, semanticModel, symbol));
+
+    static bool HasConstructorReferenceInCurrentTree(IMethodSymbol symbol, SyntaxNode root, SemanticModel semanticModel, SyntaxNode declarationNode)
+        => root.DescendantNodes()
+            .Where(node => !node.AncestorsAndSelf().Any(ancestor => ancestor == declarationNode))
+            .Any(node => node switch
+            {
+                ObjectCreationExpressionSyntax objectCreation => SymbolInfoMatches(semanticModel.GetSymbolInfo(objectCreation), symbol)
+                    || ConstructorLooksLikeReference(objectCreation, semanticModel, symbol),
+                ConstructorInitializerSyntax constructorInitializer => SymbolInfoMatches(semanticModel.GetSymbolInfo(constructorInitializer), symbol),
+                _ => false
+            });
+
+    static bool SymbolInfoMatches(SymbolInfo symbolInfo, ISymbol target)
+    {
+        if (SymbolMatches(symbolInfo.Symbol, target))
+            return true;
+
+        foreach (var candidate in symbolInfo.CandidateSymbols)
+        {
+            if (SymbolMatches(candidate, target))
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool SymbolMatches(ISymbol? candidate, ISymbol target)
+    {
+        if (candidate == null)
+            return false;
+
+        return SymbolEqualityComparer.Default.Equals(NormalizeSymbol(candidate), NormalizeSymbol(target));
+    }
+
+    static ISymbol NormalizeSymbol(ISymbol symbol) => symbol switch
+    {
+        IMethodSymbol { ReducedFrom: not null } methodSymbol => methodSymbol.ReducedFrom.OriginalDefinition,
+        _ => symbol.OriginalDefinition
+    };
+
+    static bool InvocationLooksLikeMethodReference(InvocationExpressionSyntax invocation, SemanticModel semanticModel, IMethodSymbol symbol)
+    {
+        if (!TryGetInvokedName(invocation.Expression, out var invokedName)
+            || !string.Equals(invokedName, symbol.Name, StringComparison.Ordinal)
+            || !ArgumentsCanBind(invocation.ArgumentList.Arguments.Count, symbol))
+            return false;
+
+        return ReceiverTypeMatches(invocation.Expression, semanticModel, symbol.ContainingType);
+    }
+
+    static bool ConstructorLooksLikeReference(ObjectCreationExpressionSyntax objectCreation, SemanticModel semanticModel, IMethodSymbol symbol)
+    {
+        var symbolInfo = semanticModel.GetSymbolInfo(objectCreation);
+        if (symbolInfo.Symbol != null || symbolInfo.CandidateSymbols.Length > 0)
+            return false;
+
+        if (symbol.ContainingType == null
+            || !TryGetTypeName(objectCreation.Type, out var typeName)
+            || !string.Equals(typeName, symbol.ContainingType.Name, StringComparison.Ordinal)
+            || !ArgumentsCanBind(objectCreation.ArgumentList?.Arguments.Count ?? 0, symbol))
+            return false;
+
+        var createdType = semanticModel.GetTypeInfo(objectCreation).Type;
+        return createdType == null || SymbolEqualityComparer.Default.Equals(createdType, symbol.ContainingType);
+    }
+
+    static bool ReceiverTypeMatches(ExpressionSyntax expression, SemanticModel semanticModel, INamedTypeSymbol? targetType)
+    {
+        if (targetType == null)
+            return false;
+
+        if (expression is not MemberAccessExpressionSyntax memberAccess)
+            return true;
+
+        var receiverType = semanticModel.GetTypeInfo(memberAccess.Expression).Type;
+        return receiverType == null || SymbolEqualityComparer.Default.Equals(receiverType, targetType);
+    }
+
+    static bool ArgumentsCanBind(int argumentCount, IMethodSymbol symbol)
+    {
+        var minimum = symbol.Parameters.Count(p => !p.IsOptional && !p.IsParams);
+        if (argumentCount < minimum)
+            return false;
+
+        if (symbol.Parameters.Length == 0)
+            return argumentCount == 0;
+
+        return symbol.Parameters[^1].IsParams || argumentCount <= symbol.Parameters.Length;
+    }
+
+    static bool TryGetInvokedName(ExpressionSyntax expression, out string? name)
+    {
+        switch (expression)
+        {
+            case MemberAccessExpressionSyntax memberAccess:
+                name = memberAccess.Name.Identifier.ValueText;
+                return true;
+            case IdentifierNameSyntax identifierName:
+                name = identifierName.Identifier.ValueText;
+                return true;
+            case GenericNameSyntax genericName:
+                name = genericName.Identifier.ValueText;
+                return true;
+            default:
+                name = null;
+                return false;
+        }
+    }
+
+    static bool TryGetTypeName(TypeSyntax type, out string? name)
+    {
+        switch (type)
+        {
+            case IdentifierNameSyntax identifierName:
+                name = identifierName.Identifier.ValueText;
+                return true;
+            case GenericNameSyntax genericName:
+                name = genericName.Identifier.ValueText;
+                return true;
+            case QualifiedNameSyntax qualifiedName:
+                return TryGetTypeName(qualifiedName.Right, out name);
+            default:
+                name = null;
+                return false;
+        }
+    }
+
+    static bool RequiresDeclaredConstructorBecauseBaseHasNoAccessibleDefault(INamedTypeSymbol containingType)
+    {
+        var baseType = containingType.BaseType;
+        return baseType != null && !HasAccessibleParameterlessConstructor(baseType, containingType);
+    }
+
+    static ConstructorTrimCandidate ChooseConstructorToKeep(IEnumerable<ConstructorTrimCandidate> constructors)
+        => constructors
+            .OrderBy(candidate => candidate.Declaration.Span.Length)
+            .ThenBy(candidate => candidate.Symbol.Parameters.Length)
+            .First();
+
+    static bool HasAccessibleParameterlessConstructor(INamedTypeSymbol type, INamedTypeSymbol accessingType)
+        => type.SpecialType == SpecialType.System_Object
+           || type.InstanceConstructors.Any(ctor =>
+               ctor.Parameters.Length == 0
+               && IsAccessibleFromDerivedType(ctor, accessingType));
+
+    static bool IsAccessibleFromDerivedType(IMethodSymbol ctor, INamedTypeSymbol accessingType)
+    {
+        var sameAssembly = SymbolEqualityComparer.Default.Equals(ctor.ContainingAssembly, accessingType.ContainingAssembly);
+        return ctor.DeclaredAccessibility switch
+        {
+            Accessibility.Public => true,
+            Accessibility.Protected => true,
+            Accessibility.ProtectedOrInternal => true,
+            Accessibility.Internal => sameAssembly,
+            Accessibility.ProtectedAndInternal => sameAssembly,
+            _ => false
+        };
+    }
+
+    sealed record ConstructorTrimCandidate(ConstructorDeclarationSyntax Declaration, IMethodSymbol Symbol);
 
     static bool IsEligibleForRemoval(VariableDeclaratorSyntax variableDeclarator, IFieldSymbol symbol)
     {

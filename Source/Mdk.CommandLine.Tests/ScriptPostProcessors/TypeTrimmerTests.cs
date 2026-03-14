@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Reflection;
 using FakeItEasy;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
@@ -6,6 +8,8 @@ using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
 namespace MDK.CommandLine.Tests.ScriptPostProcessors;
@@ -1040,6 +1044,376 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenMethodUsesOptionalParametersAndNestedConstructor_KeepsBoth()
+    {
+        const string testCode =
+            """
+            using System;
+
+            class Scheduler
+            {
+                public void AddScheduledAction(Action action, double updateFrequency, bool disposeAfterRun = false, double timeOffset = 0)
+                {
+                    var scheduledAction = new QueuedAction(action, updateFrequency, disposeAfterRun);
+                }
+
+                public void AddScheduledAction(QueuedAction scheduledAction)
+                {
+                }
+            }
+
+            class QueuedAction : ScheduledAction
+            {
+                public QueuedAction(Action action, double runInterval, bool removeAfterRun = false)
+                    : base(action, 1.0 / runInterval, removeAfterRun, 0)
+                {
+                }
+            }
+
+            class ScheduledAction
+            {
+                public ScheduledAction(Action action, double runFrequency, bool removeAfterRun = false, double timeOffset = 0)
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                readonly Scheduler _scheduler = new Scheduler();
+
+                void Main()
+                {
+                    _scheduler.AddScheduledAction(() => { }, 0.1);
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var addScheduledActionOverload = root!.DescendantNodes()
+            .OfType<MethodDeclarationSyntax>()
+            .SingleOrDefault(method => method.Identifier.ValueText == "AddScheduledAction"
+                && method.ParameterList.Parameters.Count == 4);
+        var queuedActionConstructor = root.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .SingleOrDefault(ctor => ctor.Identifier.ValueText == "QueuedAction"
+                && ctor.ParameterList.Parameters.Count == 3);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(addScheduledActionOverload, Is.Not.Null);
+            Assert.That(queuedActionConstructor, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenDerivedTypeHasOnlyConstructorAndBaseHasNoDefault_PreservesConstructor()
+    {
+        const string testCode =
+            """
+            using System.Collections.Generic;
+
+            class Derived : Base
+            {
+                public Derived(int value)
+                    : base(value)
+                {
+                }
+            }
+
+            class Base
+            {
+                public Base(int value)
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                readonly Queue<Derived> _items = new Queue<Derived>();
+
+                void Main()
+                {
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var derivedConstructor = root!.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .SingleOrDefault(ctor => ctor.Identifier.ValueText == "Derived");
+
+        Assert.That(derivedConstructor, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenDerivedTypeHasOnlyUnusedConstructorsAndBaseHasNoDefault_PreservesOneConstructor()
+    {
+        const string testCode =
+            """
+            using System.Collections.Generic;
+
+            class Derived : Base
+            {
+                public Derived(int value)
+                    : base(value)
+                {
+                }
+
+                public Derived(string value)
+                    : base(value.Length)
+                {
+                }
+            }
+
+            class Base
+            {
+                public Base(int value)
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                readonly Queue<Derived> _items = new Queue<Derived>();
+
+                void Main()
+                {
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var derivedConstructors = root!.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .Where(ctor => ctor.Identifier.ValueText == "Derived")
+            .ToArray();
+
+        Assert.That(derivedConstructors, Has.Length.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenOneDerivedConstructorIsUsedAndBaseHasNoDefault_TrimsOtherUnusedConstructors()
+    {
+        const string testCode =
+            """
+            class Derived : Base
+            {
+                public Derived(int value)
+                    : base(value)
+                {
+                }
+
+                public Derived(string value)
+                    : base(value.Length)
+                {
+                }
+            }
+
+            class Base
+            {
+                public Base(int value)
+                {
+                }
+            }
+
+            class Program : MyGridProgram
+            {
+                readonly Derived _item = new Derived(1);
+
+                void Main()
+                {
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var derivedConstructors = root!.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .Where(ctor => ctor.Identifier.ValueText == "Derived")
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(derivedConstructors, Has.Length.EqualTo(1));
+            Assert.That(derivedConstructors[0].ParameterList.Parameters[0].Type!.ToString(), Is.EqualTo("int"));
+        });
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenBaseDefaultConstructorIsInternalInAnotherAssembly_PreservesDerivedConstructor()
+    {
+        using var workspace = new AdhocWorkspace();
+        var baseProject = workspace.AddProject("BaseProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var baseDocument = baseProject.AddDocument("Base.cs",
+            """
+            public class Base
+            {
+                internal Base()
+                {
+                }
+
+                public Base(int value)
+                {
+                }
+            }
+            """);
+        baseProject = baseDocument.Project;
+
+        var derivedProject = workspace.AddProject("DerivedProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            .AddProjectReference(new ProjectReference(baseProject.Id));
+        var derivedDocument = derivedProject.AddDocument("Derived.cs",
+            """
+            using System.Collections.Generic;
+
+            class Derived : Base
+            {
+                public Derived(int value)
+                    : base(value)
+                {
+                }
+            }
+
+            class Program
+            {
+                readonly Queue<Derived> _items = new Queue<Derived>();
+            }
+            """);
+
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(derivedDocument, context);
+        var root = await result.GetSyntaxRootAsync();
+        var derivedConstructor = root!.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .SingleOrDefault(ctor => ctor.Identifier.ValueText == "Derived");
+
+        Assert.That(derivedConstructor, Is.Not.Null);
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenStaticFieldInitializerHasSideEffects_PreservesField()
     {
         const string testCode =
@@ -1239,5 +1613,91 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         var actual = await result.GetTextAsync();
 
         Assert.That(actual.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WithPreservedUnusedMembers_KeepsOnlyPreservedOnes()
+    {
+        const string testCode =
+            """
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                }
+
+                #region mdk preserve
+                void PreservedUnusedMethod()
+                {
+                }
+                #endregion
+
+                void TrimmedUnusedMethod()
+                {
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var regionAnnotator = new RegionAnnotator();
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var annotatedDocument = await regionAnnotator.ProcessAsync(document, context);
+        var annotatedRoot = await annotatedDocument.GetSyntaxRootAsync();
+        var annotatedPreservedMethod = annotatedRoot!.DescendantNodes()
+            .OfType<MethodDeclarationSyntax>()
+            .Single(method => method.Identifier.ValueText == "PreservedUnusedMethod");
+        var result = await processor.ProcessAsync(annotatedDocument, context);
+        var root = await result.GetSyntaxRootAsync();
+
+        Assert.That(root, Is.Not.Null);
+        var methodNames = root!.DescendantNodes().OfType<MethodDeclarationSyntax>()
+            .Select(m => m.Identifier.ValueText)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(annotatedPreservedMethod.ShouldBePreserved(), Is.True);
+            Assert.That(methodNames, Does.Contain("Main"));
+            Assert.That(methodNames, Does.Contain("PreservedUnusedMethod"));
+            Assert.That(methodNames, Does.Not.Contain("TrimmedUnusedMethod"));
+        });
+    }
+
+    static IEnumerable<MetadataReference> GetCoreReferences()
+    {
+        var coreAssemblies = new[]
+        {
+            typeof(object).Assembly,
+            typeof(Console).Assembly,
+            typeof(Enumerable).Assembly,
+            typeof(List<>).Assembly,
+            typeof(Task).Assembly
+        };
+
+        var references = coreAssemblies.Select(assembly => MetadataReference.CreateFromFile(assembly.Location)).ToList();
+        references.Add(MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location));
+        return references;
     }
 }

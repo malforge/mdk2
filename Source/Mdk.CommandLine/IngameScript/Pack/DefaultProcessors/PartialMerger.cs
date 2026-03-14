@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.IngameScript.Pack.Api;
@@ -59,7 +60,8 @@ public class PartialMerger : IDocumentProcessor
             {
                 case ClassDeclarationSyntax classDeclarationSyntax:
                 {
-                    var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
+                    var allMembers = MergeMembersPreservingClosingTrivia(parts);
+                    var migratedClosingTrivia = ShouldMigrateClosingTrivia(classDeclarationSyntax);
                     var newType = classDeclarationSyntax;
                     if (finalBaseList.Types.Count > 0)
                         newType = newType.WithBaseList(finalBaseList);
@@ -67,6 +69,9 @@ public class PartialMerger : IDocumentProcessor
                         .WithModifiers(finalModifiers)
                         .NormalizeWhitespace()
                         .WithMembers(SyntaxFactory.List(allMembers));
+
+                    if (migratedClosingTrivia)
+                        newType = newType.WithCloseBraceToken(newType.CloseBraceToken.WithLeadingTrivia(FormattingTriviaOnly(newType.CloseBraceToken.LeadingTrivia)));
 
                     if (newType.GetTrailingTrivia().All(t => t.IsKind(SyntaxKind.EndOfLineTrivia)))
                         newType = newType.WithTrailingTrivia(newType.GetTrailingTrivia().Add(SyntaxFactory.EndOfLine(Environment.NewLine)));
@@ -81,7 +86,8 @@ public class PartialMerger : IDocumentProcessor
 
                 case InterfaceDeclarationSyntax interfaceDeclarationSyntax:
                 {
-                    var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
+                    var allMembers = MergeMembersPreservingClosingTrivia(parts);
+                    var migratedClosingTrivia = ShouldMigrateClosingTrivia(interfaceDeclarationSyntax);
                     var newType = interfaceDeclarationSyntax;
                     if (finalBaseList.Types.Count > 0)
                         newType = newType.WithBaseList(finalBaseList);
@@ -89,6 +95,9 @@ public class PartialMerger : IDocumentProcessor
                         .WithModifiers(finalModifiers)
                         .NormalizeWhitespace()
                         .WithMembers(SyntaxFactory.List(allMembers));
+
+                    if (migratedClosingTrivia)
+                        newType = newType.WithCloseBraceToken(newType.CloseBraceToken.WithLeadingTrivia(FormattingTriviaOnly(newType.CloseBraceToken.LeadingTrivia)));
 
                     editor.ReplaceNode(current, newType);
                     foreach (var node in parts.Skip(1))
@@ -100,7 +109,8 @@ public class PartialMerger : IDocumentProcessor
 
                 case StructDeclarationSyntax structDeclarationSyntax:
                 {
-                    var allMembers = parts.SelectMany(t => t.ChildNodes().OfType<MemberDeclarationSyntax>()).ToList();
+                    var allMembers = MergeMembersPreservingClosingTrivia(parts);
+                    var migratedClosingTrivia = ShouldMigrateClosingTrivia(structDeclarationSyntax);
                     var newType = structDeclarationSyntax;
                     if (finalBaseList.Types.Count > 0)
                         newType = newType.WithBaseList(finalBaseList);
@@ -108,6 +118,9 @@ public class PartialMerger : IDocumentProcessor
                         .WithModifiers(finalModifiers)
                         .NormalizeWhitespace()
                         .WithMembers(SyntaxFactory.List(allMembers));
+
+                    if (migratedClosingTrivia)
+                        newType = newType.WithCloseBraceToken(newType.CloseBraceToken.WithLeadingTrivia(FormattingTriviaOnly(newType.CloseBraceToken.LeadingTrivia)));
 
                     editor.ReplaceNode(current, newType);
                     foreach (var node in parts.Skip(1))
@@ -150,4 +163,31 @@ public class PartialMerger : IDocumentProcessor
                 throw new NotSupportedException($"The type {typeDeclarationSyntax.GetType().Name} is not supported.");
         }
     }
+
+    static List<MemberDeclarationSyntax> MergeMembersPreservingClosingTrivia(IEnumerable<TypeDeclarationSyntax> parts)
+    {
+        var mergedMembers = new List<MemberDeclarationSyntax>();
+        foreach (var part in parts)
+        {
+            var partMembers = part.Members.ToList();
+            if (partMembers.Count > 0 && ContainsMeaningfulTrivia(part.CloseBraceToken.LeadingTrivia))
+            {
+                var lastMember = partMembers[^1];
+                partMembers[^1] = lastMember.WithTrailingTrivia(lastMember.GetTrailingTrivia().AddRange(part.CloseBraceToken.LeadingTrivia));
+            }
+
+            mergedMembers.AddRange(partMembers);
+        }
+
+        return mergedMembers;
+    }
+
+    static bool ContainsMeaningfulTrivia(SyntaxTriviaList trivia)
+        => trivia.Any(t => !t.IsKind(SyntaxKind.WhitespaceTrivia) && !t.IsKind(SyntaxKind.EndOfLineTrivia));
+
+    static bool ShouldMigrateClosingTrivia(TypeDeclarationSyntax part)
+        => part.Members.Count > 0 && ContainsMeaningfulTrivia(part.CloseBraceToken.LeadingTrivia);
+
+    static SyntaxTriviaList FormattingTriviaOnly(SyntaxTriviaList trivia)
+        => SyntaxFactory.TriviaList(trivia.Where(t => t.IsKind(SyntaxKind.WhitespaceTrivia) || t.IsKind(SyntaxKind.EndOfLineTrivia)));
 }

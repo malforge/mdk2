@@ -39,7 +39,7 @@ public partial class SymbolRenamer : IDocumentProcessor
         syntaxRoot = await document.GetSyntaxRootAsync() ?? throw new InvalidOperationException("Failed to get syntax root.");
 
         var idMap = new Dictionary<string, ISymbol>(StringComparer.Ordinal);
-        var scanPhase1 = new DefinitionScanWalker(semanticModel, idMap);
+        var scanPhase1 = new DefinitionScanWalker(semanticModel, idMap, context);
         scanPhase1.Visit(syntaxRoot);
         var scanPhase2 = new UsageScanWalker(semanticModel, idMap);
         scanPhase2.Visit(syntaxRoot);
@@ -110,6 +110,9 @@ public partial class SymbolRenamer : IDocumentProcessor
         int _symbolSrc;
 
         public IReadOnlyDictionary<string, string> NameMap => _nameMap;
+
+        static bool IsPreserved(EnumDeclarationSyntax node) => node.ShouldBePreserved() || node.Identifier.ShouldBePreserved();
+        static bool IsPreserved(EnumMemberDeclarationSyntax node) => node.ShouldBePreserved() || node.Identifier.ShouldBePreserved();
         
         string GetMinifiedName(string oldName)
         {
@@ -338,7 +341,7 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (EnumDeclarationSyntax?)base.VisitEnumDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
-            var shouldBePreserved = newNode!.ShouldBePreserved();
+            var shouldBePreserved = IsPreserved(newNode!);
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
@@ -354,7 +357,7 @@ public partial class SymbolRenamer : IDocumentProcessor
             var newNode = (EnumMemberDeclarationSyntax?)base.VisitEnumMemberDeclaration(node);
             if (!TryGetSymbol(newNode, out _))
                 return newNode;
-            var shouldBePreserved = newNode!.ShouldBePreserved();
+            var shouldBePreserved = IsPreserved(newNode!);
             var oldName = newNode!.Identifier.Text;
             var newName = GetMinifiedName(oldName);
             var newIdentifier = SyntaxFactory.Identifier(newName)
@@ -741,10 +744,18 @@ public partial class SymbolRenamer : IDocumentProcessor
         }
     }
 
-    class DefinitionScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap) : BaseWalker
+    class DefinitionScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap, IPackContext context) : BaseWalker
     {
         readonly SemanticModel _semanticModel = semanticModel;
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
+        readonly IPackContext _context = context;
+
+        static bool ShouldBePreserved(SyntaxNode node) => node switch
+        {
+            EnumDeclarationSyntax enumDeclaration => enumDeclaration.ShouldBePreserved() || enumDeclaration.Identifier.ShouldBePreserved(),
+            EnumMemberDeclarationSyntax enumMemberDeclaration => enumMemberDeclaration.ShouldBePreserved() || enumMemberDeclaration.Identifier.ShouldBePreserved(),
+            _ => node.ShouldBePreserved()
+        };
 
         public override void Visit(SyntaxNode? node)
         {
@@ -752,7 +763,7 @@ public partial class SymbolRenamer : IDocumentProcessor
             if (node == null)
                 return;
 
-            if (node.ShouldBePreserved())
+            if (ShouldBePreserved(node))
                 return;
             var nodeId = node.GetAnnotations("NodeID").FirstOrDefault()?.Data;
             if (nodeId == null)
@@ -761,6 +772,8 @@ public partial class SymbolRenamer : IDocumentProcessor
 
             if (symbol != null)
             {
+                if (PreservedDeclarationRegistry.Contains(symbol, _context))
+                    return;
                 if (IsOverriddenSymbolPreserved(symbol))
                     return;
                 if (IsReferencedSymbolPreserved(symbol))

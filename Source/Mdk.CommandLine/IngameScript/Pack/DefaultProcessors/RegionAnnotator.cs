@@ -49,8 +49,11 @@ public partial class RegionAnnotator : IDocumentProcessor
             if (node == null)
                 return null;
             var region = _stack.Peek();
-            if (region.Annotation != null)
-                return node.WithAdditionalAnnotations(region.Annotation);
+            var annotation = region.Annotation;
+            if (annotation == null && node.IsSymbolDeclaration())
+                annotation = node.GetFirstToken().GetAnnotations("MDK").FirstOrDefault(a => a.Data?.Contains("preserve") ?? false);
+            if (annotation != null)
+                return node.WithAdditionalAnnotations(annotation);
             return node;
         }
 
@@ -165,7 +168,7 @@ public partial class RegionAnnotator : IDocumentProcessor
             var match = _regionRegex.Match(content);
             if (match.Success)
             {
-                var tags = match.Groups[1].Value.Trim().Split(TagSeparators, StringSplitOptions.RemoveEmptyEntries);
+                var tags = match.Groups["tags"].Value.Trim().Split(TagSeparators, StringSplitOptions.RemoveEmptyEntries);
                 var tagString = string.Join(" ", tags);
                 if (region.Annotation != null)
                     tagString = region.Annotation.Data + " " + tagString;

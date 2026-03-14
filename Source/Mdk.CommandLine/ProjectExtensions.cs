@@ -86,6 +86,8 @@ public static class ProjectExtensions
         var usingDirectivesToRemove = invalidNamespaceDiagnostics
             .SelectMany(d => root.FindToken(d.Location.SourceSpan.Start).Parent!.AncestorsAndSelf().OfType<UsingDirectiveSyntax>())
             .Distinct();
+        if (!usingDirectivesToRemove.Any())
+            return document;
         
         // Remove the using directives
         var newRoot = root.RemoveNodes(usingDirectivesToRemove, SyntaxRemoveOptions.KeepNoTrivia);
