@@ -511,14 +511,28 @@ public class TypeTrimmer : IDocumentProcessor
             return false;
 
         var baseType = containingType.BaseType;
-        return baseType != null && !HasAccessibleParameterlessConstructor(baseType);
+        return baseType != null && !HasAccessibleParameterlessConstructor(baseType, containingType);
     }
 
-    static bool HasAccessibleParameterlessConstructor(INamedTypeSymbol type)
+    static bool HasAccessibleParameterlessConstructor(INamedTypeSymbol type, INamedTypeSymbol accessingType)
         => type.SpecialType == SpecialType.System_Object
            || type.InstanceConstructors.Any(ctor =>
-            ctor.Parameters.Length == 0
-            && ctor.DeclaredAccessibility != Accessibility.Private);
+               ctor.Parameters.Length == 0
+               && IsAccessibleFromDerivedType(ctor, accessingType));
+
+    static bool IsAccessibleFromDerivedType(IMethodSymbol ctor, INamedTypeSymbol accessingType)
+    {
+        var sameAssembly = SymbolEqualityComparer.Default.Equals(ctor.ContainingAssembly, accessingType.ContainingAssembly);
+        return ctor.DeclaredAccessibility switch
+        {
+            Accessibility.Public => true,
+            Accessibility.Protected => true,
+            Accessibility.ProtectedOrInternal => true,
+            Accessibility.Internal => sameAssembly,
+            Accessibility.ProtectedAndInternal => sameAssembly,
+            _ => false
+        };
+    }
 
     static bool IsEligibleForRemoval(VariableDeclaratorSyntax variableDeclarator, IFieldSymbol symbol)
     {

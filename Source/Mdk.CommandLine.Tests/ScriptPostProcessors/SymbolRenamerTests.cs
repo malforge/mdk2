@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Reflection;
 using FakeItEasy;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
@@ -241,6 +242,72 @@ public class SymbolRenamerTests : DocumentProcessorTests<SymbolRenamer>
 
         Assert.Multiple(() =>
         {
+            Assert.That(preservedEnum.Identifier.ValueText, Is.EqualTo("PreservedEnum"));
+            Assert.That(enumMemberNames, Is.EqualTo(new[] { "Alpha", "Beta" }));
+            Assert.That(enumReferences, Is.EqualTo(new[] { "Alpha" }));
+        });
+    }
+
+    [Test]
+    public async Task ProcessAsync_WithRegistryOnlyPreservedEnumInsideGenericOuterType_KeepsEnumAndMembers()
+    {
+        const string testCode =
+            """
+            namespace TestNamespace
+            {
+                #region mdk preserve
+                class Outer<T>
+                {
+                    enum PreservedEnum
+                    {
+                        Alpha,
+                        Beta
+                    }
+
+                    public PreservedEnum Value = PreservedEnum.Alpha;
+                }
+                #endregion
+
+                class Program
+                {
+                    void Test()
+                    {
+                        var outer = new Outer<int>();
+                        _ = outer.Value;
+                    }
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var deleteNamespaces = new DeleteNamespaces();
+        var processor = new SymbolRenamer();
+        var context = CreateContext();
+        var flattenedDocument = await deleteNamespaces.ProcessAsync(document, context);
+        var flattenedText = await flattenedDocument.GetTextAsync();
+        var annotationFreeDocument = flattenedDocument.Project.Solution
+            .WithDocumentText(flattenedDocument.Id, flattenedText)
+            .GetDocument(flattenedDocument.Id)!;
+        var semanticModel = await annotationFreeDocument.GetSemanticModelAsync();
+        var enumSymbol = semanticModel!.GetDeclaredSymbol((await annotationFreeDocument.GetSyntaxRootAsync())!.DescendantNodes().OfType<EnumDeclarationSyntax>().Single());
+        var registryType = typeof(SymbolRenamer).Assembly.GetType("Mdk.CommandLine.IngameScript.Pack.DefaultProcessors.PreservedDeclarationRegistry");
+        var containsMethod = registryType!.GetMethod("Contains", BindingFlags.Public | BindingFlags.Static);
+        var registryContains = (bool?)containsMethod!.Invoke(null, [enumSymbol!, context]);
+        var result = await processor.ProcessAsync(annotationFreeDocument, context);
+        var resultRoot = await result.GetSyntaxRootAsync();
+        var preservedEnum = resultRoot!.DescendantNodes().OfType<EnumDeclarationSyntax>().Single();
+        var enumMemberNames = preservedEnum.Members.Select(m => m.Identifier.ValueText).ToArray();
+        var enumReferences = resultRoot.DescendantNodes()
+            .OfType<MemberAccessExpressionSyntax>()
+            .Where(m => m.Expression is IdentifierNameSyntax { Identifier.ValueText: "PreservedEnum" })
+            .Select(m => m.Name.Identifier.ValueText)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(registryContains, Is.True);
             Assert.That(preservedEnum.Identifier.ValueText, Is.EqualTo("PreservedEnum"));
             Assert.That(enumMemberNames, Is.EqualTo(new[] { "Alpha", "Beta" }));
             Assert.That(enumReferences, Is.EqualTo(new[] { "Alpha" }));

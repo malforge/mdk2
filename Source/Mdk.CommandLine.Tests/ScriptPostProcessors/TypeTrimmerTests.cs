@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Reflection;
 using FakeItEasy;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
@@ -6,6 +8,7 @@ using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
@@ -1264,6 +1267,80 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
     }
 
     [Test]
+    public async Task ProcessAsync_WhenBaseDefaultConstructorIsInternalInAnotherAssembly_PreservesDerivedConstructor()
+    {
+        using var workspace = new AdhocWorkspace();
+        var baseProject = workspace.AddProject("BaseProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var baseDocument = baseProject.AddDocument("Base.cs",
+            """
+            public class Base
+            {
+                internal Base()
+                {
+                }
+
+                public Base(int value)
+                {
+                }
+            }
+            """);
+        baseProject = baseDocument.Project;
+
+        var derivedProject = workspace.AddProject("DerivedProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
+            .AddProjectReference(new ProjectReference(baseProject.Id));
+        var derivedDocument = derivedProject.AddDocument("Derived.cs",
+            """
+            using System.Collections.Generic;
+
+            class Derived : Base
+            {
+                public Derived(int value)
+                    : base(value)
+                {
+                }
+            }
+
+            class Program
+            {
+                readonly Queue<Derived> _items = new Queue<Derived>();
+            }
+            """);
+
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(derivedDocument, context);
+        var root = await result.GetSyntaxRootAsync();
+        var derivedConstructor = root!.DescendantNodes()
+            .OfType<ConstructorDeclarationSyntax>()
+            .SingleOrDefault(ctor => ctor.Identifier.ValueText == "Derived");
+
+        Assert.That(derivedConstructor, Is.Not.Null);
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenStaticFieldInitializerHasSideEffects_PreservesField()
     {
         const string testCode =
@@ -1533,5 +1610,21 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
             Assert.That(methodNames, Does.Contain("PreservedUnusedMethod"));
             Assert.That(methodNames, Does.Not.Contain("TrimmedUnusedMethod"));
         });
+    }
+
+    static IEnumerable<MetadataReference> GetCoreReferences()
+    {
+        var coreAssemblies = new[]
+        {
+            typeof(object).Assembly,
+            typeof(Console).Assembly,
+            typeof(Enumerable).Assembly,
+            typeof(List<>).Assembly,
+            typeof(Task).Assembly
+        };
+
+        var references = coreAssemblies.Select(assembly => MetadataReference.CreateFromFile(assembly.Location)).ToList();
+        references.Add(MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location));
+        return references;
     }
 }

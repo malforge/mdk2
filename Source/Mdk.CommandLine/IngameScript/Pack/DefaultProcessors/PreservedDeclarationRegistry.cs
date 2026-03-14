@@ -32,8 +32,8 @@ static class PreservedDeclarationRegistry
 
         return symbol switch
         {
-            INamedTypeSymbol { TypeKind: TypeKind.Enum } enumSymbol => entries.ContainsKey(GetEnumKey(enumSymbol.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName))),
-            IFieldSymbol { ContainingType.TypeKind: TypeKind.Enum } enumMemberSymbol => entries.ContainsKey(GetEnumMemberKey(enumMemberSymbol.ContainingType.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName), enumMemberSymbol.Name)),
+            INamedTypeSymbol { TypeKind: TypeKind.Enum } enumSymbol => entries.ContainsKey(GetEnumKey(GetEnumIdentity(enumSymbol))),
+            IFieldSymbol { ContainingType.TypeKind: TypeKind.Enum } enumMemberSymbol => entries.ContainsKey(GetEnumMemberKey(GetEnumIdentity(enumMemberSymbol.ContainingType), enumMemberSymbol.Name)),
             _ => false
         };
     }
@@ -61,5 +61,13 @@ static class PreservedDeclarationRegistry
         }
 
         return builder.ToString();
+    }
+
+    static string GetEnumIdentity(INamedTypeSymbol enumSymbol)
+    {
+        if (enumSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is EnumDeclarationSyntax enumDeclaration)
+            return GetEnumIdentity(enumDeclaration);
+
+        return enumSymbol.GetFullName(DeclarationFullNameFlags.WithoutNamespaceName);
     }
 }
