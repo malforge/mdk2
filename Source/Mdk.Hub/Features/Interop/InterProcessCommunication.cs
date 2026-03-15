@@ -21,13 +21,16 @@ namespace Mdk.Hub.Features.Interop;
 public class InterProcessCommunication : IInterProcessCommunication
 {
     const string PortFileName = "hub-ipc.port";
-    readonly bool _createdNew;
+    const string StartupLockFileName = "hub-ipc.starting";
+    static readonly TimeSpan StartupPollDelay = TimeSpan.FromMilliseconds(100);
 
+    readonly bool _createdNew;
     readonly IFileStorageService _fileStorage;
     readonly ILogger _logger;
     readonly int _port;
     readonly CancellationTokenSource? _serverCancellation;
     readonly ISettings _settings;
+    TcpListener? _listener;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="InterProcessCommunication" /> class.
@@ -41,63 +44,47 @@ public class InterProcessCommunication : IInterProcessCommunication
         _fileStorage = fileStorage;
         _settings = settings;
 
-        // Check if another instance is already running by checking the port file
-        var portFilePath = GetPortFilePath();
-        if (_fileStorage.FileExists(portFilePath))
+        if (TryUseRunningInstance(out var existingPort))
         {
-            var portText = _fileStorage.ReadAllText(portFilePath);
-            if (int.TryParse(portText, out var existingPort))
-            {
-                _logger.Debug($"Found existing port file with port {existingPort}, checking if instance is alive");
+            _createdNew = false;
+            _port = existingPort;
+            return;
+        }
 
-                // Try connecting to verify the instance is still running
-                if (TryConnect(existingPort))
+        while (true)
+        {
+            if (!TryAcquireStartupLock(out var startupLock))
+            {
+                _logger.Debug("Another Hub instance is starting; waiting for the IPC endpoint");
+                Thread.Sleep(StartupPollDelay);
+                continue;
+            }
+
+            if (startupLock is null)
+                continue;
+
+            try
+            {
+                if (TryUseRunningInstance(out existingPort))
                 {
-                    _logger.Info($"Hub is already running on port {existingPort}");
                     _createdNew = false;
                     _port = existingPort;
                     return;
                 }
 
-                _logger.Warning($"Port file exists but no instance running on port {existingPort}, starting as first instance");
+                _port = DeterminePort();
+                _createdNew = true;
+                _logger.Info("Hub is the first instance - starting IPC server");
+                _serverCancellation = new CancellationTokenSource();
+                StartListening(startupLock, _serverCancellation.Token);
+                startupLock = null;
+                return;
             }
-        }
-
-        // We're the first instance - determine port to use
-        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
-        var configuredPort = hubSettings.IpcPort;
-
-        if (configuredPort.HasValue && configuredPort.Value > 0)
-        {
-            // User configured a specific port
-            _port = configuredPort.Value;
-            _logger.Info($"Using configured IPC port: {_port}");
-        }
-        else if (_fileStorage.FileExists(portFilePath))
-        {
-            // Try to reuse the port from the file
-            var portText = _fileStorage.ReadAllText(portFilePath);
-            if (int.TryParse(portText, out var reusablePort))
+            finally
             {
-                _port = reusablePort;
-                _logger.Info($"Reusing port from file: {_port}");
-            }
-            else
-            {
-                _port = 0; // Random port
-                _logger.Debug("Port file invalid, using random port");
+                startupLock?.Dispose();
             }
         }
-        else
-        {
-            _port = 0; // Random port
-            _logger.Debug("No port file found, using random port");
-        }
-
-        _createdNew = true;
-        _logger.Info("Hub is the first instance - starting IPC server");
-        _serverCancellation = new CancellationTokenSource();
-        StartListeningAsync(_serverCancellation.Token);
     }
 
     /// <summary>
@@ -119,25 +106,23 @@ public class InterProcessCommunication : IInterProcessCommunication
     {
         if (_createdNew)
         {
-            // We are the server - handle the message directly
             _logger.Debug("Handling message locally (we are the server)");
             OnMessageReceived(message);
             return;
         }
 
-        // We are a client - send to the server
         try
         {
             var portFilePath = GetPortFilePath();
             _logger.Debug($"Looking for port file at: {portFilePath}");
 
-            if (!File.Exists(portFilePath))
+            if (!_fileStorage.FileExists(portFilePath))
             {
                 _logger.Error("Hub IPC port file not found - cannot send message");
                 return;
             }
 
-            var portText = await File.ReadAllTextAsync(portFilePath);
+            var portText = await _fileStorage.ReadAllTextAsync(portFilePath);
             if (!int.TryParse(portText, out var port))
             {
                 _logger.Error($"Invalid port in IPC file: {portText}");
@@ -147,7 +132,6 @@ public class InterProcessCommunication : IInterProcessCommunication
             _logger.Debug($"Connecting to Hub on port {port}...");
             using var client = new TcpClient();
 
-            // Add timeout for connection
             var connectTask = client.ConnectAsync(IPAddress.Loopback, port);
             if (await Task.WhenAny(connectTask, Task.Delay(5000)) != connectTask)
             {
@@ -173,6 +157,8 @@ public class InterProcessCommunication : IInterProcessCommunication
     public void Dispose()
     {
         _serverCancellation?.Cancel();
+        _listener?.Stop();
+        StartupLockState.ReleaseHeldLock();
         _serverCancellation?.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -193,29 +179,81 @@ public class InterProcessCommunication : IInterProcessCommunication
         }
     }
 
-    async void StartListeningAsync(CancellationToken cancellationToken)
+    int DeterminePort()
     {
-        TcpListener? listener = null;
+        var portFilePath = GetPortFilePath();
+        var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+        var configuredPort = hubSettings.IpcPort;
+
+        if (configuredPort.HasValue && configuredPort.Value > 0)
+        {
+            _logger.Info($"Using configured IPC port: {configuredPort.Value}");
+            return configuredPort.Value;
+        }
+
+        if (!_fileStorage.FileExists(portFilePath))
+        {
+            _logger.Debug("No port file found, using random port");
+            return 0;
+        }
+
         try
         {
-            // Start TCP listener on the determined port
-            listener = new TcpListener(IPAddress.Loopback, _port);
-            listener.Start();
+            var portText = _fileStorage.ReadAllText(portFilePath);
+            if (int.TryParse(portText, out var reusablePort))
+            {
+                _logger.Info($"Reusing port from file: {reusablePort}");
+                return reusablePort;
+            }
+        }
+        catch (IOException ex)
+        {
+            _logger.Debug($"Could not read port file while selecting port: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.Debug($"Could not access port file while selecting port: {ex.Message}");
+        }
 
-            var actualPort = ((IPEndPoint)listener.LocalEndpoint).Port;
+        _logger.Debug("Port file invalid, using random port");
+        return 0;
+    }
+
+    void StartListening(FileStream startupLock, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _listener = new TcpListener(IPAddress.Loopback, _port);
+            _listener.Start();
+
+            var actualPort = ((IPEndPoint)_listener.LocalEndpoint).Port;
             _logger.Info($"IPC server listening on port {actualPort}");
 
-            // Save port to file for clients to discover
             var portFilePath = GetPortFilePath();
             var portDir = Path.GetDirectoryName(portFilePath);
             if (!string.IsNullOrEmpty(portDir))
                 _fileStorage.CreateDirectory(portDir);
-            await _fileStorage.WriteAllTextAsync(portFilePath, actualPort.ToString(), cancellationToken);
+            _fileStorage.WriteAllText(portFilePath, actualPort.ToString());
 
-            // Accept connections
-            while (!cancellationToken.IsCancellationRequested)
+            startupLock.Dispose();
+            _ = AcceptConnectionsAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _listener?.Stop();
+            _listener = null;
+            _logger.Error($"IPC server error: {ex.Message}", ex);
+            throw;
+        }
+    }
+
+    async Task AcceptConnectionsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (_listener is not null && !cancellationToken.IsCancellationRequested)
             {
-                var client = await listener.AcceptTcpClientAsync(cancellationToken);
+                var client = await _listener.AcceptTcpClientAsync(cancellationToken);
                 _logger.Debug("Accepted TCP connection from client");
                 _ = HandleConnectionAsync(client, cancellationToken);
             }
@@ -224,25 +262,19 @@ public class InterProcessCommunication : IInterProcessCommunication
         {
             _logger.Debug("IPC server shutting down");
         }
+        catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.Debug("IPC server shutting down");
+        }
         catch (Exception ex)
         {
-            _logger.Error($"IPC server error: {ex.Message}");
+            _logger.Error($"IPC server error: {ex.Message}", ex);
         }
         finally
         {
-            listener?.Stop();
-
-            // Clean up port file
-            try
-            {
-                var portFilePath = GetPortFilePath();
-                if (_fileStorage.FileExists(portFilePath))
-                    _fileStorage.DeleteFile(portFilePath);
-            }
-            catch
-            {
-                // Best effort cleanup
-            }
+            _listener?.Stop();
+            _listener = null;
+            CleanupPortFile();
         }
     }
 
@@ -257,7 +289,6 @@ public class InterProcessCommunication : IInterProcessCommunication
 
                 _logger.Info($"Received {message.Type} message from client");
 
-                // Raise event on UI thread if available
                 if (Dispatcher.UIThread.CheckAccess())
                     OnMessageReceived(message);
                 else
@@ -266,22 +297,144 @@ public class InterProcessCommunication : IInterProcessCommunication
         }
         catch (OperationCanceledException)
         {
-            // Normal shutdown
         }
         catch (Exception ex)
         {
-            _logger.Error($"Error handling IPC connection: {ex.Message}");
+            _logger.Error($"Error handling IPC connection: {ex.Message}", ex);
         }
     }
 
     void OnMessageReceived(InterConnectMessage message) => MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
 
+    void CleanupPortFile()
+    {
+        try
+        {
+            var portFilePath = GetPortFilePath();
+            if (_fileStorage.FileExists(portFilePath))
+                _fileStorage.DeleteFile(portFilePath);
+        }
+        catch (Exception ex)
+        {
+            // Best-effort cleanup: log and continue; a stale port file may cause confusing behavior later.
+            _logger.Warning($"Failed to clean up IPC port file: {ex.Message}", ex);
+        }
+    }
+
+    bool TryAcquireStartupLock(out FileStream? startupLock)
+    {
+        startupLock = StartupLockState.TakeHeldLock();
+        if (startupLock is not null)
+            return true;
+
+        var startupLockPath = GetStartupLockPath();
+        var startupLockDir = Path.GetDirectoryName(startupLockPath);
+        if (!string.IsNullOrEmpty(startupLockDir))
+            _fileStorage.CreateDirectory(startupLockDir);
+
+        startupLock = TryOpenStartupLock(startupLockPath);
+        return startupLock is not null;
+    }
+
+    bool TryUseRunningInstance(out int existingPort)
+    {
+        existingPort = 0;
+        if (!TryReadRunningPort(GetPortFilePath(), _fileStorage.FileExists, _fileStorage.ReadAllText, TryConnect, out existingPort))
+            return false;
+
+        _logger.Info($"Hub is already running on port {existingPort}");
+        return true;
+    }
+
     string GetPortFilePath() => Path.Combine(_fileStorage.GetLocalApplicationDataPath(), "Hub", PortFileName);
+    string GetStartupLockPath() => Path.Combine(_fileStorage.GetLocalApplicationDataPath(), "Hub", StartupLockFileName);
 
     static string GetStandalonePortFilePath()
     {
         var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         return Path.Combine(appDataPath, "MDK2", "Hub", PortFileName);
+    }
+
+    static string GetStandaloneStartupLockPath()
+    {
+        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        return Path.Combine(appDataPath, "MDK2", "Hub", StartupLockFileName);
+    }
+
+    static bool TryReadRunningPort(string portFilePath, Func<string, bool> fileExists, Func<string, string> readAllText, Func<int, bool> tryConnect, out int existingPort)
+    {
+        existingPort = 0;
+
+        try
+        {
+            if (!fileExists(portFilePath))
+                return false;
+
+            var portText = readAllText(portFilePath);
+            if (!int.TryParse(portText, out var candidatePort))
+                return false;
+
+            if (!tryConnect(candidatePort))
+                return false;
+
+            existingPort = candidatePort;
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    static FileStream? TryOpenStartupLock(string startupLockPath)
+    {
+        try
+        {
+            return new FileStream(startupLockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    static class StartupLockState
+    {
+        static readonly object Sync = new();
+        static FileStream? _heldLock;
+
+        public static void Hold(FileStream startupLock)
+        {
+            lock (Sync)
+                _heldLock = startupLock;
+        }
+
+        public static FileStream? TakeHeldLock()
+        {
+            lock (Sync)
+            {
+                var startupLock = _heldLock;
+                _heldLock = null;
+                return startupLock;
+            }
+        }
+
+        public static void ReleaseHeldLock()
+        {
+            lock (Sync)
+            {
+                _heldLock?.Dispose();
+                _heldLock = null;
+            }
+        }
     }
 
     /// <summary>
@@ -297,32 +450,54 @@ public class InterProcessCommunication : IInterProcessCommunication
         /// </summary>
         public Standalone()
         {
-            var fileStorage = new FileStorageService(); // Use production implementation for startup
+            var fileStorage = new FileStorageService();
             _logger = new FileLogger(fileStorage);
 
-            // Check if another instance is running by checking port file
-            var portFilePath = GetStandalonePortFilePath();
-            if (File.Exists(portFilePath))
+            while (true)
             {
-                var portText = File.ReadAllText(portFilePath);
-                if (int.TryParse(portText, out var port))
+                if (TryReadRunningPort(GetStandalonePortFilePath(), File.Exists, File.ReadAllText, TryConnect, out var port))
                 {
-                    // Try to connect to verify instance is alive
-                    _isFirstInstance = !TryConnect(port);
-                    if (!_isFirstInstance)
-                        _logger.Info($"Found running instance on port {port}");
+                    _isFirstInstance = false;
+                    _logger.Info($"Found running instance on port {port}");
+                    return;
                 }
-                else
-                    _isFirstInstance = true;
-            }
-            else
+
+                var startupLockPath = GetStandaloneStartupLockPath();
+                var startupLockDir = Path.GetDirectoryName(startupLockPath);
+                if (!string.IsNullOrEmpty(startupLockDir))
+                    Directory.CreateDirectory(startupLockDir);
+
+                var startupLock = TryOpenStartupLock(startupLockPath);
+                if (startupLock is null)
+                {
+                    _logger.Debug("Another Hub instance is starting; waiting for the IPC endpoint");
+                    Thread.Sleep(StartupPollDelay);
+                    continue;
+                }
+
+                if (TryReadRunningPort(GetStandalonePortFilePath(), File.Exists, File.ReadAllText, TryConnect, out port))
+                {
+                    startupLock.Dispose();
+                    _isFirstInstance = false;
+                    _logger.Info($"Found running instance on port {port}");
+                    return;
+                }
+
+                StartupLockState.Hold(startupLock);
                 _isFirstInstance = true;
+                _logger.Info("Acquired Hub startup lock");
+                return;
+            }
         }
 
         /// <summary>
         ///     Releases all resources used by the <see cref="Standalone" /> instance.
         /// </summary>
-        public void Dispose() => GC.SuppressFinalize(this);
+        public void Dispose()
+        {
+            StartupLockState.ReleaseHeldLock();
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         ///     Gets a value indicating whether another instance of the Hub is already running.
@@ -362,13 +537,11 @@ public class InterProcessCommunication : IInterProcessCommunication
                     return;
                 }
 
-                // Parse known IPC notification commands; otherwise forward raw startup args.
                 var isKnownNotification = Enum.TryParse<NotificationType>(args[0], true, out var type) && type != NotificationType.StartupArgs;
                 var messageArgs = isKnownNotification ? args.Skip(1).ToArray() : args;
                 type = isKnownNotification ? type : NotificationType.StartupArgs;
                 var message = new InterConnectMessage(type, messageArgs);
 
-                // Read port from file (synchronous) - use static helper for standalone
                 var portFilePath = GetStandalonePortFilePath();
                 if (!File.Exists(portFilePath))
                 {
@@ -385,7 +558,6 @@ public class InterProcessCommunication : IInterProcessCommunication
 
                 _logger.Debug($"Connecting to Hub on port {port}...");
 
-                // Connect and send message (synchronous)
                 using var client = new TcpClient();
                 client.Connect(IPAddress.Loopback, port);
 
