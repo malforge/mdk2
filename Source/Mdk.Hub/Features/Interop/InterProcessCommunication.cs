@@ -116,13 +116,13 @@ public class InterProcessCommunication : IInterProcessCommunication
             var portFilePath = GetPortFilePath();
             _logger.Debug($"Looking for port file at: {portFilePath}");
 
-            if (!File.Exists(portFilePath))
+            if (!_fileStorage.FileExists(portFilePath))
             {
                 _logger.Error("Hub IPC port file not found - cannot send message");
                 return;
             }
 
-            var portText = await File.ReadAllTextAsync(portFilePath);
+            var portText = await _fileStorage.ReadAllTextAsync(portFilePath);
             if (!int.TryParse(portText, out var port))
             {
                 _logger.Error($"Invalid port in IPC file: {portText}");
