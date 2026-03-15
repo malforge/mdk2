@@ -314,8 +314,10 @@ public class InterProcessCommunication : IInterProcessCommunication
             if (_fileStorage.FileExists(portFilePath))
                 _fileStorage.DeleteFile(portFilePath);
         }
-        catch
+        catch (Exception ex)
         {
+            // Best-effort cleanup: log and continue; a stale port file may cause confusing behavior later.
+            _logger.Warning($"Failed to clean up IPC port file: {ex.Message}", ex);
         }
     }
 
