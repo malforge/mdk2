@@ -1,7 +1,7 @@
 # MDK²-SE
 _(Malware's Development Kit for SE)_
 
-[![Build and Deploy](https://github.com/malware-dev/mdk2/actions/workflows/buildwithartefacts.yml/badge.svg?branch=main)](https://github.com/malware-dev/mdk2/actions/workflows/dotnet.yml)
+[![Build and Deploy](https://github.com/malware-dev/mdk2/actions/workflows/buildwithartefacts.yml/badge.svg?branch=main)](https://github.com/malware-dev/mdk2/actions/workflows/buildwithartefacts.yml)
 
 A toolkit to help with developing both **programmable block scripts** and **mods** for Keen Software House’s space sandbox *Space Engineers*. It sets up a ready-to-code Visual Studio project, checks for disallowed code, and includes a script minifier for programmable blocks.
 
