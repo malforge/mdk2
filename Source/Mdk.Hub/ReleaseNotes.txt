@@ -1,3 +1,6 @@
+v.2.2.5
+   - Warning log messages can now include exception details for better debugging context.
+
 v.2.2.4
    - Fixed a timing issue that could open duplicate MDK Hub windows during parallel solution builds.
 
