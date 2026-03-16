@@ -116,6 +116,20 @@ public class FileLogger : ILogger
         => WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Warning, Message = message, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName });
 
     /// <summary>
+    ///     Logs a warning message with an associated exception.
+    /// </summary>
+    /// <param name="message">The message to log.</param>
+    /// <param name="exception">The exception to log.</param>
+    /// <param name="filePath">The source file path (automatically captured).</param>
+    /// <param name="lineNumber">The source line number (automatically captured).</param>
+    /// <param name="memberName">The calling member name (automatically captured).</param>
+    public void Warning(string message, Exception exception, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
+    {
+        var fullMessage = $"{message}\nException: {exception.GetType().Name}: {exception.Message}\nStack Trace:\n{exception.StackTrace}";
+        WriteLog(new LogEntry { Timestamp = DateTimeOffset.Now, Level = LogLevel.Warning, Message = fullMessage, FilePath = filePath, LineNumber = lineNumber, MemberName = memberName, Exception = exception });
+    }
+
+    /// <summary>
     ///     Logs an error message.
     /// </summary>
     /// <param name="message">The message to log.</param>

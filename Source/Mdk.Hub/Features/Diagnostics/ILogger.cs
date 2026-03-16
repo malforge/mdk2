@@ -24,6 +24,11 @@ public interface ILogger
     void Warning(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
 
     /// <summary>
+    ///     Logs a warning message with exception details and caller context information.
+    /// </summary>
+    void Warning(string message, Exception exception, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
+
+    /// <summary>
     ///     Logs an error message with caller context information.
     /// </summary>
     void Error(string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "");
