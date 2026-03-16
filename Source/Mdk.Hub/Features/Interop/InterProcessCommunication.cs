@@ -317,7 +317,7 @@ public class InterProcessCommunication : IInterProcessCommunication
         catch (Exception ex)
         {
             // Best-effort cleanup: log and continue; a stale port file may cause confusing behavior later.
-            _logger.Warning($"Failed to clean up IPC port file: {ex.Message}", ex);
+            _logger.Warning($"Failed to clean up IPC port file: {ex.Message}");
         }
     }
 
