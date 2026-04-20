@@ -609,17 +609,21 @@ public class ShellViewModel : ViewModel, IShell
                 // Check and install .NET SDK
                 busyOverlay.Message = "Checking .NET SDK...";
                 var (sdkInstalled, sdkVersion) = await updateManager.CheckDotNetSdkAsync();
+                var sdkInstalledNow = sdkInstalled;
                 if (!sdkInstalled)
                 {
                     busyOverlay.Message = "Installing .NET SDK... (this may take a few minutes)";
                     try
                     {
                         await updateManager.InstallDotNetSdkAsync();
+                        sdkInstalledNow = true;
                         messages.Add("✓ .NET SDK installed successfully");
                     }
                     catch (Exception ex)
                     {
-                        messages.Add($"✗ Failed to install .NET SDK: {ex.Message}");
+                        _logger.Error($"Failed to install .NET SDK", ex);
+                        messages.Add($"✗ Failed to install .NET SDK:\n  {ex.Message}");
+                        messages.Add("  Please visit https://dotnet.microsoft.com/download/dotnet/9.0 to install manually.");
                     }
                 }
                 else
@@ -638,7 +642,10 @@ public class ShellViewModel : ViewModel, IShell
                     }
                     catch (Exception ex)
                     {
-                        messages.Add($"✗ Failed to install template package: {ex.Message}");
+                        _logger.Error($"Failed to install template package", ex);
+                        messages.Add($"✗ Failed to install template package:\n  {ex.Message}");
+                        if (!sdkInstalledNow)
+                            messages.Add("  (This usually happens if .NET SDK installation failed - please install it manually first)");
                     }
                 }
                 else

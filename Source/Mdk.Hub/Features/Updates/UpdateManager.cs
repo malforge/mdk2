@@ -5,6 +5,7 @@ using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Mal.SourceGeneratedDI;
@@ -183,15 +184,21 @@ public class UpdateManager : IUpdateManager
         {
             _logger.Info("Installing MDK² template package");
 
-            // Build arguments - include --prerelease if user wants prerelease updates
-            var args = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates
-                ? $"new install {EnvironmentMetadata.TemplatePackageId} --prerelease"
-                : $"new install {EnvironmentMetadata.TemplatePackageId}";
+            // Get the latest version (prerelease or stable based on user preference)
+            var includePrerelease = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates;
+            var latestVersion = await _nuGetService.GetLatestVersionAsync(EnvironmentMetadata.TemplatePackageId, includePrerelease);
+            
+            if (latestVersion == null)
+                throw new InvalidOperationException("Could not determine latest template package version");
+
+            // Use ::version syntax to install specific version (required for prerelease)
+            var packageSpec = $"{EnvironmentMetadata.TemplatePackageId}::{latestVersion}";
+            _logger.Info($"Installing template package version: {latestVersion}");
 
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = args,
+                Arguments = $"new install {packageSpec}",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -215,7 +222,7 @@ public class UpdateManager : IUpdateManager
                 throw new InvalidOperationException($"Template installation failed: {error}");
             }
 
-            _logger.Info($"Template package installed successfully (prerelease: {_settings.GetValue(SettingsKeys.HubSettings, new HubSettings()).IncludePrereleaseUpdates})");
+            _logger.Info($"Template package installed successfully (version: {latestVersion})");
         }
         catch (Exception ex)
         {
@@ -281,6 +288,88 @@ public class UpdateManager : IUpdateManager
     }
 
     /// <summary>
+    ///     Fetches the latest .NET 9 SDK download URL for Windows x64 from Microsoft's official releases API.
+    /// </summary>
+    private async Task<string?> GetLatestDotNet9SdkDownloadUrlAsync()
+    {
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+
+            var releasesUrl = "https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/9.0/releases.json";
+            _logger.Info($"Fetching .NET 9 releases metadata from {releasesUrl}");
+
+            var releasesJson = await httpClient.GetStringAsync(releasesUrl);
+            using var doc = JsonDocument.Parse(releasesJson);
+
+            var downloadUrl = SelectWindowsX64InstallerUrl(doc.RootElement);
+            if (downloadUrl != null)
+            {
+                _logger.Info("Found .NET 9 SDK installer URL");
+                return downloadUrl;
+            }
+
+            _logger.Error("Could not find .NET 9 SDK download URL in releases metadata");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("Failed to fetch .NET 9 SDK download URL", ex);
+            return null;
+        }
+    }
+
+    /// <summary>
+    ///     Selects the Windows x64 SDK installer URL from a Microsoft releases.json root element.
+    ///     Releases are ordered newest first; the first matching file is returned.
+    /// </summary>
+    internal static string? SelectWindowsX64InstallerUrl(JsonElement root)
+    {
+        if (!root.TryGetProperty("releases", out var releases))
+            return null;
+
+        foreach (var release in releases.EnumerateArray())
+        {
+            if (!release.TryGetProperty("sdk", out var sdk) ||
+                !sdk.TryGetProperty("files", out var files))
+                continue;
+
+            foreach (var file in files.EnumerateArray())
+            {
+                if (!file.TryGetProperty("name", out var name) ||
+                    !file.TryGetProperty("url", out var url))
+                    continue;
+
+                var fileName = name.GetString() ?? string.Empty;
+                // Match dotnet-sdk-win-x64.exe — Microsoft omits the version from the filename
+                if (fileName.Contains("dotnet-sdk") &&
+                    fileName.Contains("win-x64") &&
+                    fileName.EndsWith(".exe"))
+                    return url.GetString();
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///     Returns true if <paramref name="url"/> is an absolute HTTPS URL on a known Microsoft domain.
+    /// </summary>
+    private static bool IsValidMicrosoftDownloadUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return false;
+        if (!string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase))
+            return false;
+        var host = uri.Host;
+        return host.Equals("microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+               host.EndsWith(".microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+               host.Equals("azureedge.net", StringComparison.OrdinalIgnoreCase) ||
+               host.EndsWith(".azureedge.net", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     ///     Parses the output of <c>dotnet --list-sdks</c> and returns the highest .NET 9.x version string found,
     ///     or <c>null</c> if no 9.x SDK is listed.
     /// </summary>
@@ -320,13 +409,20 @@ public class UpdateManager : IUpdateManager
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // Windows: Download and run the installer
-                var installerUrl = "https://download.visualstudio.microsoft.com/download/pr/23e32323-5a2b-48c2-86fa-58f5e72c6e98/19e09b4411d771867c0c9c30a8d7062c/dotnet-sdk-9.0.101-win-x64.exe";
-                var installerPath = Path.Combine(_fileStorage.GetTempPath(), "dotnet-sdk-9-installer.exe");
+                // Windows: Fetch the latest .NET 9 SDK download URL and run the installer
+                _logger.Info("Fetching latest .NET 9 SDK download URL");
+                var installerUrl = await GetLatestDotNet9SdkDownloadUrlAsync();
+                if (string.IsNullOrEmpty(installerUrl))
+                    throw new InvalidOperationException("Could not determine .NET 9 SDK download URL");
 
+                if (!IsValidMicrosoftDownloadUrl(installerUrl))
+                    throw new InvalidOperationException($"Resolved SDK download URL is not a trusted Microsoft HTTPS URL: {installerUrl}");
+
+                var installerPath = Path.Combine(_fileStorage.GetTempPath(), "dotnet-sdk-9-installer.exe");
                 _logger.Info("Downloading .NET 9 SDK installer");
 
                 using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(300); // 5 minutes for large file
                 var installerBytes = await httpClient.GetByteArrayAsync(installerUrl);
                 await _fileStorage.WriteAllBytesAsync(installerPath, installerBytes);
 
