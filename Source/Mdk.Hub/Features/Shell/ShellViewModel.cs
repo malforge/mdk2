@@ -619,7 +619,9 @@ public class ShellViewModel : ViewModel, IShell
                     }
                     catch (Exception ex)
                     {
-                        messages.Add($"✗ Failed to install .NET SDK: {ex.Message}");
+                        _logger.Error($"Failed to install .NET SDK", ex);
+                        messages.Add($"✗ Failed to install .NET SDK:\n  {ex.Message}");
+                        messages.Add("  Please visit https://dotnet.microsoft.com/download/dotnet/9.0 to install manually.");
                     }
                 }
                 else
@@ -638,7 +640,10 @@ public class ShellViewModel : ViewModel, IShell
                     }
                     catch (Exception ex)
                     {
-                        messages.Add($"✗ Failed to install template package: {ex.Message}");
+                        _logger.Error($"Failed to install template package", ex);
+                        messages.Add($"✗ Failed to install template package:\n  {ex.Message}");
+                        if (!sdkInstalled)
+                            messages.Add("  (This usually happens if .NET SDK installation failed - please install it manually first)");
                     }
                 }
                 else

@@ -24,6 +24,7 @@ public class GlobalSettingsViewModel : OverlayModel
     readonly AsyncRelayCommand _cancelCommand;
     readonly AsyncRelayCommand _checkPrerequisitesCommand;
     readonly HubSettings _hubSettings;
+    readonly ILogger _logger;
     readonly RelayCommand _saveCommand;
     readonly ISettings _settings;
     readonly IShell _shell;
@@ -46,6 +47,7 @@ public class GlobalSettingsViewModel : OverlayModel
         _settings = settings;
         _updateManager = updateManager;
         _shell = shell;
+        _logger = logger;
         _hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
 
         // Load initial values
@@ -398,10 +400,13 @@ public class GlobalSettingsViewModel : OverlayModel
         try
         {
             var messages = new List<string>();
+            bool sdkInstalled = false;
+            bool templateInstalled = false;
 
             // Check .NET SDK
             busyOverlay.Message = "Checking .NET SDK...";
-            var (sdkInstalled, sdkVersion) = await _updateManager.CheckDotNetSdkAsync();
+            var (sdkCheck, sdkVersion) = await _updateManager.CheckDotNetSdkAsync();
+            sdkInstalled = sdkCheck;
             if (sdkInstalled)
                 messages.Add($"✓ .NET SDK {sdkVersion} is installed");
             else
@@ -409,7 +414,7 @@ public class GlobalSettingsViewModel : OverlayModel
 
             // Check template package
             busyOverlay.Message = "Checking template package...";
-            var templateInstalled = await _updateManager.IsTemplateInstalledAsync();
+            templateInstalled = await _updateManager.IsTemplateInstalledAsync();
             if (templateInstalled)
                 messages.Add("✓ MDK² template package is installed");
             else
@@ -417,15 +422,22 @@ public class GlobalSettingsViewModel : OverlayModel
 
             busyOverlay.Dismiss();
 
-            // Only show dialog if there are problems - otherwise just toast
-            var hasProblems = messages.Any(m => m.StartsWith("✗"));
+            // Check if there are problems
+            bool hasProblems = !sdkInstalled || !templateInstalled;
             if (hasProblems)
             {
-                await _shell.ShowOverlayAsync(new InformationMessage
+                var result = await _shell.ShowOverlayAsync(new ConfirmationMessage
                 {
                     Title = "Prerequisites Check",
-                    Message = string.Join("\n", messages)
+                    Message = $"{string.Join("\n", messages)}\n\nWould you like to install missing prerequisites?",
+                    OkText = "Install",
+                    CancelText = "Close"
                 });
+
+                if (result)
+                {
+                    await InstallMissingPrerequisitesAsync(sdkInstalled, templateInstalled);
+                }
             }
             else
                 _shell.ShowToast("All prerequisites installed ✓");
@@ -437,6 +449,69 @@ public class GlobalSettingsViewModel : OverlayModel
             {
                 Title = "Check Failed",
                 Message = $"An error occurred while checking prerequisites:\n\n{ex.Message}"
+            });
+        }
+    }
+
+    async Task InstallMissingPrerequisitesAsync(bool sdkInstalled, bool templateInstalled)
+    {
+        var busyOverlay = new BusyOverlayViewModel("Installing missing prerequisites...");
+        _shell.AddOverlay(busyOverlay);
+
+        try
+        {
+            var messages = new List<string>();
+
+            // Install .NET SDK if needed
+            if (!sdkInstalled)
+            {
+                busyOverlay.Message = "Installing .NET SDK... (this may take a few minutes)";
+                try
+                {
+                    await _updateManager.InstallDotNetSdkAsync();
+                    messages.Add("✓ .NET SDK installed successfully");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to install .NET SDK", ex);
+                    messages.Add($"✗ Failed to install .NET SDK:\n  {ex.Message}");
+                    messages.Add("  Please visit https://dotnet.microsoft.com/download/dotnet/9.0 to install manually.");
+                }
+            }
+
+            // Install template package if SDK is now available
+            if (!templateInstalled && (sdkInstalled || messages.Any(m => m.Contains("SDK installed successfully"))))
+            {
+                busyOverlay.Message = "Installing MDK² template package...";
+                try
+                {
+                    await _updateManager.InstallTemplateAsync();
+                    messages.Add("✓ MDK² template package installed successfully");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to install template package", ex);
+                    messages.Add($"✗ Failed to install template package:\n  {ex.Message}");
+                    if (!sdkInstalled)
+                        messages.Add("  (Make sure .NET SDK installation succeeded first)");
+                }
+            }
+
+            busyOverlay.Dismiss();
+
+            await _shell.ShowOverlayAsync(new InformationMessage
+            {
+                Title = "Installation Complete",
+                Message = string.Join("\n", messages)
+            });
+        }
+        catch (Exception ex)
+        {
+            busyOverlay.Dismiss();
+            await _shell.ShowOverlayAsync(new InformationMessage
+            {
+                Title = "Installation Failed",
+                Message = $"An error occurred during installation:\n\n{ex.Message}"
             });
         }
     }
