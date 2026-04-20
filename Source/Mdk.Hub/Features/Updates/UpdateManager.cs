@@ -363,7 +363,9 @@ public class UpdateManager : IUpdateManager
         if (!string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase))
             return false;
         var host = uri.Host;
-        return host.EndsWith(".microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+        return host.Equals("microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+               host.EndsWith(".microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+               host.Equals("azureedge.net", StringComparison.OrdinalIgnoreCase) ||
                host.EndsWith(".azureedge.net", StringComparison.OrdinalIgnoreCase);
     }
 
