@@ -1,3 +1,9 @@
+v.2.2.6
+   - Fixed .NET 9 SDK installation failing due to hardcoded download URL; URL is now resolved dynamically from the Microsoft releases API.
+   - Fixed template installation failing with "--prerelease is not supported"; installer now queries NuGet for the exact version and installs using the correct syntax.
+   - "Check Prerequisites" now offers to install missing prerequisites instead of just reporting them.
+   - Improved error visibility when prerequisite installation fails.
+
 v.2.2.5
    - Warning log messages can now include exception details for better debugging context.
 
