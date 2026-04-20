@@ -461,6 +461,7 @@ public class GlobalSettingsViewModel : OverlayModel
         try
         {
             var messages = new List<string>();
+            var sdkInstalledNow = sdkInstalled;
 
             // Install .NET SDK if needed
             if (!sdkInstalled)
@@ -469,6 +470,7 @@ public class GlobalSettingsViewModel : OverlayModel
                 try
                 {
                     await _updateManager.InstallDotNetSdkAsync();
+                    sdkInstalledNow = true;
                     messages.Add("✓ .NET SDK installed successfully");
                 }
                 catch (Exception ex)
@@ -480,7 +482,7 @@ public class GlobalSettingsViewModel : OverlayModel
             }
 
             // Install template package if SDK is now available
-            if (!templateInstalled && (sdkInstalled || messages.Any(m => m.Contains("SDK installed successfully"))))
+            if (!templateInstalled && (sdkInstalledNow))
             {
                 busyOverlay.Message = "Installing MDK² template package...";
                 try
@@ -492,7 +494,7 @@ public class GlobalSettingsViewModel : OverlayModel
                 {
                     _logger.Error($"Failed to install template package", ex);
                     messages.Add($"✗ Failed to install template package:\n  {ex.Message}");
-                    if (!sdkInstalled)
+                    if (!sdkInstalledNow)
                         messages.Add("  (Make sure .NET SDK installation succeeded first)");
                 }
             }

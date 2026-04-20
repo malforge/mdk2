@@ -297,42 +297,17 @@ public class UpdateManager : IUpdateManager
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(10);
 
-            // Fetch the .NET 9 releases metadata from Microsoft's official API
             var releasesUrl = "https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/9.0/releases.json";
             _logger.Info($"Fetching .NET 9 releases metadata from {releasesUrl}");
 
             var releasesJson = await httpClient.GetStringAsync(releasesUrl);
             using var doc = JsonDocument.Parse(releasesJson);
-            var root = doc.RootElement;
 
-            // Find the latest SDK release (releases are ordered newest first)
-            if (root.TryGetProperty("releases", out var releases))
+            var downloadUrl = SelectWindowsX64InstallerUrl(doc.RootElement);
+            if (downloadUrl != null)
             {
-                foreach (var release in releases.EnumerateArray())
-                {
-                    if (release.TryGetProperty("sdk", out var sdk) && 
-                        sdk.TryGetProperty("files", out var files))
-                    {
-                        // Look for Windows x64 SDK installer
-                        foreach (var file in files.EnumerateArray())
-                        {
-                            if (file.TryGetProperty("name", out var name) && 
-                                file.TryGetProperty("url", out var url))
-                            {
-                                var fileName = name.GetString() ?? string.Empty;
-                                // Match dotnet-sdk-win-x64.exe (filename has no version number; version is in URL)
-                                if (fileName.Contains("dotnet-sdk") && 
-                                    fileName.Contains("win-x64") && 
-                                    fileName.EndsWith(".exe"))
-                                {
-                                    var downloadUrl = url.GetString();
-                                    _logger.Info($"Found .NET 9 SDK installer: {fileName}");
-                                    return downloadUrl;
-                                }
-                            }
-                        }
-                    }
-                }
+                _logger.Info("Found .NET 9 SDK installer URL");
+                return downloadUrl;
             }
 
             _logger.Error("Could not find .NET 9 SDK download URL in releases metadata");
@@ -340,9 +315,56 @@ public class UpdateManager : IUpdateManager
         }
         catch (Exception ex)
         {
-            _logger.Error($"Failed to fetch .NET 9 SDK download URL: {ex.Message}");
+            _logger.Error("Failed to fetch .NET 9 SDK download URL", ex);
             return null;
         }
+    }
+
+    /// <summary>
+    ///     Selects the Windows x64 SDK installer URL from a Microsoft releases.json root element.
+    ///     Releases are ordered newest first; the first matching file is returned.
+    /// </summary>
+    internal static string? SelectWindowsX64InstallerUrl(JsonElement root)
+    {
+        if (!root.TryGetProperty("releases", out var releases))
+            return null;
+
+        foreach (var release in releases.EnumerateArray())
+        {
+            if (!release.TryGetProperty("sdk", out var sdk) ||
+                !sdk.TryGetProperty("files", out var files))
+                continue;
+
+            foreach (var file in files.EnumerateArray())
+            {
+                if (!file.TryGetProperty("name", out var name) ||
+                    !file.TryGetProperty("url", out var url))
+                    continue;
+
+                var fileName = name.GetString() ?? string.Empty;
+                // Match dotnet-sdk-win-x64.exe — Microsoft omits the version from the filename
+                if (fileName.Contains("dotnet-sdk") &&
+                    fileName.Contains("win-x64") &&
+                    fileName.EndsWith(".exe"))
+                    return url.GetString();
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///     Returns true if <paramref name="url"/> is an absolute HTTPS URL on a known Microsoft domain.
+    /// </summary>
+    private static bool IsValidMicrosoftDownloadUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return false;
+        if (!string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase))
+            return false;
+        var host = uri.Host;
+        return host.EndsWith(".microsoft.com", StringComparison.OrdinalIgnoreCase) ||
+               host.EndsWith(".azureedge.net", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -390,6 +412,9 @@ public class UpdateManager : IUpdateManager
                 var installerUrl = await GetLatestDotNet9SdkDownloadUrlAsync();
                 if (string.IsNullOrEmpty(installerUrl))
                     throw new InvalidOperationException("Could not determine .NET 9 SDK download URL");
+
+                if (!IsValidMicrosoftDownloadUrl(installerUrl))
+                    throw new InvalidOperationException($"Resolved SDK download URL is not a trusted Microsoft HTTPS URL: {installerUrl}");
 
                 var installerPath = Path.Combine(_fileStorage.GetTempPath(), "dotnet-sdk-9-installer.exe");
                 _logger.Info("Downloading .NET 9 SDK installer");

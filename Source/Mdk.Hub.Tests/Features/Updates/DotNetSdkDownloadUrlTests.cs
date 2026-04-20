@@ -1,9 +1,4 @@
 using System.Text.Json;
-using FakeItEasy;
-using Mdk.Hub.Features.Diagnostics;
-using Mdk.Hub.Features.Settings;
-using Mdk.Hub.Features.Shell;
-using Mdk.Hub.Features.Storage;
 using Mdk.Hub.Features.Updates;
 
 namespace Mdk.Hub.Tests.Features.Updates;
@@ -12,10 +7,10 @@ namespace Mdk.Hub.Tests.Features.Updates;
 public class DotNetSdkDownloadUrlTests
 {
     [Test]
-    public void GetLatestDotNet9SdkDownloadUrlAsync_ParsesRealWorldJsonStructure()
+    public void SelectWindowsX64InstallerUrl_ParsesRealWorldJsonStructure()
     {
-        // This test verifies that a realistic Microsoft releases.json structure
-        // contains the expected Windows x64 SDK installer files
+        // Verifies that SelectWindowsX64InstallerUrl correctly identifies the
+        // Windows x64 SDK installer from a realistic Microsoft releases.json payload.
         var microsoftReleasesJson = """
             {
               "releases-index": [
@@ -69,46 +64,15 @@ public class DotNetSdkDownloadUrlTests
             }
             """;
 
-        // Parse the JSON to verify structure
+        // Parse the JSON and call the production method directly
         using var doc = JsonDocument.Parse(microsoftReleasesJson);
-        var root = doc.RootElement;
 
-        // Verify we can navigate the structure that the implementation expects
-        Assert.That(root.TryGetProperty("releases", out var releases), Is.True,
-            "JSON should have 'releases' property");
+        var result = UpdateManager.SelectWindowsX64InstallerUrl(doc.RootElement);
 
-        var releaseArray = releases.EnumerateArray().ToList();
-        Assert.That(releaseArray, Is.Not.Empty, "Should have at least one release");
-
-        var firstRelease = releaseArray[0];
-        Assert.That(firstRelease.TryGetProperty("sdk", out var sdk), Is.True,
-            "Release should have 'sdk' property");
-        Assert.That(sdk.TryGetProperty("files", out var files), Is.True,
-            "SDK should have 'files' property");
-
-        // Verify we can find the Windows x64 installer
-        var fileList = files.EnumerateArray().ToList();
-        var windowsX64File = fileList.FirstOrDefault(f =>
-        {
-            if (!f.TryGetProperty("name", out var name))
-                return false;
-            var fileName = name.GetString() ?? string.Empty;
-            return fileName.Contains("dotnet-sdk") && 
-                   fileName.Contains("win-x64") && 
-                   fileName.EndsWith(".exe");
-        });
-
-        Assert.That(windowsX64File, Is.Not.EqualTo(default(JsonElement)),
-            "Should find Windows x64 SDK installer in files");
-
-        // Verify the URL is present
-        Assert.That(windowsX64File.TryGetProperty("url", out var url), Is.True,
-            "File should have 'url' property");
-        
-        var urlString = url.GetString();
-        Assert.That(urlString, Is.Not.Null.And.Not.Empty);
-        Assert.That(urlString, Does.Contain("win-x64"));
-        Assert.That(urlString, Does.Contain(".exe"));
+        Assert.That(result, Is.Not.Null.And.Not.Empty);
+        Assert.That(result, Does.Contain("win-x64"));
+        Assert.That(result, Does.Contain(".exe"));
+        Assert.That(result, Does.StartWith("https://"));
     }
 
     [Test]
