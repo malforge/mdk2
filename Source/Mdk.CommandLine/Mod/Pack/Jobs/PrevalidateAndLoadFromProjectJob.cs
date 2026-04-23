@@ -50,15 +50,23 @@ internal class PrevalidateAndLoadFromProjectJob : ModJob
 
         if (!diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
         {
-            foreach (var tree in compilation.SyntaxTrees)
+            // Collect source-generated documents and inline them as regular documents with physical file
+            // paths so that ProcessScriptsJob can write them to the output directory. The generators are
+            // stripped from the project to prevent duplicate type definitions on subsequent compilations.
+            var sourceGeneratedDocuments = (await project.GetSourceGeneratedDocumentsAsync()).ToImmutableArray();
+            if (sourceGeneratedDocuments.Length > 0)
             {
-                var existingDocument = project.GetDocument(tree);
-                if (existingDocument is SourceGeneratedDocument)
+                context.Console.Trace($"  {sourceGeneratedDocuments.Length} source-generated documents found");
+                foreach (var analyzerRef in project.AnalyzerReferences.ToArray())
                 {
-                    var newFilePath =  Path.Combine(context.FileSystem.ProjectPath, Path.GetFileName(tree.FilePath));
-                    // var newFilePath =  Path.Combine(context.FileSystem.ProjectPath, $"{Guid.NewGuid():N}_{Path.GetFileName(tree.FilePath)}");
-                    existingDocument = project.AddDocument(existingDocument.Name, await tree.GetTextAsync(), filePath: newFilePath);
-                    project = existingDocument.Project;
+                    if (analyzerRef.GetGenerators(LanguageNames.CSharp).Any())
+                        project = project.RemoveAnalyzerReference(analyzerRef);
+                }
+                foreach (var sgDoc in sourceGeneratedDocuments)
+                {
+                    var text = await sgDoc.GetTextAsync();
+                    var newFilePath = Path.Combine(context.FileSystem.ProjectPath, sgDoc.HintName);
+                    project = project.AddDocument(sgDoc.HintName, text, filePath: newFilePath).Project;
                 }
             }
 

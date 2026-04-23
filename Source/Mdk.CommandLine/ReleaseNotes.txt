@@ -1,3 +1,6 @@
+v.2.2.3
+    - Mod projects that use Roslyn source generators are now packed correctly: generated files are written as physical .cs files in the output.
+
 v.2.2.2
     - Full minification now keeps enum and enum member names intact inside `#region mdk preserve`.
     - Full minification no longer breaks Whip's Scheduler by trimming required derived constructors.
