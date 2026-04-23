@@ -1,3 +1,6 @@
+v.2.2.4-pre.1
+    - Mod projects that use Roslyn source generators are now packed correctly: generated files are written as physical .cs files in the output.
+
 v.2.2.3
     - Mod projects that use Roslyn source generators are now packed correctly: generated files are written as physical .cs files in the output.
 
