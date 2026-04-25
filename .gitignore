@@ -412,3 +412,6 @@ test-*.ps1
 
 # MDK-specific
 .issues/
+
+# Claude Code per-user settings
+.claude/settings.local.json
