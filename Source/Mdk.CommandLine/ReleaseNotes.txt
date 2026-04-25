@@ -1,3 +1,7 @@
+v.2.2.3
+    - The "Mod projects are currently in beta" warning has been removed.
+    - Mods using Roslyn source generators are now packed correctly.
+
 v.2.2.3-pre.1
     - Mods using Roslyn source generators are now packed correctly.
 
