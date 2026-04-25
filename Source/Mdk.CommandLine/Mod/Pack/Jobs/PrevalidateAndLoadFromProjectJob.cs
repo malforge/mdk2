@@ -50,15 +50,22 @@ internal class PrevalidateAndLoadFromProjectJob : ModJob
 
         if (!diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
         {
-            foreach (var tree in compilation.SyntaxTrees)
+            // Inline source-generated documents as regular in-memory documents so they flow through
+            // the rest of the pack pipeline. Generator analyzer references are stripped to prevent
+            // any subsequent compilation from re-running them and producing duplicate definitions.
+            var sourceGeneratedDocuments = (await project.GetSourceGeneratedDocumentsAsync()).ToImmutableArray();
+            if (sourceGeneratedDocuments.Length > 0)
             {
-                var existingDocument = project.GetDocument(tree);
-                if (existingDocument is SourceGeneratedDocument)
+                context.Console.Trace($"Inlining {sourceGeneratedDocuments.Length} source-generated document(s)");
+                foreach (var analyzerRef in project.AnalyzerReferences.ToArray())
                 {
-                    var newFilePath =  Path.Combine(context.FileSystem.ProjectPath, Path.GetFileName(tree.FilePath));
-                    // var newFilePath =  Path.Combine(context.FileSystem.ProjectPath, $"{Guid.NewGuid():N}_{Path.GetFileName(tree.FilePath)}");
-                    existingDocument = project.AddDocument(existingDocument.Name, await tree.GetTextAsync(), filePath: newFilePath);
-                    project = existingDocument.Project;
+                    if (analyzerRef.GetGenerators(LanguageNames.CSharp).Any())
+                        project = project.RemoveAnalyzerReference(analyzerRef);
+                }
+                foreach (var sgDoc in sourceGeneratedDocuments)
+                {
+                    var virtualPath = Path.Combine(context.FileSystem.ProjectPath, "MdkGenerated", sgDoc.HintName);
+                    project = project.AddDocument(sgDoc.Name, await sgDoc.GetTextAsync(), filePath: virtualPath).Project;
                 }
             }
 

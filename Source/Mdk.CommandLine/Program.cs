@@ -112,7 +112,6 @@ public static class Program
             {
                 case MdkProjectType.Mod:
                 {
-                    console.Print("Warning: Mod projects are currently in beta. Please report any issues you encounter.");
                     var packer = new ModPacker();
                     var packed = await packer.PackAsync(parameters, console, interaction);
 
