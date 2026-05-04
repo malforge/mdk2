@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -16,8 +17,8 @@ using VRageMath;
 // ReSharper disable SuggestVarOrType_SimpleTypes
 // ReSharper disable RemoveRedundantBraces
 
-// Thanks, Digi, for providing me with this class.
-// A minimum of alteration on my part to match my specific needs in this utility.
+// Thanks, Digi, for providing the original temp-block-spawn pattern.
+// Adapted to spawn many blocks on a single shared grid.
 
 namespace Digi.BuildInfo.Features.LiveData
 {
@@ -25,37 +26,44 @@ namespace Digi.BuildInfo.Features.LiveData
     {
         public const string TempGridDisplayName = "BuildInfo_TemporaryGrid";
 
-        public static void Spawn(MyCubeBlockDefinition def, bool deleteGridOnSpawn = true, Vector3D spawnPos = default, Action<IMySlimBlock> callback = null)
+        public static void Spawn(
+            IReadOnlyList<(MyCubeBlockDefinition Definition, Vector3I Position)> blocks,
+            MyCubeSize gridSize,
+            Vector3D spawnPos,
+            Action<IMyCubeGrid> callback)
         {
-            new TempBlockSpawn(def, spawnPos, deleteGridOnSpawn, callback);
+            new TempBlockSpawn(blocks, gridSize, spawnPos, callback);
         }
 
-        readonly bool DeleteGrid;
-        readonly MyCubeBlockDefinition BlockDef;
-        readonly Action<IMySlimBlock> Callback;
+        readonly Action<IMyCubeGrid> Callback;
 
-        TempBlockSpawn(MyCubeBlockDefinition def, Vector3D spawnPos, bool deleteGridOnSpawn = true, Action<IMySlimBlock> callback = null)
+        TempBlockSpawn(
+            IReadOnlyList<(MyCubeBlockDefinition Definition, Vector3I Position)> blocks,
+            MyCubeSize gridSize,
+            Vector3D spawnPos,
+            Action<IMyCubeGrid> callback)
         {
-            BlockDef = def;
-            DeleteGrid = deleteGridOnSpawn;
             Callback = callback;
-
-            MyObjectBuilder_CubeBlock blockOB = (MyObjectBuilder_CubeBlock)MyObjectBuilderSerializer.CreateNewObject(def.Id);
-            blockOB.EntityId = 0;
-            blockOB.Min = Vector3I.Zero;
 
             MyObjectBuilder_CubeGrid gridOB = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_CubeGrid>();
             gridOB.EntityId = 0;
             gridOB.DisplayName = TempGridDisplayName;
             gridOB.CreatePhysics = false;
-            gridOB.GridSizeEnum = def.CubeSize;
+            gridOB.GridSizeEnum = gridSize;
             gridOB.PositionAndOrientation = new MyPositionAndOrientation(spawnPos, Vector3.Forward, Vector3.Up);
             gridOB.PersistentFlags = MyPersistentEntityFlags2.InScene;
             gridOB.IsStatic = true;
             gridOB.Editable = false;
             gridOB.DestructibleBlocks = false;
             gridOB.IsRespawnGrid = false;
-            gridOB.CubeBlocks.Add(blockOB);
+
+            foreach (var (def, pos) in blocks)
+            {
+                MyObjectBuilder_CubeBlock blockOB = (MyObjectBuilder_CubeBlock)MyObjectBuilderSerializer.CreateNewObject(def.Id);
+                blockOB.EntityId = 0;
+                blockOB.Min = pos;
+                gridOB.CubeBlocks.Add(blockOB);
+            }
 
             MyCubeGrid grid = (MyCubeGrid)MyAPIGateway.Entities.CreateFromObjectBuilderParallel(gridOB, true, SpawnCompleted);
 
@@ -65,33 +73,21 @@ namespace Digi.BuildInfo.Features.LiveData
 
         void SpawnCompleted(IMyEntity ent)
         {
-            // has to be here if wanna do this, but not really important anyway
-            // if done before it fully initializes, it can crash for certain blocks, like Holo LCD
-            //ent.Render.Visible = false;
-
             IMyCubeGrid grid = ent as IMyCubeGrid;
 
             try
             {
-                IMySlimBlock block = grid?.GetCubeBlock(Vector3I.Zero);
-                if(block == null)
+                if (grid == null)
                 {
-                    MyLog.Default.Error($"Can't get block from spawned entity for block: {BlockDef.Id.ToString()}; grid={grid?.EntityId.ToString() ?? "(NULL)"};");
+                    MyLog.Default.Error("TempBlockSpawn: spawned entity was not an IMyCubeGrid");
                     return;
                 }
 
-                Callback?.Invoke(block);
+                Callback?.Invoke(grid);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 MyLog.Default.Error(e.ToString());
-            }
-            finally
-            {
-                if(DeleteGrid && grid != null)
-                {
-                    grid.Close();
-                }
             }
         }
     }

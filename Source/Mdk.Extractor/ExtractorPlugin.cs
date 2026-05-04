@@ -24,6 +24,9 @@ using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game;
 using SpaceEngineers.Game.GUI;
 using VRage;
+using VRage.Game;
+using VRage.Game.ModAPI;
+using VRage.ObjectBuilders;
 using VRage.Plugins;
 using VRage.Scripting;
 using VRage.Utils;
@@ -130,36 +133,32 @@ public class ExtractorPlugin : IPlugin
     {
         try
         {
-            var blocks = new List<(MyCubeBlockDefinition, IMyTerminalBlock)>();
+            var byTypeId = new Dictionary<MyObjectBuilderType, MyCubeBlockDefinition>();
             foreach (var definition in MyDefinitionManager.Static.GetAllDefinitions())
             {
-                var position = new Vector3D(100000, 0, 0);
-                if (definition is MyCubeBlockDefinition cbd)
-                {
-                    Debug.WriteLine(definition.Id);
-                    await GameThread.SwitchToGameThread();
-                    var tcs = new TaskCompletionSource<(MyCubeBlockDefinition, IMyTerminalBlock)>();
-                    TempBlockSpawn.Spawn(cbd,
-                        false,
-                        spawnPos: position,
-                        callback: slim =>
-                        {
-                            if (slim.FatBlock is not IMyTerminalBlock block)
-                            {
-                                tcs.SetResult((null, null));
-                                return;
-                            }
-                            
-                            tcs.SetResult((cbd, block));
-                        });
-                    var pair = await tcs.Task;
-                    position.Z += 100;
-                    if (pair.Item1 != null || pair.Item2 != null)
-                        blocks.Add(pair);
-                    await Task.Delay(100);
-                }
+                if (definition is not MyCubeBlockDefinition cbd)
+                    continue;
+                if (byTypeId.TryGetValue(cbd.Id.TypeId, out var existing) && existing.CubeSize == MyCubeSize.Large)
+                    continue;
+                byTypeId[cbd.Id.TypeId] = cbd;
             }
-            
+
+            var largeDefs = new List<MyCubeBlockDefinition>();
+            var smallDefs = new List<MyCubeBlockDefinition>();
+            foreach (var def in byTypeId.Values)
+            {
+                if (def.CubeSize == MyCubeSize.Large)
+                    largeDefs.Add(def);
+                else
+                    smallDefs.Add(def);
+            }
+
+            var blocks = new List<(MyCubeBlockDefinition, IMyTerminalBlock)>();
+            if (largeDefs.Count > 0)
+                blocks.AddRange(await SpawnGridAsync(largeDefs, MyCubeSize.Large, new Vector3D(100000, 0, 0)));
+            if (smallDefs.Count > 0)
+                blocks.AddRange(await SpawnGridAsync(smallDefs, MyCubeSize.Small, new Vector3D(100000, 0, 1000)));
+
             return blocks;
         }
         catch (ReflectionTypeLoadException e)
@@ -167,6 +166,31 @@ public class ExtractorPlugin : IPlugin
             foreach (var loaderException in e.LoaderExceptions) MyLog.Default.Error(loaderException.ToString());
             throw;
         }
+    }
+
+    async Task<List<(MyCubeBlockDefinition, IMyTerminalBlock)>> SpawnGridAsync(
+        List<MyCubeBlockDefinition> definitions,
+        MyCubeSize gridSize,
+        Vector3D spawnPos)
+    {
+        const int spacing = 16;
+        var positioned = new List<(MyCubeBlockDefinition Definition, Vector3I Position)>(definitions.Count);
+        for (var i = 0; i < definitions.Count; i++)
+            positioned.Add((definitions[i], new Vector3I(i * spacing, 0, 0)));
+
+        await GameThread.SwitchToGameThread();
+        var tcs = new TaskCompletionSource<IMyCubeGrid>();
+        TempBlockSpawn.Spawn(positioned, gridSize, spawnPos, grid => tcs.SetResult(grid));
+        var spawnedGrid = await tcs.Task;
+
+        var results = new List<(MyCubeBlockDefinition, IMyTerminalBlock)>();
+        foreach (var (def, pos) in positioned)
+        {
+            var slim = spawnedGrid.GetCubeBlock(pos);
+            if (slim?.FatBlock is IMyTerminalBlock terminal)
+                results.Add((def, terminal));
+        }
+        return results;
     }
     
     void GrabTerminalActions(string terminalFileName, List<(MyCubeBlockDefinition, IMyTerminalBlock)> blocks)
