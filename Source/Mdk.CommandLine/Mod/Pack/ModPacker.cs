@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
@@ -36,7 +37,11 @@ public class ModPacker : ProjectJob
         //     MSBuildLocator.RegisterInstance(msbuildInstances.First());
         // }
 
-        using var workspace = MSBuildWorkspace.Create();
+        var workspaceProperties = new Dictionary<string, string>
+        {
+            ["Configuration"] = parameters.PackVerb.Configuration ?? "Release"
+        };
+        using var workspace = MSBuildWorkspace.Create(workspaceProperties);
 
         var projectPath = parameters.PackVerb.ProjectFile;
         if (projectPath == null) throw new CommandLineException(-1, "No project file specified.");
@@ -143,7 +148,7 @@ public class ModPacker : ProjectJob
         var projectPath = Path.GetDirectoryName(project.FilePath)!;
         var tracePath = Path.Combine(projectPath, "obj");
         var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
-        var context = new ModPackContext(parameters, console, interaction, filter, outputCleanFilter, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"), project, default, default, default);
+        var context = new ModPackContext(parameters, console, interaction, filter, outputCleanFilter, fileSystem, PackContext.ResolvePreprocessorSymbols(project), project, default, default, default);
 
         return await PackProjectAsync(context);
     }

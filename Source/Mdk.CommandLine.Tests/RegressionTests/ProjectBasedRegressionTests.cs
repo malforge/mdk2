@@ -77,15 +77,50 @@ public class ProjectBasedRegressionTests
         });
     }
 
-    static async Task<PackedProject> PackProjectAsync(string path)
+    [Test]
+    public async Task Pack_ForIssue143_DefaultConfiguration_OmitsUserConstantBlocks()
+    {
+        var project = await PackProjectAsync("TestData/Issue143/Issue143.csproj");
+        var script = project.ProducedFiles.Single(f => f.Id == "script.cs").Content;
+
+        Assert.That(script, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(script, Does.Not.Contain("IncludedAsUserConstant"),
+                "THIS_SHOULD_BE_INCLUDED is only defined under MyRandomConfiguration; should be absent in the default Release pack.");
+            Assert.That(script, Does.Not.Contain("NotIncludedAsBuildName"),
+                "The build configuration name must not be treated as a #if symbol.");
+        });
+    }
+
+    [Test]
+    public async Task Pack_ForIssue143_CustomConfiguration_IncludesUserConstantButNotConfigurationName()
+    {
+        var project = await PackProjectAsync("TestData/Issue143/Issue143.csproj", "MyRandomConfiguration");
+        var script = project.ProducedFiles.Single(f => f.Id == "script.cs").Content;
+
+        Assert.That(script, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(script, Does.Contain("IncludedAsUserConstant"),
+                "THIS_SHOULD_BE_INCLUDED is defined via DefineConstants for MyRandomConfiguration and must drive #if.");
+            Assert.That(script, Does.Not.Contain("NotIncludedAsBuildName"),
+                "Build configuration name must never be treated as a #if symbol (regression for #143).");
+        });
+    }
+
+    static async Task<PackedProject> PackProjectAsync(string path, string? configuration = null)
     {
         var fullPath = Path.Combine(TestContext.CurrentContext.TestDirectory, path);
         if (File.Exists(fullPath))
         {
+            var restoreArgs = $"restore \"{fullPath}\" --verbosity quiet";
+            if (configuration is not null)
+                restoreArgs += $" -p:Configuration={configuration}";
             var startInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"restore \"{fullPath}\" --verbosity quiet",
+                Arguments = restoreArgs,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -100,15 +135,17 @@ public class ProjectBasedRegressionTests
             Assert.That(process.ExitCode, Is.EqualTo(0), $"{standardErrorTask.Result}{standardOutputTask.Result}");
         }
 
+        var args = new List<string> { "pack", path, "-trace", "-dryrun" };
+        if (configuration is not null)
+        {
+            args.Add("-configuration");
+            args.Add(configuration);
+        }
+
         var peripherals = Program.Peripherals.Create()
             .WithInteraction(A.Fake<IInteraction>())
             .WithHttpClient(A.Fake<IHttpClient>(o => o.Strict()))
-            .FromArguments([
-                "pack",
-                path,
-                "-trace",
-                "-dryrun"
-            ])
+            .FromArguments(args.ToArray())
             .Build();
 
         var result = await Program.RunAsync(peripherals);
