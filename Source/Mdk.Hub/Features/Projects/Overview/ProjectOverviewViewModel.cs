@@ -344,7 +344,7 @@ public class ProjectOverviewViewModel : ViewModel
 
         // Build new filtered list
         var filteredItems = _allProjects
-            .Where(item => item.MatchesFilter(_searchTerm, FilterScriptsOnly, FilterModsOnly))
+            .Where(item => item.MatchesFilter(_searchTerm, FilterModsOnly, FilterScriptsOnly))
             .ToList();
 
         // Set select command
