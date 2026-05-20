@@ -53,6 +53,24 @@ public class ProjectBasedRegressionTests
     }
 
     [Test]
+    public async Task Pack_ForIssue76_DiscardsUsingStaticIngameScriptProgram()
+    {
+        // After DeleteNamespaces strips `namespace IngameScript`, a leftover
+        // `using static IngameScript.Program;` no longer resolves. Pre-2.1.5,
+        // RemoveUnnecessaryUsingsAsync would abort with "Compilation failed
+        // with errors" before it could strip that using. This test guards
+        // against regressing that fix.
+        var project = await PackProjectAsync("TestData/Issue76/Issue76.csproj");
+        var script = project.ProducedFiles.Single(f => f.Id == "script.cs").Content;
+
+        Assert.That(script, Is.Not.Null);
+        Assert.That(script, Does.Not.Contain("using static IngameScript.Program"),
+            "The stripped namespace's using directive must not survive into the combined script.");
+        Assert.That(script, Does.Contain("SorterBlockerHandler"),
+            "The helper class that used `using static IngameScript.Program` must still be in the output.");
+    }
+
+    [Test]
     public async Task Pack_ForIssue130_PreservesEnumNamesInsidePreserveRegion()
     {
         var project = await PackProjectAsync("TestData/Issue130/Issue130.csproj");
