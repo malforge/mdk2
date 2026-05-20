@@ -51,7 +51,7 @@ public class ModRegressionTests
         var startInfo = new System.Diagnostics.ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"build \"{projectPath}\" --verbosity quiet --nologo",
+            Arguments = $"build \"{projectPath}\" -c Release --verbosity quiet --nologo",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
