@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
@@ -48,7 +49,11 @@ public class ScriptPacker: ProjectJob
         //         console.Trace($"Found MSBuild instance: {instance.Name} {instance.Version}");
         //     MSBuildLocator.RegisterInstance(msbuildInstances.First());
         // }
-        using var workspace = MSBuildWorkspace.Create();
+        var workspaceProperties = new Dictionary<string, string>
+        {
+            ["Configuration"] = parameters.PackVerb.Configuration ?? "Release"
+        };
+        using var workspace = MSBuildWorkspace.Create(workspaceProperties);
 
         var projectPath = parameters.PackVerb.ProjectFile;
         if (projectPath == null) throw new CommandLineException(-1, "No project file specified.");
@@ -150,7 +155,7 @@ public class ScriptPacker: ProjectJob
         var projectPath= Path.GetDirectoryName(project.FilePath)!;
         var tracePath = Path.Combine(projectPath, "obj");
         var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
-        var context = new PackContext(parameters, console, interaction, filter, null, fileSystem, ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase, parameters.PackVerb.Configuration ?? "Release"));
+        var context = new PackContext(parameters, console, interaction, filter, null, fileSystem, PackContext.ResolvePreprocessorSymbols(project));
 
         return await PackProjectAsync(project, context);
     }
