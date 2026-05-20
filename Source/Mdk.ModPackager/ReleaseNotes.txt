@@ -1,4 +1,14 @@
-﻿v.2.2.0-pre.5
+﻿v.2.2.4
+   - `#if` directives now use the project's actual conditional compilation symbols instead of the build configuration name.
+   - Mod projects are now automatically registered with the MDK Hub after a successful pack, the same way Programmable Block scripts already were.
+   - The "MDK Hub Not Found" page now includes diagnostics to help identify stale or misconfigured Hub installations.
+
+v.2.2.4-pre.1
+   - `#if` directives now use the project's actual conditional compilation symbols instead of the build configuration name.
+   - Mod projects are now automatically registered with the MDK Hub after a successful pack, the same way Programmable Block scripts already were.
+   - The "MDK Hub Not Found" page now includes diagnostics to help identify stale or misconfigured Hub installations.
+
+v.2.2.0-pre.5
    - Improved MSBuild property handling for interactive mode
 
 v.2.1.11
