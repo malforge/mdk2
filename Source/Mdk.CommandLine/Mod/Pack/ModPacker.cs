@@ -173,6 +173,10 @@ public class ModPacker : ProjectJob
         foreach (var job in jobs)
             context = await job.ExecuteAsync(context);
 
+        var project = context.Project;
+        if (!string.IsNullOrEmpty(project.FilePath))
+            context.Interaction.Mod(project.Name, project.FilePath);
+
         return ImmutableArray<ProducedFile>.Empty.Add(new ProducedFile());
     }
 }

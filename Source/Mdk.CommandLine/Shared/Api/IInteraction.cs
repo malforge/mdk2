@@ -17,6 +17,15 @@ public interface IInteraction
     /// <param name="message"></param>
     /// <param name="args"></param>
     void Script(string scriptName, string projectPath, string? message = null, params object?[] args);
+
+    /// <summary>
+    /// Show a notification to the user about a mod being successfully built.
+    /// </summary>
+    /// <param name="modName"></param>
+    /// <param name="projectPath">Path to the .csproj file of the project that was built</param>
+    /// <param name="message"></param>
+    /// <param name="args"></param>
+    void Mod(string modName, string projectPath, string? message = null, params object?[] args);
     
     /// <summary>
     /// Show a notification to the user about a new version of a nuget package being available.

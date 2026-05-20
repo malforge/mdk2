@@ -9,6 +9,47 @@ namespace MDK.CommandLine.Tests.RegressionTests;
 public class ModRegressionTests
 {
     [Test]
+    public async Task Pack_ForMod_NotifiesInteractionWithProjectNameAndPath()
+    {
+        const string relativeProjectPath = "TestData/Issue139/Issue139.csproj";
+        var fullProjectPath = Path.Combine(TestContext.CurrentContext.TestDirectory, relativeProjectPath);
+        Assert.That(File.Exists(fullProjectPath), Is.True, $"Test project not found at {fullProjectPath}");
+
+        await BuildAsync(fullProjectPath);
+
+        var interaction = A.Fake<IInteraction>();
+        var outputDir = Path.Combine(Path.GetTempPath(), $"mdk-mod-notify-{Guid.NewGuid():N}");
+        try
+        {
+            var peripherals = Program.Peripherals.Create()
+                .WithInteraction(interaction)
+                .WithHttpClient(A.Fake<IHttpClient>(o => o.Strict()))
+                .FromArguments([
+                    "pack",
+                    relativeProjectPath,
+                    "-output", outputDir,
+                    "-trace"
+                ])
+                .Build();
+
+            await Program.RunAsync(peripherals);
+
+            var normalizedExpected = Path.GetFullPath(fullProjectPath);
+            A.CallTo(() => interaction.Mod(
+                    "Issue139",
+                    A<string>.That.Matches(p => Path.GetFullPath(p) == normalizedExpected, "matches Issue139 project path"),
+                    A<string?>._,
+                    A<object?[]>._))
+                .MustHaveHappened();
+        }
+        finally
+        {
+            if (Directory.Exists(outputDir))
+                Directory.Delete(outputDir, recursive: true);
+        }
+    }
+
+    [Test]
     public async Task Pack_ForIssue139_InlinesSourceGeneratedDocuments()
     {
         const string relativeProjectPath = "TestData/Issue139/Issue139.csproj";
