@@ -27,11 +27,12 @@ public class Interaction : IInteraction
         }
         
         // If set to ShowNotification or OpenHub (or null - use default), enable interaction
-        _hubPath = HubLocator.FindHub(console);
+        var location = HubLocator.LocateHub(console);
+        _hubPath = location.Path;
         if (_hubPath is null)
         {
             console.Trace("Hub not found - showing notification to user.");
-            HubLocator.ShowHubNotFoundMessage();
+            HubLocator.ShowHubNotFoundMessage(location);
         }
     }
 
