@@ -1,3 +1,8 @@
+v.2.2.4-pre.1
+    - `#if` directives now use the project's actual conditional compilation symbols. Previously the build configuration name (e.g., "Release") was treated as a `#if` symbol while user-defined constants and DEBUG/TRACE were ignored.
+    - Mod projects are now automatically registered with the MDK Hub after a successful pack, the same way Programmable Block scripts already were.
+    - The "MDK Hub Not Found" page now shows which marker file MDK looked at, what was in it, and whether it pointed to a real Hub install, so stale or misconfigured installations can be diagnosed at a glance.
+
 v.2.2.3
     - The "Mod projects are currently in beta" warning has been removed.
     - Mods using Roslyn source generators are now packed correctly.
