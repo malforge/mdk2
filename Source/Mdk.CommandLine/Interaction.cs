@@ -62,6 +62,20 @@ public class Interaction : IInteraction
         Run(arguments);
     }
 
+    public void Mod(string modName, string projectPath, string? message, params object?[] args)
+    {
+        if (string.IsNullOrEmpty(message))
+            message = $"Your mod \"{modName}\" has been successfully built.";
+        else
+            message = string.Format(message, args);
+        _console.Print(message);
+        if (_hubPath is null)
+            return;
+        var arguments = BuildArguments("mod", Escape(modName), Escape(projectPath), Escape(message));
+        _console.Trace($"Running Hub: {arguments}");
+        Run(arguments);
+    }
+
     public void Nuget(string packageName, string currentVersion, string newVersion, string? message, params object?[] args)
     {
         if (string.IsNullOrEmpty(message))
