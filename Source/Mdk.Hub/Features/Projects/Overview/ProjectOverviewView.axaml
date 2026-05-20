@@ -147,14 +147,14 @@
             Margin="0,8,8,8"
             Content="Mods"
             GroupName="FilterGroup"
-            IsChecked="{Binding FilterScriptsOnly }" />
+            IsChecked="{Binding FilterModsOnly }" />
         <RadioButton
             Grid.Row="0"
             Grid.Column="3"
             Margin="0,8,8,8"
             Content="Scripts"
             GroupName="FilterGroup"
-            IsChecked="{Binding FilterModsOnly }" />
+            IsChecked="{Binding FilterScriptsOnly }" />
 
         <ListBox
             x:Name="ProjectListBox"
