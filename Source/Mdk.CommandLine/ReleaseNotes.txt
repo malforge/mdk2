@@ -1,3 +1,7 @@
+v.2.2.5-pre.2
+    - [mdk-branch:<branch>] sections now watermark the deployed thumbnail by default: a translucent red stamp (text from watermarktext, or the branch name) is drawn onto thumb.png via SkiaSharp. Set watermark=false to disable. Best-effort with graceful fallback if no font is available.
+    - Fixed branch-section precedence so mdk.local.ini overrides mdk.ini for the same branch, consistent with all other settings.
+
 v.2.2.5-pre.1
     - Added per-branch mod output folders. [mdk-branch:<branch>] sections in mdk.ini map the current git branch to an output folder name pattern (the $MDK_PROJECT$ and $MDK_BRANCH$ macros are available). On a matching branch the mod packs into that folder instead of the project-name folder, enabling a separate alpha/test Workshop item. If branch sections are configured but the current git branch cannot be determined, the pack is aborted to avoid publishing over the released mod.
 
