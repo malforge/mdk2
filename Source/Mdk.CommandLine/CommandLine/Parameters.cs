@@ -316,6 +316,30 @@ public class Parameters : TracksPropertyChanges, IParameters
                 }
             }
         }
+
+        // Branch-scoped output: [mdk-branch:<branchname>] sections carry a 'pattern' key naming the output
+        // folder to use when packing on that git branch, plus optional 'watermark'/'watermarktext' keys to
+        // stamp the deployed thumbnail. The branch name lives in the section header so it can contain
+        // characters that aren't key-safe (e.g. slashes).
+        const string mdkBranchSectionPrefix = "mdk-branch:";
+        foreach (var branchSection in ini.Sections)
+        {
+            if (!branchSection.Name.StartsWith(mdkBranchSectionPrefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+            var branch = branchSection.Name[mdkBranchSectionPrefix.Length..].Trim();
+            if (string.IsNullOrEmpty(branch) || !branchSection.HasKey("pattern"))
+                continue;
+            // Honor overrideExisting like every other setting, so mdk.local.ini (loaded first) wins over mdk.ini.
+            if (!overrideExisting && PackVerb.BranchOutputs.ContainsKey(branch))
+                continue;
+            var pattern = branchSection["pattern"].ToString();
+            if (string.IsNullOrWhiteSpace(pattern))
+                continue;
+            // Watermarking defaults ON for a branch section (a redirect implies a non-release build); watermark=false opts out.
+            var watermark = !branchSection.HasKey("watermark") || branchSection["watermark"].ToBool();
+            var watermarkText = branchSection.HasKey("watermarktext") ? branchSection["watermarktext"].ToString() : null;
+            PackVerb.BranchOutputs[branch] = new BranchOutput(pattern, watermark, watermarkText);
+        }
     }
 
     /// <summary>
@@ -509,6 +533,9 @@ public class Parameters : TracksPropertyChanges, IParameters
         /// <inheritdoc cref="IParameters.IPackVerbParameters.Macros" />
         public Dictionary<string, string> Macros { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+        /// <inheritdoc cref="IParameters.IPackVerbParameters.BranchOutputs" />
+        public Dictionary<string, BranchOutput> BranchOutputs { get; } = new(StringComparer.OrdinalIgnoreCase);
+
         /// <inheritdoc />
         public string? ProjectFile
         {
@@ -566,6 +593,9 @@ public class Parameters : TracksPropertyChanges, IParameters
 
         /// <inheritdoc />
         IReadOnlyDictionary<string, string> IParameters.IPackVerbParameters.Macros => Macros;
+
+        /// <inheritdoc />
+        IReadOnlyDictionary<string, BranchOutput> IParameters.IPackVerbParameters.BranchOutputs => BranchOutputs;
     }
 }
 

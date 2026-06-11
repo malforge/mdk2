@@ -115,5 +115,14 @@ public interface IParameters
         ///     </para>
         /// </remarks>
         IReadOnlyDictionary<string, string> Macros { get; }
+
+        /// <summary>
+        ///     Maps a git branch name to its output configuration (folder pattern, optional thumbnail watermark).
+        /// </summary>
+        /// <remarks>
+        ///     Populated from <c>[mdk-branch:&lt;branchname&gt;]</c> sections in the ini file. Branches with no
+        ///     entry pack to the project name as usual.
+        /// </remarks>
+        IReadOnlyDictionary<string, BranchOutput> BranchOutputs { get; }
     }
 }

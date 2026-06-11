@@ -58,8 +58,16 @@ public class ModProducer : IModProducer
             fileBuilder.Add(new ProducedFile("thumb.png", thumbnailPath, null));
             if (!context.Parameters.PackVerb.DryRun)
             {
-                File.Copy(thumbnailDocument.FilePath!, thumbnailPath, true);
-                context.Console.Trace($"The thumbnail was written to {thumbnailPath}");
+                var watermark = ResolveWatermarkText(context);
+                if (watermark != null && ThumbnailWatermark.TryStamp(thumbnailDocument.FilePath!, thumbnailPath, watermark, context.Console))
+                {
+                    context.Console.Trace($"The thumbnail was watermarked '{watermark}' and written to {thumbnailPath}");
+                }
+                else
+                {
+                    File.Copy(thumbnailDocument.FilePath!, thumbnailPath, true);
+                    context.Console.Trace($"The thumbnail was written to {thumbnailPath}");
+                }
             }
             else
             {
@@ -68,5 +76,25 @@ public class ModProducer : IModProducer
         }
         
         return fileBuilder.ToImmutable();
+    }
+
+    /// <summary>
+    ///     Determines the watermark text for the current branch, or null if no watermark applies. Reads the
+    ///     current branch from the $MDK_BRANCH$ macro and the branch's <see cref="BranchOutput" /> config.
+    /// </summary>
+    static string? ResolveWatermarkText(IPackContext context)
+    {
+        var pack = context.Parameters.PackVerb;
+        if (pack.BranchOutputs.Count == 0)
+            return null;
+        if (!pack.Macros.TryGetValue("$MDK_BRANCH$", out var branch) || string.IsNullOrEmpty(branch))
+            return null;
+        if (!pack.BranchOutputs.TryGetValue(branch, out var config) || !config.Watermark)
+            return null;
+
+        var text = string.IsNullOrWhiteSpace(config.WatermarkText)
+            ? branch.ToUpperInvariant()
+            : MacroReplacer.Replace(config.WatermarkText, pack.Macros);
+        return string.IsNullOrWhiteSpace(text) ? null : text;
     }
 }
