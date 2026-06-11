@@ -1,3 +1,9 @@
+v.2.2.5
+    - Added per-branch mod output folders. [mdk-branch:<branch>] sections in mdk.ini map the current git branch to an output folder name pattern ($MDK_PROJECT$/$MDK_BRANCH$ macros available), so a branch can deploy to and publish a separate Workshop item. Packing aborts if branch sections are configured but the branch can't be determined, so a build never lands in the wrong mod.
+    - Branch builds watermark their thumbnail by default: a translucent red stamp (watermarktext, or the branch name) is drawn onto thumb.png via SkiaSharp. Set watermark=false to disable. Best-effort with graceful fallback if no font is available.
+    - mdk.local.ini branch sections take precedence over mdk.ini, consistent with all other settings.
+    - The Hub build notification reports the deployed folder name, so branch-redirected builds show up as their own build instead of the project name.
+
 v.2.2.5-pre.2
     - [mdk-branch:<branch>] sections now watermark the deployed thumbnail by default: a translucent red stamp (text from watermarktext, or the branch name) is drawn onto thumb.png via SkiaSharp. Set watermark=false to disable. Best-effort with graceful fallback if no font is available.
     - Fixed branch-section precedence so mdk.local.ini overrides mdk.ini for the same branch, consistent with all other settings.

@@ -1,4 +1,9 @@
-﻿v.2.2.5-pre.2
+﻿v.2.2.5
+   - Mods can be packed into a different output folder per git branch via [mdk-branch:<branch>] sections in mdk.ini, so you can publish a separate alpha/test Workshop item from a branch without touching your released mod. The folder name comes from a 'pattern' supporting the $MDK_PROJECT$ and $MDK_BRANCH$ macros.
+   - A branch build watermarks its thumbnail by default with a translucent red stamp (set watermark=false to disable; watermarktext to customize), so alpha/test items are easy to spot in the Workshop.
+   - Branch sections in mdk.local.ini take precedence over mdk.ini, matching every other setting.
+
+v.2.2.5-pre.2
    - [mdk-branch:<branch>] sections now stamp a translucent red watermark onto the deployed thumbnail by default (set watermark=false to disable; watermarktext to customize) so alpha/test builds are easy to spot in the Workshop.
    - Branch sections in mdk.local.ini now correctly take precedence over mdk.ini, matching every other setting.
 
