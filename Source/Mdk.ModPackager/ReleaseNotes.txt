@@ -1,4 +1,7 @@
-﻿v.2.2.4
+﻿v.2.2.5-pre.1
+   - Mods can now be packed into a different output folder per git branch, via [mdk-branch:<branch>] sections in mdk.ini. This lets you publish a separate alpha/test Workshop item from a branch without touching your released mod; the folder name is set by a 'pattern' that supports the $MDK_PROJECT$ and $MDK_BRANCH$ macros. Branches with no matching section pack to the project name as before.
+
+v.2.2.4
    - `#if` directives now use the project's actual conditional compilation symbols instead of the build configuration name.
    - Mod projects are now automatically registered with the MDK Hub after a successful pack, the same way Programmable Block scripts already were.
    - The "MDK Hub Not Found" page now includes diagnostics to help identify stale or misconfigured Hub installations.

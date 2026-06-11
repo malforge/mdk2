@@ -1,3 +1,6 @@
+v.2.2.5-pre.1
+    - Added per-branch mod output folders. [mdk-branch:<branch>] sections in mdk.ini map the current git branch to an output folder name pattern (the $MDK_PROJECT$ and $MDK_BRANCH$ macros are available). On a matching branch the mod packs into that folder instead of the project-name folder, enabling a separate alpha/test Workshop item. If branch sections are configured but the current git branch cannot be determined, the pack is aborted to avoid publishing over the released mod.
+
 v.2.2.4
     - `#if` directives now use the project's actual conditional compilation symbols. Previously the build configuration name (e.g., "Release") was treated as a `#if` symbol while user-defined constants and DEBUG/TRACE were ignored.
     - Mod projects are now automatically registered with the MDK Hub after a successful pack, the same way Programmable Block scripts already were.
