@@ -127,6 +127,47 @@ key=InvalidValue
         Assert.That(ini.ToString().Replace("\r", ""), Is.EqualTo(expected.Replace("\r", "")));
     }
 
+    [Test]
+    public void TryParse_SectionHeadersWithColonsAndSlashes_AreParsedVerbatim()
+    {
+        var ini = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        pattern=$MDK_PROJECT$.Alpha
+
+        [mdk-branch:release/beta]
+        pattern=$MDK_PROJECT$.Beta
+        """;
+
+        var result = Ini.TryParse(ini, out var parsed);
+
+        Assert.That(result, Is.True);
+        Assert.That(parsed["mdk-branch:alpha"]["pattern"].ToString(), Is.EqualTo("$MDK_PROJECT$.Alpha"));
+        Assert.That(parsed["mdk-branch:release/beta"]["pattern"].ToString(), Is.EqualTo("$MDK_PROJECT$.Beta"));
+    }
+
+    [Test]
+    public void Sections_EnumeratesAllParsedSections()
+    {
+        var ini = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        pattern=x
+
+        [mdk-branch:beta]
+        pattern=y
+        """;
+        Ini.TryParse(ini, out var parsed);
+
+        var names = parsed.Sections.Select(s => s.Name).ToArray();
+
+        Assert.That(names, Is.EquivalentTo(new[] { "mdk", "mdk-branch:alpha", "mdk-branch:beta" }));
+    }
+
     enum EnumType
     {
         None,

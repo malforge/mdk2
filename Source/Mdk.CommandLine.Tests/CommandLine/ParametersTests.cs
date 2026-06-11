@@ -210,7 +210,53 @@ public class ParametersTests
         parameters.Parse(new[] { "pack", "test.csproj", "-minify", "none" });
 
         // Assert
-        Assert.That(parameters.PackVerb.MinifierLevel, Is.EqualTo(MinifierLevel.None), 
+        Assert.That(parameters.PackVerb.MinifierLevel, Is.EqualTo(MinifierLevel.None),
             "Command-line -minify should override INI setting");
+    }
+
+    [Test]
+    public void BranchPatterns_LoadFromIniBranchSections()
+    {
+        // Arrange
+        var iniText = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        pattern=$MDK_PROJECT$.Alpha
+
+        [mdk-branch:release/beta]
+        pattern=$MDK_PROJECT$.Beta
+        """;
+        Ini.TryParse(iniText, out var ini);
+        var parameters = new Parameters();
+
+        // Act
+        parameters.Load(ini);
+
+        // Assert
+        Assert.That(parameters.PackVerb.BranchPatterns["alpha"], Is.EqualTo("$MDK_PROJECT$.Alpha"));
+        Assert.That(parameters.PackVerb.BranchPatterns["release/beta"], Is.EqualTo("$MDK_PROJECT$.Beta"));
+    }
+
+    [Test]
+    public void BranchPatterns_SectionWithoutPattern_IsIgnored()
+    {
+        // Arrange
+        var iniText = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        notpattern=ignored
+        """;
+        Ini.TryParse(iniText, out var ini);
+        var parameters = new Parameters();
+
+        // Act
+        parameters.Load(ini);
+
+        // Assert
+        Assert.That(parameters.PackVerb.BranchPatterns, Does.Not.ContainKey("alpha"));
     }
 }

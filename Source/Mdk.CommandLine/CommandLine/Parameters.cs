@@ -316,6 +316,22 @@ public class Parameters : TracksPropertyChanges, IParameters
                 }
             }
         }
+
+        // Branch-scoped output: [mdk-branch:<branchname>] sections each carry a 'pattern' key naming the
+        // output folder to use when packing on that git branch. The branch name lives in the section
+        // header so it can contain characters that aren't key-safe (e.g. slashes).
+        const string mdkBranchSectionPrefix = "mdk-branch:";
+        foreach (var branchSection in ini.Sections)
+        {
+            if (!branchSection.Name.StartsWith(mdkBranchSectionPrefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+            var branch = branchSection.Name[mdkBranchSectionPrefix.Length..].Trim();
+            if (string.IsNullOrEmpty(branch) || !branchSection.HasKey("pattern"))
+                continue;
+            var pattern = branchSection["pattern"].ToString();
+            if (!string.IsNullOrWhiteSpace(pattern))
+                PackVerb.BranchPatterns[branch] = pattern;
+        }
     }
 
     /// <summary>
@@ -509,6 +525,9 @@ public class Parameters : TracksPropertyChanges, IParameters
         /// <inheritdoc cref="IParameters.IPackVerbParameters.Macros" />
         public Dictionary<string, string> Macros { get; } = new(StringComparer.OrdinalIgnoreCase);
 
+        /// <inheritdoc cref="IParameters.IPackVerbParameters.BranchPatterns" />
+        public Dictionary<string, string> BranchPatterns { get; } = new(StringComparer.OrdinalIgnoreCase);
+
         /// <inheritdoc />
         public string? ProjectFile
         {
@@ -566,6 +585,9 @@ public class Parameters : TracksPropertyChanges, IParameters
 
         /// <inheritdoc />
         IReadOnlyDictionary<string, string> IParameters.IPackVerbParameters.Macros => Macros;
+
+        /// <inheritdoc />
+        IReadOnlyDictionary<string, string> IParameters.IPackVerbParameters.BranchPatterns => BranchPatterns;
     }
 }
 

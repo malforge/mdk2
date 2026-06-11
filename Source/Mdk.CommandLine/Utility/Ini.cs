@@ -60,6 +60,11 @@ public class Ini
     }
 
     /// <summary>
+    /// Gets all sections in the INI file.
+    /// </summary>
+    public IEnumerable<Section> Sections => _sections.Values;
+
+    /// <summary>
     /// Creates a clone of the current instance with the specified trailing comment.
     /// </summary>
     /// <param name="trivia"></param>
