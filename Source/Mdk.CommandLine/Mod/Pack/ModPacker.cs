@@ -230,7 +230,14 @@ public class ModPacker : ProjectJob
 
         var project = context.Project;
         if (!string.IsNullOrEmpty(project.FilePath))
-            context.Interaction.Mod(project.Name, project.FilePath);
+        {
+            // Report the actual deployed folder name so the Hub reflects branch-redirected builds
+            // (e.g. "MyMod.Alpha") rather than always the project name.
+            var deployedName = Path.GetFileName(context.FileSystem.OutputDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            if (string.IsNullOrEmpty(deployedName))
+                deployedName = project.Name;
+            context.Interaction.Mod(deployedName, project.FilePath);
+        }
 
         return ImmutableArray<ProducedFile>.Empty.Add(new ProducedFile());
     }
