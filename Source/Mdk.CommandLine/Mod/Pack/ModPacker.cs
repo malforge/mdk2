@@ -149,7 +149,7 @@ public class ModPacker : ProjectJob
 
         parameters.DumpTrace(console);
 
-        var outputLeaf = ResolveOutputLeaf(project.Name, branch, parameters.PackVerb.BranchPatterns, parameters.PackVerb.Macros);
+        var outputLeaf = ResolveOutputLeaf(project.Name, branch, parameters.PackVerb.BranchOutputs, parameters.PackVerb.Macros);
         if (!string.Equals(outputLeaf, project.Name, StringComparison.Ordinal))
             console.Trace($"Branch '{branch}' redirects output to folder '{outputLeaf}' (instead of '{project.Name}').");
 
@@ -185,18 +185,18 @@ public class ModPacker : ProjectJob
     ///     Thrown when branch patterns are configured but the current branch cannot be determined, to avoid
     ///     silently packing to the wrong (released) mod folder.
     /// </exception>
-    public static string ResolveOutputLeaf(string projectName, string? branch, IReadOnlyDictionary<string, string> branchPatterns, IReadOnlyDictionary<string, string> macros)
+    public static string ResolveOutputLeaf(string projectName, string? branch, IReadOnlyDictionary<string, BranchOutput> branchOutputs, IReadOnlyDictionary<string, string> macros)
     {
-        if (branchPatterns.Count == 0)
+        if (branchOutputs.Count == 0)
             return projectName;
 
         if (branch == null)
             throw new CommandLineException(-1, "Branch-specific output folders ([mdk-branch:...]) are configured, but the current git branch could not be determined (no git repository, or a detached HEAD). Aborting to avoid packing to the wrong mod folder.");
 
-        if (!branchPatterns.TryGetValue(branch, out var pattern) || string.IsNullOrWhiteSpace(pattern))
+        if (!branchOutputs.TryGetValue(branch, out var config) || string.IsNullOrWhiteSpace(config.Pattern))
             return projectName;
 
-        var leaf = SanitizeFolderName(MacroReplacer.Replace(pattern, macros));
+        var leaf = SanitizeFolderName(MacroReplacer.Replace(config.Pattern, macros));
         return string.IsNullOrWhiteSpace(leaf) ? projectName : leaf;
     }
 

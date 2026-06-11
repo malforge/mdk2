@@ -215,7 +215,7 @@ public class ParametersTests
     }
 
     [Test]
-    public void BranchPatterns_LoadFromIniBranchSections()
+    public void BranchOutputs_LoadFromIniBranchSections()
     {
         // Arrange
         var iniText = """
@@ -235,12 +235,12 @@ public class ParametersTests
         parameters.Load(ini);
 
         // Assert
-        Assert.That(parameters.PackVerb.BranchPatterns["alpha"], Is.EqualTo("$MDK_PROJECT$.Alpha"));
-        Assert.That(parameters.PackVerb.BranchPatterns["release/beta"], Is.EqualTo("$MDK_PROJECT$.Beta"));
+        Assert.That(parameters.PackVerb.BranchOutputs["alpha"].Pattern, Is.EqualTo("$MDK_PROJECT$.Alpha"));
+        Assert.That(parameters.PackVerb.BranchOutputs["release/beta"].Pattern, Is.EqualTo("$MDK_PROJECT$.Beta"));
     }
 
     [Test]
-    public void BranchPatterns_SectionWithoutPattern_IsIgnored()
+    public void BranchOutputs_SectionWithoutPattern_IsIgnored()
     {
         // Arrange
         var iniText = """
@@ -257,6 +257,101 @@ public class ParametersTests
         parameters.Load(ini);
 
         // Assert
-        Assert.That(parameters.PackVerb.BranchPatterns, Does.Not.ContainKey("alpha"));
+        Assert.That(parameters.PackVerb.BranchOutputs, Does.Not.ContainKey("alpha"));
+    }
+
+    [Test]
+    public void BranchOutputs_ParseWatermarkSettings()
+    {
+        // Arrange
+        var iniText = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        pattern=$MDK_PROJECT$.Alpha
+        watermark=true
+        watermarktext=ALPHA BUILD
+        """;
+        Ini.TryParse(iniText, out var ini);
+        var parameters = new Parameters();
+
+        // Act
+        parameters.Load(ini);
+
+        // Assert
+        var config = parameters.PackVerb.BranchOutputs["alpha"];
+        Assert.That(config.Watermark, Is.True);
+        Assert.That(config.WatermarkText, Is.EqualTo("ALPHA BUILD"));
+    }
+
+    [Test]
+    public void BranchOutputs_WatermarkDefaultsOn()
+    {
+        // Arrange
+        var iniText = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        pattern=$MDK_PROJECT$.Alpha
+        """;
+        Ini.TryParse(iniText, out var ini);
+        var parameters = new Parameters();
+
+        // Act
+        parameters.Load(ini);
+
+        // Assert - a branch section watermarks by default.
+        Assert.That(parameters.PackVerb.BranchOutputs["alpha"].Watermark, Is.True);
+    }
+
+    [Test]
+    public void BranchOutputs_WatermarkCanBeDisabled()
+    {
+        // Arrange
+        var iniText = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        pattern=$MDK_PROJECT$.Alpha
+        watermark=false
+        """;
+        Ini.TryParse(iniText, out var ini);
+        var parameters = new Parameters();
+
+        // Act
+        parameters.Load(ini);
+
+        // Assert
+        Assert.That(parameters.PackVerb.BranchOutputs["alpha"].Watermark, Is.False);
+    }
+
+    [Test]
+    public void BranchOutputs_LocalIniOverridesMainIniForSameBranch()
+    {
+        // mdk.local.ini is loaded first with overrideExisting:false, so it must win over mdk.ini.
+        var localIni = """
+        [mdk-branch:alpha]
+        pattern=$MDK_PROJECT$.LocalAlpha
+        """;
+        var mainIni = """
+        [mdk]
+        type=mod
+
+        [mdk-branch:alpha]
+        pattern=$MDK_PROJECT$.MainAlpha
+        """;
+        Ini.TryParse(localIni, out var local);
+        Ini.TryParse(mainIni, out var main);
+        var parameters = new Parameters();
+
+        // Act - mirror the real load order: local first (no override), then main (no override).
+        parameters.Load(local, false);
+        parameters.Load(main, false);
+
+        // Assert
+        Assert.That(parameters.PackVerb.BranchOutputs["alpha"].Pattern, Is.EqualTo("$MDK_PROJECT$.LocalAlpha"));
     }
 }

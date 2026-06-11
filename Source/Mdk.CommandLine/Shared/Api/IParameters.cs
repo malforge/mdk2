@@ -117,13 +117,12 @@ public interface IParameters
         IReadOnlyDictionary<string, string> Macros { get; }
 
         /// <summary>
-        ///     Maps a git branch name to the output folder name pattern to use when packing on that branch.
+        ///     Maps a git branch name to its output configuration (folder pattern, optional thumbnail watermark).
         /// </summary>
         /// <remarks>
-        ///     Populated from <c>[mdk-branch:&lt;branchname&gt;]</c> sections in the ini file. The value is a
-        ///     pattern that supports the same macros as <see cref="Macros" /> (notably <c>$MDK_PROJECT$</c> and
-        ///     <c>$MDK_BRANCH$</c>). Branches with no entry pack to the project name as usual.
+        ///     Populated from <c>[mdk-branch:&lt;branchname&gt;]</c> sections in the ini file. Branches with no
+        ///     entry pack to the project name as usual.
         /// </remarks>
-        IReadOnlyDictionary<string, string> BranchPatterns { get; }
+        IReadOnlyDictionary<string, BranchOutput> BranchOutputs { get; }
     }
 }

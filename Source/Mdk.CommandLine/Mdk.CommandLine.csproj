@@ -28,6 +28,10 @@
         <PackageReference Include="System.IO.Hashing" Version="9.0.0" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
         <PackageReference Include="System.Text.Json" Version="9.0.0" />
+        <!-- Thumbnail watermarking. Base SkiaSharp carries the Windows natives; NativeAssets.Linux adds the
+             fontconfig-backed Linux natives so watermarking works on Linux (MDK's two supported platforms). -->
+        <PackageReference Include="SkiaSharp" Version="2.88.9" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.9" />
     </ItemGroup>
 
     <ItemGroup>
