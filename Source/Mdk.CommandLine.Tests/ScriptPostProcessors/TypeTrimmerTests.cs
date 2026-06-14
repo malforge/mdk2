@@ -1685,6 +1685,76 @@ public class TypeTrimmerTests : DocumentProcessorTests<TypeTrimmer>
         });
     }
 
+    [Test]
+    public async Task ProcessAsync_WhenOverloadIsUnused_RemovesOnlyTheUnusedOverload()
+    {
+        // Reproduction for issue #147: a call binds to one specific overload, so the *other*
+        // same-named overload (which the call can never bind to) is unused and must be trimmed.
+        // The method-reference heuristic matched any same-named, same-arity method, so it falsely
+        // treated the unused overload as referenced and kept it in the output.
+        const string testCode =
+            """
+            using System;
+            using System.Collections.Generic;
+
+            class Program : MyGridProgram
+            {
+                void Main()
+                {
+                    ReadPackedVectors("beepboop", bop => { });
+                }
+
+                public void ReadPackedVectors(string section, Action<int> handler, Action<int, string> deserializeValue = null)
+                {
+                }
+
+                public void ReadPackedVectors(string section, HashSet<int> collection, Action<int, string> deserializeValue = null)
+                {
+                }
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new TypeTrimmer();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Trim,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var root = await result.GetSyntaxRootAsync();
+        var overloads = root!.DescendantNodes()
+            .OfType<MethodDeclarationSyntax>()
+            .Where(method => method.Identifier.ValueText == "ReadPackedVectors")
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(overloads, Has.Length.EqualTo(1), "Only the overload the call actually binds to should remain.");
+            Assert.That(overloads[0].ParameterList.Parameters[1].Type!.ToString(), Is.EqualTo("Action<int>"),
+                "The retained overload must be the one taking the Action<int> handler.");
+        });
+    }
+
     static IEnumerable<MetadataReference> GetCoreReferences()
     {
         var coreAssemblies = new[]

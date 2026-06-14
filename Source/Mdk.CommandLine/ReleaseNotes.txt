@@ -1,3 +1,6 @@
+v.2.2.6
+    - Fixed the type trimmer leaving unused method overloads in the script. When a call resolved to one overload, other same-named overloads the call could never bind to were mistakenly treated as referenced and kept. They are now trimmed like any other unused member. (#147)
+
 v.2.2.5
     - Added per-branch mod output folders. [mdk-branch:<branch>] sections in mdk.ini map the current git branch to an output folder name pattern ($MDK_PROJECT$/$MDK_BRANCH$ macros available), so a branch can deploy to and publish a separate Workshop item. Packing aborts if branch sections are configured but the branch can't be determined, so a build never lands in the wrong mod.
     - Branch builds watermark their thumbnail by default: a translucent red stamp (watermarktext, or the branch name) is drawn onto thumb.png via SkiaSharp. Set watermark=false to disable. Best-effort with graceful fallback if no font is available.

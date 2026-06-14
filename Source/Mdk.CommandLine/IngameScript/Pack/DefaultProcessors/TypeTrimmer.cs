@@ -448,6 +448,14 @@ public class TypeTrimmer : IDocumentProcessor
 
     static bool InvocationLooksLikeMethodReference(InvocationExpressionSyntax invocation, SemanticModel semanticModel, IMethodSymbol symbol)
     {
+        // This is a name-and-arity fallback for invocations that don't bind to a concrete symbol
+        // (e.g. while the tree is mid-transformation). When the invocation *does* resolve, trust
+        // that binding: any real reference to this symbol is caught by the SymbolInfoMatches checks,
+        // so a resolved call to a *different* overload must not be treated as a reference here.
+        var symbolInfo = semanticModel.GetSymbolInfo(invocation);
+        if (symbolInfo.Symbol != null || symbolInfo.CandidateSymbols.Length > 0)
+            return false;
+
         if (!TryGetInvokedName(invocation.Expression, out var invokedName)
             || !string.Equals(invokedName, symbol.Name, StringComparison.Ordinal)
             || !ArgumentsCanBind(invocation.ArgumentList.Arguments.Count, symbol))
