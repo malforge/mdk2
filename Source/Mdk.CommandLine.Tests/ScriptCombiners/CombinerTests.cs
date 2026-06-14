@@ -136,6 +136,150 @@ public class CombinerTests
         Assert.That(usingDirectives, Is.EquivalentTo(new[] { "System", "System.Collections.Generic", "System.Linq", "System.Text", "System.Threading.Tasks" }));
     }
 
+    static (Project project, Document[] documents) CreateProject(params string[] sources)
+    {
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences())
+            .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var documents = new Document[sources.Length];
+        for (var i = 0; i < sources.Length; i++)
+        {
+            var document = project.AddDocument($"TestDocument{i + 1}", sources[i]);
+            project = document.Project;
+            documents[i] = document;
+        }
+
+        // Re-fetch documents from the final project so they all share the same solution snapshot.
+        for (var i = 0; i < documents.Length; i++)
+            documents[i] = project.GetDocument(documents[i].Id)!;
+
+        return (project, documents);
+    }
+
+    static PackContext CreatePackContext()
+    {
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        return new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+    }
+
+    static async Task<Document> RunFlattenAndCombineAsync(PackContext context, Project project, Document[] documents)
+    {
+        var deleteNamespaces = new DeleteNamespaces();
+        for (var i = 0; i < documents.Length; i++)
+        {
+            documents[i] = await deleteNamespaces.ProcessAsync(documents[i], context);
+            project = documents[i].Project;
+        }
+        for (var i = 0; i < documents.Length; i++)
+            documents[i] = project.GetDocument(documents[i].Id)!;
+
+        return await new Combiner().CombineAsync(project, documents, context);
+    }
+
+    [Test]
+    public async Task CombineAsync_WithUsingOfSelfNamespaceInSameFile_DropsTheDanglingUsing()
+    {
+        // Reproduction for issue #61 (the single-file shape from the report) but driven through the
+        // full flatten+combine pipeline rather than DeleteNamespaces alone, to confirm the *output*
+        // compiles. `using MyApp;` sits in the same file as `namespace MyApp`.
+        var context = CreatePackContext();
+        var (project, documents) = CreateProject(
+            """
+            using System;
+            using MyApp;
+            namespace MyApp
+            {
+                class Program
+                {
+                }
+            }
+            """);
+
+        var result = await RunFlattenAndCombineAsync(context, project, documents);
+
+        var root = await result.GetSyntaxRootAsync();
+        var usings = root!.DescendantNodes().OfType<UsingDirectiveSyntax>().Select(u => u.Name?.ToString()).ToArray();
+        var compilation = await result.Project.GetCompilationAsync();
+        var cs0246 = compilation!.GetDiagnostics().Where(d => d.Id == "CS0246").ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(usings, Does.Not.Contain("MyApp"), "The dangling `using MyApp;` should have been removed.");
+            Assert.That(cs0246, Is.Empty, "The combined script should not have any unresolved namespace errors.");
+        });
+    }
+
+    [Test]
+    public async Task CombineAsync_WithUsingOfSelfNamespaceInFileThatDoesNotDeclareIt_DropsTheDanglingUsing()
+    {
+        // Reproduction for issue #61 across multiple files. The `using MyApp;` lives in a file that
+        // does NOT itself declare `namespace MyApp` (the namespace is declared in the other files).
+        // The per-file DeleteNamespaces cleanup cannot see that, so the combine step must drop the
+        // now-dangling using; otherwise the intermediate script fails to compile with CS0246.
+        var context = CreatePackContext();
+        var (project, documents) = CreateProject(
+            // Program.cs: declares the namespace, references Helper from the same logical namespace.
+            """
+            using System;
+            namespace MyApp
+            {
+                class Program
+                {
+                    Helper _helper = new Helper();
+                }
+            }
+            """,
+            // Helper.cs: declares the namespace too.
+            """
+            namespace MyApp
+            {
+                class Helper
+                {
+                }
+            }
+            """,
+            // Extensions.cs: imports the self-namespace but does NOT declare it.
+            """
+            using System;
+            using MyApp;
+            static class Extensions
+            {
+            }
+            """);
+
+        var result = await RunFlattenAndCombineAsync(context, project, documents);
+
+        var root = await result.GetSyntaxRootAsync();
+        var usings = root!.DescendantNodes().OfType<UsingDirectiveSyntax>().Select(u => u.Name?.ToString()).ToArray();
+        var compilation = await result.Project.GetCompilationAsync();
+        var cs0246 = compilation!.GetDiagnostics().Where(d => d.Id == "CS0246").ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(usings, Does.Not.Contain("MyApp"), "The dangling `using MyApp;` should have been removed.");
+            Assert.That(cs0246, Is.Empty, "The combined script should not have any unresolved namespace errors.");
+        });
+    }
+
     [Test]
     public async Task CombineAsync_WithPreservedMember_KeepsPreserveAnnotations()
     {

@@ -53,6 +53,51 @@ public class ProjectBasedRegressionTests
     }
 
     [Test]
+    public async Task Pack_ForIssue67_TrimsUnreferencedEnumAlongWithUnusedTypes()
+    {
+        // Faithful reproduction of issue #67: an unreferenced `enum PingState` (declared next to an
+        // unused `Utility` class) was being built into the output even though unused classes were
+        // correctly trimmed. With trimming enabled, the unused enum must be removed just like the
+        // unused classes, while the referenced class is retained.
+        var project = await PackProjectAsync("TestData/Issue67/Issue67.csproj");
+        var script = project.ProducedFiles.Single(f => f.Id == "script.cs").Content;
+
+        Assert.That(script, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(script, Does.Not.Contain("PingState"),
+                "The unreferenced enum must be trimmed from the output.");
+            Assert.That(script, Does.Not.Contain("class Utility"),
+                "The unreferenced class must be trimmed from the output.");
+            Assert.That(script, Does.Not.Contain("class EnhancedLight"),
+                "The unreferenced class must be trimmed from the output.");
+            Assert.That(script, Does.Contain("EnhancedBlock"),
+                "The referenced class must be retained in the output.");
+        });
+    }
+
+    [Test]
+    public async Task Pack_ForIssue61_DiscardsUsingOfTheStrippedIngameScriptNamespace()
+    {
+        // Faithful reproduction of issue #61: a plain `using IngameScript;` self-import sits
+        // alongside `namespace IngameScript`. After DeleteNamespaces strips the namespace, that
+        // using points at nothing and the project used to fail with CS0246 "The type or namespace
+        // name 'IngameScript' could not be found". The packer must strip the dangling using so the
+        // pack succeeds. (Sibling of #76, which covers the `using static IngameScript.Program;` form.)
+        var project = await PackProjectAsync("TestData/Issue61/Issue61.csproj");
+        var script = project.ProducedFiles.Single(f => f.Id == "script.cs").Content;
+
+        Assert.That(script, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(script, Does.Not.Contain("using IngameScript"),
+                "The stripped namespace's using directive must not survive into the combined script.");
+            Assert.That(script, Does.Contain("void Main(string argument, UpdateType updateSource)"),
+                "The script body must still be present after stripping the dangling using.");
+        });
+    }
+
+    [Test]
     public async Task Pack_ForIssue76_DiscardsUsingStaticIngameScriptProgram()
     {
         // After DeleteNamespaces strips `namespace IngameScript`, a leftover

@@ -1,3 +1,6 @@
+v.2.2.6
+   - Fixed: unused method overloads are now trimmed by the minifier instead of being left in the script.
+
 v.2.2.4
    - `#if` directives now use the project's actual conditional compilation symbols instead of the build configuration name.
    - The "MDK Hub Not Found" page now includes diagnostics to help identify stale or misconfigured Hub installations.
