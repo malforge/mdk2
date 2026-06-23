@@ -1,4 +1,4 @@
-v.2.2.7-pre.1
+v.2.2.7
     - Content files linked into a mod from outside its project - e.g. shared resources in a referenced shared project or submodule, declared as <AdditionalFiles Include="..\..\Shared\Content\..." Link="Content\..." /> - are now packed under Content\ using their Link path. Previously they were skipped, because their on-disk path relative to the project starts with "..\" and escaped the output directory. Mods using their own local Content\ are unaffected.
 
 v.2.2.6
