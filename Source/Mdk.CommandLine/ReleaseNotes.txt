@@ -1,3 +1,7 @@
+v.2.2.7
+    - Added packing-time trimming for source-defined attribute types in Programmable Block scripts and mods. Attribute applications and declarations are removed from packed source, while runtime references to those types stop packing with a diagnostic.
+    - Attribute trimming removes only aliases and static imports that target trimmed attribute types, preserves surrounding comments and preprocessor directives, and skips mod source files made structurally empty by trimming.
+
 v.2.2.6
     - Fixed the type trimmer leaving unused method overloads in the script. When a call resolved to one overload, other same-named overloads the call could never bind to were mistakenly treated as referenced and kept. They are now trimmed like any other unused member. (#147)
 

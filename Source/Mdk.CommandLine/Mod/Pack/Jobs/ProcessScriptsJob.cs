@@ -1,7 +1,9 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Mdk.CommandLine.Utility;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Mdk.CommandLine.Mod.Pack.Jobs;
 
@@ -36,6 +38,12 @@ internal class ProcessScriptsJob : ModJob
                 document = await processor.ProcessAsync(document, context);
             }
 
+            var processedRoot = await document.GetSyntaxRootAsync();
+            if (processedRoot is CompilationUnitSyntax compilationUnit && IsStructurallyEmpty(compilationUnit))
+            {
+                context.Console.Trace($"Skipping empty script document {relativePath}");
+                continue;
+            }
 
             var outputPath = PathEx.CombineInside(outputDirectory.FullName, relativePath);
             context.Console.Trace($"Writing {relativePath} to {outputDirectory.FullName}");
@@ -43,5 +51,13 @@ internal class ProcessScriptsJob : ModJob
         }
 
         return context;
+    }
+
+    static bool IsStructurallyEmpty(CompilationUnitSyntax root)
+    {
+        return root.Members.Count == 0
+               && root.AttributeLists.Count == 0
+               && root.Externs.Count == 0
+               && !root.DescendantTrivia(descendIntoTrivia: true).Any(trivia => trivia.IsDirective);
     }
 }

@@ -1,3 +1,6 @@
+v.2.2.60
+ - Updated the packager and analyzer package versions in the templates.
+
 v.2.2.59
  - Updated the package versions in the template.
 

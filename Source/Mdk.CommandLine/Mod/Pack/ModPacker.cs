@@ -218,6 +218,7 @@ public class ModPacker : ProjectJob
         ModJob[] jobs =
         [
             new PrevalidateAndLoadFromProjectJob(),
+            new TrimAttributesJob(),
             new FindAndFilterDocumentsJob(),
             new LoadProcessorsJob(),
             new PrepareOutputJob(),
