@@ -19,6 +19,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- Expose internals to the test project so pure helpers (e.g. content path resolution) can be
+             unit-tested without widening the public API surface of this tool. -->
+        <InternalsVisibleTo Include="Mdk.CommandLine.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.12.0" />
