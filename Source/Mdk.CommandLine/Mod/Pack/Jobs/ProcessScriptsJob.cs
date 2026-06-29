@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Mdk.CommandLine.Shared.AttributeTrimming;
 using Mdk.CommandLine.Utility;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -31,6 +32,7 @@ internal class ProcessScriptsJob : ModJob
             if (syntaxTree == null)
                 continue;
             var root = await syntaxTree.GetRootAsync();
+            var wasEmptiedByAttributeTrimming = root.HasAnnotations(AttributeTrimmingProcessor.EmptiedDocumentAnnotationKind);
             document = document.WithSyntaxRoot(root);
             foreach (var processor in context.Processors)
             {
@@ -39,7 +41,9 @@ internal class ProcessScriptsJob : ModJob
             }
 
             var processedRoot = await document.GetSyntaxRootAsync();
-            if (processedRoot is CompilationUnitSyntax compilationUnit && IsStructurallyEmpty(compilationUnit))
+            if (wasEmptiedByAttributeTrimming
+                && processedRoot is CompilationUnitSyntax compilationUnit
+                && IsStructurallyEmpty(compilationUnit))
             {
                 context.Console.Trace($"Skipping empty script document {relativePath}");
                 continue;

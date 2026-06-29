@@ -24,7 +24,7 @@ namespace Mdk2.ModAnalyzers
             = new DiagnosticDescriptor("MDK01", "Prohibited Type Or Member", "The type or member '{0}' is prohibited in Space Engineers", "Whitelist", DiagnosticSeverity.Error, true);
 
         internal static readonly DiagnosticDescriptor RuntimeUseOfTrimmedAttributeRule
-            = new DiagnosticDescriptor("MDK04", "Runtime Use Of Trimmed Attribute", "User generated attribute type '{0}' is used by runtime code. Attribute trimming removes this type from packed source.", "Attribute Trimming", DiagnosticSeverity.Error, true);
+            = new DiagnosticDescriptor("MDK04", "Runtime Use Of Trimmed Attribute", "Tooling-only attribute type '{0}' is used by runtime code. Attribute trimming removes this type from packed source.", "Attribute Trimming", DiagnosticSeverity.Error, true);
 
         readonly Whitelist _whitelist = new Whitelist();
         Matcher _mdkIgnorePaths;

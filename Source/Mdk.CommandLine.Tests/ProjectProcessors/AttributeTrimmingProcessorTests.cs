@@ -398,6 +398,55 @@ public class AttributeTrimmingProcessorTests
     }
 
     [Test]
+    public async Task ProcessWithResultAsync_TrimmingForPreExistingCompilerErrors()
+    {
+        var project = CreateProject("""
+            using System;
+
+            [Marker]
+            public class Settings
+            {
+                public MissingType Value { get; set; }
+            }
+
+            internal sealed class MarkerAttribute : Attribute
+            {
+            }
+            """);
+
+        var result = await ProcessAsync(project);
+        var text = await GetDocumentTextAsync(result.Project);
+
+        Assert.That(result.Diagnostics, Is.Empty);
+        Assert.That(text, Does.Not.Contain("Marker"));
+        Assert.That(text, Does.Contain("MissingType"));
+    }
+
+    [Test]
+    public async Task ProcessWithResultAsync_MarksOnlyDocumentsMadeEmptyByTrimming()
+    {
+        var project = CreateProject(
+            ("License.cs", "// License header only."),
+            ("Marker.cs", """
+                using System;
+
+                // Tooling-only declaration.
+                internal sealed class MarkerAttribute : Attribute
+                {
+                }
+                """));
+
+        var result = await ProcessAsync(project);
+        var licenseRoot = await result.Project.Documents.Single(document => document.Name == "License.cs").GetSyntaxRootAsync();
+        var markerRoot = await result.Project.Documents.Single(document => document.Name == "Marker.cs").GetSyntaxRootAsync();
+
+        Assert.That(licenseRoot, Is.Not.Null);
+        Assert.That(markerRoot, Is.Not.Null);
+        Assert.That(licenseRoot!.HasAnnotations(AttributeTrimmingProcessor.EmptiedDocumentAnnotationKind), Is.False);
+        Assert.That(markerRoot!.HasAnnotations(AttributeTrimmingProcessor.EmptiedDocumentAnnotationKind), Is.True);
+    }
+
+    [Test]
     public async Task ProcessWithResultAsync_DiagnosesRuntimeUseOfSourceDefinedAttribute()
     {
         var project = CreateProject("""

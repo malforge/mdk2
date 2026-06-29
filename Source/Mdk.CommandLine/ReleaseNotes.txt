@@ -1,3 +1,7 @@
+v.2.2.8
+    - Added packing-time trimming for source-defined attribute types in Programmable Block scripts and mods. Attribute applications and declarations are removed from packed source, while runtime references to those types stop packing with a diagnostic.
+    - Attribute trimming removes only aliases and static imports that target trimmed attribute types, preserves surrounding comments and preprocessor directives, and skips mod source files made structurally empty by trimming.
+
 v.2.2.7
     - Content files linked into a mod from outside its project - e.g. shared resources in a referenced shared project or submodule, declared as <AdditionalFiles Include="..\..\Shared\Content\..." Link="Content\..." /> - are now packed under Content\ using their Link path. Previously they were skipped, because their on-disk path relative to the project starts with "..\" and escaped the output directory. Mods using their own local Content\ are unaffected.
 

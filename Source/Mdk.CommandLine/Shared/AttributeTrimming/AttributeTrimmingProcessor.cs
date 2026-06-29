@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,16 +15,9 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace Mdk.CommandLine.Shared.AttributeTrimming;
 
-public sealed class AttributeTrimmingProcessor : IProjectProcessor
+public sealed class AttributeTrimmingProcessor
 {
-    public async Task<Project> ProcessAsync(Project project, IPackContext context, CancellationToken cancellationToken = default)
-    {
-        var result = await ProcessWithResultAsync(project, context, cancellationToken);
-        if (result.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
-            throw new CommandLineException(-2, "Attribute trimming failed.");
-
-        return result.Project;
-    }
+    internal const string EmptiedDocumentAnnotationKind = "Mdk.AttributeTrimming.EmptiedDocument";
 
     public async Task<AttributeTrimmingResult> ProcessWithResultAsync(Project project, IPackContext context, CancellationToken cancellationToken = default)
     {
@@ -33,6 +27,7 @@ public sealed class AttributeTrimmingProcessor : IProjectProcessor
 
         var systemAttribute = compilation.GetTypeByMetadataName("System.Attribute")
                               ?? throw new CommandLineException(-1, "Failed to resolve System.Attribute for attribute trimming.");
+        var baselineErrorCounts = GetErrorCounts(compilation, cancellationToken);
 
         var plan = await AnalyzeAsync(project, compilation, systemAttribute, cancellationToken);
         if (plan.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
@@ -45,7 +40,7 @@ public sealed class AttributeTrimmingProcessor : IProjectProcessor
         var usingDirectives = await FindUsingDirectivesToRemoveAsync(project, plan.SourceDefinedAttributeTypes, cancellationToken);
         project = await RewriteAsync(project, plan, usingDirectives, cancellationToken);
 
-        var validationDiagnostics = await ValidateAsync(project, cancellationToken);
+        var validationDiagnostics = await ValidateAsync(project, baselineErrorCounts, cancellationToken);
         if (validationDiagnostics.Length > 0)
             plan = plan with { Diagnostics = plan.Diagnostics.AddRange(validationDiagnostics) };
 
@@ -139,14 +134,19 @@ public sealed class AttributeTrimmingProcessor : IProjectProcessor
         {
             cancellationToken.ThrowIfCancellationRequested();
             var document = project.GetDocument(documentId);
-            var root = await document?.GetSyntaxRootAsync(cancellationToken)!;
-            if (document == null || root == null)
+            if (document == null)
+                continue;
+
+            var root = await document.GetSyntaxRootAsync(cancellationToken);
+            if (root == null)
                 continue;
 
             var applicationSpans = plan.AttributeApplications.TryGetValue(documentId, out var applications) ? applications : ImmutableHashSet<TextSpan>.Empty;
             var declarationSpans = plan.AttributeDeclarations.TryGetValue(documentId, out var declarations) ? declarations : ImmutableHashSet<TextSpan>.Empty;
             var usingSpans = usingDirectives.TryGetValue(documentId, out var usings) ? usings : ImmutableHashSet<TextSpan>.Empty;
             var newRoot = new AttributeTrimmingRewriter(applicationSpans, declarationSpans, usingSpans).Rewrite(root);
+            if (!ReferenceEquals(newRoot, root) && IsStructurallyEmpty(newRoot))
+                newRoot = newRoot.WithAdditionalAnnotations(new SyntaxAnnotation(EmptiedDocumentAnnotationKind));
 
             project = document.WithSyntaxRoot(newRoot).Project;
         }
@@ -242,17 +242,66 @@ public sealed class AttributeTrimmingProcessor : IProjectProcessor
         return diagnostics.ToImmutable();
     }
 
-    static async Task<ImmutableArray<AttributeTrimmingDiagnostic>> ValidateAsync(Project project, CancellationToken cancellationToken)
+    static async Task<ImmutableArray<AttributeTrimmingDiagnostic>> ValidateAsync(
+        Project project,
+        IReadOnlyDictionary<CompilerDiagnosticKey, int> baselineErrorCounts,
+        CancellationToken cancellationToken)
     {
         var compilation = await project.GetCompilationAsync(cancellationToken);
         if (compilation == null)
             return [new AttributeTrimmingDiagnostic("MDK04", "Attribute trimming could not validate the transformed project.", null)];
 
-        return [
-            ..compilation.GetDiagnostics(cancellationToken)
-                .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-                .Select(diagnostic => new AttributeTrimmingDiagnostic("MDK04", $"Attribute trimming produced invalid source: {diagnostic}", diagnostic.Location))
-        ];
+        var remainingBaselineErrors = new Dictionary<CompilerDiagnosticKey, int>(baselineErrorCounts);
+        var diagnostics = ImmutableArray.CreateBuilder<AttributeTrimmingDiagnostic>();
+        foreach (var diagnostic in compilation.GetDiagnostics(cancellationToken).Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+        {
+            var key = CreateCompilerDiagnosticKey(diagnostic);
+            if (remainingBaselineErrors.TryGetValue(key, out var count) && count > 0)
+            {
+                if (count == 1)
+                    remainingBaselineErrors.Remove(key);
+                else
+                    remainingBaselineErrors[key] = count - 1;
+                continue;
+            }
+
+            diagnostics.Add(new AttributeTrimmingDiagnostic(
+                "MDK04",
+                $"Attribute trimming produced invalid source: {diagnostic}",
+                diagnostic.Location));
+        }
+
+        return diagnostics.ToImmutable();
+    }
+
+    static Dictionary<CompilerDiagnosticKey, int> GetErrorCounts(Compilation compilation, CancellationToken cancellationToken)
+    {
+        var errorCounts = new Dictionary<CompilerDiagnosticKey, int>();
+        foreach (var diagnostic in compilation.GetDiagnostics(cancellationToken).Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+        {
+            var key = CreateCompilerDiagnosticKey(diagnostic);
+            errorCounts.TryGetValue(key, out var count);
+            errorCounts[key] = count + 1;
+        }
+
+        return errorCounts;
+    }
+
+    static CompilerDiagnosticKey CreateCompilerDiagnosticKey(Diagnostic diagnostic)
+    {
+        var path = diagnostic.Location is { IsInSource: true }
+            ? diagnostic.Location.SourceTree?.FilePath ?? diagnostic.Location.GetLineSpan().Path
+            : null;
+        return new CompilerDiagnosticKey(diagnostic.Id, diagnostic.GetMessage(CultureInfo.InvariantCulture), path);
+    }
+
+    static bool IsStructurallyEmpty(SyntaxNode root)
+    {
+        return root is CompilationUnitSyntax compilationUnit
+               && compilationUnit.Members.Count == 0
+               && compilationUnit.AttributeLists.Count == 0
+               && compilationUnit.Externs.Count == 0
+               && !compilationUnit.DescendantTrivia(descendIntoTrivia: true).Any(trivia => trivia.IsDirective);
     }
 
     async Task<AttributeTrimmingResult> CompleteAsync(Project project, AttributeTrimmingPlan plan, IPackContext context)
@@ -337,6 +386,8 @@ public sealed class AttributeTrimmingProcessor : IProjectProcessor
             lineSpan.StartLinePosition.Line + 1,
             reason);
     }
+
+    readonly record struct CompilerDiagnosticKey(string Id, string Message, string? Path);
 
     static void AddSpan(IDictionary<DocumentId, ImmutableHashSet<TextSpan>> spansByDocument, DocumentId documentId, TextSpan span)
     {

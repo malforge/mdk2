@@ -34,7 +34,7 @@ namespace Mdk2.PbAnalyzers
             = new DiagnosticDescriptor("MDK03", "Inconsistent Namespace Declaration", "All ingame script code should be within the {0} namespace in order to avoid problems", "Whitelist", DiagnosticSeverity.Warning, true);
 
         internal static readonly DiagnosticDescriptor RuntimeUseOfTrimmedAttributeRule
-            = new DiagnosticDescriptor("MDK04", "Runtime Use Of Trimmed Attribute", "User generated attribute type '{0}' is used by runtime code. Attribute trimming removes this type from packed source.", "Attribute Trimming", DiagnosticSeverity.Error, true);
+            = new DiagnosticDescriptor("MDK04", "Runtime Use Of Trimmed Attribute", "Tooling-only attribute type '{0}' is used by runtime code. Attribute trimming removes this type from packed source.", "Attribute Trimming", DiagnosticSeverity.Error, true);
 
         readonly Whitelist _whitelist = new Whitelist();
 
