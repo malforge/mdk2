@@ -210,6 +210,11 @@ public class CodeSmallifier : IDocumentProcessor
         {
             if (field.AttributeLists.Count > 0)
                 return false;
+            // Fields inside a "mdk preserve" region must stay exactly as written, so they are never
+            // eligible for compaction. This also stops a non-preserved neighbour from being folded
+            // into a preserved declaration.
+            if (field.ShouldBePreserved())
+                return false;
             return true;
         }
 
