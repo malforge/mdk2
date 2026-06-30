@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Validate version suffixes match branch
         shell: pwsh
@@ -97,12 +97,12 @@ jobs:
       - name: Generate token
         id: generate-token
         if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
       
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token || secrets.GITHUB_TOKEN }}
 
@@ -138,10 +138,10 @@ jobs:
         project:
           - "Mdk.CommandLine/Mdk.CommandLine.csproj"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.x
 
@@ -178,7 +178,7 @@ jobs:
           echo "ARTIFACT_NAME is: ${{ env.ARTIFACT_NAME }}"
 
       - name: Upload tool artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.ARTIFACT_NAME }}-artifact
           if-no-files-found: error
@@ -201,23 +201,23 @@ jobs:
         shell: pwsh
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.x
 
       - name: Download tool artifacts for PbPackager
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: mdk-artifact
           path: ./Source/Mdk.PbPackager/tools
 
       - name: Download tool artifacts for ModPackager
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: mdk-artifact
           path: ./Source/Mdk.ModPackager/tools
@@ -238,7 +238,7 @@ jobs:
             Copy-Item -Path $file.FullName -Destination ${{ env.NuGetDirectory }}
           }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nuget
           if-no-files-found: error
@@ -255,10 +255,10 @@ jobs:
         shell: pwsh
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.x
 
@@ -281,7 +281,7 @@ jobs:
           vpk pack --packId Malforge.MdkHub --packVersion $env:VERSION --packDir publish/win --mainExe Mdk.Hub.exe --packTitle "MDK Hub" --icon Mdk.Hub/Assets/hub.ico
 
       - name: Upload Windows installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mdk-hub-windows-installer
           if-no-files-found: error
@@ -298,10 +298,10 @@ jobs:
         shell: bash
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.x
 
@@ -324,7 +324,7 @@ jobs:
           vpk pack --packId Malforge.MdkHub --packVersion $VERSION --packDir publish/linux --mainExe Mdk.Hub --packTitle "MDK Hub" --icon Mdk.Hub/Assets/hub256.png
 
       - name: Upload Linux installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mdk-hub-linux-installer
           if-no-files-found: error
@@ -343,7 +343,7 @@ jobs:
 
     steps:
       - name: Download NuGet artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: nuget
           path: ./nuget
@@ -364,7 +364,7 @@ jobs:
       - build-hub-linux
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Get version from PackageVersion.txt
         id: get-version
@@ -425,19 +425,19 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
       
       - name: Download Windows installer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: mdk-hub-windows-installer
           path: ./releases
       
       - name: Download Linux installer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: mdk-hub-linux-installer
           path: ./releases
       
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: hub-v${{ env.VERSION }}
           name: MDK Hub v${{ env.VERSION }}
