@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack.Api;
+using Mdk.CommandLine.Shared.AttributeTrimming;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 // using Microsoft.Build.Locator;
@@ -229,6 +230,11 @@ public class ScriptPacker: ProjectJob
             }
         }
 
+        var trimmingProcessor = new AttributeTrimmingProcessor();
+        var trimmingResult = await trimmingProcessor.ProcessWithResultAsync(project, context);
+        ThrowIfTrimmingFailed(trimmingResult.Diagnostics, context.Console);
+        project = trimmingResult.Project;
+
         var allDocuments = project.Documents.ToImmutableArray();
         
         var manager = ScriptProcessingManager.Create().Build();
@@ -388,6 +394,18 @@ public class ScriptPacker: ProjectJob
                 console.Print(diagnostic.ToString());
             throw new CommandLineException(-2, "Failed to compile the project.");
         }
+    }
+
+    static void ThrowIfTrimmingFailed(ImmutableArray<AttributeTrimmingDiagnostic> diagnostics, IConsole console)
+    {
+        var errors = diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToImmutableArray();
+        if (errors.Length == 0)
+            return;
+
+        foreach (var diagnostic in errors)
+            console.Print(diagnostic.ToString());
+
+        throw new CommandLineException(-2, "Attribute trimming failed.");
     }
 
     static async Task<StringBuilder> ComposeAsync(Document scriptDocument, IScriptComposer composer, PackContext context)

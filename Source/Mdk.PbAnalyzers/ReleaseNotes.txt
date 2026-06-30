@@ -1,3 +1,6 @@
+v.2.1.17
+    - Added MDK04 warnings for runtime references to source-defined attribute types trimmed during packing.
+
 v.v.2.1.16
     - Added: Namespace whitelist feature - configure allowed namespaces via `namespaces=` in mdk.ini
     - Templates now include `namespaces=IngameScript` by default

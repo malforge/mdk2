@@ -55,4 +55,8 @@
       <None Remove="SourceGeneratorSupport\**" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="Mdk.CommandLine.Tests" />
+    </ItemGroup>
+
 </Project>

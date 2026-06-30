@@ -33,6 +33,9 @@ namespace Mdk2.PbAnalyzers
         internal static readonly DiagnosticDescriptor InconsistentNamespaceDeclarationRule
             = new DiagnosticDescriptor("MDK03", "Inconsistent Namespace Declaration", "All ingame script code should be within the {0} namespace in order to avoid problems", "Whitelist", DiagnosticSeverity.Warning, true);
 
+        internal static readonly DiagnosticDescriptor RuntimeUseOfTrimmedAttributeRule
+            = new DiagnosticDescriptor("MDK04", "Runtime Use Of Trimmed Attribute", "Tooling-only attribute type '{0}' is used by runtime code. Attribute trimming removes this type from packed source.", "Attribute Trimming", DiagnosticSeverity.Error, true);
+
         readonly Whitelist _whitelist = new Whitelist();
 
         // readonly List<Uri> _ignoredFolders = new List<Uri>();
@@ -46,7 +49,8 @@ namespace Mdk2.PbAnalyzers
             = ImmutableArray.Create(
                 ProhibitedMemberRule,
                 ProhibitedLanguageElementRule,
-                InconsistentNamespaceDeclarationRule);
+                InconsistentNamespaceDeclarationRule,
+                RuntimeUseOfTrimmedAttributeRule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -295,6 +299,23 @@ namespace Mdk2.PbAnalyzers
 
             var info = context.SemanticModel.GetSymbolInfo(node);
             if (info.Symbol == null)
+                return;
+
+            if (AttributeContext.IsSourceDefinedAttributeTypeReference(info.Symbol, context.SemanticModel, context.CancellationToken))
+            {
+                if (!AttributeContext.IsAllowed(node, context.SemanticModel, context.CancellationToken))
+                {
+                    diagnostic = Diagnostic.Create(
+                        RuntimeUseOfTrimmedAttributeRule,
+                        node.GetLocation(),
+                        info.Symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
+                    context.ReportDiagnostic(diagnostic);
+                }
+
+                return;
+            }
+
+            if (AttributeContext.IsAllowed(node, context.SemanticModel, context.CancellationToken))
                 return;
 
             // If they wrote it, they can have it.
