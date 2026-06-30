@@ -1,3 +1,6 @@
+v.2.2.9
+    - Full minification now keeps constant and field declarations inside `#region mdk preserve` exactly as written. Previously they could be merged into a single declaration, and a field just outside the region could be folded in with them. (#149)
+
 v.2.2.8
     - Added packing-time trimming for source-defined attribute types in Programmable Block scripts and mods. Attribute applications and declarations are removed from packed source, while runtime references to those types stop packing with a diagnostic.
     - Attribute trimming removes only aliases and static imports that target trimmed attribute types, preserves surrounding comments and preprocessor directives, and skips mod source files made structurally empty by trimming.

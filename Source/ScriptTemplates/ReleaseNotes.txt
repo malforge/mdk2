@@ -1,3 +1,6 @@
+v.2.2.62
+ - Updated the package versions in the template.
+
 v.2.2.61
  - Updated the packager package versions in the templates to 2.2.8.
 
