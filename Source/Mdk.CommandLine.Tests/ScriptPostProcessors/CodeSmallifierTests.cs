@@ -63,7 +63,7 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
             """
             class Program
             {
-                private static string A,B = "x";
+                static string A,B = "x";
                 internal string C;
                 string[] D;
                 string E,H;
@@ -122,7 +122,7 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
             """
             class Program
             {
-                private static string A = "x",B;
+                static string A = "x",B;
                 internal string C;
                 string[] D;
                 string E,H;
@@ -188,5 +188,119 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
             var names = fields.SelectMany(f => f.Declaration.Variables).Select(v => v.Identifier.ValueText).ToArray();
             Assert.That(names, Is.EqualTo(new[] { "ControlSeat", "CockpitName", "InternalTag" }));
         });
+    }
+
+    [Test]
+    public async Task ProcessAsync_StripsReadonlyFromFields()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                readonly int A;
+                private readonly int B;
+                private static readonly string C;
+                internal readonly float D;
+                readonly int E = 42;
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new CodeSmallifier();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Lite,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var actual = await result.GetTextAsync();
+        // After readonly is stripped:
+        // - A (readonly int), B (private readonly int → private int → int), E (readonly int)
+        //   all become plain int and compact together.
+        // - C (private static string → static string) and D (internal float) stay separate.
+        var expected =
+            """
+            class Program
+            {
+                int A,B,E = 42;
+                static string C;
+                internal float D;
+            }
+            """;
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public async Task ProcessAsync_ReadonlyStrippingEnablesCrossModifierCompaction()
+    {
+        // After readonly is stripped, fields that previously had different modifier sets can merge.
+        const string testCode =
+            """
+            class Program
+            {
+                readonly int A;
+                int B;
+                private readonly int C;
+                private int D;
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new CodeSmallifier();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Lite,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var actual = await result.GetTextAsync();
+        // After readonly is stripped:
+        // - A (readonly int → int), B (int), C (private readonly int → private int → int),
+        //   D (private int → int)
+        // All four become plain int and compact into one declaration.
+        var expected =
+            """
+            class Program
+            {
+                int A,B,C,D;
+            }
+            """;
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
     }
 }

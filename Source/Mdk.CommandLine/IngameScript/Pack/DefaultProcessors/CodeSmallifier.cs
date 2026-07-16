@@ -10,7 +10,8 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 
 /// <summary>
 ///     The purpose of this processor is to smallify the code without making it unreadable.
-///     It currently just removes unnecessary "internal" and "private" modifiers.
+///     It removes unnecessary "internal" and "private" modifiers, strips "readonly" from fields,
+///     and compacts contiguous field declarations of the same type and modifiers.
 /// </summary>
 [RunAfter<PartialMerger>]
 [RunAfter<RegionAnnotator>]
@@ -141,13 +142,7 @@ public class CodeSmallifier : IDocumentProcessor
             var newNode = (MethodDeclarationSyntax?)base.VisitMethodDeclaration(node);
             if (newNode == null)
                 return node;
-            if (newNode.Modifiers.Count == 1 && newNode.Modifiers[0].IsKind(SyntaxKind.PrivateKeyword))
-            {
-                var modifierToRemove = newNode.Modifiers[0];
-                newNode = newNode.WithModifiers(newNode.Modifiers.RemoveAt(0));
-                newNode = newNode.WithLeadingTrivia(newNode.GetLeadingTrivia().AddRange(modifierToRemove.LeadingTrivia));
-            }
-            return newNode;
+            return StripPrivate(newNode);
         }
 
         public override SyntaxNode VisitPropertyDeclaration(PropertyDeclarationSyntax node)
@@ -155,13 +150,7 @@ public class CodeSmallifier : IDocumentProcessor
             var newNode = (PropertyDeclarationSyntax?)base.VisitPropertyDeclaration(node);
             if (newNode == null)
                 return node;
-            if (newNode.Modifiers.Count == 1 && newNode.Modifiers[0].IsKind(SyntaxKind.PrivateKeyword))
-            {
-                var modifierToRemove = newNode.Modifiers[0];
-                newNode = newNode.WithModifiers(newNode.Modifiers.RemoveAt(0));
-                newNode = newNode.WithLeadingTrivia(newNode.GetLeadingTrivia().AddRange(modifierToRemove.LeadingTrivia));
-            }
-            return newNode;
+            return StripPrivate(newNode);
         }
 
         public override SyntaxNode VisitFieldDeclaration(FieldDeclarationSyntax node)
@@ -169,13 +158,34 @@ public class CodeSmallifier : IDocumentProcessor
             var newNode = (FieldDeclarationSyntax?)base.VisitFieldDeclaration(node);
             if (newNode == null)
                 return node;
-            if (newNode.Modifiers.Count == 1 && newNode.Modifiers[0].IsKind(SyntaxKind.PrivateKeyword))
+
+            // Strip "readonly" unconditionally.
+            int readonlyIndex = -1;
+            for (var i = 0; i < newNode.Modifiers.Count; i++)
             {
-                var modifierToRemove = newNode.Modifiers[0];
-                newNode = newNode.WithModifiers(newNode.Modifiers.RemoveAt(0));
-                newNode = newNode.WithLeadingTrivia(newNode.GetLeadingTrivia().AddRange(modifierToRemove.LeadingTrivia));
+                if (newNode.Modifiers[i].IsKind(SyntaxKind.ReadOnlyKeyword))
+                {
+                    readonlyIndex = i;
+                    break;
+                }
             }
-            return newNode;
+            if (readonlyIndex >= 0)
+            {
+                var readonlyModifier = newNode.Modifiers[readonlyIndex];
+                var remaining = newNode.Modifiers.RemoveAt(readonlyIndex);
+                if (remaining.Count > 0)
+                {
+                    // Move the removed modifier's leading trivia onto the first remaining
+                    // modifier so subsequent compaction can pick it up.
+                    remaining = remaining.Replace(remaining[0], remaining[0].WithLeadingTrivia(
+                        readonlyModifier.LeadingTrivia.Concat(remaining[0].LeadingTrivia)));
+                }
+                newNode = newNode.WithModifiers(remaining);
+                if (remaining.Count == 0)
+                    newNode = newNode.WithLeadingTrivia(readonlyModifier.LeadingTrivia);
+            }
+
+            return StripPrivate(newNode);
         }
 
         public override SyntaxNode VisitEventDeclaration(EventDeclarationSyntax node)
@@ -183,13 +193,7 @@ public class CodeSmallifier : IDocumentProcessor
             var newNode = (EventDeclarationSyntax?)base.VisitEventDeclaration(node);
             if (newNode == null)
                 return node;
-            if (newNode.Modifiers.Count == 1 && newNode.Modifiers[0].IsKind(SyntaxKind.PrivateKeyword))
-            {
-                var modifierToRemove = newNode.Modifiers[0];
-                newNode = newNode.WithModifiers(newNode.Modifiers.RemoveAt(0));
-                newNode = newNode.WithLeadingTrivia(newNode.GetLeadingTrivia().AddRange(modifierToRemove.LeadingTrivia));
-            }
-            return newNode;
+            return StripPrivate(newNode);
         }
 
         public override SyntaxNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
@@ -197,13 +201,7 @@ public class CodeSmallifier : IDocumentProcessor
             var newNode = (ConstructorDeclarationSyntax?)base.VisitConstructorDeclaration(node);
             if (newNode == null)
                 return node;
-            if (newNode.Modifiers.Count == 1 && newNode.Modifiers[0].IsKind(SyntaxKind.PrivateKeyword))
-            {
-                var modifierToRemove = newNode.Modifiers[0];
-                newNode = newNode.WithModifiers(newNode.Modifiers.RemoveAt(0));
-                newNode = newNode.WithLeadingTrivia(newNode.GetLeadingTrivia().AddRange(modifierToRemove.LeadingTrivia));
-            }
-            return newNode;
+            return StripPrivate(newNode);
         }
 
         static bool IsSimpleField(FieldDeclarationSyntax field)
@@ -220,6 +218,51 @@ public class CodeSmallifier : IDocumentProcessor
 
         static bool ModifiersEqual(FieldDeclarationSyntax a, FieldDeclarationSyntax b) =>
             a.Modifiers.Select(m => m.Kind()).SequenceEqual(b.Modifiers.Select(m => m.Kind()));
+
+        /// <summary>
+        ///     Strips redundant <c>private</c> from member declarations when no other accessibility
+        ///     modifier is present.  Leading trivia from the removed keyword is preserved on the node
+        ///     or the first remaining modifier.
+        /// </summary>
+        static T StripPrivate<T>(T node) where T : MemberDeclarationSyntax
+        {
+            var modifiers = node.Modifiers;
+            // If any explicit accessibility modifier is present, private (or not) is intentional.
+            var hasAccessibility = modifiers.Any(m =>
+                m.IsKind(SyntaxKind.PublicKeyword) ||
+                m.IsKind(SyntaxKind.ProtectedKeyword) ||
+                m.IsKind(SyntaxKind.InternalKeyword));
+            if (hasAccessibility)
+                return node;
+
+            // Collect private modifier indices from the end so removal doesn't shift earlier ones.
+            var privateIndices = new List<int>();
+            for (var i = modifiers.Count - 1; i >= 0; i--)
+            {
+                if (modifiers[i].IsKind(SyntaxKind.PrivateKeyword))
+                    privateIndices.Add(i);
+            }
+            if (privateIndices.Count == 0)
+                return node;
+
+            var remaining = modifiers;
+            foreach (var idx in privateIndices)
+            {
+                var trivia = remaining[idx].LeadingTrivia;
+                remaining = remaining.RemoveAt(idx);
+                // Attach the removed keyword's leading trivia to the first remaining modifier,
+                // or to the node itself when nothing is left.
+                if (remaining.Count > 0)
+                    remaining = remaining.Replace(remaining[0],
+                        remaining[0].WithLeadingTrivia(trivia.Concat(remaining[0].LeadingTrivia)));
+            }
+
+            var result = (T)node.WithModifiers(remaining);
+            if (remaining.Count == 0)
+                result = (T)(SyntaxNode)result.WithLeadingTrivia(
+                    privateIndices.Select(i => modifiers[i].LeadingTrivia).SelectMany(t => t));
+            return result;
+        }
 
         static T CompactFieldDeclarations<T>(T node) where T : TypeDeclarationSyntax
         {
