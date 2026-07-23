@@ -1,3 +1,6 @@
+v.2.2.9
+ - Fixed global settings path so Hub-configured binary paths are now respected on Linux.
+
 v.2.2.8
  - Fixed missing System.Collections.Immutable dependency for installations with incomplete MSBuild components.
 

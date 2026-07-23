@@ -31,7 +31,7 @@ namespace Mdk2.References
             {
                 var settingsPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "MDK2", "Hub", "settings.json");
+                    "MDK2", "settings.json");
 
                 if (!File.Exists(settingsPath))
                     return null;
@@ -121,9 +121,25 @@ namespace Mdk2.References
                 Log.LogMessage(MessageImportance.High, "[SpaceEngineersFinder] ProjectPath is null or empty, skipping ini file search");
             }
             
+            // Try global settings as a fallback when no ini resolved anything
+            if (!string.IsNullOrEmpty(BinaryPath) || !string.IsNullOrEmpty(DataPath))
+            {
+                Log.LogMessage(MessageImportance.High, $"Paths resolved from configuration (BinaryPath: {BinaryPath ?? "(null)"}, DataPath: {DataPath ?? "(null)"})");
+                return true;
+            }
+
             if (Verbose)
-                Log.LogMessage(MessageImportance.High, "[SpaceEngineersFinder] No ini file found, attempting registry lookup...");
-            
+                Log.LogMessage(MessageImportance.High, "[SpaceEngineersFinder] No ini file found, attempting global settings lookup...");
+
+            // Try global settings directly (works even when no project ini exists)
+            var globalBinaryPath = GetCustomAutoBinaryPath();
+            if (!string.IsNullOrEmpty(globalBinaryPath))
+            {
+                BinaryPath = globalBinaryPath;
+                Log.LogMessage(MessageImportance.High, $"Binary path was resolved from global settings: {BinaryPath}");
+                return true;
+            }
+
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Log.LogWarning("Unable to determine the location of Space Engineers, because we're not running on Windows. If you have a .mdk.local.ini file, you can specify the BinaryPath there.");
