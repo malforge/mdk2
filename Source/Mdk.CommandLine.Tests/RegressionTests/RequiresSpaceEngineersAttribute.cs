@@ -16,7 +16,20 @@ public class RequiresSpaceEngineersAttribute : Attribute, ITestAction
 {
     public void BeforeTest(ITest test)
     {
-        if (!new SpaceEngineers().TryGetInstallPath("Bin64", out _))
+        bool located;
+        try
+        {
+            located = new SpaceEngineers().TryGetInstallPath("Bin64", out _);
+        }
+        catch
+        {
+            // The locator can throw rather than return false when Steam itself is absent (e.g. it
+            // fails to open the Steam registry key on a bare CI runner). Any probe failure means the
+            // game is not locatable here.
+            located = false;
+        }
+
+        if (!located)
             Assert.Ignore(
                 "Ignored because a Space Engineers installation could not be located. These tests " +
                 "compile a real project against the game assemblies, which are unavailable here.");
