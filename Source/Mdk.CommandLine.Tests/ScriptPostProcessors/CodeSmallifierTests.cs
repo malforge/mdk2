@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using FakeItEasy;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.IngameScript.Pack;
@@ -15,6 +15,12 @@ namespace MDK.CommandLine.Tests.ScriptPostProcessors;
 [TestFixture]
 public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
 {
+    static IEnumerable<MetadataReference> GetCoreReferences()
+    {
+        // Only System.Private.CoreLib is needed — it defines int, string, float, etc.
+        yield return MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
+    }
+
     [Test]
     public async Task ProcessAsync_WhenFieldsAreUninitialized_CompactsByType()
     {
@@ -59,7 +65,7 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
 
         var result = await processor.ProcessAsync(document, context);
         var actual = await result.GetTextAsync();
-            var expected =
+        var expected =
             """
             class Program
             {
@@ -118,7 +124,7 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
 
         var result = await processor.ProcessAsync(document, context);
         var actual = await result.GetTextAsync();
-            var expected =
+        var expected =
             """
             class Program
             {
@@ -193,6 +199,9 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
     [Test]
     public async Task ProcessAsync_StripsReadonlyFromFields()
     {
+        // readonly is stripped for reference types (string), but preserved for value types (int, float).
+        // This is because stripping readonly from a mutable struct field changes runtime behavior
+        // (the compiler emits defensive copies for mutating operations on readonly struct fields).
         const string testCode =
             """
             class Program
@@ -206,7 +215,8 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
             """;
 
         var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences());
         var document = project.AddDocument("TestDocument", testCode);
         var processor = new CodeSmallifier();
         var parameters = new Parameters
@@ -231,17 +241,19 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
 
         var result = await processor.ProcessAsync(document, context);
         var actual = await result.GetTextAsync();
-        // After readonly is stripped:
-        // - A (readonly int), B (private readonly int → private int → int), E (readonly int)
-        //   all become plain int and compact together.
-        // - C (private static string → static string) and D (internal float) stay separate.
+        // After readonly is processed:
+        // - A, B, E are int (struct), so readonly is preserved and they cannot compact together
+        //   with plain int F (which doesn't have readonly).
+        // - C is string (reference type), so readonly is stripped and it compacts with other
+        //   static string fields.
+        // - D is float (struct), so readonly is preserved.
         var expected =
             """
             class Program
             {
-                int A,B,E = 42;
+                readonly int A,B,E = 42;
                 static string C;
-                internal float D;
+                internal readonly float D;
             }
             """;
 
@@ -251,20 +263,22 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
     [Test]
     public async Task ProcessAsync_ReadonlyStrippingEnablesCrossModifierCompaction()
     {
-        // After readonly is stripped, fields that previously had different modifier sets can merge.
+        // After readonly is stripped for reference types, fields that previously had different
+        // modifier sets can merge. Note: int is a struct, so readonly is preserved.
         const string testCode =
             """
             class Program
             {
-                readonly int A;
-                int B;
-                private readonly int C;
-                private int D;
+                readonly string A;
+                string B;
+                private readonly string C;
+                private string D;
             }
             """;
 
         var workspace = new AdhocWorkspace();
-        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences());
         var document = project.AddDocument("TestDocument", testCode);
         var processor = new CodeSmallifier();
         var parameters = new Parameters
@@ -289,15 +303,82 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
 
         var result = await processor.ProcessAsync(document, context);
         var actual = await result.GetTextAsync();
-        // After readonly is stripped:
-        // - A (readonly int → int), B (int), C (private readonly int → private int → int),
-        //   D (private int → int)
-        // All four become plain int and compact into one declaration.
+        // After readonly is stripped (string is a reference type):
+        // - A (readonly string → string), B (string), C (private readonly string → private string → string),
+        //   D (private string → string)
+        // All four become plain string and compact into one declaration.
         var expected =
             """
             class Program
             {
-                int A,B,C,D;
+                string A,B,C,D;
+            }
+            """;
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public async Task ProcessAsync_PreservesReadonlyForStructFields()
+    {
+        // readonly should be preserved for user-defined struct fields because stripping it
+        // changes runtime behavior — the compiler emits defensive copies for mutating operations
+        // on readonly struct fields.
+        const string testCode =
+            """
+            struct Cooldown
+            {
+                public double Remaining;
+                public void Tick(double dt) { if (Remaining > 0) Remaining -= dt; }
+            }
+
+            class Program
+            {
+                readonly Cooldown _gate;
+                Cooldown mutableGate;
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp)
+            .WithMetadataReferences(GetCoreReferences());
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new CodeSmallifier();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Lite,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var actual = await result.GetTextAsync();
+        // readonly should be preserved for the struct field _gate
+        var expected =
+            """
+            struct Cooldown
+            {
+                public double Remaining;
+                public void Tick(double dt) { if (Remaining > 0) Remaining -= dt; }
+            }
+
+            class Program
+            {
+                readonly Cooldown _gate;
+                Cooldown mutableGate;
             }
             """;
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,13 +32,20 @@ public class CodeSmallifier : IDocumentProcessor
         if (root == null)
             return document;
 
-        var newRoot = new CodeSmallifierRewriter().Visit(root);
+        var semanticModel = await document.GetSemanticModelAsync() ?? throw new InvalidOperationException("Failed to get semantic model.");
+        var newRoot = new CodeSmallifierRewriter(semanticModel).Visit(root);
         return document.WithSyntaxRoot(newRoot);
     }
 
     class CodeSmallifierRewriter : CSharpSyntaxRewriter
     {
         readonly Stack<TypeDeclarationSyntax> _parentTypes = new();
+        readonly SemanticModel _semanticModel;
+
+        public CodeSmallifierRewriter(SemanticModel semanticModel)
+        {
+            _semanticModel = semanticModel;
+        }
 
         public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
@@ -159,7 +167,24 @@ public class CodeSmallifier : IDocumentProcessor
             if (newNode == null)
                 return node;
 
-            // Strip "readonly" unconditionally.
+            // Strip "readonly" only for reference types (classes), not for structs.
+            // For mutable structs, removing readonly changes runtime behavior because the
+            // compiler emits defensive copies for mutating operations on readonly struct fields.
+            // Use GetDeclaredSymbol on the variable declarator to get the actual type, rather than
+            // GetTypeInfo on the TypeSyntax, which returns a placeholder type with incorrect IsValueType.
+            bool shouldStripReadonly = false;
+            foreach (var variable in newNode.Declaration.Variables)
+            {
+                var fieldSymbol = _semanticModel.GetDeclaredSymbol(variable) as IFieldSymbol;
+                var actualType = fieldSymbol?.Type;
+                // Check if the type is a reference type (class), not a value type (struct)
+                if (actualType?.IsReferenceType == true)
+                {
+                    shouldStripReadonly = true;
+                    break;
+                }
+            }
+
             int readonlyIndex = -1;
             for (var i = 0; i < newNode.Modifiers.Count; i++)
             {
@@ -169,7 +194,7 @@ public class CodeSmallifier : IDocumentProcessor
                     break;
                 }
             }
-            if (readonlyIndex >= 0)
+            if (readonlyIndex >= 0 && shouldStripReadonly)
             {
                 var readonlyModifier = newNode.Modifiers[readonlyIndex];
                 var remaining = newNode.Modifiers.RemoveAt(readonlyIndex);
