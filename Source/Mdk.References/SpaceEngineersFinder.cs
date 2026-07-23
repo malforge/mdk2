@@ -37,36 +37,49 @@ namespace Mdk2.References
                     return null;
 
                 var json = File.ReadAllText(settingsPath);
-                
-                // Simple JSON parsing for just this one value
-                var key = "\"CustomAutoBinaryPath\"";
-                var keyIndex = json.IndexOf(key, StringComparison.Ordinal);
-                if (keyIndex < 0)
-                    return null;
-                    
-                var colonIndex = json.IndexOf(':', keyIndex);
-                if (colonIndex < 0)
-                    return null;
-                    
-                var valueStart = json.IndexOf('"', colonIndex + 1);
-                if (valueStart < 0)
-                    return null;
-                    
-                var valueEnd = json.IndexOf('"', valueStart + 1);
-                if (valueEnd < 0)
-                    return null;
-                    
-                var value = json.Substring(valueStart + 1, valueEnd - valueStart - 1);
-                if (string.IsNullOrWhiteSpace(value) || value == "auto")
-                    return null;
-                    
-                return value;
+                return ParseCustomAutoBinaryPath(json);
             }
             catch
             {
                 // If we can't read settings, just return null (use default)
                 return null;
             }
+        }
+
+        /// <summary>
+        ///     Extracts the <c>CustomAutoBinaryPath</c> value from the raw settings JSON. Returns
+        ///     <c>null</c> when the key is missing, the value is empty/whitespace, or the value is the
+        ///     "auto" sentinel (meaning "no override"). Kept as a separate, IO-free method so it can be
+        ///     unit tested without touching the filesystem.
+        /// </summary>
+        internal static string ParseCustomAutoBinaryPath(string json)
+        {
+            if (json == null)
+                return null;
+
+            // Simple JSON parsing for just this one value
+            var key = "\"CustomAutoBinaryPath\"";
+            var keyIndex = json.IndexOf(key, StringComparison.Ordinal);
+            if (keyIndex < 0)
+                return null;
+
+            var colonIndex = json.IndexOf(':', keyIndex);
+            if (colonIndex < 0)
+                return null;
+
+            var valueStart = json.IndexOf('"', colonIndex + 1);
+            if (valueStart < 0)
+                return null;
+
+            var valueEnd = json.IndexOf('"', valueStart + 1);
+            if (valueEnd < 0)
+                return null;
+
+            var value = json.Substring(valueStart + 1, valueEnd - valueStart - 1);
+            if (string.IsNullOrWhiteSpace(value) || value == "auto")
+                return null;
+
+            return value;
         }
 
         public override bool Execute()
@@ -121,7 +134,7 @@ namespace Mdk2.References
                 Log.LogMessage(MessageImportance.High, "[SpaceEngineersFinder] ProjectPath is null or empty, skipping ini file search");
             }
             
-            // Try global settings as a fallback when no ini resolved anything
+            // If an ini already resolved a path, we're done - skip the global-settings fallback below.
             if (!string.IsNullOrEmpty(BinaryPath) || !string.IsNullOrEmpty(DataPath))
             {
                 Log.LogMessage(MessageImportance.High, $"Paths resolved from configuration (BinaryPath: {BinaryPath ?? "(null)"}, DataPath: {DataPath ?? "(null)"})");

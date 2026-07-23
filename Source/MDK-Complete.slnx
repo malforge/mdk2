@@ -56,4 +56,5 @@
   <Project Path="Mdk.References\Mdk.References.csproj">
     <Platform Project="x64" />
   </Project>
+  <Project Path="Mdk.References.Tests\Mdk.References.Tests.csproj" />
 </Solution>
