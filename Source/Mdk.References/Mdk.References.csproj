@@ -22,6 +22,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <InternalsVisibleTo Include="Mdk.CommandLine.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="Microsoft.Build.Framework" Version="17.14.28" />
       <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.28" />
       <PackageReference Include="System.Collections.Immutable" Version="9.0.0" PrivateAssets="all" IncludeInPackage="true" />
