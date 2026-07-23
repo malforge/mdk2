@@ -9,6 +9,7 @@ using NUnit.Framework;
 namespace MDK.CommandLine.Tests.RegressionTests;
 
 [TestFixture]
+[RequiresSpaceEngineers]
 public class ProjectBasedRegressionTests
 {
     [TestCase("TestData/Issue44/Issue44.csproj")]
