@@ -287,13 +287,13 @@
                             
                                 <!-- IDE opening behavior-->
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="IDE opening"
+                                    <TextBlock Text="IDE opens"
                                                Classes="h3 heading" />
 
                                     <TextBlock TextWrapping="Wrap"
                                                Classes="caption muted"
                                                Margin="0,0,0,4">
-                                        Select whether to open the project definition file or the project directory
+                                        Select whether to open the project definition file (csproj) or the project directory
                                     </TextBlock>
                                     
                                     <controls:ValidatedControl>
