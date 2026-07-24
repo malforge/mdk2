@@ -591,19 +591,21 @@ public class ProjectService : IProjectService
             string executablePath;
             var arguments = string.Empty;
             var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+            string projectPathValue = hubSettings.IDEOpenDirectory ? projectPath.GetDirectoryName() : projectPath.Value;
+
             if (string.IsNullOrEmpty(hubSettings.CustomIdePath))
             {
                 // let the OS decide what to do
-                executablePath = projectPath.Value;
+                executablePath = projectPathValue;
             }
             else
             {
                 // launch the IDE with this file
                 executablePath = hubSettings.CustomIdePath;
-                arguments = $"\"{projectPath.Value}\"";
+                arguments = $"\"{projectPathValue}\"";
             }
 
-            if (executablePath != projectPath.Value && !File.Exists(executablePath))
+            if (executablePath != projectPathValue && !File.Exists(executablePath))
                 return false;
 
             Process.Start(new ProcessStartInfo
