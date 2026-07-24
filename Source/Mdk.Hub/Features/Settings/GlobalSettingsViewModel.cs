@@ -33,6 +33,7 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoModOutputPath = "";
     string _customAutoScriptOutputPath = "";
     string _customIdePath = "";
+    bool _IDEOpenDirectory;
     int? _deploymentNotificationTimeoutSeconds;
     bool _includePrereleaseUpdates;
     string _ipcPort = "";
@@ -122,6 +123,14 @@ public class GlobalSettingsViewModel : OverlayModel
     {
         get => _customIdePath;
         set => SetProperty(ref _customIdePath, value);
+    }
+    /// <summary>
+    ///     Gets or sets whether to open the project in the definition or directory
+    /// </summary>
+    public bool IDEOpenDirectory
+    {
+        get => _IDEOpenDirectory;
+        set => SetProperty(ref _IDEOpenDirectory, value);
     }
 
     /// <summary>
@@ -255,6 +264,7 @@ public class GlobalSettingsViewModel : OverlayModel
         CustomAutoModOutputPath = App.IsLinux && modPath == "auto" ? "" : modPath;
         CustomAutoBinaryPath = App.IsLinux && binPath == "auto" ? "" : binPath;
         CustomIdePath = settings.CustomIdePath;
+        IDEOpenDirectory = settings.IDEOpenDirectory;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
         IpcPort = settings.IpcPort?.ToString() ?? "";
@@ -347,6 +357,7 @@ public class GlobalSettingsViewModel : OverlayModel
             CustomAutoModOutputPath = _customAutoModOutputPath,
             CustomAutoBinaryPath = _customAutoBinaryPath,
             CustomIdePath = _customIdePath,
+            IDEOpenDirectory = _IDEOpenDirectory,
             IncludePrereleaseUpdates = _includePrereleaseUpdates,
             DeploymentNotificationTimeoutSeconds = _deploymentNotificationTimeoutSeconds ?? 0,
             IpcPort = string.IsNullOrWhiteSpace(_ipcPort) || !int.TryParse(_ipcPort, out var port) ? null : port

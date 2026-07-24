@@ -84,6 +84,11 @@ public struct HubSettings
     public int? IpcPort { get; set; }
 
     /// <summary>
+    ///     Gets or sets the 'Open in IDE' behavior
+    /// </summary>
+    public bool IDEOpenDirectory { get; set; }
+
+    /// <summary>
     ///     Gets or sets the timeout duration (in seconds) for deployment notification snackbars.
     ///     Default is 10 seconds.
     /// </summary>
