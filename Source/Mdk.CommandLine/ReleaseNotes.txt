@@ -1,3 +1,6 @@
+v.2.2.10
+    - Minification now strips redundant `readonly` and `private` modifiers from fields and members that have other non-accessibility modifiers (such as `static`, `const`, or `virtual`), producing smaller output.
+
 v.2.2.9
     - Full minification now keeps constant and field declarations inside `#region mdk preserve` exactly as written. Previously they could be merged into a single declaration, and a field just outside the region could be folded in with them. (#149)
 
