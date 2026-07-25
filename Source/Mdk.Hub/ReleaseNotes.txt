@@ -1,3 +1,6 @@
+v.2.2.8
+   - Added option to open project directory instead of the project definition
+
 v.2.2.7
    - Fixed: the "Scripts" and "Mods" project list filters no longer show swapped project types.
 
