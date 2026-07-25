@@ -244,6 +244,11 @@ public class GlobalSettingsViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    ///     Gets the validation error message for IDE opening, if any.
+    /// </summary>
+    public string? IDEOpenDirectoryValidationError => string.IsNullOrEmpty(CustomIdePath) ? "You must provide an IDE path to open the directory" : string.Empty;
+
     void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
     {
         // Reload if HubSettings changed externally (not by us during Save)
@@ -348,6 +353,12 @@ public class GlobalSettingsViewModel : OverlayModel
         if (!string.IsNullOrWhiteSpace(DeploymentNotificationTimeoutValidationError))
         {
             _shell.ShowToast(DeploymentNotificationTimeoutValidationError);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(IDEOpenDirectoryValidationError))
+        {
+            _shell.ShowToast(IDEOpenDirectoryValidationError);
             return;
         }
 

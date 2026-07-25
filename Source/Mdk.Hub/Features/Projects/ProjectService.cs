@@ -596,7 +596,7 @@ public class ProjectService : IProjectService
             if (string.IsNullOrEmpty(hubSettings.CustomIdePath))
             {
                 // let the OS decide what to do
-                executablePath = projectPathValue;
+                executablePath = projectPathValue;  
             }
             else
             {
