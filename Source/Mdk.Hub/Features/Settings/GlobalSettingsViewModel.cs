@@ -33,7 +33,7 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoModOutputPath = "";
     string _customAutoScriptOutputPath = "";
     string _customIdePath = "";
-    bool _IDEOpenDirectory;
+    bool _ideOpenDirectory;
     int? _deploymentNotificationTimeoutSeconds;
     bool _includePrereleaseUpdates;
     string _ipcPort = "";
@@ -122,15 +122,23 @@ public class GlobalSettingsViewModel : OverlayModel
     public string CustomIdePath
     {
         get => _customIdePath;
-        set => SetProperty(ref _customIdePath, value);
+        set {
+            if (SetProperty(ref _customIdePath, value))
+                OnPropertyChanged(nameof(IdeOpenDirectoryValidationError));
+
+        }
     }
     /// <summary>
     ///     Gets or sets whether to open the project in the definition or directory
     /// </summary>
-    public bool IDEOpenDirectory
+    public bool IdeOpenDirectory
     {
-        get => _IDEOpenDirectory;
-        set => SetProperty(ref _IDEOpenDirectory, value);
+        get => _ideOpenDirectory;
+        set
+        {
+            if (SetProperty(ref _ideOpenDirectory, value))
+                OnPropertyChanged(nameof(IdeOpenDirectoryValidationError));
+        } 
     }
 
     /// <summary>
@@ -247,7 +255,16 @@ public class GlobalSettingsViewModel : OverlayModel
     /// <summary>
     ///     Gets the validation error message for IDE opening, if any.
     /// </summary>
-    public string? IDEOpenDirectoryValidationError => string.IsNullOrEmpty(CustomIdePath) ? "You must provide an IDE path to open the directory" : string.Empty;
+    public string? IdeOpenDirectoryValidationError
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(CustomIdePath) && IdeOpenDirectory)
+                return "You must provide an IDE path to open the directory"; 
+            
+            return null;
+        }
+    }
 
     void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
     {
@@ -269,7 +286,7 @@ public class GlobalSettingsViewModel : OverlayModel
         CustomAutoModOutputPath = App.IsLinux && modPath == "auto" ? "" : modPath;
         CustomAutoBinaryPath = App.IsLinux && binPath == "auto" ? "" : binPath;
         CustomIdePath = settings.CustomIdePath;
-        IDEOpenDirectory = settings.IDEOpenDirectory;
+        IdeOpenDirectory = settings.IdeOpenDirectory;
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
         IpcPort = settings.IpcPort?.ToString() ?? "";
@@ -356,9 +373,9 @@ public class GlobalSettingsViewModel : OverlayModel
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(IDEOpenDirectoryValidationError))
+        if (!string.IsNullOrWhiteSpace(IdeOpenDirectoryValidationError))
         {
-            _shell.ShowToast(IDEOpenDirectoryValidationError);
+            _shell.ShowToast(IdeOpenDirectoryValidationError);
             return;
         }
 
@@ -368,7 +385,7 @@ public class GlobalSettingsViewModel : OverlayModel
             CustomAutoModOutputPath = _customAutoModOutputPath,
             CustomAutoBinaryPath = _customAutoBinaryPath,
             CustomIdePath = _customIdePath,
-            IDEOpenDirectory = _IDEOpenDirectory,
+            IdeOpenDirectory = _ideOpenDirectory,
             IncludePrereleaseUpdates = _includePrereleaseUpdates,
             DeploymentNotificationTimeoutSeconds = _deploymentNotificationTimeoutSeconds ?? 0,
             IpcPort = string.IsNullOrWhiteSpace(_ipcPort) || !int.TryParse(_ipcPort, out var port) ? null : port

@@ -37,6 +37,10 @@ public struct HubSettings
     ///     When empty, uses the default behavior (OS defined file handler).
     /// </summary>
     public string CustomIdePath { get; set; } = string.Empty;
+    /// <summary>
+    ///     Gets or sets the 'Open in IDE' behavior
+    /// </summary>
+    public bool IdeOpenDirectory { get; set; }
 
     /// <summary>
     ///     Gets or sets whether to include prerelease versions when checking for updates.
@@ -82,11 +86,6 @@ public struct HubSettings
     ///     When null or 0, a port is automatically selected and reused.
     /// </summary>
     public int? IpcPort { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the 'Open in IDE' behavior
-    /// </summary>
-    public bool IDEOpenDirectory { get; set; }
 
     /// <summary>
     ///     Gets or sets the timeout duration (in seconds) for deployment notification snackbars.

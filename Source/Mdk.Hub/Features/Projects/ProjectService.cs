@@ -591,10 +591,15 @@ public class ProjectService : IProjectService
             string executablePath;
             var arguments = string.Empty;
             var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
-            string projectPathValue = hubSettings.IDEOpenDirectory ? projectPath.GetDirectoryName() : projectPath.Value;
+            string projectPathValue = hubSettings.IdeOpenDirectory ? projectPath.GetDirectoryName() : projectPath.Value;
 
             if (string.IsNullOrEmpty(hubSettings.CustomIdePath))
             {
+                // Something went wrong with the config
+                if (hubSettings.IdeOpenDirectory)
+                {
+                    return false;
+                }
                 // let the OS decide what to do
                 executablePath = projectPathValue;  
             }
