@@ -591,17 +591,24 @@ public class ProjectService : IProjectService
             string executablePath;
             var arguments = string.Empty;
             var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
-            string projectPathValue = hubSettings.IdeOpenDirectory ? projectPath.GetDirectoryName() : projectPath.Value;
+
+            // Handing a directory to the OS handler opens the file manager, not an editor, so the
+            // directory option only makes sense when a specific IDE has been nominated. Settings can
+            // reach this combination by other routes than the settings dialog, so fall back to the
+            // project file rather than doing nothing at all.
+            var openDirectory = hubSettings.IdeOpenDirectory;
+            if (openDirectory && string.IsNullOrEmpty(hubSettings.CustomIdePath))
+            {
+                _logger.Warning("Cannot open the project directory without a custom IDE path; opening the project file instead.");
+                openDirectory = false;
+            }
+
+            var projectPathValue = openDirectory ? projectPath.GetDirectoryName() : projectPath.Value;
 
             if (string.IsNullOrEmpty(hubSettings.CustomIdePath))
             {
-                // Something went wrong with the config
-                if (hubSettings.IdeOpenDirectory)
-                {
-                    return false;
-                }
                 // let the OS decide what to do
-                executablePath = projectPathValue;  
+                executablePath = projectPathValue;
             }
             else
             {
@@ -620,8 +627,7 @@ public class ProjectService : IProjectService
                 UseShellExecute = true
             });
 
-
-            _logger.Info($"Opened project in IDE: {projectPath}");
+            _logger.Info($"Opened project in IDE: {projectPathValue}");
             return true;
         }
         catch (Exception ex)

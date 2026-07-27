@@ -177,7 +177,7 @@
                                     </controls:ValidatedControl>
                                 </StackPanel>
 
-                                <!-- IDE opening behavior-->
+                                <!-- IDE opening behavior -->
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="IDE opens"
                                                Classes="h3 heading" />
@@ -185,16 +185,15 @@
                                     <TextBlock TextWrapping="Wrap"
                                                Classes="caption muted"
                                                Margin="0,0,0,4">
-                                        Select whether to open the project definition file (csproj) or the project directory
+                                        Select whether to open the project definition file (csproj) or the project directory. Opening the directory requires a custom IDE executable above.
                                     </TextBlock>
-                                    
+
                                     <controls:ValidatedControl ValidationMessage="{Binding IdeOpenDirectoryValidationError}">
                                         <controls:ValidatedControl.Content>
                                             <ToggleSwitch IsChecked="{Binding IdeOpenDirectory}"
-                                                Margin="0,4,0,0"
-                                                OnContent="Project directory"
-                                                OffContent="Project definition"
-                                            />
+                                                          Margin="0,4,0,0"
+                                                          OnContent="Project directory"
+                                                          OffContent="Project definition" />
                                         </controls:ValidatedControl.Content>
                                     </controls:ValidatedControl>
                                 </StackPanel>

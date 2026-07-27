@@ -37,8 +37,10 @@ public struct HubSettings
     ///     When empty, uses the default behavior (OS defined file handler).
     /// </summary>
     public string CustomIdePath { get; set; } = string.Empty;
+
     /// <summary>
-    ///     Gets or sets the 'Open in IDE' behavior
+    ///     Gets or sets whether "Open in IDE" opens the project directory rather than the project file.
+    ///     Only honored when <see cref="CustomIdePath" /> is set.
     /// </summary>
     public bool IdeOpenDirectory { get; set; }
 

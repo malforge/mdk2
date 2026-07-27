@@ -33,8 +33,8 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoModOutputPath = "";
     string _customAutoScriptOutputPath = "";
     string _customIdePath = "";
-    bool _ideOpenDirectory;
     int? _deploymentNotificationTimeoutSeconds;
+    bool _ideOpenDirectory;
     bool _includePrereleaseUpdates;
     string _ipcPort = "";
     bool _openedForLinuxValidation;
@@ -122,12 +122,13 @@ public class GlobalSettingsViewModel : OverlayModel
     public string CustomIdePath
     {
         get => _customIdePath;
-        set {
+        set
+        {
             if (SetProperty(ref _customIdePath, value))
                 OnPropertyChanged(nameof(IdeOpenDirectoryValidationError));
-
         }
     }
+
     /// <summary>
     ///     Gets or sets whether to open the project in the definition or directory
     /// </summary>
@@ -138,7 +139,7 @@ public class GlobalSettingsViewModel : OverlayModel
         {
             if (SetProperty(ref _ideOpenDirectory, value))
                 OnPropertyChanged(nameof(IdeOpenDirectoryValidationError));
-        } 
+        }
     }
 
     /// <summary>
@@ -255,16 +256,10 @@ public class GlobalSettingsViewModel : OverlayModel
     /// <summary>
     ///     Gets the validation error message for IDE opening, if any.
     /// </summary>
-    public string? IdeOpenDirectoryValidationError
-    {
-        get
-        {
-            if (string.IsNullOrEmpty(CustomIdePath) && IdeOpenDirectory)
-                return "You must provide an IDE path to open the directory"; 
-            
-            return null;
-        }
-    }
+    public string? IdeOpenDirectoryValidationError =>
+        IdeOpenDirectory && string.IsNullOrEmpty(CustomIdePath)
+            ? "You must provide an IDE path to open the directory"
+            : null;
 
     void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
     {
