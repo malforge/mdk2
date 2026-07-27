@@ -111,9 +111,10 @@ Run tests with:
 dotnet test MDK-Complete.slnx
 ```
 
-We use NUnit for tests. Note that `MDK-Complete.slnx` includes MDK Hub, which targets
-Windows and won't build on Linux - see the debugging guide below for how to run individual
-test projects instead. CI runs the full suite on Windows for every pull request.
+We use NUnit for tests. Building the whole solution requires Windows, because MDK Hub also
+targets `net9.0-windows` and that framework can't be built elsewhere. Individual projects
+build fine on Linux - see the debugging guide below. CI runs the full suite on Windows for
+every pull request.
 
 For debugging help, see [.github/debugging-mdk.md](.github/debugging-mdk.md).
 

@@ -84,11 +84,17 @@ dotnet test MDK-Complete.slnx
 
 We use NUnit.
 
-**On Linux this will not work.** `MDK-Complete.slnx` includes Mdk.Hub, which multi-targets
-`net9.0-windows` and cannot build there. You can still run individual test projects:
+**That whole-solution command needs Windows.** Mdk.Hub multi-targets `net9.0` and
+`net9.0-windows`, and the latter can only be built on Windows, so building the solution
+elsewhere fails on that framework. The Hub itself is cross-platform - CI publishes a Linux
+build of it on every run - so this is a quirk of building everything at once, not a
+limitation of the application.
+
+Run individual test projects instead:
 
 ```bash
 dotnet test Mdk.CommandLine.Tests/Mdk.CommandLine.Tests.csproj
+dotnet test Mdk.Hub.Tests/Mdk.Hub.Tests.csproj
 ```
 
 Some regression tests pack real projects, which needs Space Engineers installed. Those
