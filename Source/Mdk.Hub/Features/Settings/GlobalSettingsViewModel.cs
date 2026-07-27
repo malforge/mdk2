@@ -34,6 +34,7 @@ public class GlobalSettingsViewModel : OverlayModel
     string _customAutoScriptOutputPath = "";
     string _customIdePath = "";
     int? _deploymentNotificationTimeoutSeconds;
+    bool _ideOpenDirectory;
     bool _includePrereleaseUpdates;
     string _ipcPort = "";
     bool _openedForLinuxValidation;
@@ -121,7 +122,24 @@ public class GlobalSettingsViewModel : OverlayModel
     public string CustomIdePath
     {
         get => _customIdePath;
-        set => SetProperty(ref _customIdePath, value);
+        set
+        {
+            if (SetProperty(ref _customIdePath, value))
+                OnPropertyChanged(nameof(IdeOpenDirectoryValidationError));
+        }
+    }
+
+    /// <summary>
+    ///     Gets or sets whether to open the project in the definition or directory
+    /// </summary>
+    public bool IdeOpenDirectory
+    {
+        get => _ideOpenDirectory;
+        set
+        {
+            if (SetProperty(ref _ideOpenDirectory, value))
+                OnPropertyChanged(nameof(IdeOpenDirectoryValidationError));
+        }
     }
 
     /// <summary>
@@ -235,6 +253,14 @@ public class GlobalSettingsViewModel : OverlayModel
         }
     }
 
+    /// <summary>
+    ///     Gets the validation error message for IDE opening, if any.
+    /// </summary>
+    public string? IdeOpenDirectoryValidationError =>
+        IdeOpenDirectory && string.IsNullOrEmpty(CustomIdePath)
+            ? "You must provide an IDE path to open the directory"
+            : null;
+
     void OnSettingsChanged(object? sender, SettingsChangedEventArgs e)
     {
         // Reload if HubSettings changed externally (not by us during Save)
@@ -255,6 +281,11 @@ public class GlobalSettingsViewModel : OverlayModel
         CustomAutoModOutputPath = App.IsLinux && modPath == "auto" ? "" : modPath;
         CustomAutoBinaryPath = App.IsLinux && binPath == "auto" ? "" : binPath;
         CustomIdePath = settings.CustomIdePath;
+
+        // The option is meaningless without an IDE to hand the directory to, and settings can
+        // arrive in that combination from a hand-edited file. Present it as off rather than as a
+        // state the dialog itself would never produce.
+        IdeOpenDirectory = settings.IdeOpenDirectory && !string.IsNullOrEmpty(settings.CustomIdePath);
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
         IpcPort = settings.IpcPort?.ToString() ?? "";
@@ -341,12 +372,19 @@ public class GlobalSettingsViewModel : OverlayModel
             return;
         }
 
+        if (!string.IsNullOrWhiteSpace(IdeOpenDirectoryValidationError))
+        {
+            _shell.ShowToast(IdeOpenDirectoryValidationError);
+            return;
+        }
+
         var updatedSettings = _hubSettings with
         {
             CustomAutoScriptOutputPath = _customAutoScriptOutputPath,
             CustomAutoModOutputPath = _customAutoModOutputPath,
             CustomAutoBinaryPath = _customAutoBinaryPath,
             CustomIdePath = _customIdePath,
+            IdeOpenDirectory = _ideOpenDirectory,
             IncludePrereleaseUpdates = _includePrereleaseUpdates,
             DeploymentNotificationTimeoutSeconds = _deploymentNotificationTimeoutSeconds ?? 0,
             IpcPort = string.IsNullOrWhiteSpace(_ipcPort) || !int.TryParse(_ipcPort, out var port) ? null : port

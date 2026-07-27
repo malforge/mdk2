@@ -591,19 +591,33 @@ public class ProjectService : IProjectService
             string executablePath;
             var arguments = string.Empty;
             var hubSettings = _settings.GetValue(SettingsKeys.HubSettings, new HubSettings());
+
+            // Handing a directory to the OS handler opens the file manager, not an editor, so the
+            // directory option only makes sense when a specific IDE has been nominated. Settings can
+            // reach this combination by other routes than the settings dialog, so fall back to the
+            // project file rather than doing nothing at all.
+            var openDirectory = hubSettings.IdeOpenDirectory;
+            if (openDirectory && string.IsNullOrEmpty(hubSettings.CustomIdePath))
+            {
+                _logger.Warning("Cannot open the project directory without a custom IDE path; opening the project file instead.");
+                openDirectory = false;
+            }
+
+            var projectPathValue = openDirectory ? projectPath.GetDirectoryName() : projectPath.Value;
+
             if (string.IsNullOrEmpty(hubSettings.CustomIdePath))
             {
                 // let the OS decide what to do
-                executablePath = projectPath.Value;
+                executablePath = projectPathValue;
             }
             else
             {
                 // launch the IDE with this file
                 executablePath = hubSettings.CustomIdePath;
-                arguments = $"\"{projectPath.Value}\"";
+                arguments = $"\"{projectPathValue}\"";
             }
 
-            if (executablePath != projectPath.Value && !File.Exists(executablePath))
+            if (executablePath != projectPathValue && !File.Exists(executablePath))
                 return false;
 
             Process.Start(new ProcessStartInfo
@@ -613,8 +627,7 @@ public class ProjectService : IProjectService
                 UseShellExecute = true
             });
 
-
-            _logger.Info($"Opened project in IDE: {projectPath}");
+            _logger.Info($"Opened project in IDE: {projectPathValue}");
             return true;
         }
         catch (Exception ex)

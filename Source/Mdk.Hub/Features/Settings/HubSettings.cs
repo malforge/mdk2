@@ -39,6 +39,12 @@ public struct HubSettings
     public string CustomIdePath { get; set; } = string.Empty;
 
     /// <summary>
+    ///     Gets or sets whether "Open in IDE" opens the project directory rather than the project file.
+    ///     Only honored when <see cref="CustomIdePath" /> is set.
+    /// </summary>
+    public bool IdeOpenDirectory { get; set; }
+
+    /// <summary>
     ///     Gets or sets whether to include prerelease versions when checking for updates.
     /// </summary>
     public bool IncludePrereleaseUpdates { get; set; }
