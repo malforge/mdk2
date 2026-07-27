@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The styling system uses a strict two-layer architecture:
+The styling system uses a strict three-layer architecture:
 
 **Layer 1: Colors** (`Colors.axaml`) define the raw color palette using semantic names that describe what the color represents. Examples: `AccentPrimaryColor`, `SuccessColor`, `TextBodyColor`. These names answer "what is this color?"
 

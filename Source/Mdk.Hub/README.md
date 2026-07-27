@@ -27,7 +27,7 @@ Draw your own conclusions about what this means for AI-assisted development.
 
 ## Getting Started
 
-The Hub is distributed as part of MDK2. Install it via the installer or portable zip from the [releases page](https://github.com/malware-dev/MDK-SE/releases).
+The Hub is distributed as part of MDK2. Install it via the installer or portable zip from the [releases page](https://github.com/malforge/mdk2/releases).
 
 ### For New Users
 
@@ -65,4 +65,4 @@ If you're diving into the code and wondering "why is this structured this way?" 
 
 ## License
 
-See the [main repository](https://github.com/malware-dev/MDK-SE) for license information.
+See the [main repository](https://github.com/malforge/mdk2) for license information.
