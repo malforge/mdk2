@@ -77,11 +77,15 @@ jobs:
             
             Write-Host "`nChecking folder: $relativePath"
             
-            # Check if any files in this folder changed (excluding PackageVersion.txt and ReleaseNotes.txt)
-            $folderChanges = $changedFiles | Where-Object { 
-              $_ -like "$relativePath/*" -and 
-              $_ -notlike "*/PackageVersion.txt" -and 
-              $_ -notlike "*/ReleaseNotes.txt"
+            # Check if any files in this folder changed (excluding PackageVersion.txt and ReleaseNotes.txt).
+            # Markdown is excluded too: readmes are packed into the NuGet package, but correcting
+            # documentation does not justify a release of its own - the new text ships with the
+            # package's next release.
+            $folderChanges = $changedFiles | Where-Object {
+              $_ -like "$relativePath/*" -and
+              $_ -notlike "*/PackageVersion.txt" -and
+              $_ -notlike "*/ReleaseNotes.txt" -and
+              $_ -notlike "*.md"
             }
             
             if ($folderChanges) {
