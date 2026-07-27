@@ -6,9 +6,10 @@ description: Use when working in Source/ScriptTemplates/content/ or modifying th
 # MDK Project Templates
 
 Templates live in `Source/ScriptTemplates/content/`:
-- `0_Script` — PB script template
-- `1_Mod` — mod template
-- `2_Mixin` — shared project template
+- `0_Script` — PB script template (`mdk2pbscript`)
+- `1_Mod` — mod template (`mdk2mod`)
+- `2_Mixin` — shared project template (`mdk2mixin`)
+- `3_ScriptUnitTest` — unit test project for a script (`mdk2pbtests`)
 
 ## Standard template layout
 

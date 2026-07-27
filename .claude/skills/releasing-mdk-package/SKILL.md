@@ -9,7 +9,7 @@ description: Use when preparing a release for an MDK package — bumping Package
 
 When you modify code in a project that has a `PackageVersion.txt`, you must:
 
-1. **Bump `PackageVersion.txt`** — single source of truth for the version number in that package directory. All packages use the same version per release. Read in MSBuild via `$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))`.
+1. **Bump `PackageVersion.txt`** — single source of truth for the version number in that package directory. Each package versions independently; bump only the ones you changed. Read in MSBuild via `$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))`.
 2. **Add an entry to `ReleaseNotes.txt`** — describes the change to users (see guidelines below).
 3. **CI/CD will trigger deployment** — `buildwithartefacts.yml` watches for changes and auto-publishes to NuGet.
 
