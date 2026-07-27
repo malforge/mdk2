@@ -29,15 +29,15 @@ MDK² (Malware's Development Kit for Space Engineers) is a toolkit for developin
 
 ### Building
 ```bash
-dotnet build Source\MDK-Complete.sln                            # all projects + tests + generators
-dotnet build Source\MDK-Packages.sln                            # packages only (no tests/generators/Hub)
+dotnet build Source\MDK-Complete.slnx                           # all projects + tests + generators
+dotnet build Source\MDK-Packages.slnx                           # packages only (no tests/generators/Hub)
 dotnet build Source\Mdk.CommandLine\Mdk.CommandLine.csproj      # one project
-dotnet build Source\MDK-Packages.sln -c Release                 # release packages (auto-generates NuGet packages)
+dotnet build Source\MDK-Packages.slnx -c Release                # release packages (auto-generates NuGet packages)
 ```
 
 ### Testing (NUnit + NUnit3TestAdapter)
 ```bash
-dotnet test Source\MDK-Complete.sln
+dotnet test Source\MDK-Complete.slnx
 dotnet test Source\Mdk.CommandLine.Tests\Mdk.CommandLine.Tests.csproj
 dotnet test --filter "FullyQualifiedName~TestMethodName"
 dotnet test --filter "FullyQualifiedName~ClassName"
