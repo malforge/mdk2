@@ -7,6 +7,7 @@ using Mdk.Hub.Features.Diagnostics;
 using Mdk.Hub.Features.Projects;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Storage;
+using Mdk.Hub.Tests.Framework;
 using Mdk.Hub.Utility;
 using NUnit.Framework;
 
@@ -41,7 +42,8 @@ public class ProjectRegistryTests
     public void AddOrUpdateProject_NewProject_AddsSuccessfully()
     {
         // Arrange
-        var project = CreateTestProject("TestProject", @"C:\Projects\Test\Test.csproj");
+        var path = TestPaths.Of("Projects", "Test", "Test.csproj");
+        var project = CreateTestProject("TestProject", path);
 
         // Act
         _registry.AddOrUpdateProject(project);
@@ -50,15 +52,15 @@ public class ProjectRegistryTests
         // Assert
         Assert.That(projects, Has.Count.EqualTo(1));
         Assert.That(projects[0].Name, Is.EqualTo("TestProject"));
-        Assert.That(projects[0].ProjectPath.Value, Is.EqualTo(@"C:\Projects\Test\Test.csproj"));
+        Assert.That(projects[0].ProjectPath.Value, Is.EqualTo(path));
     }
 
     [Test]
     public void AddOrUpdateProject_DuplicatePath_UpdatesExisting()
     {
         // Arrange
-        var project1 = CreateTestProject("OriginalName", @"C:\Projects\Test\Test.csproj");
-        var project2 = CreateTestProject("UpdatedName", @"C:\Projects\Test\Test.csproj");
+        var project1 = CreateTestProject("OriginalName", TestPaths.Of("Projects", "Test", "Test.csproj"));
+        var project2 = CreateTestProject("UpdatedName", TestPaths.Of("Projects", "Test", "Test.csproj"));
 
         // Act
         _registry.AddOrUpdateProject(project1);
@@ -74,11 +76,11 @@ public class ProjectRegistryTests
     public void RemoveProject_ExistingProject_RemovesSuccessfully()
     {
         // Arrange
-        var project = CreateTestProject("TestProject", @"C:\Projects\Test\Test.csproj");
+        var project = CreateTestProject("TestProject", TestPaths.Of("Projects", "Test", "Test.csproj"));
         _registry.AddOrUpdateProject(project);
 
         // Act
-        _registry.RemoveProject(@"C:\Projects\Test\Test.csproj");
+        _registry.RemoveProject(TestPaths.Of("Projects", "Test", "Test.csproj"));
         var projects = _registry.GetProjects();
 
         // Assert
@@ -89,7 +91,7 @@ public class ProjectRegistryTests
     public void RemoveProject_NonExistentProject_DoesNotThrow()
     {
         // Act & Assert
-        Assert.DoesNotThrow(() => _registry.RemoveProject(@"C:\NonExistent\Project.csproj"));
+        Assert.DoesNotThrow(() => _registry.RemoveProject(TestPaths.Of("NonExistent", "Project.csproj")));
     }
 
     [Test]
@@ -161,8 +163,8 @@ public class ProjectRegistryTests
     public void SaveToFile_WithProjects_PersistsCorrectly()
     {
         // Arrange
-        var project1 = CreateTestProject("Project1", @"C:\Projects\Project1\Project1.csproj");
-        var project2 = CreateTestProject("Project2", @"C:\Projects\Project2\Project2.csproj");
+        var project1 = CreateTestProject("Project1", TestPaths.Of("Projects", "Project1", "Project1.csproj"));
+        var project2 = CreateTestProject("Project2", TestPaths.Of("Projects", "Project2", "Project2.csproj"));
         _registry.AddOrUpdateProject(project1);
         _registry.AddOrUpdateProject(project2);
 
@@ -181,7 +183,7 @@ public class ProjectRegistryTests
     {
         // Arrange
         var oldTime = DateTimeOffset.Now.AddDays(-1);
-        var project = CreateTestProject("TestProject", @"C:\Projects\Test\Test.csproj") with { LastReferenced = oldTime };
+        var project = CreateTestProject("TestProject", TestPaths.Of("Projects", "Test", "Test.csproj")) with { LastReferenced = oldTime };
 
         // Act
         _registry.AddOrUpdateProject(project);
@@ -195,8 +197,8 @@ public class ProjectRegistryTests
     public void SaveToFile_SimulatedProjects_ExcludedFromPersistence()
     {
         // Arrange
-        var realProject = CreateTestProject("RealProject", @"C:\Projects\Real\Real.csproj");
-        var simulatedProject = CreateTestProject("SimulatedProject", @"C:\Projects\Simulated\Simulated.csproj") 
+        var realProject = CreateTestProject("RealProject", TestPaths.Of("Projects", "Real", "Real.csproj"));
+        var simulatedProject = CreateTestProject("SimulatedProject", TestPaths.Of("Projects", "Simulated", "Simulated.csproj")) 
             with { Flags = ProjectFlags.Simulated };
         
         _registry.AddOrUpdateProject(realProject);
@@ -215,9 +217,9 @@ public class ProjectRegistryTests
     public void GetProjects_OrdersByLastReferencedDescending()
     {
         // Arrange
-        var oldProject = CreateTestProject("Old", @"C:\Projects\Old\Old.csproj") with { LastReferenced = DateTimeOffset.Now.AddDays(-10) };
-        var recentProject = CreateTestProject("Recent", @"C:\Projects\Recent\Recent.csproj") with { LastReferenced = DateTimeOffset.Now.AddDays(-1) };
-        var newestProject = CreateTestProject("Newest", @"C:\Projects\Newest\Newest.csproj") with { LastReferenced = DateTimeOffset.Now };
+        var oldProject = CreateTestProject("Old", TestPaths.Of("Projects", "Old", "Old.csproj")) with { LastReferenced = DateTimeOffset.Now.AddDays(-10) };
+        var recentProject = CreateTestProject("Recent", TestPaths.Of("Projects", "Recent", "Recent.csproj")) with { LastReferenced = DateTimeOffset.Now.AddDays(-1) };
+        var newestProject = CreateTestProject("Newest", TestPaths.Of("Projects", "Newest", "Newest.csproj")) with { LastReferenced = DateTimeOffset.Now };
 
         // Act
         _registry.AddOrUpdateProject(oldProject);

@@ -3,6 +3,7 @@ using FakeItEasy;
 using Mdk.Hub.Features.Projects;
 using Mdk.Hub.Features.Projects.Overview;
 using Mdk.Hub.Features.Shell;
+using Mdk.Hub.Tests.Framework;
 using Mdk.Hub.Utility;
 using NUnit.Framework;
 
@@ -14,7 +15,7 @@ public class ProjectModelMatchesFilterTests
     static ProjectModel CreateProject(ProjectType type, string name = "Test")
     {
         var shell = A.Fake<IShell>();
-        return new ProjectModel(type, name, new CanonicalPath(@"C:\Projects\Test\Test.csproj"), DateTimeOffset.Now, shell);
+        return new ProjectModel(type, name, new CanonicalPath(TestPaths.Of("Projects", "Test", "Test.csproj")), DateTimeOffset.Now, shell);
     }
 
     [Test]
