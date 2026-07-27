@@ -103,15 +103,17 @@ You'll need .NET 9.0 SDK, an IDE (Visual Studio 2022 works well), and Space Engi
 Clone the repo and build it:
 ```bash
 cd Source
-dotnet build MDK-Complete.sln
+dotnet build MDK-Complete.slnx
 ```
 
 Run tests with:
 ```bash
-dotnet test MDK-Complete.sln
+dotnet test MDK-Complete.slnx
 ```
 
-We use NUnit for tests.
+We use NUnit for tests. Note that `MDK-Complete.slnx` includes MDK Hub, which targets
+Windows and won't build on Linux - see the debugging guide below for how to run individual
+test projects instead. CI runs the full suite on Windows for every pull request.
 
 For debugging help, see [.github/debugging-mdk.md](.github/debugging-mdk.md).
 
