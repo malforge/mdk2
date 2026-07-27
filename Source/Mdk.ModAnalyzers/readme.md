@@ -1,4 +1,4 @@
-﻿# MDK Analyzers
+﻿# MDK Mod Analyzers
 
 ---
 
@@ -23,7 +23,8 @@ you should check manually now and again, especially after game updates.
 
 ### Ignoring paths and folders
 
-Edit your project file. Within the first <PropertyGroup>, add
+`**\*.debug.cs` and `obj\**\*` are ignored by default. To ignore more, edit your project file.
+Within the first `<PropertyGroup>`, add
 
 ```xml
 <Mdk-IgnorePaths>$(Mdk-IgnorePaths)|PathToIgnore\**\*</Mdk-IgnorePaths>

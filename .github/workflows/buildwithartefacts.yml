@@ -203,8 +203,9 @@ jobs:
         with:
           dotnet-version: 9.x
 
-      # Runs on Windows because MDK-Complete.slnx includes Mdk.Hub, which multi-targets
-      # net9.0-windows and cannot build on Linux. The test projects themselves are net9.0.
+      # Runs on Windows because building MDK-Complete.slnx as a whole includes Mdk.Hub's
+      # net9.0-windows framework, which only builds on Windows. The Hub itself is
+      # cross-platform - see build-hub-linux. The test projects themselves are net9.0.
       - name: Run tests
         run: dotnet test MDK-Complete.slnx -c Debug --nologo
 

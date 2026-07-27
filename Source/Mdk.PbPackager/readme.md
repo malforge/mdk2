@@ -1,4 +1,4 @@
-﻿# MDK Analyzers
+﻿# MDK Programmable Block Packager
 
 ---
 
@@ -14,8 +14,11 @@ _This package is part of the MDK2 project._
 
 ### Usage:
 
-Usage description pending: This is an emergency release due to the problems with MDK1 and the latest Visual Studio 2022
-version. A more detailed description will be added later.
+Reference the NuGet package in your script project and it packs on build. For full instructions,
+see the [documentation site](https://malforge.github.io/spaceengineers/mdk2/).
+
+Most day-to-day options live in an `mdk.ini` file next to your project. The MSBuild properties
+below control the packaging step itself.
 
 #### Important options:
 Currently, modifying the options is a little bit cumbersome.
@@ -34,11 +37,11 @@ add our options.
     bar at the bottom of the window. This is useful for CI/CD systems, or if you just don't want to be bothered by it.  
 
 
-- **By default, MDK will only pack the project if you have selected the `Release` configuration, and not the `Debug` configuration.**
+- **By default, MDK packs on every build configuration.**
 
-    `<MdkBuildConfiguration>all</MdkBuildConfiguration>` - This option will allow you to specify at which configuration the
-    packager should build the project. By default, this is set to `Release`. You can either specify your own configuration,
-    or you can set it to `all` to build all configurations.
+    `<MdkBuildConfiguration>Release</MdkBuildConfiguration>` - This option controls which configuration the
+    packager runs for. It defaults to `all`. Set it to a specific configuration name, such as `Release`, if you
+    only want packing to happen there.
 
 ---
 

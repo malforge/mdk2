@@ -29,15 +29,15 @@ MDK² (Malware's Development Kit for Space Engineers) is a toolkit for developin
 
 ### Building
 ```bash
-dotnet build Source\MDK-Complete.sln                            # all projects + tests + generators
-dotnet build Source\MDK-Packages.sln                            # packages only (no tests/generators/Hub)
+dotnet build Source\MDK-Complete.slnx                           # all projects + tests + generators
+dotnet build Source\MDK-Packages.slnx                           # packages only (no tests/generators/Hub)
 dotnet build Source\Mdk.CommandLine\Mdk.CommandLine.csproj      # one project
-dotnet build Source\MDK-Packages.sln -c Release                 # release packages (auto-generates NuGet packages)
+dotnet build Source\MDK-Packages.slnx -c Release                # release packages (auto-generates NuGet packages)
 ```
 
 ### Testing (NUnit + NUnit3TestAdapter)
 ```bash
-dotnet test Source\MDK-Complete.sln
+dotnet test Source\MDK-Complete.slnx
 dotnet test Source\Mdk.CommandLine.Tests\Mdk.CommandLine.Tests.csproj
 dotnet test --filter "FullyQualifiedName~TestMethodName"
 dotnet test --filter "FullyQualifiedName~ClassName"
@@ -58,16 +58,14 @@ None configured — relies on built-in Roslyn analyzers and IDE warnings.
 **Support**
 - `Mdk.Extractor` — extracts game data for whitelists
 
-**Hub & doc generators**
-- `Mdk.Hub` — GUI management app (Avalonia UI)
-- `Mdk.DocGen3` — primary documentation generator
-- `Mdk.DocGen2.*` — legacy doc tools (ApiDocs, Sprites, Terminals, TypeDef)
+**Hub**
+- `Mdk.Hub` — GUI management app (Avalonia UI, Windows and Linux)
 
 ## Development Environment
 
 - **Target framework**: .NET 9.0 (CLI + tests), netstandard2.0 (analyzers)
-- **IDE**: Visual Studio 2022 recommended (suggested for stability, unconfirmed)
-- **Platform**: Windows-focused (win-x64 runtime — game is Windows-only)
+- **IDE**: any C# environment — Visual Studio, Rider, VS Code
+- **Platform**: Windows and Linux. The game itself is Windows-only, but the tooling runs on both; the Hub ships a Linux AppImage and the CLI and packagers work there. Building the full solution needs Windows because Mdk.Hub also targets `net9.0-windows`.
 - **Roslyn**: Microsoft.CodeAnalysis.CSharp.Workspaces 4.12.0
 
 ## Specialized topics — see skills

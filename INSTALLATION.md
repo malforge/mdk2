@@ -11,7 +11,7 @@ Windows SmartScreen shows warnings for unsigned executables that haven't built u
 ### Is MDK Hub Safe?
 
 Yes! MDK Hub is:
-- **Open source** - All code is publicly visible on [GitHub](https://github.com/malware-dev/mdk2)
+- **Open source** - All code is publicly visible on [GitHub](https://github.com/malforge/mdk2)
 - **Community maintained** - Built by the Space Engineers modding community
 - **Verifiable** - You can check the source code and build it yourself if you prefer
 
@@ -25,7 +25,7 @@ The Setup.exe installer provides automatic updates and integrates with Windows.
 
 **Installation Steps:**
 
-1. **Download** `Malforge.MdkHub-win-Setup.exe` from the [latest release](https://github.com/malware-dev/mdk2/releases)
+1. **Download** `Malforge.MdkHub-win-Setup.exe` from the [latest release](https://github.com/malforge/mdk2/releases)
 
 2. **Run the installer** - Windows SmartScreen will show a warning:
    ```
@@ -47,7 +47,7 @@ If you prefer not to run the installer, the portable version requires no install
 
 **Setup Steps:**
 
-1. **Download** `Malforge.MdkHub-win-Portable.zip` from the [latest release](https://github.com/malware-dev/mdk2/releases)
+1. **Download** `Malforge.MdkHub-win-Portable.zip` from the [latest release](https://github.com/malforge/mdk2/releases)
 
 2. **Extract** the ZIP file to a folder of your choice (e.g., `C:\Tools\MDK Hub`)
 
@@ -55,16 +55,21 @@ If you prefer not to run the installer, the portable version requires no install
 
 **Note:** Windows may still show a SmartScreen warning when you first run the .exe. Follow the same "More info" → "Run anyway" steps above.
 
----
+### Option 3: Linux AppImage
 
-## Verifying the Download (Optional)
+1. **Download** `Malforge.MdkHub.AppImage` from the [latest release](https://github.com/malforge/mdk2/releases)
 
-If you want to verify you downloaded the authentic file from GitHub:
+2. **Make it executable:**
+   ```bash
+   chmod +x Malforge.MdkHub.AppImage
+   ```
 
-1. Download the release from the official [MDK2 GitHub repository](https://github.com/malware-dev/mdk2/releases)
-2. Check the SHA256 hash of the downloaded file matches the one shown on the GitHub release page
-3. **Windows**: `Get-FileHash -Path "Malforge.MdkHub-win-Setup.exe" -Algorithm SHA256`
-4. **The hash should match** the one listed in the GitHub release assets
+3. **Run it:**
+   ```bash
+   ./Malforge.MdkHub.AppImage
+   ```
+
+On Linux you'll need to point the Hub at your Space Engineers binaries yourself, since there's no registry to detect them from. See [After Installation](#after-installation) below.
 
 ---
 
@@ -122,7 +127,7 @@ If SmartScreen continues blocking after you click "Run anyway":
 
 ### Need Help?
 
-- **Issues/Bugs:** [GitHub Issues](https://github.com/malware-dev/mdk2/issues)
+- **Issues/Bugs:** [GitHub Issues](https://github.com/malforge/mdk2/issues)
 - **Documentation:** [Official Docs](https://malforge.github.io/spaceengineers/mdk2/)
 - **Community:** Join the Space Engineers modding community for support
 
@@ -132,7 +137,7 @@ If SmartScreen continues blocking after you click "Run anyway":
 
 If you prefer to build MDK Hub yourself:
 
-1. Clone the repository: `git clone https://github.com/malware-dev/mdk2.git`
+1. Clone the repository: `git clone https://github.com/malforge/mdk2.git`
 2. Open `Source/MDK-Complete.slnx` in Visual Studio or Rider
 3. Build the solution
 4. Run `Mdk.Hub` project

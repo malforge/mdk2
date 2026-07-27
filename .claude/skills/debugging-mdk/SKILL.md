@@ -9,7 +9,7 @@ This skill walks through reproducing, debugging, and fixing issues in MDK itself
 
 ## Prerequisites
 
-- MDK source repo checked out (working directory: `D:\Repos\Malforge\mdk2`)
+- MDK source repo checked out
 - .NET 9.0 SDK installed
 - A test project to work with (a working baseline AND, ideally, a failing repro)
 
@@ -90,7 +90,7 @@ Always verify normal operation before investigating failures.
 4. Note what success looks like (exit code, output shape, files written).
 
 ```bash
-& "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "Source\Mdk.CommandLine.Tests\TestData\NewNamingTest\NewNamingTest.csproj" --trace
+& "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "Source\Mdk.CommandLine.Tests\TestData\NewNamingTest\NewNamingTest.csproj" -trace
 ```
 
 ### Step 2 — Reproduce the issue
@@ -116,9 +116,9 @@ Diff the failing case against the working baseline:
 
 ### Trace mode
 
-Add `--trace` to the command:
+Add `-trace` to the command:
 ```bash
-& "mdk.exe" pack "project.csproj" --trace
+& "mdk.exe" pack "project.csproj" -trace
 ```
 
 Or set it in the test project's `mdk.ini`:
@@ -129,7 +129,7 @@ trace=on
 
 ### Visual Studio debugger
 
-1. Open `Source\MDK-Complete.sln` (or `MDK-Packages.sln`).
+1. Open `Source\MDK-Complete.slnx` (or `MDK-Packages.slnx`).
 2. Set `Mdk.CommandLine` as startup project.
 3. Project → Properties → Debug → "Open debug launch profiles UI".
 4. Set command line arguments, e.g. `pack D:\path\to\project.csproj`.
@@ -246,7 +246,7 @@ The `.issues/` folder is gitignored — use it freely for:
 dotnet build project.csproj -v:detailed > .issues\build-output.txt 2>&1
 
 # Save trace logs
-& mdk.exe pack project.csproj --trace > .issues\trace-log.txt 2>&1
+& mdk.exe pack project.csproj -trace > .issues\trace-log.txt 2>&1
 
 # Stash a minimal repro project
 mkdir .issues\test-case
@@ -255,7 +255,7 @@ mkdir .issues\test-case
 ## Code map (where to look)
 
 - **`Source\Mdk.CommandLine\Program.cs`** — entry point, command routing, exception handling
-- **`Source\Mdk.CommandLine\Parameters.cs`** — CLI argument parsing
+- **`Source\Mdk.CommandLine\CommandLine\Parameters.cs`** — CLI argument parsing
 - **`Source\Mdk.CommandLine\MdkProject.cs`** — project type detection / loading
 - **`Source\Mdk.CommandLine\IngameScript\Pack\`** — PB script packaging logic
 - **`Source\Mdk.CommandLine\Mod\Pack\`** — mod packaging logic

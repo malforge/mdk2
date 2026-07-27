@@ -2,8 +2,6 @@
 
 ---
 
-### Note: It does seem like VS2022 is required for stable performance. However this is unconfirmed.
-
 The game [Space Engineers](https://store.steampowered.com/app/244850/Space_Engineers/)
 (by [Keen Software House](https://www.keenswh.com/), no affiliation) supports 
 scripting and modding using the C# language. This package aims to automatically detect
@@ -30,8 +28,7 @@ their reference for you.
 
 ### Overriding the binary path
 To manually specify where to get the Space Engineers binaries from, add a file named 
-`<projectname>.mdk.local.ini` to the project directory. For example; if your project is named 
-`MyMod`, the file should be named `MyMod.mdk.local.ini`. In this file, add the following line:
+`mdk.local.ini` to the project directory, containing:
 ```
 [mdk]
 binarypath = C:\Path\To\SpaceEngineers\Bin
@@ -39,7 +36,10 @@ binarypath = C:\Path\To\SpaceEngineers\Bin
 
 Note: Make sure you add this file to your `.gitignore` file, or any other version control ignore 
 file you use. The binary path is usually different for each developer. If, against all odds, this 
-does not apply to you, you should use the file name pattern `<projectname>.mdk.ini` instead.
+does not apply to you, use `mdk.ini` instead so it is committed with the project.
+
+The older names `<projectname>.mdk.local.ini` and `<projectname>.mdk.ini` still work, but the
+shorter names take priority when both are present.
 
 ---
 

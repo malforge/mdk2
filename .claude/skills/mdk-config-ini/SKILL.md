@@ -20,6 +20,7 @@ description: Use when authoring or debugging mdk.ini / mdk.local.ini configurati
 ```ini
 [mdk]
 type=programmableblock                       # project type
+output=C:\Path\To\Output                     # override the deploy location
 minify=none|trim|stripcomments|lite|full     # minification level
 ignores=obj/**/*,MDK/**/*,**/*.debug.cs      # exclusion globs
 namespaces=IngameScript                      # allowed namespaces (comma-separated)
