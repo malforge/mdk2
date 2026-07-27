@@ -51,6 +51,21 @@ public class GlobalSettingsIdeOptionTests
     }
 
     [Test]
+    public void Save_WithSettingsLoadedInTheInvalidCombination_IsNotBlocked()
+    {
+        // A hand-edited settings file (or a future migration) can carry the option switched on
+        // with no IDE path. That must not lock the user out of saving unrelated settings.
+        var stored = new HubSettings { CustomIdePath = "", IdeOpenDirectory = true };
+        var vm = CreateViewModel(stored, out var settings);
+
+        vm.IpcPort = "12345";
+        ((ICommand)vm.SaveCommand).Execute(null);
+
+        A.CallTo(() => settings.SetValue(SettingsKeys.HubSettings, A<HubSettings>._))
+            .MustHaveHappenedOnceExactly();
+    }
+
+    [Test]
     public void ValidationError_IsRaised_OnlyWhenTheOptionIsOnWithoutAnIdePath()
     {
         var vm = CreateViewModel(new HubSettings { CustomIdePath = "" }, out _);

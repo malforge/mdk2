@@ -281,7 +281,11 @@ public class GlobalSettingsViewModel : OverlayModel
         CustomAutoModOutputPath = App.IsLinux && modPath == "auto" ? "" : modPath;
         CustomAutoBinaryPath = App.IsLinux && binPath == "auto" ? "" : binPath;
         CustomIdePath = settings.CustomIdePath;
-        IdeOpenDirectory = settings.IdeOpenDirectory;
+
+        // The option is meaningless without an IDE to hand the directory to, and settings can
+        // arrive in that combination from a hand-edited file. Present it as off rather than as a
+        // state the dialog itself would never produce.
+        IdeOpenDirectory = settings.IdeOpenDirectory && !string.IsNullOrEmpty(settings.CustomIdePath);
         IncludePrereleaseUpdates = settings.IncludePrereleaseUpdates;
         DeploymentNotificationTimeoutSeconds = settings.DeploymentNotificationTimeoutSeconds;
         IpcPort = settings.IpcPort?.ToString() ?? "";
