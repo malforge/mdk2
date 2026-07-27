@@ -1,4 +1,4 @@
-﻿# MDK Analyzers
+﻿# MDK Programmable Block Analyzers
 
 ---
 
@@ -14,11 +14,23 @@ _This package is part of the MDK2 project._
 ---
 
 ### Usage:
-Simply reference the nuget package in your mod project. It should automatically start 
+Simply reference the nuget package in your script project. It should automatically start 
 analyzing your project.
 
 Nuget unfortunately does not notify you when there's updates to nuget packages, so 
 you should check manually now and again, especially after game updates.
+
+### Ignoring paths and folders
+
+`obj\**\*`, `MDK\**\*` and `**\*.debug.cs` are ignored by default. To ignore more, edit your
+project file and add the following within the first `<PropertyGroup>`:
+
+```xml
+<Mdk-IgnorePaths>$(Mdk-IgnorePaths)|PathToIgnore\**\*</Mdk-IgnorePaths>
+```
+
+Add multiple patterns with `|`. Including `$(Mdk-IgnorePaths)` _adds_ to the default list
+rather than replacing it.
 
 ---
 
