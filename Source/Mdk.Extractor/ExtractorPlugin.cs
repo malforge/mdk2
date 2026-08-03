@@ -226,6 +226,13 @@ public class ExtractorPlugin : IPlugin
             {
                 if (definition is not MyCubeBlockDefinition cbd)
                     continue;
+
+                // Blocks the game hides from the build menu. Debug spheres are the obvious case, but this also
+                // keeps the sampled subtype of a mixed type honest: most wheel definitions are hidden, and
+                // documenting a block from one of those would describe something nobody can place.
+                if (!cbd.Public)
+                    continue;
+
                 if (byTypeId.TryGetValue(cbd.Id.TypeId, out var existing) && existing.CubeSize == MyCubeSize.Large)
                     continue;
                 byTypeId[cbd.Id.TypeId] = cbd;
@@ -381,6 +388,13 @@ public class BlockInfo(
     List<ITerminalProperty> properties)
 {
     /// <summary>
+    ///     Whether an interface descends from this is what tells a consumer it can fetch a block through it.
+    ///     Recorded here rather than left to be worked out later, because this is the only place the actual
+    ///     type hierarchy is available.
+    /// </summary>
+    static readonly Type TerminalBlockInterface = typeof(Sandbox.ModAPI.Ingame.IMyTerminalBlock);
+
+    /// <summary>
     ///     The block's object builder type without its prefix, and the key a block is listed under.
     /// </summary>
     public string TypeDefinition { get; } = typeDefinition;
@@ -413,7 +427,9 @@ public class BlockInfo(
             new XAttribute("type", DeclaredInterfaceType?.FullName ?? ""));
 
         foreach (var ingameInterface in IngameInterfaces)
-            root.Add(new XElement("interface", new XAttribute("name", ingameInterface.FullName ?? "")));
+            root.Add(new XElement("interface",
+                new XAttribute("name", ingameInterface.FullName ?? ""),
+                new XAttribute("terminal", TerminalBlockInterface.IsAssignableFrom(ingameInterface) ? "true" : "false")));
         foreach (var action in Actions)
             root.Add(new XElement("action", new XAttribute("name", action.Id), new XAttribute("text", action.Name)));
         foreach (var property in Properties)
