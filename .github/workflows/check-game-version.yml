@@ -1,0 +1,95 @@
+name: Check Game Version
+
+# Asks Steam what build the Space Engineers dedicated server is on and files an issue when it moves. This only
+# reads metadata, so it costs about ten seconds and downloads nothing beyond the steamcmd client itself.
+#
+# It never commits and never touches a branch. Whether an update has already been reported is worked out by
+# looking for an existing issue naming that build, so closing the issue is what marks it handled.
+on:
+  schedule:
+    # Space Engineers updates a few times a year, so weekly is plenty to catch one without becoming noise.
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Ask Steam for the current build
+        id: steam
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path C:\steamcmd | Out-Null
+          Invoke-WebRequest -Uri 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip' -OutFile C:\steamcmd\steamcmd.zip
+          Expand-Archive -Path C:\steamcmd\steamcmd.zip -DestinationPath C:\steamcmd -Force
+
+          # First run fetches the real client and exits without doing what it was asked.
+          & C:\steamcmd\steamcmd.exe +quit | Out-Null
+
+          $output = & C:\steamcmd\steamcmd.exe +login anonymous +app_info_update 1 +app_info_print 298740 +quit 2>&1
+          $text = $output -join "`n"
+
+          # The public branch is the live one. Other branches carry pre-release builds which must never be
+          # treated as current.
+          $match = [regex]::Match($text, '(?s)"branches"\s*\{.*?"public"\s*\{(.*?)\}')
+          if (-not $match.Success) { throw "Could not find the public branch in the Steam app info for 298740." }
+
+          $buildMatch = [regex]::Match($match.Groups[1].Value, '"buildid"\s*"(\d+)"')
+          if (-not $buildMatch.Success) { throw "Could not find a build id for the public branch." }
+          $buildId = $buildMatch.Groups[1].Value
+
+          $updated = ''
+          $timeMatch = [regex]::Match($match.Groups[1].Value, '"timeupdated"\s*"(\d+)"')
+          if ($timeMatch.Success) {
+            $updated = [DateTimeOffset]::FromUnixTimeSeconds([long]$timeMatch.Groups[1].Value).ToString('yyyy-MM-dd')
+          }
+
+          "buildId=$buildId"  | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "updated=$updated"  | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "::notice::Space Engineers dedicated server is on build $buildId (updated $updated)"
+
+      - name: File an issue if this build has not been seen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ steps.steam.outputs.buildId }}
+          UPDATED: ${{ steps.steam.outputs.updated }}
+        shell: pwsh
+        run: |
+          $title = "Space Engineers updated to build $env:BUILD_ID"
+
+          # Listed and matched exactly rather than searched. GitHub's issue search ignores punctuation and is
+          # indexed asynchronously, either of which would let this file the same issue twice.
+          # Open and closed alike: a closed one means the update was dealt with, and asking again every week
+          # would be worse than saying nothing.
+          $issues = gh issue list --state all --limit 500 --json number,title | ConvertFrom-Json
+          $existing = $issues | Where-Object { $_.title -eq $title } | Select-Object -First 1
+          if ($existing) {
+            "::notice::Already reported as issue #$($existing.number)"
+            exit 0
+          }
+
+          $body = @(
+            "Steam reports the Space Engineers dedicated server on build ``$env:BUILD_ID``, updated $env:UPDATED."
+            ""
+            "The data MDK ships with was generated against an earlier build, so it may be out of date."
+            ""
+            "**To update it**"
+            ""
+            "1. Run the [Propose Game Data Update](../actions/workflows/refresh-game-data.yml) workflow."
+            "2. If the whitelists moved, it opens a pull request bumping the affected analyzer packages. Merging that publishes them."
+            "3. The ``game-data`` release is refreshed either way, so the documentation site can pick the new data up."
+            ""
+            "**The documentation site is separate.** ``malforge.github.io`` reflects over the game itself for its API"
+            "pages, so a game update means it needs regenerating too: run ``update-gamedata.ps1`` then ``generate-wiki.ps1`` there."
+            ""
+            "Close this issue once handled. It will not be filed again for this build."
+          ) -join "`n"
+          Set-Content -Path issue-body.md -Value $body -Encoding utf8
+
+          gh issue create --title $title --body-file issue-body.md
+          "::notice::Filed an issue for build $env:BUILD_ID"
