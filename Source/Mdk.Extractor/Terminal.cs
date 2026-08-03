@@ -203,7 +203,9 @@ partial class Program
                 "-pbwhitelist",
                 "-pbprologue",
                 "-terminal",
-                "-sepath"
+                "-sepath",
+                "-instance",
+                "-timeout"
             };
             // var simpleSwitches = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             // {
@@ -245,10 +247,12 @@ partial class Program
             switches.TryGetValue("-pbprologue", out var pbPrologue);
             switches.TryGetValue("-terminal", out var terminal);
             switches.TryGetValue("-sepath", out var sepath);
+            switches.TryGetValue("-instance", out var instance);
+            switches.TryGetValue("-timeout", out var timeout);
 
             // Named arguments on purpose: every parameter here is optional, so a positional call silently shifts its
             // arguments along whenever a new one is added rather than failing to compile.
-            Main(modWhitelist: modWhitelist, pbWhitelist: pbWhitelist, pbPrologue: pbPrologue, terminal: terminal, sePath: sepath);
+            Main(modWhitelist: modWhitelist, pbWhitelist: pbWhitelist, pbPrologue: pbPrologue, terminal: terminal, sePath: sepath, instance: instance, timeout: timeout);
             return 0;
             //
             // if (string.Equals(verb, "help", StringComparison.OrdinalIgnoreCase))
@@ -277,9 +281,17 @@ partial class Program
     public static void Help(string verb = null)
     {
         Console.WriteLine(@"Usage:");
-        Console.WriteLine(@"mdkx [-modwhitelist file] [-pbwhitelist file] [-pbprologue file] [-terminal file] [-sepath pathtobin64]");
+        Console.WriteLine(@"mdkx [-modwhitelist file] [-pbwhitelist file] [-pbprologue file] [-terminal file]");
+        Console.WriteLine(@"     [-sepath dedicatedserver64] [-instance folder] [-timeout seconds]");
         Console.WriteLine();
-        Console.WriteLine(@"Launches Space Engineers and writes out the data MDK ships with. Any output left");
-        Console.WriteLine(@"unspecified goes to its default file name in the working directory.");
+        Console.WriteLine(@"Runs a headless Space Engineers dedicated server and writes out the data MDK ships");
+        Console.WriteLine(@"with. Any output left unspecified goes to its default file name in the working");
+        Console.WriteLine(@"directory.");
+        Console.WriteLine();
+        Console.WriteLine(@"-sepath   A DedicatedServer64 folder. Defaults to the MDK_SE_DEDICATED_BIN");
+        Console.WriteLine(@"          environment variable, then to a Steam-installed dedicated server.");
+        Console.WriteLine(@"-instance Where the server keeps its world and logs. Defaults to a temp folder,");
+        Console.WriteLine(@"          and is wiped before every run.");
+        Console.WriteLine(@"-timeout  How long to wait for the server, in seconds. Defaults to 600.");
     }
 }

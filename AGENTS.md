@@ -56,7 +56,7 @@ None configured — relies on built-in Roslyn analyzers and IDE warnings.
 - `ScriptTemplates` — .NET templates for new projects
 
 **Support**
-- `Mdk.Extractor` — extracts game data for whitelists
+- `Mdk.Extractor` — extracts game data (whitelists, script prologue, terminal actions) by running a headless Space Engineers dedicated server
 
 **Hub**
 - `Mdk.Hub` — GUI management app (Avalonia UI, Windows and Linux)

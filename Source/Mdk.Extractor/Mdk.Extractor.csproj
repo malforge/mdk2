@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -7,43 +7,66 @@
         <LangVersion>latest</LangVersion>
         <Configurations>Release;Debug</Configurations>
         <Platforms>x64</Platforms>
+        <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
 
-    <Target Name="SpaceEngineersExecutable" AfterTargets="SpaceEngineers">
-        <ItemGroup>
-            <Reference Include="SpaceEngineers">
-                <HintPath>$(SpaceEngineersBinPath)\SpaceEngineers.exe</HintPath>
-                <Private>$(SpaceEngineersBinCopyLocal)</Private>
-            </Reference>
-        </ItemGroup>
+    <!--
+        The extractor builds against the Space Engineers *dedicated server*, not the game. The dedicated server
+        ships the same Sandbox.Game / SpaceEngineers.Game assemblies as the client, is downloadable anonymously
+        through steamcmd (app 298740), and runs headless, which is what lets this run unattended.
+
+        Point SeDedicatedBinPath at a DedicatedServer64 folder, either as an MSBuild property or through the
+        MDK_SE_DEDICATED_BIN environment variable.
+    -->
+    <PropertyGroup>
+        <SeDedicatedBinPath Condition="'$(SeDedicatedBinPath)' == ''">$(MDK_SE_DEDICATED_BIN)</SeDedicatedBinPath>
+    </PropertyGroup>
+
+    <Target Name="VerifySeDedicatedBinPath" BeforeTargets="BeforeBuild">
+        <Error Condition="'$(SeDedicatedBinPath)' == ''"
+               Text="SeDedicatedBinPath is not set. Set the MDK_SE_DEDICATED_BIN environment variable (or pass -p:SeDedicatedBinPath=...) to a Space Engineers DedicatedServer64 folder." />
+        <Error Condition="!Exists('$(SeDedicatedBinPath)\SpaceEngineersDedicated.exe')"
+               Text="'$(SeDedicatedBinPath)' does not look like a DedicatedServer64 folder: SpaceEngineersDedicated.exe was not found there." />
+        <Message Importance="high" Text="Building against the Space Engineers dedicated server at $(SeDedicatedBinPath)" />
     </Target>
 
     <ItemGroup>
-        <None Update="steam_appid.txt">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+        <Reference Include="Sandbox.Common">
+            <HintPath>$(SeDedicatedBinPath)\Sandbox.Common.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Sandbox.Game">
+            <HintPath>$(SeDedicatedBinPath)\Sandbox.Game.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="SpaceEngineers.Game">
+            <HintPath>$(SeDedicatedBinPath)\SpaceEngineers.Game.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="SpaceEngineers.ObjectBuilders">
+            <HintPath>$(SeDedicatedBinPath)\SpaceEngineers.ObjectBuilders.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="VRage">
+            <HintPath>$(SeDedicatedBinPath)\VRage.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="VRage.Game">
+            <HintPath>$(SeDedicatedBinPath)\VRage.Game.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="VRage.Library">
+            <HintPath>$(SeDedicatedBinPath)\VRage.Library.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="VRage.Math">
+            <HintPath>$(SeDedicatedBinPath)\VRage.Math.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="VRage.Scripting">
+            <HintPath>$(SeDedicatedBinPath)\VRage.Scripting.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
     </ItemGroup>
 
-    <ItemGroup>
-        <EmbeddedResource Update="Resources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Mal.Mdk2.References" Version="2.2.3">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-    </ItemGroup>
-    
 </Project>

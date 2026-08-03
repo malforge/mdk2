@@ -353,6 +353,19 @@ jobs:
           retention-days: 7
           path: ./Source/Releases/*
 
+  game-data:
+    # Nothing gets published against stale game data. This extracts from the current dedicated server, publishes
+    # all four files to the game-data release, and fails the release if the committed analyzer whitelists no
+    # longer match the game. Costs about seven minutes and an 8 GB download per release, which is the price of
+    # never shipping an analyzer that disagrees with the game about what is legal.
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
+    permissions:
+      contents: write
+    uses: ./.github/workflows/extract-game-data.yml
+    with:
+      publishRelease: true
+      failIfAnalyzerDataChanged: true
+
   deploy:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
     runs-on: ubuntu-latest
@@ -360,6 +373,7 @@ jobs:
     needs:
       - build-primary
       - test
+      - game-data
 
     defaults:
       run:
@@ -387,6 +401,7 @@ jobs:
       - build-hub-windows
       - build-hub-linux
       - test
+      - game-data
     
     steps:
       - uses: actions/checkout@v5

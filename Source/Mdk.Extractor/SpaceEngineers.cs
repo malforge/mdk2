@@ -1,56 +1,56 @@
-﻿using System;
+using System;
 using System.IO;
-using System.Linq;
 
 namespace Mdk.Extractor
 {
     /// <summary>
-    /// Utility service to retrieve information about Space Engineers (copyright Keen Software House, no affiliation)
+    /// Utility service to locate the Space Engineers dedicated server (copyright Keen Software House, no affiliation)
     /// </summary>
+    /// <remarks>
+    /// The extractor runs against the dedicated server rather than the game. The dedicated server is a separate
+    /// Steam application (298740) which can be installed anonymously through steamcmd, so it is often not
+    /// registered with the Steam client at all. The environment variable is therefore the primary route and the
+    /// Steam lookup is a convenience for machines where it was installed through the client.
+    /// </remarks>
     class SpaceEngineers
     {
+        /// <summary>
+        /// Environment variable naming the DedicatedServer64 folder directly.
+        /// </summary>
+        public const string BinPathVariable = "MDK_SE_DEDICATED_BIN";
+
+        /// <summary>
+        /// The Steam App ID of the Space Engineers Dedicated Server
+        /// </summary>
+        public const long SteamAppId = 298740;
+
+        const string InstallFolderName = "SpaceEngineersDedicatedServer";
+        const string BinFolderName = "DedicatedServer64";
+        const string Executable = "SpaceEngineersDedicated.exe";
+
         /// <summary>
         /// The <see cref="Steam"/> service
         /// </summary>
         public Steam Steam { get; } = new Steam();
 
         /// <summary>
-        /// The Steam App ID of Space Engineers
+        /// Attempts to locate the dedicated server's binary folder.
         /// </summary>
-        public const long SteamAppId = 244850;
-
-        /// <summary>
-        /// Attempts to get the install path of Space Engineers.
-        /// </summary>
-        /// <param name="subfolders">The desired subfolder path, if any</param>
-        /// <returns></returns>
-        public string GetInstallPath(params string[] subfolders)
+        /// <returns>The full path to a DedicatedServer64 folder, or <c>null</c> if none could be found.</returns>
+        public string GetDedicatedServerPath()
         {
+            var fromEnvironment = Environment.GetEnvironmentVariable(BinPathVariable);
+            if (!string.IsNullOrEmpty(fromEnvironment) && File.Exists(Path.Combine(fromEnvironment, Executable)))
+                return Path.GetFullPath(fromEnvironment);
+
             if (!Steam.Exists)
                 return null;
-            var installFolder = Steam.GetInstallFolder("SpaceEngineers", "Bin64\\SpaceEngineers.exe");
+
+            var installFolder = Steam.GetInstallFolder(InstallFolderName, Path.Combine(BinFolderName, Executable));
             if (string.IsNullOrEmpty(installFolder))
                 return null;
-            if (subfolders == null || subfolders.Length == 0)
-                return Path.GetFullPath(installFolder);
 
-            subfolders = new[] {installFolder}.Concat(subfolders).ToArray();
-            return Path.GetFullPath(Path.Combine(subfolders));
-        }
-
-        /// <summary>
-        /// Attempts to get the default data path for Space Engineers.
-        /// </summary>
-        /// <param name="subfolders">The desired subfolder path, if any</param>
-        /// <returns></returns>
-        public string GetDataPath(params string[] subfolders)
-        {
-            var dataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SpaceEngineers");
-            if (subfolders == null || subfolders.Length <= 0)
-                return Path.GetFullPath(dataFolder);
-
-            subfolders = new[] {dataFolder}.Concat(subfolders).ToArray();
-            return Path.GetFullPath(Path.Combine(subfolders));
+            return Path.GetFullPath(Path.Combine(installFolder, BinFolderName));
         }
     }
 }

@@ -1,0 +1,252 @@
+name: Extract Game Data
+
+# Pulls the Space Engineers dedicated server (~8 GB) from Steam and extracts the data MDK ships with.
+#
+# The dedicated server is a separate free Steam application (298740) which installs anonymously, so nothing here
+# requires an account, a licence, or a copy of the game. No game content is published: the only things that leave
+# the runner are the small data files MDK already ships.
+#
+# Called by the release workflow so that nothing is ever published against stale game data, and dispatchable by
+# hand when you just want to look.
+on:
+  workflow_dispatch:
+    inputs:
+      steamBranch:
+        description: 'Steam branch of the dedicated server to install (public = live)'
+        required: true
+        default: 'public'
+      publishRelease:
+        description: 'Publish the extracted files to the game-data release'
+        type: boolean
+        required: false
+        default: false
+
+  workflow_call:
+    inputs:
+      steamBranch:
+        type: string
+        required: false
+        default: 'public'
+      publishRelease:
+        description: 'Publish the extracted files to the game-data release'
+        type: boolean
+        required: false
+        default: false
+      failIfAnalyzerDataChanged:
+        description: 'Fail if the extracted analyzer data differs from what is committed'
+        type: boolean
+        required: false
+        default: false
+    outputs:
+      analyzerDataChanged:
+        description: 'true when the extracted analyzer data differs from what is committed'
+        value: ${{ jobs.extract.outputs.analyzerDataChanged }}
+      buildId:
+        description: 'The Steam build id of the dedicated server that was used'
+        value: ${{ jobs.extract.outputs.buildId }}
+
+jobs:
+  extract:
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    permissions:
+      contents: write
+
+    outputs:
+      analyzerDataChanged: ${{ steps.compare.outputs.changed }}
+      buildId: ${{ steps.download.outputs.buildId }}
+
+    env:
+      SE_INSTALL_DIR: C:\se-dedicated
+      OUTPUT_DIR: ${{ github.workspace }}\extracted
+
+    steps:
+      - name: Report runner disk space
+        shell: pwsh
+        run: |
+          # The dedicated server needs roughly 8 GB. This step exists so a failure here is obvious rather than
+          # showing up as a confusing steamcmd error halfway through.
+          Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null } | ForEach-Object {
+            "{0}: {1} GB free of {2} GB" -f $_.Name,
+              [math]::Round($_.Free / 1GB, 1),
+              [math]::Round(($_.Used + $_.Free) / 1GB, 1)
+          }
+          $system = Get-PSDrive -Name C
+          "::notice::C: has $([math]::Round($system.Free / 1GB, 1)) GB free before install"
+          if ($system.Free -lt 12GB) {
+            "::warning::Less than 12 GB free on C:. The dedicated server install may not fit."
+          }
+
+      - uses: actions/checkout@v5
+
+      - name: Install steamcmd
+        shell: pwsh
+        run: |
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          New-Item -ItemType Directory -Force -Path C:\steamcmd | Out-Null
+          Invoke-WebRequest -Uri 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip' -OutFile C:\steamcmd\steamcmd.zip
+          Expand-Archive -Path C:\steamcmd\steamcmd.zip -DestinationPath C:\steamcmd -Force
+
+          # The archive contains a bootstrapper, not steamcmd itself. Its first run downloads the real client and
+          # then exits with code 7 without doing anything it was asked to, so it is got out of the way here rather
+          # than being mistaken for a failed download later.
+          & C:\steamcmd\steamcmd.exe +quit
+          "bootstrap exited with code $LASTEXITCODE"
+          "steamcmd installed in $([math]::Round($sw.Elapsed.TotalSeconds, 1))s"
+
+          # The bootstrap's exit code is expected to be non-zero and means nothing here, but the step would
+          # otherwise inherit it and fail: GitHub's pwsh wrapper ends every step by exiting with $LASTEXITCODE.
+          exit 0
+
+      - name: Download the Space Engineers dedicated server
+        id: download
+        shell: pwsh
+        run: |
+          # Empty when called with no branch, which means the live branch.
+          $branch = '${{ inputs.steamBranch }}'
+          if (-not $branch) { $branch = 'public' }
+          if ($branch -ne 'public') {
+            "::warning::Installing the '$branch' branch. Data extracted from a pre-release build must not be committed as if it were live."
+          }
+
+          # "public" is the default branch and is selected by leaving -beta off entirely.
+          $update = @('+app_update', '298740')
+          if ($branch -ne 'public') { $update += @('-beta', $branch) }
+
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          $code = -1
+          foreach ($attempt in 1..3) {
+            & C:\steamcmd\steamcmd.exe +force_install_dir $env:SE_INSTALL_DIR +login anonymous @update +quit
+            $code = $LASTEXITCODE
+            if ($code -eq 0) { break }
+
+            # 7 means it restarted itself instead of running the command, which is not a real failure. Anything
+            # else here is usually a transient CDN problem, and both are worth one more go before giving up on an
+            # 8 GB download.
+            "::warning::steamcmd attempt $attempt exited with code $code"
+          }
+          $elapsed = [math]::Round($sw.Elapsed.TotalMinutes, 1)
+          "::notice::steamcmd finished in $elapsed minutes with exit code $code"
+          if ($code -ne 0) { throw "steamcmd failed with exit code $code" }
+
+          $bin = Join-Path $env:SE_INSTALL_DIR 'DedicatedServer64'
+          if (-not (Test-Path (Join-Path $bin 'SpaceEngineersDedicated.exe'))) {
+            throw "The dedicated server was not installed to $bin"
+          }
+
+          # Records which game build the data came from, so a release can say what it was generated against.
+          $manifest = Join-Path $env:SE_INSTALL_DIR 'steamapps\appmanifest_298740.acf'
+          $buildId = 'unknown'
+          if (Test-Path $manifest) {
+            $match = [regex]::Match((Get-Content $manifest -Raw), '"buildid"\s*"(\d+)"')
+            if ($match.Success) { $buildId = $match.Groups[1].Value }
+          }
+          "buildId=$buildId" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "::notice::Dedicated server build id $buildId"
+
+          $size = (Get-ChildItem $env:SE_INSTALL_DIR -Recurse -File -ErrorAction SilentlyContinue |
+                   Measure-Object -Property Length -Sum).Sum
+          "::notice::Installed size $([math]::Round($size / 1GB, 2)) GB, C: now has $([math]::Round((Get-PSDrive -Name C).Free / 1GB, 1)) GB free"
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build the extractor
+        shell: pwsh
+        env:
+          MDK_SE_DEDICATED_BIN: C:\se-dedicated\DedicatedServer64
+        run: |
+          msbuild Source\Mdk.Extractor\Mdk.Extractor.csproj -t:Restore -v:quiet -nologo
+          msbuild Source\Mdk.Extractor\Mdk.Extractor.csproj -t:Build -p:Configuration=Release -p:Platform=x64 -v:minimal -nologo
+
+      - name: Extract
+        shell: pwsh
+        env:
+          MDK_SE_DEDICATED_BIN: C:\se-dedicated\DedicatedServer64
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:OUTPUT_DIR | Out-Null
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          & Source\Mdk.Extractor\bin\x64\Release\net48\mdkx.exe `
+              -modwhitelist "$env:OUTPUT_DIR\modwhitelist.dat" `
+              -pbwhitelist  "$env:OUTPUT_DIR\pbwhitelist.dat" `
+              -pbprologue   "$env:OUTPUT_DIR\pbprologue.dat" `
+              -terminal     "$env:OUTPUT_DIR\terminal.dat" `
+              -instance     "${{ runner.temp }}\se-instance" `
+              -timeout      600
+          $code = $LASTEXITCODE
+          "::notice::Extraction finished in $([math]::Round($sw.Elapsed.TotalSeconds, 1))s with exit code $code"
+          if ($code -ne 0) { throw "The extractor failed with exit code $code" }
+
+      - name: Compare against what is committed
+        id: compare
+        shell: pwsh
+        run: |
+          # Only the three analyzer inputs are committed here; terminal.dat belongs to the documentation site and
+          # is only ever published, never compared.
+          $pairs = @(
+            @('pbwhitelist.dat',  'Source\Mdk.PbAnalyzers\pbwhitelist.dat'),
+            @('modwhitelist.dat', 'Source\Mdk.ModAnalyzers\modwhitelist.dat'),
+            @('pbprologue.dat',   'Source\Mdk.PbAnalyzers\pbprologue.dat')
+          )
+
+          $changed = $false
+          $rows = @('| File | Committed | Extracted | Changed |', '| --- | --- | --- | --- |')
+          foreach ($pair in $pairs) {
+            $newLines = @(Get-Content (Join-Path $env:OUTPUT_DIR $pair[0]))
+            $oldLines = if (Test-Path $pair[1]) { @(Get-Content $pair[1]) } else { @() }
+            $differs = [bool](Compare-Object $oldLines $newLines -SyncWindow 0)
+            if ($differs) { $changed = $true }
+            $rows += "| $($pair[0]) | $($oldLines.Count) | $($newLines.Count) | $(if ($differs) { '**yes**' } else { 'no' }) |"
+          }
+
+          $terminal = [xml](Get-Content (Join-Path $env:OUTPUT_DIR 'terminal.dat') -Raw)
+          $rows += "| terminal.dat | not committed | $($terminal.terminals.block.Count) blocks | n/a |"
+
+          "## Game data (build ${{ steps.download.outputs.buildId }})" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          $rows -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+          "changed=$($changed.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          if ($changed) { "::notice::The analyzer data has changed" } else { "::notice::The analyzer data is unchanged" }
+
+      - name: Upload the extracted data
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-data
+          path: ${{ env.OUTPUT_DIR }}/*.dat
+          if-no-files-found: error
+
+      - name: Publish the game-data release
+        if: inputs.publishRelease
+        uses: softprops/action-gh-release@v3
+        with:
+          # A fixed tag, updated in place, so the documentation site has a stable URL to fetch from:
+          #   https://github.com/malforge/mdk2/releases/download/game-data/terminal.dat
+          tag_name: game-data
+          name: Game data
+          body: |
+            Data extracted from the Space Engineers dedicated server, build `${{ steps.download.outputs.buildId }}`.
+
+            `pbwhitelist.dat`, `modwhitelist.dat` and `pbprologue.dat` are the analyzer inputs, also committed in
+            this repository. `terminal.dat` lists every terminal block's actions and properties and is consumed by
+            the documentation site.
+
+            Updated automatically. Do not edit by hand.
+          files: ${{ env.OUTPUT_DIR }}/*.dat
+          make_latest: false
+
+      - name: Fail if the analyzer data is stale
+        # Last, so the artefact and the release are available to act on. Anything published against stale data
+        # would embed the wrong whitelist in the analyzer packages, which is worth stopping a release over.
+        if: inputs.failIfAnalyzerDataChanged && steps.compare.outputs.changed == 'true'
+        shell: pwsh
+        run: |
+          throw "The game has changed since the committed analyzer data was generated (dedicated server build ${{ steps.download.outputs.buildId }}). Download the game-data artefact from this run, commit the three analyzer files, and release again."
+
+      - name: Upload the dedicated server log
+        # The server's own log is the only thing that explains a failed run.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dedicated-server-log
+          path: ${{ runner.temp }}/se-instance/*.log
+          if-no-files-found: ignore

@@ -1,29 +1,22 @@
 // Mdk.Extractor
-// 
+//
 // Copyright 2023-2026 The MDK² Authors
 
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Digi.BuildInfo.Features.LiveData;
 using Sandbox;
 using Sandbox.Definitions;
-using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.World;
-using Sandbox.Graphics.GUI;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
-using SpaceEngineers.Game;
-using SpaceEngineers.Game.GUI;
-using VRage;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ObjectBuilders;
@@ -34,73 +27,116 @@ using VRageMath;
 
 namespace Mdk.Extractor;
 
+/// <summary>
+///     Runs inside a headless Space Engineers dedicated server and writes out everything MDK needs from the game.
+/// </summary>
+/// <remarks>
+///     Started by <see cref="Extractor" />, which names this assembly in the server's plugin list and passes the
+///     output paths through environment variables, since the server runs as a separate process.
+/// </remarks>
 [SuppressMessage("ReSharper", "UnusedType.Global")]
 public class ExtractorPlugin : IPlugin
 {
     const string ObjectBuilderPrefix = "MyObjectBuilder_";
-    
-    bool _firstInit = true;
-    
-    public SpaceEngineersGame Game { get; private set; }
-    
+
+    string _modWhitelist;
+    string _pbWhitelist;
+    string _pbPrologue;
+    string _terminal;
+    bool _started;
+
     public void Dispose() { }
-    
+
     public void Init(object gameInstance)
     {
-        MyLog.Default.Info("Extractor Plugin Loaded.");
-        
-        Game = (SpaceEngineersGame)gameInstance;
+        _modWhitelist = ReadPath(Extractor.ModWhitelistVariable);
+        _pbWhitelist = ReadPath(Extractor.PbWhitelistVariable);
+        _pbPrologue = ReadPath(Extractor.PbPrologueVariable);
+        _terminal = ReadPath(Extractor.TerminalVariable);
+
+        MyLog.Default.WriteLineAndConsole("MDK2 Extractor: Plugin loaded");
     }
-    
-    public async void Update()
+
+    static string ReadPath(string variable)
     {
-        if (!_firstInit)
-            return;
-        
-        _firstInit = false;
-        await Task.Delay(TimeSpan.FromSeconds(1));
-        MySandboxGame.Static.Invoke(() =>
-            {
-                MySession.AfterLoading += MySession_AfterLoading;
-                var screen = MyScreenManager.GetFirstScreenOfType<MyGuiScreenMainMenu>();
-                var button = (MyGuiControlButton)screen.Controls.FirstOrDefault(c => c is MyGuiControlButton b && MyTexts.Get(MyCommonTexts.ScreenMenuButtonInventory).EqualsStrFast(b.Text));
-                button?.PressButton();
-            },
-            "Mdk.Extractor");
+        var value = Environment.GetEnvironmentVariable(variable);
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
-    
+
+    /// <summary>
+    ///     Waits for the session to come up, then extracts once.
+    /// </summary>
+    /// <remarks>
+    ///     A dedicated server never raises <see cref="MySession.AfterLoading" />, which is what the extractor
+    ///     originally hung this off when it drove the game's own user interface. The session's own readiness flag
+    ///     is the signal that does work in both cases.
+    /// </remarks>
+    public void Update()
+    {
+        if (_started)
+            return;
+        if (MySession.Static == null || !MySession.Static.Ready)
+            return;
+
+        _started = true;
+        ExtractAsync();
+    }
+
+    async void ExtractAsync()
+    {
+        try
+        {
+            await GameThread.SwitchToGameThread();
+            MySandboxGame.Config.ExperimentalMode = true;
+
+            WriteWhitelists(_modWhitelist, _pbWhitelist);
+            WritePrologue(_pbPrologue);
+            await GrabTerminalAsync();
+        }
+        catch (Exception e)
+        {
+            MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: ERROR: extraction failed: {e}");
+        }
+        finally
+        {
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            await GameThread.SwitchToGameThread();
+            MySandboxGame.ExitThreadSafe();
+        }
+    }
+
     void WriteWhitelists(string modWhitelist, string pbWhitelist)
     {
         var modTypes = string.IsNullOrEmpty(modWhitelist) ? null : new List<string>();
         var pbTypes = string.IsNullOrEmpty(pbWhitelist) ? null : new List<string>();
-        
+
         if (modTypes == null && pbTypes == null)
             return;
-        
+
         MyLog.Default.WriteLineAndConsole("MDK2 Extractor: Retrieving whitelist(s)");
-        
+
         foreach (var item in MyScriptCompiler.Static.Whitelist.GetWhitelist())
         {
             if (modTypes != null && (item.Value & MyWhitelistTarget.ModApi) == MyWhitelistTarget.ModApi)
                 modTypes.Add(item.Key);
-            
+
             if (pbTypes != null && (item.Value & MyWhitelistTarget.Ingame) == MyWhitelistTarget.Ingame)
                 pbTypes.Add(item.Key);
         }
-        
+
         if (modTypes != null)
         {
             MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Writing mod whitelist {modTypes.Count} {modWhitelist}");
             File.WriteAllText(modWhitelist, string.Join(Environment.NewLine, modTypes));
         }
-        
+
         if (pbTypes != null)
         {
             MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Writing pb whitelist {pbTypes.Count} {pbWhitelist}");
             File.WriteAllText(pbWhitelist, string.Join(Environment.NewLine, pbTypes));
         }
     }
-    
+
     /// <summary>
     ///     Dumps the using directives the programmable block puts in front of every script.
     /// </summary>
@@ -169,39 +205,18 @@ public class ExtractorPlugin : IPlugin
         File.WriteAllText(pbPrologue, string.Join(Environment.NewLine, prologue));
     }
 
-
-    async void MySession_AfterLoading()
-    {
-        await Task.Delay(TimeSpan.FromSeconds(1));
-        await GameThread.SwitchToGameThread();
-        MySandboxGame.Config.ExperimentalMode = true;
-        GrabWhitelist();
-        await GrabTerminalAsync();
-        
-        await Task.Delay(TimeSpan.FromSeconds(1));
-        await GameThread.SwitchToGameThread();
-        MySandboxGame.ExitThreadSafe();
-    }
-    
-    void GrabWhitelist()
-    {
-        WriteWhitelists(Extractor.Current.ModWhitelist, Extractor.Current.PbWhitelist);
-        WritePrologue(Extractor.Current.PbPrologue);
-    }
-    
     async Task GrabTerminalAsync()
     {
-        await Task.Delay(TimeSpan.FromSeconds(1));
-        await GameThread.SwitchToGameThread();
-        MySandboxGame.Config.ExperimentalMode = true;
+        if (string.IsNullOrEmpty(_terminal))
+            return;
+
         var result = await SpawnBlocksForAnalysisAsync();
         await Task.Delay(TimeSpan.FromSeconds(1));
         await GameThread.SwitchToGameThread();
-        
-        if (result != null)
-            GrabTerminalActions(Extractor.Current.Terminal, result);
+
+        GrabTerminalActions(_terminal, result);
     }
-    
+
     async Task<List<(MyCubeBlockDefinition, IMyTerminalBlock)>> SpawnBlocksForAnalysisAsync()
     {
         try
@@ -265,65 +280,45 @@ public class ExtractorPlugin : IPlugin
         }
         return results;
     }
-    
+
     void GrabTerminalActions(string terminalFileName, List<(MyCubeBlockDefinition, IMyTerminalBlock)> blocks)
     {
         try
         {
-            if (string.IsNullOrEmpty(terminalFileName))
-                return;
-            MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Extracting terminal actions and properties");
-            // var targetsArgumentIndex = commandLine.IndexOf("-terminalcaches");
-            // if (targetsArgumentIndex == -1 || targetsArgumentIndex == commandLine.Count - 1)
-            //     return;
-            // var targetsArgument = commandLine[targetsArgumentIndex + 1];
-            // var targets = targetsArgument.Split(';');
-            
+            MyLog.Default.WriteLineAndConsole("MDK2 Extractor: Extracting terminal actions and properties");
+
             var blockInfos = new List<BlockInfo>();
-            var totalTime = TimeSpan.Zero;
-            TimeSpan timeSinceLastWrite = TimeSpan.Zero;
-            int n = 0;
-            int total = blocks.Count;
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+
             foreach (var (cbd, block) in blocks)
             {
-                var stopwatch = Stopwatch.StartNew();
-                var infoAttribute = block.GetType().GetCustomAttribute<MyTerminalInterfaceAttribute>();
-                if (infoAttribute == null)
+                var typeDefinition = StripObjectBuilderPrefix(cbd.Id.TypeId.ToString());
+
+                // One definition is sampled per type id, so a repeat would mean the game changed under us.
+                if (!seen.Add(typeDefinition))
                 {
-                    MyLog.Default.Info($"Could not get any info for {cbd.Id} because there's no interface attribute");
+                    MyLog.Default.Info($"Skipping a second definition for {typeDefinition}");
                     continue;
                 }
-                
-                var ingameType = infoAttribute.LinkedTypes.FirstOrDefault(t => t.Namespace?.EndsWith(".Ingame") ?? false);
-                if (ingameType == null)
-                {
-                    MyLog.Default.Info($"Could not get any info for {cbd.Id} because there's no ingame interface in the interface attribute");
-                    continue;
-                }
-                
-                
-                var actions = new List<ITerminalAction>(new List<ITerminalAction>());
+
+                var actions = new List<ITerminalAction>();
                 var properties = new List<ITerminalProperty>();
                 block.GetActions(actions);
                 block.GetProperties(properties);
-                
+
                 MyLog.Default.Info($"Got {actions.Count} actions and {properties.Count} properties from {cbd.Id}");
-                
-                var blockInfo = new BlockInfo(block.GetType(), FindTypeDefinition(block.GetType()), ingameType, actions, properties);
-                if (blockInfo.BlockInterfaceType != null && blockInfos.All(b => b.BlockInterfaceType != blockInfo.BlockInterfaceType))
-                    blockInfos.Add(blockInfo);
-                var elapsed = stopwatch.Elapsed;
-                totalTime += elapsed;
-                var averageTime = totalTime.TotalMilliseconds / ++n;
-                var estimatedTime = TimeSpan.FromMilliseconds(averageTime * (total - n));
-                timeSinceLastWrite += elapsed;
-                if (timeSinceLastWrite > TimeSpan.FromSeconds(1))
-                {
-                    timeSinceLastWrite = TimeSpan.Zero;
-                    Console.WriteLine($@"Estimated time left: {estimatedTime}");
-                }
+
+                blockInfos.Add(new BlockInfo(
+                    typeDefinition,
+                    cbd.Id.SubtypeName,
+                    block.GetType(),
+                    FindDeclaredInterface(block.GetType()),
+                    FindIngameInterfaces(block.GetType()),
+                    actions,
+                    properties));
             }
-            MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Writing terminal cache {terminalFileName}");
+
+            MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Writing terminal cache {blockInfos.Count} blocks {terminalFileName}");
             WriteTerminals(blockInfos, terminalFileName);
         }
         catch (ReflectionTypeLoadException e)
@@ -332,54 +327,97 @@ public class ExtractorPlugin : IPlugin
             throw;
         }
     }
-    
-    string FindTypeDefinition(Type block)
+
+    static string StripObjectBuilderPrefix(string name) =>
+        name.StartsWith(ObjectBuilderPrefix, StringComparison.Ordinal) ? name.Substring(ObjectBuilderPrefix.Length) : name;
+
+    /// <summary>
+    ///     The ingame interface the game itself declares for a block, where it declares one.
+    /// </summary>
+    /// <remarks>
+    ///     Kept for consumers that want the game's own opinion, but it is not load bearing: thirteen block classes
+    ///     have no <c>MyTerminalInterfaceAttribute</c> at all, among them the rotor and the missile turret, and the
+    ///     attribute is declared with <c>Inherited = false</c> so a base class never supplies one. Blocks are keyed
+    ///     by type definition instead, and every interface they implement is listed separately.
+    /// </remarks>
+    static Type FindDeclaredInterface(Type blockType)
     {
-        var attr = block.GetCustomAttribute<MyCubeBlockTypeAttribute>();
-        if (attr == null)
-            return null;
-        return attr.ObjectBuilderType.Name.StartsWith(ObjectBuilderPrefix) ? attr.ObjectBuilderType.Name.Substring(ObjectBuilderPrefix.Length) : attr.ObjectBuilderType.Name;
+        var attribute = blockType.GetCustomAttribute<MyTerminalInterfaceAttribute>();
+        return attribute?.LinkedTypes.FirstOrDefault(t => t.Namespace?.EndsWith(".Ingame") ?? false);
     }
-    
+
+    /// <summary>
+    ///     Every ingame interface a block implements, so a consumer can list a block under all of them.
+    /// </summary>
+    /// <remarks>
+    ///     No attempt is made to pick a "primary" interface. A script can fetch a block through any interface it
+    ///     implements, marker interfaces such as <c>IMyTextSurfaceProvider</c> included, so all of them are equally
+    ///     real and choosing between them would be guesswork.
+    /// </remarks>
+    static List<Type> FindIngameInterfaces(Type blockType) =>
+        blockType.GetInterfaces()
+            .Where(i => i.Namespace?.EndsWith(".Ingame") ?? false)
+            .OrderBy(i => i.FullName, StringComparer.Ordinal)
+            .ToList();
+
     void WriteTerminals(List<BlockInfo> blocks, string fileName)
     {
         var document = new XDocument(new XElement("terminals"));
         foreach (var blockInfo in blocks)
             // ReSharper disable once PossibleNullReferenceException
             document.Root.Add(blockInfo.ToXElement());
-        
+
         document.Save(fileName);
     }
 }
 
-public class BlockInfo(Type blockType, string typeDefinition, Type blockInterfaceType, List<ITerminalAction> actions, List<ITerminalProperty> properties)
+public class BlockInfo(
+    string typeDefinition,
+    string subtypeName,
+    Type blockType,
+    Type declaredInterfaceType,
+    List<Type> ingameInterfaces,
+    List<ITerminalAction> actions,
+    List<ITerminalProperty> properties)
 {
-    public Type BlockType { get; } = blockType;
+    /// <summary>
+    ///     The block's object builder type without its prefix, and the key a block is listed under.
+    /// </summary>
     public string TypeDefinition { get; } = typeDefinition;
-    public Type BlockInterfaceType { get; } = blockInterfaceType;
-    
-    public ReadOnlyCollection<ITerminalProperty> Properties { get; set; } = new(properties);
-    
-    public ReadOnlyCollection<ITerminalAction> Actions { get; set; } = new(actions);
-    
-    public void Write(TextWriter writer)
-    {
-        writer.WriteLine(BlockInterfaceType.FullName);
-        foreach (var action in Actions)
-            writer.WriteLine($"- action {action.Id}");
-        foreach (var property in Properties)
-            writer.WriteLine($"- action {property.Id} {DetermineType(property.TypeName)}");
-    }
-    
-    string DetermineType(string propertyTypeName) => propertyTypeName;
-    
+
+    /// <summary>
+    ///     Which subtype was sampled. One definition per type definition is spawned and which one wins depends on
+    ///     the order the game returns them in, so this records what the numbers below actually came from.
+    /// </summary>
+    public string SubtypeName { get; } = subtypeName;
+
+    public Type BlockType { get; } = blockType;
+
+    /// <summary>
+    ///     The interface the game declares for this block, if it declares one at all.
+    /// </summary>
+    public Type DeclaredInterfaceType { get; } = declaredInterfaceType;
+
+    public ReadOnlyCollection<Type> IngameInterfaces { get; } = new(ingameInterfaces);
+
+    public ReadOnlyCollection<ITerminalProperty> Properties { get; } = new(properties);
+
+    public ReadOnlyCollection<ITerminalAction> Actions { get; } = new(actions);
+
     public XElement ToXElement()
     {
-        var root = new XElement("block", new XAttribute("type", BlockInterfaceType.FullName ?? ""), new XAttribute("typedefinition", TypeDefinition ?? ""));
+        var root = new XElement("block",
+            new XAttribute("typedefinition", TypeDefinition ?? ""),
+            new XAttribute("subtype", SubtypeName ?? ""),
+            new XAttribute("class", BlockType.FullName ?? ""),
+            new XAttribute("type", DeclaredInterfaceType?.FullName ?? ""));
+
+        foreach (var ingameInterface in IngameInterfaces)
+            root.Add(new XElement("interface", new XAttribute("name", ingameInterface.FullName ?? "")));
         foreach (var action in Actions)
             root.Add(new XElement("action", new XAttribute("name", action.Id), new XAttribute("text", action.Name)));
         foreach (var property in Properties)
-            root.Add(new XElement("property", new XAttribute("name", property.Id), new XAttribute("type", DetermineType(property.TypeName))));
+            root.Add(new XElement("property", new XAttribute("name", property.Id), new XAttribute("type", property.TypeName)));
         return root;
     }
 }
