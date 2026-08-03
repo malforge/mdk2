@@ -1,0 +1,194 @@
+name: Refresh Game Data
+
+# Extracts the current game data and, if the analyzer whitelists have moved, opens a pull request that updates
+# them and bumps the patch version of whichever analyzer packages are affected.
+#
+# Manual only, and deliberately so: it costs an 8 GB download, and deciding that a game update is worth a release
+# is a judgement call rather than something to leave to a timer.
+on:
+  workflow_dispatch:
+    inputs:
+      steamBranch:
+        description: 'Steam branch of the dedicated server to install (public = live)'
+        required: true
+        default: 'public'
+      dryRun:
+        description: 'Report what changed without opening a pull request'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  extract:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/extract-game-data.yml
+    with:
+      steamBranch: ${{ inputs.steamBranch }}
+      publishRelease: true
+      failIfAnalyzerDataChanged: false
+
+  update:
+    needs: extract
+    if: needs.extract.outputs.analyzerDataChanged == 'true' && !inputs.dryRun
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    env:
+      BUILD_ID: ${{ needs.extract.outputs.buildId }}
+      BRANCH: chore/game-data
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download the extracted data
+        uses: actions/download-artifact@v5
+        with:
+          name: game-data
+          path: extracted
+
+      - name: Update the data and bump the affected packages
+        id: update
+        run: |
+          # Which package a file belongs to, so only the packages whose data actually moved get a version bump.
+          $files = @(
+            @{ Source = 'extracted/pbwhitelist.dat';  Target = 'Source/Mdk.PbAnalyzers/pbwhitelist.dat';   Package = 'Source/Mdk.PbAnalyzers' },
+            @{ Source = 'extracted/pbprologue.dat';   Target = 'Source/Mdk.PbAnalyzers/pbprologue.dat';    Package = 'Source/Mdk.PbAnalyzers' },
+            @{ Source = 'extracted/modwhitelist.dat'; Target = 'Source/Mdk.ModAnalyzers/modwhitelist.dat'; Package = 'Source/Mdk.ModAnalyzers' }
+          )
+
+          $notes = @{
+            'Source/Mdk.PbAnalyzers'  = 'Updated for the current Space Engineers release, so scripts are checked against the types and imports the game actually provides.'
+            'Source/Mdk.ModAnalyzers' = 'Updated for the current Space Engineers release, so mods are checked against the types the game actually provides.'
+          }
+
+          $changedPackages = @{}
+          $changedFiles = @()
+          foreach ($file in $files) {
+            $new = @(Get-Content $file.Source)
+            $old = if (Test-Path $file.Target) { @(Get-Content $file.Target) } else { @() }
+            if (-not (Compare-Object $old $new -SyncWindow 0)) { continue }
+
+            Copy-Item $file.Source $file.Target -Force
+            $changedPackages[$file.Package] = $true
+            $changedFiles += "``$(Split-Path $file.Target -Leaf)`` ($($old.Count) to $($new.Count) entries)"
+          }
+
+          if ($changedPackages.Count -eq 0) {
+            # The called workflow said something changed, so reaching here means the two disagree.
+            throw "No analyzer data actually differed, despite the extraction reporting a change."
+          }
+
+          $bumped = @()
+          foreach ($package in $changedPackages.Keys) {
+            $versionFile = Join-Path $package 'PackageVersion.txt'
+            $current = (Get-Content $versionFile -Raw).Trim()
+
+            if ($current -notmatch '^(\d+)\.(\d+)\.(\d+)$') {
+              # A suffixed version means a prerelease is in flight, and guessing what the next number should be
+              # is not this workflow's decision to make.
+              throw "$versionFile contains '$current', which is not a plain MAJOR.MINOR.PATCH version. Sort the release out by hand."
+            }
+
+            $next = "$($Matches[1]).$($Matches[2]).$([int]$Matches[3] + 1)"
+
+            # No trailing newline: that is how these files are written and MSBuild reads them raw.
+            [IO.File]::WriteAllText((Resolve-Path $versionFile), $next)
+
+            $notesFile = Join-Path $package 'ReleaseNotes.txt'
+            $existing = Get-Content $notesFile -Raw
+            $entry = "v.$next`n    - $($notes[$package])`n`n"
+            [IO.File]::WriteAllText((Resolve-Path $notesFile), $entry + $existing)
+
+            $bumped += "$(Split-Path $package -Leaf) $current to $next"
+            "::notice::$(Split-Path $package -Leaf) bumped from $current to $next"
+          }
+
+          "bumped=$($bumped -join ', ')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $summary = ($changedFiles | ForEach-Object { "- $_" }) -join "`n"
+          "changedFiles<<EOF`n$summary`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $bumpList = ($bumped | ForEach-Object { "- $_" }) -join "`n"
+          "bumpList<<EOF`n$bumpList`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Passed as environment variables rather than expression interpolation: both are multi-line, and
+          # substituting them straight into the script would inject newlines at column zero.
+          CHANGED_FILES: ${{ steps.update.outputs.changedFiles }}
+          BUMP_LIST: ${{ steps.update.outputs.bumpList }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          # A fixed branch, force-pushed, so repeated runs refresh one pull request instead of piling up new ones.
+          git checkout -B $env:BRANCH
+          git add Source/Mdk.PbAnalyzers Source/Mdk.ModAnalyzers
+          git commit -m "chore(analyzers): update game data for Space Engineers build $env:BUILD_ID"
+          git push --force origin $env:BRANCH
+
+          $body = @(
+            "Extracted from Space Engineers dedicated server build ``$env:BUILD_ID``."
+            ""
+            "**Data that changed**"
+            $env:CHANGED_FILES
+            ""
+            "**Versions bumped**"
+            $env:BUMP_LIST
+            ""
+            "All four extracted files, ``terminal.dat`` included, are attached to the"
+            "[game-data release](https://github.com/$env:REPOSITORY/releases/tag/game-data)."
+            ""
+            "Opened automatically by the Refresh Game Data workflow. Pull requests opened by a workflow do not"
+            "trigger other workflows, so Version Guard has not run against this."
+          ) -join "`n"
+          Set-Content -Path pr-body.md -Value $body -Encoding utf8
+
+          $existing = gh pr list --head $env:BRANCH --state open --json number --jq '.[0].number'
+          if ($existing) {
+            gh pr edit $existing --body-file pr-body.md
+            "::notice::Updated pull request #$existing"
+          } else {
+            gh pr create --base main --head $env:BRANCH `
+                         --title "chore(analyzers): update game data for Space Engineers build $env:BUILD_ID" `
+                         --body-file pr-body.md
+            "::notice::Opened a pull request"
+          }
+
+          Remove-Item pr-body.md -Force
+
+      - name: Summarise
+        env:
+          CHANGED_FILES: ${{ steps.update.outputs.changedFiles }}
+          BUMP_LIST: ${{ steps.update.outputs.bumpList }}
+        run: |
+          @(
+            "## Game data refreshed"
+            "Dedicated server build ``$env:BUILD_ID``"
+            ""
+            "**Data that changed**"
+            $env:CHANGED_FILES
+            ""
+            "**Versions bumped**"
+            $env:BUMP_LIST
+          ) -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+  unchanged:
+    needs: extract
+    if: needs.extract.outputs.analyzerDataChanged != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nothing to do
+        shell: pwsh
+        run: |
+          "::notice::The analyzer data still matches the game (dedicated server build ${{ needs.extract.outputs.buildId }}). No release needed."
