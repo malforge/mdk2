@@ -1,11 +1,13 @@
 name: Extract Game Data
 
-# Manual only. This pulls the Space Engineers dedicated server (~8 GB) from Steam, so it is meant to be run
-# when Keen ships an update, not on every push.
+# Pulls the Space Engineers dedicated server (~8 GB) from Steam and extracts the data MDK ships with.
 #
 # The dedicated server is a separate free Steam application (298740) which installs anonymously, so nothing here
 # requires an account, a licence, or a copy of the game. No game content is published: the only things that leave
-# the runner are the small data files MDK ships with.
+# the runner are the small data files MDK already ships.
+#
+# Called by the release workflow so that nothing is ever published against stale game data, and dispatchable by
+# hand when you just want to look.
 on:
   workflow_dispatch:
     inputs:
@@ -13,18 +15,47 @@ on:
         description: 'Steam branch of the dedicated server to install (public = live)'
         required: true
         default: 'public'
+      publishRelease:
+        description: 'Publish the extracted files to the game-data release'
+        type: boolean
+        required: false
+        default: false
 
-  # TEMPORARY, REMOVE BEFORE MERGING. GitHub only offers workflow_dispatch for workflows that already exist on
-  # the default branch, so this is the only way to run it from the branch and find out whether ~8 GB fits on a
-  # runner at all. Every push to this branch starts a full download while this is here.
-  push:
-    branches:
-      - feat/extractor-dedicated-server
+  workflow_call:
+    inputs:
+      steamBranch:
+        type: string
+        required: false
+        default: 'public'
+      publishRelease:
+        description: 'Publish the extracted files to the game-data release'
+        type: boolean
+        required: false
+        default: false
+      failIfAnalyzerDataChanged:
+        description: 'Fail if the extracted analyzer data differs from what is committed'
+        type: boolean
+        required: false
+        default: false
+    outputs:
+      analyzerDataChanged:
+        description: 'true when the extracted analyzer data differs from what is committed'
+        value: ${{ jobs.extract.outputs.analyzerDataChanged }}
+      buildId:
+        description: 'The Steam build id of the dedicated server that was used'
+        value: ${{ jobs.extract.outputs.buildId }}
 
 jobs:
   extract:
     runs-on: windows-latest
     timeout-minutes: 90
+
+    permissions:
+      contents: write
+
+    outputs:
+      analyzerDataChanged: ${{ steps.compare.outputs.changed }}
+      buildId: ${{ steps.download.outputs.buildId }}
 
     env:
       SE_INSTALL_DIR: C:\se-dedicated
@@ -36,8 +67,7 @@ jobs:
         run: |
           # The dedicated server needs roughly 8 GB. This step exists so a failure here is obvious rather than
           # showing up as a confusing steamcmd error halfway through.
-          $drives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null }
-          $drives | ForEach-Object {
+          Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null } | ForEach-Object {
             "{0}: {1} GB free of {2} GB" -f $_.Name,
               [math]::Round($_.Free / 1GB, 1),
               [math]::Round(($_.Used + $_.Free) / 1GB, 1)
@@ -70,11 +100,10 @@ jobs:
           exit 0
 
       - name: Download the Space Engineers dedicated server
+        id: download
         shell: pwsh
         run: |
-          # This is the expensive step and the whole reason this workflow is manual. It is timed so we know what
-          # it actually costs rather than guessing.
-          # Empty when this runs from the push trigger rather than a dispatch, which means the live branch.
+          # Empty when called with no branch, which means the live branch.
           $branch = '${{ inputs.steamBranch }}'
           if (-not $branch) { $branch = 'public' }
           if ($branch -ne 'public') {
@@ -83,7 +112,7 @@ jobs:
 
           # "public" is the default branch and is selected by leaving -beta off entirely.
           $update = @('+app_update', '298740')
-          if ($branch -and $branch -ne 'public') { $update += @('-beta', $branch) }
+          if ($branch -ne 'public') { $update += @('-beta', $branch) }
 
           $sw = [Diagnostics.Stopwatch]::StartNew()
           $code = -1
@@ -106,10 +135,19 @@ jobs:
             throw "The dedicated server was not installed to $bin"
           }
 
+          # Records which game build the data came from, so a release can say what it was generated against.
+          $manifest = Join-Path $env:SE_INSTALL_DIR 'steamapps\appmanifest_298740.acf'
+          $buildId = 'unknown'
+          if (Test-Path $manifest) {
+            $match = [regex]::Match((Get-Content $manifest -Raw), '"buildid"\s*"(\d+)"')
+            if ($match.Success) { $buildId = $match.Groups[1].Value }
+          }
+          "buildId=$buildId" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "::notice::Dedicated server build id $buildId"
+
           $size = (Get-ChildItem $env:SE_INSTALL_DIR -Recurse -File -ErrorAction SilentlyContinue |
                    Measure-Object -Property Length -Sum).Sum
-          $free = (Get-PSDrive -Name C).Free
-          "::notice::Installed size $([math]::Round($size / 1GB, 2)) GB, C: now has $([math]::Round($free / 1GB, 1)) GB free"
+          "::notice::Installed size $([math]::Round($size / 1GB, 2)) GB, C: now has $([math]::Round((Get-PSDrive -Name C).Free / 1GB, 1)) GB free"
 
       - uses: microsoft/setup-msbuild@v2
 
@@ -140,26 +178,35 @@ jobs:
           if ($code -ne 0) { throw "The extractor failed with exit code $code" }
 
       - name: Compare against what is committed
+        id: compare
         shell: pwsh
         run: |
-          # Reports differences rather than failing on them: a game update is supposed to change these files.
+          # Only the three analyzer inputs are committed here; terminal.dat belongs to the documentation site and
+          # is only ever published, never compared.
           $pairs = @(
             @('pbwhitelist.dat',  'Source\Mdk.PbAnalyzers\pbwhitelist.dat'),
             @('modwhitelist.dat', 'Source\Mdk.ModAnalyzers\modwhitelist.dat'),
             @('pbprologue.dat',   'Source\Mdk.PbAnalyzers\pbprologue.dat')
           )
-          $lines = @('| File | Committed | Extracted | Changed |', '| --- | --- | --- | --- |')
+
+          $changed = $false
+          $rows = @('| File | Committed | Extracted | Changed |', '| --- | --- | --- | --- |')
           foreach ($pair in $pairs) {
-            $new = Join-Path $env:OUTPUT_DIR $pair[0]
-            $old = $pair[1]
-            $newLines = @(Get-Content $new)
-            $oldLines = if (Test-Path $old) { @(Get-Content $old) } else { @() }
-            $changed = [bool](Compare-Object $oldLines $newLines -SyncWindow 0)
-            $lines += "| $($pair[0]) | $($oldLines.Count) | $($newLines.Count) | $(if ($changed) { 'yes' } else { 'no' }) |"
+            $newLines = @(Get-Content (Join-Path $env:OUTPUT_DIR $pair[0]))
+            $oldLines = if (Test-Path $pair[1]) { @(Get-Content $pair[1]) } else { @() }
+            $differs = [bool](Compare-Object $oldLines $newLines -SyncWindow 0)
+            if ($differs) { $changed = $true }
+            $rows += "| $($pair[0]) | $($oldLines.Count) | $($newLines.Count) | $(if ($differs) { '**yes**' } else { 'no' }) |"
           }
+
           $terminal = [xml](Get-Content (Join-Path $env:OUTPUT_DIR 'terminal.dat') -Raw)
-          $lines += "| terminal.dat | | $($terminal.terminals.block.Count) blocks | |"
-          $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          $rows += "| terminal.dat | not committed | $($terminal.terminals.block.Count) blocks | n/a |"
+
+          "## Game data (build ${{ steps.download.outputs.buildId }})" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          $rows -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+          "changed=$($changed.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          if ($changed) { "::notice::The analyzer data has changed" } else { "::notice::The analyzer data is unchanged" }
 
       - name: Upload the extracted data
         uses: actions/upload-artifact@v4
@@ -167,6 +214,33 @@ jobs:
           name: game-data
           path: ${{ env.OUTPUT_DIR }}/*.dat
           if-no-files-found: error
+
+      - name: Publish the game-data release
+        if: inputs.publishRelease
+        uses: softprops/action-gh-release@v3
+        with:
+          # A fixed tag, updated in place, so the documentation site has a stable URL to fetch from:
+          #   https://github.com/malforge/mdk2/releases/download/game-data/terminal.dat
+          tag_name: game-data
+          name: Game data
+          body: |
+            Data extracted from the Space Engineers dedicated server, build `${{ steps.download.outputs.buildId }}`.
+
+            `pbwhitelist.dat`, `modwhitelist.dat` and `pbprologue.dat` are the analyzer inputs, also committed in
+            this repository. `terminal.dat` lists every terminal block's actions and properties and is consumed by
+            the documentation site.
+
+            Updated automatically. Do not edit by hand.
+          files: ${{ env.OUTPUT_DIR }}/*.dat
+          make_latest: false
+
+      - name: Fail if the analyzer data is stale
+        # Last, so the artefact and the release are available to act on. Anything published against stale data
+        # would embed the wrong whitelist in the analyzer packages, which is worth stopping a release over.
+        if: inputs.failIfAnalyzerDataChanged && steps.compare.outputs.changed == 'true'
+        shell: pwsh
+        run: |
+          throw "The game has changed since the committed analyzer data was generated (dedicated server build ${{ steps.download.outputs.buildId }}). Download the game-data artefact from this run, commit the three analyzer files, and release again."
 
       - name: Upload the dedicated server log
         # The server's own log is the only thing that explains a failed run.
