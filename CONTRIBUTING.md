@@ -12,7 +12,7 @@ MDK² consists of several packages that work together:
 
 Core packages (on NuGet): Mdk.CommandLine (the CLI tool), Mdk.PbPackager and Mdk.ModPackager (MSBuild integration), Mdk.PbAnalyzers and Mdk.ModAnalyzers (Roslyn analyzers), Mdk.References (finds your Space Engineers installation), and ScriptTemplates (project templates).
 
-Support projects: Mdk.Hub (the GUI application) and Mdk.Extractor (pulls data from the game for whitelists).
+Support projects: Mdk.Hub (the GUI application) and Mdk.Extractor (pulls data out of a headless Space Engineers dedicated server for the whitelists).
 
 ### The Philosophy
 

@@ -35,7 +35,7 @@ Set `<MdkBuildConfiguration>Release</MdkBuildConfiguration>` in a project to onl
 
 Run at compile time in the IDE/build, **independent of the CLI tool**.
 - `PbAnalyzers` validates against `pbwhitelist.dat`; `ModAnalyzers` against `modwhitelist.dat` (both embedded resources)
-- `PbAnalyzers` also embeds `pbnamespaces.dat`, the namespaces the programmable block imports for a script. Both `.dat` files are produced by `Mdk.Extractor` running against the game
+- `PbAnalyzers` also embeds `pbprologue.dat`, the using directives the programmable block puts in front of a script. All `.dat` files are produced by `Mdk.Extractor`, which runs a headless Space Engineers *dedicated server* (not the game) with itself loaded as a server plugin
 - Read INI files via `AdditionalFiles` (auto-included by packager props)
 - Consume `Mdk-IgnorePaths` and `ProjectDir` MSBuild properties
 - Ignore patterns implemented via `Microsoft.Extensions.FileSystemGlobbing`
