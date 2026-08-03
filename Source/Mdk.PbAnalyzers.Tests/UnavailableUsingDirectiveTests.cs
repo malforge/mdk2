@@ -274,6 +274,41 @@ public class UnavailableUsingDirectiveTests
     }
 
     [Test]
+    public void AliasRestatingATypesOwnName_DoesNotWarn()
+    {
+        // Written to keep the mod API and the ingame API apart while editing. The block imports the ingame namespace,
+        // so the packed script resolves the plain name to the same type and losing the alias changes nothing. Found in
+        // a shared mixin, so it travels into other people's projects.
+        var result = PbAnalyzerRunner.Run("""
+                                          using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper { public IMyTerminalBlock Target; }
+                                          }
+                                          """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05"), Is.Empty, $"the block provides that name anyway:\n{result.Describe()}");
+    }
+
+    [Test]
+    public void AliasRenamingAType_StillWarns()
+    {
+        // A genuinely different name has nothing to fall back on once the directive is gone.
+        var result = PbAnalyzerRunner.Run("""
+                                          using Block = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper { public Block Target; }
+                                          }
+                                          """);
+
+        Assert.That(result.OfRule("MDK05").Count(), Is.EqualTo(1), result.Describe());
+    }
+
+    [Test]
     public void AliasUsingForAScriptNamespace_Warns()
     {
         // The namespace survives as flattened code, but the alias still does not.

@@ -320,6 +320,13 @@ namespace Mdk2.PbAnalyzers
                 if (Prologue.DeclaresAlias(usingDirective.Alias.Name.ToString(), name.ToString()))
                     return;
 
+                // An alias that simply restates the type's own name changes nothing once it is gone, provided the type
+                // is reachable anyway. Scripts write these to disambiguate the mod API from the ingame API while
+                // editing - "using IMyTerminalBlock = Sandbox.ModAPI.Ingame.IMyTerminalBlock" - and the packed script
+                // resolves that name through the block's own import regardless.
+                if (IsRedundantAlias(usingDirective, context.SemanticModel, context.CancellationToken))
+                    return;
+
                 if (!DirectiveUsage.IsUsed(usingDirective, context.SemanticModel, root, context.CancellationToken))
                     return;
 
@@ -450,6 +457,27 @@ namespace Mdk2.PbAnalyzers
                 return;
             diagnostic = Diagnostic.Create(ProhibitedMemberRule, node.GetLocation(), info.Symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
             context.ReportDiagnostic(diagnostic);
+        }
+
+        /// <summary>
+        ///     Whether the alias names a type that the packed script can reach under that same name without it.
+        /// </summary>
+        static bool IsRedundantAlias(UsingDirectiveSyntax usingDirective, SemanticModel model, CancellationToken cancellationToken)
+        {
+            var target = model.GetSymbolInfo(usingDirective.Name, cancellationToken).Symbol as ITypeSymbol;
+            if (target == null)
+                return false;
+
+            if (usingDirective.Alias.Name.Identifier.ValueText != target.Name)
+                return false;
+
+            var containing = target.ContainingNamespace;
+            if (containing == null || containing.IsGlobalNamespace)
+                return false;
+
+            // Either the block imports the namespace itself, or the script declares it and packing flattens the type
+            // out to where a plain name finds it.
+            return Prologue.Imports(containing.ToDisplayString()) || containing.IsInSource();
         }
 
         void AnalyzeMemberAccessNamespace(SyntaxNodeAnalysisContext context)
