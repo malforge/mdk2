@@ -461,7 +461,27 @@ jobs:
           name: mdk-hub-linux-installer
           path: ./releases
       
+      # This workflow runs whenever any PackageVersion.txt changes, not only the Hub's, so it reaches this point on
+      # pushes that leave the Hub untouched. Releasing again would overwrite the assets and notes of an already
+      # published release with a rebuild of the same version - which is what happened to hub-v2.2.7 on 24 July, two
+      # months after it went out. The NuGet step is protected from the same thing by --skip-duplicate.
+      - name: Check whether this Hub version is already released
+        id: existing-release
+        run: |
+          if gh release view "hub-v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "hub-v$VERSION already exists; skipping the release so it is not overwritten."
+            echo "Bump Source/Mdk.Hub/PackageVersion.txt to publish a new Hub release."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "hub-v$VERSION does not exist yet; it will be created."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Release
+        # A manual run with deployRelease=y is taken as "I meant it", so a botched upload can still be redone.
+        if: steps.existing-release.outputs.exists != 'true' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: hub-v${{ env.VERSION }}
