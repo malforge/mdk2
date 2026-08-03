@@ -14,6 +14,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Mdk2.PbAnalyzers
@@ -195,8 +196,9 @@ namespace Mdk2.PbAnalyzers
                 SyntaxKind.Parameter);
             context.RegisterSyntaxNodeAction(AnalyzeNamespace,
                 SyntaxKind.ClassDeclaration);
-            context.RegisterSyntaxNodeAction(AnalyzeUsingDirective,
-                SyntaxKind.UsingDirective);
+            // Per document rather than per node: deciding whether a using directive is actually needed takes the
+            // compiler's own verdict on the whole file, which is worth asking for exactly once.
+            context.RegisterSemanticModelAction(AnalyzeUsingDirectives);
             // Member access is only visited for the sake of namespace references. In expression position a namespace of
             // more than one segment, such as A.B in A.B.SomeType.Method(), is a member access rather than a qualified
             // name, so without this it would go unnoticed. The whitelist rules deliberately do not run here; they have
@@ -296,12 +298,51 @@ namespace Mdk2.PbAnalyzers
             context.ReportDiagnostic(diagnostic);
         }
 
-        void AnalyzeUsingDirective(SyntaxNodeAnalysisContext context)
+        void AnalyzeUsingDirectives(SemanticModelAnalysisContext context)
         {
-            if (IsIgnorableNode(context))
+            var model = context.SemanticModel;
+            if (IsIgnorableTree(model.SyntaxTree))
                 return;
 
-            var usingDirective = (UsingDirectiveSyntax)context.Node;
+            var root = model.SyntaxTree.GetRoot(context.CancellationToken);
+
+            // Using directives live directly under the compilation unit or a namespace, so there is no reason to walk
+            // into type declarations looking for them.
+            var usingDirectives = root
+                .DescendantNodes(node => node is CompilationUnitSyntax || node is BaseNamespaceDeclarationSyntax)
+                .OfType<UsingDirectiveSyntax>()
+                .ToArray();
+            if (usingDirectives.Length == 0)
+                return;
+
+            // A using directive the file does not actually need cannot break anything by disappearing during packing.
+            // Unused imports are extremely common - old templates still seed System.Threading.Tasks, and a class nested
+            // inside Program picks up its members without the static import that names them - so reporting them would be
+            // noise on code that works perfectly.
+            var unnecessary = new HashSet<TextSpan>();
+            foreach (var diagnostic in model.GetDiagnostics(null, context.CancellationToken))
+            {
+                switch (diagnostic.Id)
+                {
+                    // Unnecessary using directive, duplicate using directive, unresolvable namespace.
+                    case "CS8019":
+                    case "CS0105":
+                    case "CS0246":
+                    case "CS0234":
+                        unnecessary.Add(diagnostic.Location.SourceSpan);
+                        break;
+                }
+            }
+
+            foreach (var usingDirective in usingDirectives)
+            {
+                if (!unnecessary.Contains(usingDirective.Span))
+                    AnalyzeUsingDirective(context, usingDirective);
+            }
+        }
+
+        void AnalyzeUsingDirective(SemanticModelAnalysisContext context, UsingDirectiveSyntax usingDirective)
+        {
             var name = usingDirective.Name;
             if (name == null)
                 return;
@@ -512,12 +553,14 @@ namespace Mdk2.PbAnalyzers
             }
         }
 
-        bool IsIgnorableNode(SyntaxNodeAnalysisContext context)
+        bool IsIgnorableNode(SyntaxNodeAnalysisContext context) => IsIgnorableTree(context.Node.SyntaxTree);
+
+        bool IsIgnorableTree(SyntaxTree syntaxTree)
         {
             if (!_whitelist.IsEnabled || _whitelist.IsEmpty())
                 return true;
 
-            var fileName = Path.GetFileName(context.Node.SyntaxTree.FilePath);
+            var fileName = Path.GetFileName(syntaxTree.FilePath);
 
             if (string.IsNullOrWhiteSpace(fileName))
                 return true;
@@ -535,7 +578,7 @@ namespace Mdk2.PbAnalyzers
                 return false;
             
             // Get relative path from project directory for matching
-            var filePath = context.Node.SyntaxTree.FilePath;
+            var filePath = syntaxTree.FilePath;
             var relativePath = filePath;
             if (!string.IsNullOrEmpty(_projectDir) && filePath.StartsWith(_projectDir, StringComparison.OrdinalIgnoreCase))
             {

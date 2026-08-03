@@ -73,17 +73,17 @@ public class UnavailableUsingDirectiveTests
         Assert.That(result.OfRule("MDK05"), Is.Empty, result.Describe());
     }
 
-    [TestCase("Sandbox.ModAPI", "Sandbox.ModAPI.Ingame")]
-    [TestCase("VRage.Game.ModAPI", "VRage.Game.ModAPI.Ingame")]
-    [TestCase("SpaceEngineers.Game.ModAPI", "SpaceEngineers.Game.ModAPI.Ingame")]
-    public void ModApiNamespace_WarnsAndSuggestsTheIngameNamespace(string modApi, string ingame)
+    [TestCase("Sandbox.ModAPI", "Sandbox.ModAPI.Ingame", "IMyEntity")]
+    [TestCase("VRage.Game.ModAPI", "VRage.Game.ModAPI.Ingame", "IMyCubeGrid")]
+    [TestCase("SpaceEngineers.Game.ModAPI", "SpaceEngineers.Game.ModAPI.Ingame", "IMyAirVent")]
+    public void ModApiNamespace_WarnsAndSuggestsTheIngameNamespace(string modApi, string ingame, string type)
     {
         var result = PbAnalyzerRunner.Run($$"""
                                            using {{modApi}};
 
                                            namespace IngameScript
                                            {
-                                               public class Helper { }
+                                               public class Helper { public {{type}} Thing; }
                                            }
                                            """);
 
@@ -119,7 +119,7 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public MemberInfo Info; }
                                           }
                                           """);
 
@@ -138,7 +138,7 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public IMyEntity Thing; }
                                           }
                                           """);
 
@@ -201,7 +201,7 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public Block Target; }
                                           }
                                           """);
 
@@ -227,7 +227,7 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public MH.Utils Item; }
                                           }
                                           """);
 
@@ -242,7 +242,7 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public double Root() { return Sqrt(2.0); } }
                                           }
                                           """);
 
@@ -268,12 +268,67 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public int Value() { return Zero(); } }
                                           }
                                           """);
 
         Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
         Assert.That(result.OfRule("MDK05").Count(), Is.EqualTo(1), result.Describe());
+    }
+
+    [Test]
+    public void UnusedImport_DoesNotWarn()
+    {
+        // Old templates and stock Visual Studio file headers seed imports nothing uses. Nothing depends on them, so
+        // nothing breaks when packing drops them, and warning about them would be noise across the whole ecosystem.
+        var result = PbAnalyzerRunner.Run("""
+                                          using System.Threading.Tasks;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper { }
+                                          }
+                                          """);
+
+        Assert.That(result.OfRule("MDK05"), Is.Empty, $"an unused import harms nothing:\n{result.Describe()}");
+    }
+
+    [Test]
+    public void RedundantStaticImportOfTheEnclosingClass_DoesNotWarn()
+    {
+        // A class nested inside Program reaches Program's members through the nesting, so this static import is
+        // redundant already. Packing nests it further rather than breaking it. Seen in the wild.
+        var result = PbAnalyzerRunner.Run([
+            new SourceFile("Program.cs", """
+                                         using Sandbox.ModAPI.Ingame;
+
+                                         namespace IngameScript
+                                         {
+                                             public partial class Program : MyGridProgram
+                                             {
+                                                 public enum Property { Auto }
+                                                 public static void Register(Property property) { }
+                                             }
+                                         }
+                                         """),
+            new SourceFile("Handler.cs", """
+                                         using static IngameScript.Program;
+
+                                         namespace IngameScript
+                                         {
+                                             public partial class Program
+                                             {
+                                                 public class Handler
+                                                 {
+                                                     public Handler() { Register(Property.Auto); }
+                                                 }
+                                             }
+                                         }
+                                         """)
+        ]);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05"), Is.Empty, $"redundant imports are not breakage:\n{result.Describe()}");
     }
 
     [Test]
@@ -302,7 +357,7 @@ public class UnavailableUsingDirectiveTests
 
                                                   namespace IngameScript
                                                   {
-                                                      public class Helper { }
+                                                      public class Helper { public IMyEntity Thing; }
                                                   }
                                                   """)],
             """
@@ -323,7 +378,12 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper
+                                              {
+                                                  public IMyEntity Entity;
+                                                  public IMyCubeGrid Grid;
+                                                  public MemberInfo Info;
+                                              }
                                           }
                                           """);
 
@@ -338,7 +398,7 @@ public class UnavailableUsingDirectiveTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public IMyEntity Thing; }
                                           }
                                           """);
 

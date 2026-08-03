@@ -53,11 +53,13 @@ public class ExistingRuleRegressionTests
 
                                           namespace IngameScript
                                           {
-                                              public class Helper { }
+                                              public class Helper { public IMyEntity Thing; }
                                           }
                                           """);
 
-        Assert.That(result.OfRule("MDK01"), Is.Empty, $"MDK05 is the rule for imports:\n{result.Describe()}");
+        // MDK01 fires on the type reference, as it always has. The point is that the import itself is MDK05's business.
+        Assert.That(result.OfRule("MDK01").Select(d => d.Location.GetLineSpan().StartLinePosition.Line),
+            Has.None.EqualTo(0), $"nothing should be reported against the using directive on line 1:\n{result.Describe()}");
         Assert.That(result.OfRule("MDK05").Count(), Is.EqualTo(1), result.Describe());
     }
 
