@@ -4,11 +4,11 @@ using NUnit.Framework;
 namespace Mdk2.PbAnalyzers.Tests;
 
 /// <summary>
-///     MDK05: the programmable block imports a fixed set of namespaces, and packing strips every using directive from
-///     the script. Importing anything else means the packed script loses the import.
+///     MDK05: packing strips every using directive from the script, and the programmable block only reinstates a fixed
+///     set of namespace imports. Everything else - other namespaces, aliases, static imports - is simply lost.
 /// </summary>
 [TestFixture]
-public class UnavailableNamespaceImportTests
+public class UnavailableUsingDirectiveTests
 {
     /// <summary>
     ///     The using directives the script template ships with. Not one of them may warn, or every new project would
@@ -174,8 +174,10 @@ public class UnavailableNamespaceImportTests
     }
 
     [Test]
-    public void AliasUsing_IsLeftAlone()
+    public void AliasUsing_Warns()
     {
+        // The alias exists nowhere but in the directive, so packing takes the name with it even though what it points at
+        // is a perfectly legal ingame type.
         var result = PbAnalyzerRunner.Run("""
                                           using Block = Sandbox.ModAPI.Ingame.IMyTerminalBlock;
 
@@ -185,11 +187,37 @@ public class UnavailableNamespaceImportTests
                                           }
                                           """);
 
-        Assert.That(result.OfRule("MDK05"), Is.Empty, $"alias usings are out of this rule's scope:\n{result.Describe()}");
+        var diagnostics = result.OfRule("MDK05").ToArray();
+        Assert.That(diagnostics, Has.Length.EqualTo(1), result.Describe());
+        Assert.That(diagnostics[0].GetMessage(), Does.Contain("The alias 'Block'"));
+
+        var location = diagnostics[0].Location;
+        Assert.That(location.SourceTree!.GetText().ToString(location.SourceSpan), Is.EqualTo("Block"));
     }
 
     [Test]
-    public void StaticUsing_IsLeftAlone()
+    public void AliasUsingForAScriptNamespace_Warns()
+    {
+        // The namespace survives as flattened code, but the alias still does not.
+        var result = PbAnalyzerRunner.Run("""
+                                          using MH = MyHelpers;
+
+                                          namespace MyHelpers
+                                          {
+                                              public class Utils { }
+                                          }
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper { }
+                                          }
+                                          """);
+
+        Assert.That(result.OfRule("MDK05").Count(), Is.EqualTo(1), result.Describe());
+    }
+
+    [Test]
+    public void StaticUsing_Warns()
     {
         var result = PbAnalyzerRunner.Run("""
                                           using static System.Math;
@@ -200,7 +228,34 @@ public class UnavailableNamespaceImportTests
                                           }
                                           """);
 
-        Assert.That(result.OfRule("MDK05"), Is.Empty, $"static usings are out of this rule's scope:\n{result.Describe()}");
+        var diagnostics = result.OfRule("MDK05").ToArray();
+        Assert.That(diagnostics, Has.Length.EqualTo(1), result.Describe());
+        Assert.That(diagnostics[0].GetMessage(), Does.Contain("The static import of 'System.Math'"));
+    }
+
+    [Test]
+    public void StaticUsingOfAScriptType_Warns()
+    {
+        // The programmable block imports namespaces, never types, so nothing reinstates a static import.
+        var result = PbAnalyzerRunner.Run("""
+                                          using static MyHelpers.Utils;
+
+                                          namespace MyHelpers
+                                          {
+                                              public class Utils
+                                              {
+                                                  public static int Zero() { return 0; }
+                                              }
+                                          }
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper { }
+                                          }
+                                          """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05").Count(), Is.EqualTo(1), result.Describe());
     }
 
     [Test]

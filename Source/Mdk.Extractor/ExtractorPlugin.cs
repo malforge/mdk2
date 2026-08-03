@@ -101,6 +101,52 @@ public class ExtractorPlugin : IPlugin
         }
     }
     
+    /// <summary>
+    ///     Dumps the namespaces the programmable block imports on a script's behalf.
+    /// </summary>
+    /// <remarks>
+    ///     The game keeps these in a private field with no accessor of any kind, so reflection is the only way at them.
+    ///     If a game update renames or retypes that field this is designed to complain loudly and leave the existing file
+    ///     alone, rather than quietly writing an empty list that would make the analyzer flag every using directive in
+    ///     every script.
+    /// </remarks>
+    void WriteImplicitNamespaces(string pbNamespaces)
+    {
+        if (string.IsNullOrEmpty(pbNamespaces))
+            return;
+
+        MyLog.Default.WriteLineAndConsole("MDK2 Extractor: Retrieving implicit script namespaces");
+
+        var field = typeof(MyScriptCompiler).GetField("m_implicitScriptNamespaces", BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field == null)
+        {
+            MyLog.Default.WriteLineAndConsole("MDK2 Extractor: ERROR: MyScriptCompiler no longer has an m_implicitScriptNamespaces field. Implicit namespaces were NOT written.");
+            return;
+        }
+
+        if (!(field.GetValue(MyScriptCompiler.Static) is System.Collections.IEnumerable values))
+        {
+            MyLog.Default.WriteLineAndConsole("MDK2 Extractor: ERROR: m_implicitScriptNamespaces is not enumerable. Implicit namespaces were NOT written.");
+            return;
+        }
+
+        var namespaces = values.Cast<object>()
+            .Select(value => value?.ToString())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct()
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToList();
+
+        if (namespaces.Count == 0)
+        {
+            MyLog.Default.WriteLineAndConsole("MDK2 Extractor: ERROR: m_implicitScriptNamespaces was empty. Implicit namespaces were NOT written.");
+            return;
+        }
+
+        MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Writing pb namespaces {namespaces.Count} {pbNamespaces}");
+        File.WriteAllText(pbNamespaces, string.Join(Environment.NewLine, namespaces));
+    }
+
     async void MySession_AfterLoading()
     {
         await Task.Delay(TimeSpan.FromSeconds(1));
@@ -114,7 +160,11 @@ public class ExtractorPlugin : IPlugin
         MySandboxGame.ExitThreadSafe();
     }
     
-    void GrabWhitelist() => WriteWhitelists(Extractor.Current.ModWhitelist, Extractor.Current.PbWhitelist);
+    void GrabWhitelist()
+    {
+        WriteWhitelists(Extractor.Current.ModWhitelist, Extractor.Current.PbWhitelist);
+        WriteImplicitNamespaces(Extractor.Current.PbNamespaces);
+    }
     
     async Task GrabTerminalAsync()
     {

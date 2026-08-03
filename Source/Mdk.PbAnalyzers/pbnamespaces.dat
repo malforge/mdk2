@@ -1,0 +1,22 @@
+// PROVISIONAL: seeded from the script template's using directives, not yet from a real extractor run.
+// Run the extractor against the game to replace this file with the authoritative list; doing so also
+// removes these comments, which is the intended signal that the contents can be trusted.
+Sandbox.Game.EntityComponents
+Sandbox.ModAPI.Ingame
+Sandbox.ModAPI.Interfaces
+SpaceEngineers.Game.ModAPI.Ingame
+System
+System.Collections
+System.Collections.Generic
+System.Collections.Immutable
+System.Linq
+System.Text
+VRage
+VRage.Collections
+VRage.Game
+VRage.Game.Components
+VRage.Game.GUI.TextPanel
+VRage.Game.ModAPI.Ingame
+VRage.Game.ModAPI.Ingame.Utilities
+VRage.Game.ObjectBuilders.Definitions
+VRageMath

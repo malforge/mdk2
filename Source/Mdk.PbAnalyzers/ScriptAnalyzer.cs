@@ -36,11 +36,11 @@ namespace Mdk2.PbAnalyzers
         internal static readonly DiagnosticDescriptor RuntimeUseOfTrimmedAttributeRule
             = new DiagnosticDescriptor("MDK04", "Runtime Use Of Trimmed Attribute", "Tooling-only attribute type '{0}' is used by runtime code. Attribute trimming removes this type from packed source.", "Attribute Trimming", DiagnosticSeverity.Error, true);
 
-        internal static readonly DiagnosticDescriptor UnavailableNamespaceImportRule
-            = new DiagnosticDescriptor("MDK05", "Namespace Not Imported By The Programmable Block",
-                "The programmable block does not import '{0}', and packing removes this using directive.{1}", "Whitelist", DiagnosticSeverity.Warning, true,
-                "The programmable block compiles scripts with a fixed set of imported namespaces, and packing strips all using directives from the final script. "
-                + "Types from any other namespace must be written fully qualified, assuming they are whitelisted at all.");
+        internal static readonly DiagnosticDescriptor UnavailableUsingDirectiveRule
+            = new DiagnosticDescriptor("MDK05", "Using Directive Does Not Survive Packing",
+                "{0} is not available to the packed script, because packing removes using directives.{1}", "Whitelist", DiagnosticSeverity.Warning, true,
+                "Packing strips every using directive from the script, and the programmable block compiles the result with a fixed set of imported namespaces. "
+                + "Namespace imports outside that set, aliases and static imports all lose their meaning, so whatever they shortened has to be written out in full.");
 
         internal static readonly DiagnosticDescriptor ScriptNamespaceReferenceRule
             = new DiagnosticDescriptor("MDK06", "Reference To A Script Namespace",
@@ -49,31 +49,10 @@ namespace Mdk2.PbAnalyzers
                 + "Names qualified through one of those namespaces have nothing left to resolve against ingame. Refer to the type directly instead.");
 
         /// <summary>
-        ///     The namespaces the programmable block imports on the script's behalf. Kept in sync with the using directives of
-        ///     the script template (Source/ScriptTemplates/content/0_Script/Program.cs).
+        ///     The namespaces the programmable block imports on the script's behalf, extracted from the game the same way
+        ///     the whitelist is.
         /// </summary>
-        static readonly HashSet<string> PbImplicitNamespaces = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "Sandbox.Game.EntityComponents",
-            "Sandbox.ModAPI.Ingame",
-            "Sandbox.ModAPI.Interfaces",
-            "SpaceEngineers.Game.ModAPI.Ingame",
-            "System",
-            "System.Collections",
-            "System.Collections.Generic",
-            "System.Collections.Immutable",
-            "System.Linq",
-            "System.Text",
-            "VRage",
-            "VRage.Collections",
-            "VRage.Game",
-            "VRage.Game.Components",
-            "VRage.Game.GUI.TextPanel",
-            "VRage.Game.ModAPI.Ingame",
-            "VRage.Game.ModAPI.Ingame.Utilities",
-            "VRage.Game.ObjectBuilders.Definitions",
-            "VRageMath"
-        };
+        static readonly HashSet<string> PbImplicitNamespaces = LoadImplicitNamespaces();
 
         readonly Whitelist _whitelist = new Whitelist();
 
@@ -90,7 +69,7 @@ namespace Mdk2.PbAnalyzers
                 ProhibitedLanguageElementRule,
                 InconsistentNamespaceDeclarationRule,
                 RuntimeUseOfTrimmedAttributeRule,
-                UnavailableNamespaceImportRule,
+                UnavailableUsingDirectiveRule,
                 ScriptNamespaceReferenceRule);
 
         public override void Initialize(AnalysisContext context)
@@ -113,6 +92,30 @@ namespace Mdk2.PbAnalyzers
             _whitelist.IsEnabled = true;
             _whitelist.Load(content.Lines.Select(l => l.ToString()).ToArray());
             return true;
+        }
+
+        static HashSet<string> LoadImplicitNamespaces()
+        {
+            var namespaces = new HashSet<string>(StringComparer.Ordinal);
+            using (var stream = typeof(ScriptAnalyzer).Assembly.GetManifestResourceStream("pbnamespaces.dat"))
+            {
+                if (stream == null)
+                    throw new InvalidOperationException("Error loading the embedded implicit namespace list");
+
+                using (var reader = new StreamReader(stream))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        var trimmed = line.Trim();
+                        if (trimmed.Length == 0 || trimmed.StartsWith("//", StringComparison.Ordinal))
+                            continue;
+                        namespaces.Add(trimmed);
+                    }
+                }
+            }
+
+            return namespaces;
         }
 
         void LoadEmbeddedWhitelist()
@@ -299,15 +302,25 @@ namespace Mdk2.PbAnalyzers
                 return;
 
             var usingDirective = (UsingDirectiveSyntax)context.Node;
-
-            // Aliases and static imports do not survive packing either, but that is a different problem with different
-            // advice attached, so this rule stays out of it.
-            if (usingDirective.Alias != null || usingDirective.StaticKeyword.IsKind(SyntaxKind.StaticKeyword))
-                return;
-
             var name = usingDirective.Name;
             if (name == null)
                 return;
+
+            // An alias is a name that exists nowhere but in this directive, so packing always takes it with it.
+            if (usingDirective.Alias != null)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(UnavailableUsingDirectiveRule, usingDirective.Alias.Name.GetLocation(),
+                    "The alias '" + usingDirective.Alias.Name + "'", ""));
+                return;
+            }
+
+            // The programmable block imports namespaces, never types, so a static import is never reinstated.
+            if (usingDirective.StaticKeyword.IsKind(SyntaxKind.StaticKeyword))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(UnavailableUsingDirectiveRule, name.GetLocation(),
+                    "The static import of '" + name + "'", ""));
+                return;
+            }
 
             var namespaceSymbol = context.SemanticModel.GetSymbolInfo(name, context.CancellationToken).Symbol as INamespaceSymbol;
             if (namespaceSymbol == null)
@@ -326,7 +339,8 @@ namespace Mdk2.PbAnalyzers
                 ? " Did you mean '" + namespaceName + ".Ingame'?"
                 : "";
 
-            context.ReportDiagnostic(Diagnostic.Create(UnavailableNamespaceImportRule, name.GetLocation(), namespaceName, hint));
+            context.ReportDiagnostic(Diagnostic.Create(UnavailableUsingDirectiveRule, name.GetLocation(),
+                "The namespace '" + namespaceName + "'", hint));
         }
 
         void AnalyzeDeclaration(SyntaxNodeAnalysisContext context)
