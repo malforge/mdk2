@@ -7,16 +7,16 @@ namespace Mdk.Extractor;
 public partial class Program
 {
     [Verb, Default]
-    public static void Main([Switch] string modWhitelist = null, [Switch] string pbWhitelist = null, [Switch] string pbNamespaces = null, [Switch] string terminal = null, [Switch] string sePath = null)
+    public static void Main([Switch] string modWhitelist = null, [Switch] string pbWhitelist = null, [Switch] string pbPrologue = null, [Switch] string terminal = null, [Switch] string sePath = null)
     {
         modWhitelist ??= "modwhitelist.dat";
         pbWhitelist ??= "pbwhitelist.dat";
-        pbNamespaces ??= "pbnamespaces.dat";
+        pbPrologue ??= "pbprologue.dat";
         terminal ??= "terminal.dat";
 
         modWhitelist = Path.GetFullPath(modWhitelist);
         pbWhitelist = Path.GetFullPath(pbWhitelist);
-        pbNamespaces = Path.GetFullPath(pbNamespaces);
+        pbPrologue = Path.GetFullPath(pbPrologue);
         terminal = Path.GetFullPath(terminal);
         
         var se = new SpaceEngineers();
@@ -25,7 +25,7 @@ public partial class Program
         if (string.IsNullOrEmpty(sePath) || !Directory.Exists(sePath))
             throw new TerminalException($"Cannot find designated SE path \"{sePath}\"");
 
-        var program = new Extractor(modWhitelist, pbWhitelist, pbNamespaces, terminal, sePath);
+        var program = new Extractor(modWhitelist, pbWhitelist, pbPrologue, terminal, sePath);
         var oldPath = Environment.CurrentDirectory;
         Environment.CurrentDirectory = sePath;
         try

@@ -130,6 +130,21 @@ static class StubGameAssemblies
     ];
 
     /// <summary>
+    ///     The programmable block reaches these six types through aliases it declares itself, rather than by importing
+    ///     their namespace. They come from the real framework, so they need no stub - this list only records why
+    ///     System.ComponentModel is a special case.
+    /// </summary>
+    public static readonly string[] AliasedFrameworkTypes =
+    [
+        "INotifyPropertyChanged",
+        "INotifyPropertyChanging",
+        "PropertyChangedEventHandler",
+        "PropertyChangedEventArgs",
+        "PropertyChangingEventHandler",
+        "PropertyChangingEventArgs"
+    ];
+
+    /// <summary>
     ///     The stub assemblies plus the runtime references needed to bind the <c>System</c> namespaces the programmable
     ///     block imports.
     /// </summary>
@@ -165,7 +180,12 @@ static class StubGameAssemblies
             typeof(System.Collections.Generic.List<>).Assembly,
             typeof(System.Text.StringBuilder).Assembly,
             typeof(System.Reflection.MemberInfo).Assembly,
-            typeof(System.Diagnostics.Stopwatch).Assembly
+            typeof(System.Diagnostics.Stopwatch).Assembly,
+            // Whitelisted, but not imported by the block: exactly the cases MDK05 exists for.
+            typeof(System.Text.RegularExpressions.Regex).Assembly,
+            typeof(System.Globalization.CultureInfo).Assembly,
+            // Reached through the aliases the block declares rather than through an import.
+            typeof(System.ComponentModel.INotifyPropertyChanged).Assembly
         };
 
         var trustedPlatformAssemblies = (AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string ?? string.Empty)

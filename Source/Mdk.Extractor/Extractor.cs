@@ -11,12 +11,12 @@ public class Extractor
 {
     const string LauncherTypeName = "Mdk.Extractor.Launcher";
 
-    public Extractor(string modWhitelist, string pbWhitelist, string pbNamespaces, string terminal, string seBinPath)
+    public Extractor(string modWhitelist, string pbWhitelist, string pbPrologue, string terminal, string seBinPath)
     {
         Current = this;
         ModWhitelist = modWhitelist;
         PbWhitelist = pbWhitelist;
-        PbNamespaces = pbNamespaces;
+        PbPrologue = pbPrologue;
         Terminal = terminal;
         SeBinPath = seBinPath;
     }
@@ -25,7 +25,7 @@ public class Extractor
 
     public string ModWhitelist { get; }
     public string PbWhitelist { get; }
-    public string PbNamespaces { get; }
+    public string PbPrologue { get; }
     public string Terminal { get; }
     public string SeBinPath { get; }
 

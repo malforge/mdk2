@@ -56,6 +56,66 @@ public class UnavailableUsingDirectiveTests
     }
 
     [Test]
+    public void NamespaceReachedThroughTheBlocksOwnAliases_DoesNotWarn()
+    {
+        // The programmable block declares aliases for six System.ComponentModel types rather than importing the
+        // namespace, so this code is fine. Missing that mechanism is what made an earlier version of this rule report a
+        // working script.
+        var result = PbAnalyzerRunner.Run("""
+                                          using System.ComponentModel;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper : INotifyPropertyChanged
+                                              {
+                                                  public event PropertyChangedEventHandler PropertyChanged;
+                                              }
+                                          }
+                                          """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05"), Is.Empty, $"those types are aliased by the block itself:\n{result.Describe()}");
+    }
+
+    [Test]
+    public void AliasRestatingOneTheBlockDeclares_DoesNotWarn()
+    {
+        var result = PbAnalyzerRunner.Run("""
+                                          using INotifyPropertyChanged = System.ComponentModel.INotifyPropertyChanged;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper : INotifyPropertyChanged
+                                              {
+                                                  public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+                                              }
+                                          }
+                                          """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05"), Is.Empty, $"the block declares this very alias:\n{result.Describe()}");
+    }
+
+    [TestCase("System.Text.RegularExpressions", "Regex")]
+    [TestCase("System.Globalization", "CultureInfo")]
+    public void WhitelistedButUnimportedNamespace_Warns(string ns, string type)
+    {
+        // The sharp end of this rule: fully whitelisted, so nothing else objects, but not imported by the block, so the
+        // packed script does not compile.
+        var result = PbAnalyzerRunner.Run($$"""
+                                           using {{ns}};
+
+                                           namespace IngameScript
+                                           {
+                                               public class Helper { public {{type}} Thing; }
+                                           }
+                                           """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05").Count(), Is.EqualTo(1), result.Describe());
+    }
+
+    [Test]
     public void MemorySafeTypes_DoesNotWarn()
     {
         // The programmable block imports this one even though the template never mentions it. It is exactly what a

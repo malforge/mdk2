@@ -201,7 +201,7 @@ partial class Program
             {
                 "-modwhitelist",
                 "-pbwhitelist",
-                "-pbnamespaces",
+                "-pbprologue",
                 "-terminal",
                 "-sepath"
             };
@@ -242,13 +242,13 @@ partial class Program
             var verb = parameters.Count > 0 ? parameters.Dequeue() : "help";
             switches.TryGetValue("-modwhitelist", out var modWhitelist);
             switches.TryGetValue("-pbwhitelist", out var pbWhitelist);
-            switches.TryGetValue("-pbnamespaces", out var pbNamespaces);
+            switches.TryGetValue("-pbprologue", out var pbPrologue);
             switches.TryGetValue("-terminal", out var terminal);
             switches.TryGetValue("-sepath", out var sepath);
 
             // Named arguments on purpose: every parameter here is optional, so a positional call silently shifts its
             // arguments along whenever a new one is added rather than failing to compile.
-            Main(modWhitelist: modWhitelist, pbWhitelist: pbWhitelist, pbNamespaces: pbNamespaces, terminal: terminal, sePath: sepath);
+            Main(modWhitelist: modWhitelist, pbWhitelist: pbWhitelist, pbPrologue: pbPrologue, terminal: terminal, sePath: sepath);
             return 0;
             //
             // if (string.Equals(verb, "help", StringComparison.OrdinalIgnoreCase))
@@ -277,7 +277,7 @@ partial class Program
     public static void Help(string verb = null)
     {
         Console.WriteLine(@"Usage:");
-        Console.WriteLine(@"mdkx [-modwhitelist file] [-pbwhitelist file] [-pbnamespaces file] [-terminal file] [-sepath pathtobin64]");
+        Console.WriteLine(@"mdkx [-modwhitelist file] [-pbwhitelist file] [-pbprologue file] [-terminal file] [-sepath pathtobin64]");
         Console.WriteLine();
         Console.WriteLine(@"Launches Space Engineers and writes out the data MDK ships with. Any output left");
         Console.WriteLine(@"unspecified goes to its default file name in the working directory.");

@@ -50,10 +50,11 @@ namespace Mdk2.PbAnalyzers
                 + "Names qualified through one of those namespaces have nothing left to resolve against ingame. Refer to the type directly instead.");
 
         /// <summary>
-        ///     The namespaces the programmable block imports on the script's behalf, extracted from the game the same way
-        ///     the whitelist is.
+        ///     The using directives the programmable block puts in front of every script, extracted from the game the same
+        ///     way the whitelist is. Parsed as the C# it is, so that whichever directive forms the game emits are all
+        ///     understood rather than only the ones anyone thought to look for.
         /// </summary>
-        static readonly HashSet<string> PbImplicitNamespaces = LoadImplicitNamespaces();
+        static readonly PbPrologue Prologue = PbPrologue.LoadEmbedded();
 
         readonly Whitelist _whitelist = new Whitelist();
 
@@ -93,30 +94,6 @@ namespace Mdk2.PbAnalyzers
             _whitelist.IsEnabled = true;
             _whitelist.Load(content.Lines.Select(l => l.ToString()).ToArray());
             return true;
-        }
-
-        static HashSet<string> LoadImplicitNamespaces()
-        {
-            var namespaces = new HashSet<string>(StringComparer.Ordinal);
-            using (var stream = typeof(ScriptAnalyzer).Assembly.GetManifestResourceStream("pbnamespaces.dat"))
-            {
-                if (stream == null)
-                    throw new InvalidOperationException("Error loading the embedded implicit namespace list");
-
-                using (var reader = new StreamReader(stream))
-                {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        var trimmed = line.Trim();
-                        if (trimmed.Length == 0 || trimmed.StartsWith("//", StringComparison.Ordinal))
-                            continue;
-                        namespaces.Add(trimmed);
-                    }
-                }
-            }
-
-            return namespaces;
         }
 
         void LoadEmbeddedWhitelist()
@@ -347,9 +324,13 @@ namespace Mdk2.PbAnalyzers
             if (name == null)
                 return;
 
-            // An alias is a name that exists nowhere but in this directive, so packing always takes it with it.
+            // An alias is a name that exists nowhere but in this directive, so packing takes it away - unless the
+            // programmable block happens to declare the very same alias itself.
             if (usingDirective.Alias != null)
             {
+                if (Prologue.DeclaresAlias(usingDirective.Alias.Name.ToString(), name.ToString()))
+                    return;
+
                 context.ReportDiagnostic(Diagnostic.Create(UnavailableUsingDirectiveRule, usingDirective.Alias.Name.GetLocation(),
                     "The alias '" + usingDirective.Alias.Name + "'", ""));
                 return;
@@ -372,11 +353,11 @@ namespace Mdk2.PbAnalyzers
                 return;
 
             var namespaceName = namespaceSymbol.ToDisplayString();
-            if (PbImplicitNamespaces.Contains(namespaceName))
+            if (Prologue.Provides(namespaceName))
                 return;
 
             // The mod API namespaces mirror the ingame ones, and picking the wrong one is the usual reason to end up here.
-            var hint = PbImplicitNamespaces.Contains(namespaceName + ".Ingame")
+            var hint = Prologue.Imports(namespaceName + ".Ingame")
                 ? " Did you mean '" + namespaceName + ".Ingame'?"
                 : "";
 
