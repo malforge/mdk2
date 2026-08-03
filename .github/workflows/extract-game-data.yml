@@ -14,6 +14,13 @@ on:
         required: true
         default: 'public'
 
+  # TEMPORARY, REMOVE BEFORE MERGING. GitHub only offers workflow_dispatch for workflows that already exist on
+  # the default branch, so this is the only way to run it from the branch and find out whether ~8 GB fits on a
+  # runner at all. Every push to this branch starts a full download while this is here.
+  push:
+    branches:
+      - feat/extractor-dedicated-server
+
 jobs:
   extract:
     runs-on: windows-latest
@@ -57,7 +64,9 @@ jobs:
         run: |
           # This is the expensive step and the whole reason this workflow is manual. It is timed so we know what
           # it actually costs rather than guessing.
+          # Empty when this runs from the push trigger rather than a dispatch, which means the live branch.
           $branch = '${{ inputs.steamBranch }}'
+          if (-not $branch) { $branch = 'public' }
           if ($branch -ne 'public') {
             "::warning::Installing the '$branch' branch. Data extracted from a pre-release build must not be committed as if it were live."
           }
