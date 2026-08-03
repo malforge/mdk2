@@ -25,14 +25,19 @@ public class RealScriptCorpusTests
     public void RealScript_ReportsNoUsingOrNamespaceProblems(string project)
     {
         var root = Path.Combine(FindSourceDirectory(), "Mdk.CommandLine.Tests", "TestData", project);
-        Assert.That(Directory.Exists(root), Is.True, $"corpus project not found: {root}");
+
+        // Not every fixture is in the repository - AutomaticLCDs2MDK2 is kept locally - so a missing one is ignored
+        // rather than failed, the same way RequiresFileAttribute handles it over in the CLI tests.
+        if (!Directory.Exists(root))
+            Assert.Ignore($"corpus project not present: {root}");
 
         var files = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories)
             .Where(file => !IsUnderDirectory(file, "obj") && !IsUnderDirectory(file, "bin"))
             .Select(file => new SourceFile(Path.GetRelativePath(root, file), File.ReadAllText(file)))
             .ToList();
 
-        Assert.That(files, Is.Not.Empty, $"corpus project has no sources: {root}");
+        if (files.Count == 0)
+            Assert.Ignore($"corpus project has no sources: {root}");
 
         var result = PbAnalyzerRunner.Run(files);
 
