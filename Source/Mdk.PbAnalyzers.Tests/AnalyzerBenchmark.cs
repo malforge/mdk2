@@ -79,6 +79,19 @@ public class AnalyzerBenchmark
             return stopwatch.Elapsed.TotalMilliseconds;
         }
 
+        // A faster analyzer that stopped reporting things would look like a win and be a disaster, so record what each
+        // variant actually finds before timing anything.
+        TestContext.Out.WriteLine("");
+        foreach (var variant in variants)
+        {
+            var compilation = NewCompilation(trees, references);
+            var diagnostics = compilation.WithAnalyzers(loaded[variant.Label], options)
+                .GetAnalyzerDiagnosticsAsync().GetAwaiter().GetResult();
+            var byId = diagnostics.GroupBy(d => d.Id).OrderBy(g => g.Key)
+                .Select(g => $"{g.Key}={g.Count()}");
+            TestContext.Out.WriteLine($"FINDINGS {variant.Label,-24} total={diagnostics.Length,-5} {string.Join(" ", byId)}");
+        }
+
         foreach (var variant in variants)
             for (var i = 0; i < 3; i++)
             {
