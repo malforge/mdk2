@@ -119,7 +119,14 @@ static class StubGameAssemblies
                           {
                               public struct ListReader<T> { }
                           }
-                          """)
+                          """),
+
+        ("VRage.Scripting", """
+                            namespace VRage.Scripting.MemorySafeTypes
+                            {
+                                public class MemorySafeStringBuilder { }
+                            }
+                            """)
     ];
 
     /// <summary>

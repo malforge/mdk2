@@ -55,6 +55,24 @@ public class UnavailableUsingDirectiveTests
         Assert.That(result.OfRule("MDK05"), Is.Empty, $"the stock template must not warn:\n{result.Describe()}");
     }
 
+    [Test]
+    public void MemorySafeTypes_DoesNotWarn()
+    {
+        // The programmable block imports this one even though the template never mentions it. It is exactly what a
+        // hand-maintained list gets wrong, which is why the list is extracted from the game instead.
+        var result = PbAnalyzerRunner.Run("""
+                                          using VRage.Scripting.MemorySafeTypes;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper { }
+                                          }
+                                          """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05"), Is.Empty, result.Describe());
+    }
+
     [TestCase("Sandbox.ModAPI", "Sandbox.ModAPI.Ingame")]
     [TestCase("VRage.Game.ModAPI", "VRage.Game.ModAPI.Ingame")]
     [TestCase("SpaceEngineers.Game.ModAPI", "SpaceEngineers.Game.ModAPI.Ingame")]

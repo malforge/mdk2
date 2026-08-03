@@ -1,6 +1,3 @@
-// PROVISIONAL: seeded from the script template's using directives, not yet from a real extractor run.
-// Run the extractor against the game to replace this file with the authoritative list; doing so also
-// removes these comments, which is the intended signal that the contents can be trusted.
 Sandbox.Game.EntityComponents
 Sandbox.ModAPI.Ingame
 Sandbox.ModAPI.Interfaces
@@ -19,4 +16,5 @@ VRage.Game.GUI.TextPanel
 VRage.Game.ModAPI.Ingame
 VRage.Game.ModAPI.Ingame.Utilities
 VRage.Game.ObjectBuilders.Definitions
+VRage.Scripting.MemorySafeTypes
 VRageMath
