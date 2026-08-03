@@ -35,6 +35,7 @@ Set `<MdkBuildConfiguration>Release</MdkBuildConfiguration>` in a project to onl
 
 Run at compile time in the IDE/build, **independent of the CLI tool**.
 - `PbAnalyzers` validates against `pbwhitelist.dat`; `ModAnalyzers` against `modwhitelist.dat` (both embedded resources)
+- `PbAnalyzers` also embeds `pbnamespaces.dat`, the namespaces the programmable block imports for a script. Both `.dat` files are produced by `Mdk.Extractor` running against the game
 - Read INI files via `AdditionalFiles` (auto-included by packager props)
 - Consume `Mdk-IgnorePaths` and `ProjectDir` MSBuild properties
 - Ignore patterns implemented via `Microsoft.Extensions.FileSystemGlobbing`

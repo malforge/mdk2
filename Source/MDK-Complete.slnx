@@ -9,6 +9,9 @@
     <Project Path="Mdk.PbAnalyzers\Mdk.PbAnalyzers.csproj">
       <Platform Project="x64" />
     </Project>
+    <Project Path="Mdk.PbAnalyzers.Tests\Mdk.PbAnalyzers.Tests.csproj">
+      <Platform Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/GitHub Actions/">
     <File Path="..\.github\workflows\buildwithartefacts.yml" />

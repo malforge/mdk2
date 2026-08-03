@@ -43,6 +43,10 @@
         <EmbeddedResource Include="pbwhitelist.dat">
             <LogicalName>pbwhitelist.dat</LogicalName>
         </EmbeddedResource>
+        <None Remove="pbprologue.dat"/>
+        <EmbeddedResource Include="pbprologue.dat">
+            <LogicalName>pbprologue.dat</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
     <Target Name="AddNuGetDlls" BeforeTargets="_GetPackageFiles">

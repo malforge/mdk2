@@ -101,6 +101,75 @@ public class ExtractorPlugin : IPlugin
         }
     }
     
+    /// <summary>
+    ///     Dumps the using directives the programmable block puts in front of every script.
+    /// </summary>
+    /// <remarks>
+    ///     Taken from the wrapper the game generates around a script rather than from the fields that feed it. Those
+    ///     fields turned out to be two separate mechanisms, plain namespace imports and type aliases, and there is no
+    ///     guarantee a future version will not add a third. The generated source is where they all end up, so reading it
+    ///     keeps this correct without anyone having to notice the change.
+    ///     If the game stops producing something recognisable, this complains loudly and leaves the existing file alone
+    ///     rather than writing a short list that would make the analyzer flag correct code.
+    /// </remarks>
+    void WritePrologue(string pbPrologue)
+    {
+        if (string.IsNullOrEmpty(pbPrologue))
+            return;
+
+        MyLog.Default.WriteLineAndConsole("MDK2 Extractor: Retrieving the ingame script prologue");
+
+        var method = typeof(MyScriptCompiler).GetMethod("GetInGameScript", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        if (method == null)
+        {
+            MyLog.Default.WriteLineAndConsole("MDK2 Extractor: ERROR: MyScriptCompiler no longer has GetInGameScript. The prologue was NOT written.");
+            return;
+        }
+
+        object script;
+        try
+        {
+            script = method.Invoke(MyScriptCompiler.Static, new object[] { "", "Program", "MyGridProgram", "public" });
+        }
+        catch (Exception e)
+        {
+            MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: ERROR: GetInGameScript threw {e.GetType().Name}. The prologue was NOT written.");
+            return;
+        }
+
+        const BindingFlags anyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        var code = script?.GetType().GetProperty("Code", anyInstance)?.GetValue(script) as string
+                   ?? script?.GetType().GetField("Code", anyInstance)?.GetValue(script) as string;
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            MyLog.Default.WriteLineAndConsole("MDK2 Extractor: ERROR: GetInGameScript produced no code. The prologue was NOT written.");
+            return;
+        }
+
+        // The prologue is the run of using directives the generated file opens with; everything after that is the
+        // wrapper class and the script's own code.
+        var prologue = new List<string>();
+        foreach (var rawLine in code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
+        {
+            var line = rawLine.Trim();
+            if (line.Length == 0)
+                continue;
+            if (!line.StartsWith("using ", StringComparison.Ordinal) || !line.EndsWith(";", StringComparison.Ordinal))
+                break;
+            prologue.Add(line);
+        }
+
+        if (prologue.Count == 0)
+        {
+            MyLog.Default.WriteLineAndConsole("MDK2 Extractor: ERROR: the generated script opens with no using directives. The prologue was NOT written.");
+            return;
+        }
+
+        MyLog.Default.WriteLineAndConsole($"MDK2 Extractor: Writing pb prologue {prologue.Count} directives {pbPrologue}");
+        File.WriteAllText(pbPrologue, string.Join(Environment.NewLine, prologue));
+    }
+
+
     async void MySession_AfterLoading()
     {
         await Task.Delay(TimeSpan.FromSeconds(1));
@@ -114,7 +183,11 @@ public class ExtractorPlugin : IPlugin
         MySandboxGame.ExitThreadSafe();
     }
     
-    void GrabWhitelist() => WriteWhitelists(Extractor.Current.ModWhitelist, Extractor.Current.PbWhitelist);
+    void GrabWhitelist()
+    {
+        WriteWhitelists(Extractor.Current.ModWhitelist, Extractor.Current.PbWhitelist);
+        WritePrologue(Extractor.Current.PbPrologue);
+    }
     
     async Task GrabTerminalAsync()
     {

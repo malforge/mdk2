@@ -1,3 +1,7 @@
+v.2.2.0
+    - Using directives your script relies on but that do not survive packing are now a warning. That covers importing a namespace the programmable block does not provide, using aliases, and static imports. Mixing up the mod API namespaces with the ingame ones is the usual cause, so where an ingame version of the namespace exists, the warning points at it. Imports your code does not actually need are left alone, since dropping those breaks nothing.
+    - Referring to one of your own namespaces by name, such as MyHelpers.Utils, is now an error. Namespaces are removed when your script is packed, so the game would reject the packed script.
+
 v.2.1.17
     - Added MDK04 warnings for runtime references to source-defined attribute types trimmed during packing.
 
