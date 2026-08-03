@@ -65,6 +65,10 @@ jobs:
           "bootstrap exited with code $LASTEXITCODE"
           "steamcmd installed in $([math]::Round($sw.Elapsed.TotalSeconds, 1))s"
 
+          # The bootstrap's exit code is expected to be non-zero and means nothing here, but the step would
+          # otherwise inherit it and fail: GitHub's pwsh wrapper ends every step by exiting with $LASTEXITCODE.
+          exit 0
+
       - name: Download the Space Engineers dedicated server
         shell: pwsh
         run: |
