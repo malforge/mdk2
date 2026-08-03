@@ -3,6 +3,7 @@
 // Copyright 2023-2026 The MDK² Authors
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -64,6 +65,7 @@ namespace Mdk2.PbAnalyzers
         HashSet<string> _allowedNamespaces;
         string _projectDir;
         Matcher _mdkIgnorePaths;
+        ConcurrentDictionary<SyntaxTree, bool> _ignorableTrees;
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; }
             = ImmutableArray.Create(
@@ -111,6 +113,8 @@ namespace Mdk2.PbAnalyzers
 
         void RegisterActions(CompilationStartAnalysisContext context)
         {
+            // Fresh per compilation, alongside the other per-compilation state on this analyzer.
+            _ignorableTrees = new ConcurrentDictionary<SyntaxTree, bool>();
             context.Options.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue("build_property.projectdir", out _projectDir);
             _projectDir = _projectDir ?? ".";
             
@@ -296,29 +300,14 @@ namespace Mdk2.PbAnalyzers
             // Unused imports are extremely common - old templates still seed System.Threading.Tasks, and a class nested
             // inside Program picks up its members without the static import that names them - so reporting them would be
             // noise on code that works perfectly.
-            var unnecessary = new HashSet<TextSpan>();
-            foreach (var diagnostic in model.GetDiagnostics(null, context.CancellationToken))
-            {
-                switch (diagnostic.Id)
-                {
-                    // Unnecessary using directive, duplicate using directive, unresolvable namespace.
-                    case "CS8019":
-                    case "CS0105":
-                    case "CS0246":
-                    case "CS0234":
-                        unnecessary.Add(diagnostic.Location.SourceSpan);
-                        break;
-                }
-            }
-
+            //
+            // The usage test is deliberately left until a directive has otherwise earned a warning, since it walks the
+            // file and almost every directive is ruled out before then by much cheaper checks.
             foreach (var usingDirective in usingDirectives)
-            {
-                if (!unnecessary.Contains(usingDirective.Span))
-                    AnalyzeUsingDirective(context, usingDirective);
-            }
+                AnalyzeUsingDirective(context, usingDirective, root);
         }
 
-        void AnalyzeUsingDirective(SemanticModelAnalysisContext context, UsingDirectiveSyntax usingDirective)
+        void AnalyzeUsingDirective(SemanticModelAnalysisContext context, UsingDirectiveSyntax usingDirective, SyntaxNode root)
         {
             var name = usingDirective.Name;
             if (name == null)
@@ -331,6 +320,9 @@ namespace Mdk2.PbAnalyzers
                 if (Prologue.DeclaresAlias(usingDirective.Alias.Name.ToString(), name.ToString()))
                     return;
 
+                if (!DirectiveUsage.IsUsed(usingDirective, context.SemanticModel, root, context.CancellationToken))
+                    return;
+
                 context.ReportDiagnostic(Diagnostic.Create(UnavailableUsingDirectiveRule, usingDirective.Alias.Name.GetLocation(),
                     "The alias '" + usingDirective.Alias.Name + "'", ""));
                 return;
@@ -339,6 +331,9 @@ namespace Mdk2.PbAnalyzers
             // The programmable block imports namespaces, never types, so a static import is never reinstated.
             if (usingDirective.StaticKeyword.IsKind(SyntaxKind.StaticKeyword))
             {
+                if (!DirectiveUsage.IsUsed(usingDirective, context.SemanticModel, root, context.CancellationToken))
+                    return;
+
                 context.ReportDiagnostic(Diagnostic.Create(UnavailableUsingDirectiveRule, name.GetLocation(),
                     "The static import of '" + name + "'", ""));
                 return;
@@ -354,6 +349,9 @@ namespace Mdk2.PbAnalyzers
 
             var namespaceName = namespaceSymbol.ToDisplayString();
             if (Prologue.Provides(namespaceName))
+                return;
+
+            if (!DirectiveUsage.IsUsed(usingDirective, context.SemanticModel, root, context.CancellationToken))
                 return;
 
             // The mod API namespaces mirror the ingame ones, and picking the wrong one is the usual reason to end up here.
@@ -456,7 +454,9 @@ namespace Mdk2.PbAnalyzers
 
         void AnalyzeMemberAccessNamespace(SyntaxNodeAnalysisContext context)
         {
-            if (IsIgnorableNode(context))
+            // Cheapest test first: member access is one of the most common nodes there is, and almost none of it sits
+            // where a namespace qualifier could.
+            if (!CouldQualifyANamespace(context.Node) || IsIgnorableNode(context))
                 return;
             AnalyzeNamespaceReference(context);
         }
@@ -536,7 +536,27 @@ namespace Mdk2.PbAnalyzers
 
         bool IsIgnorableNode(SyntaxNodeAnalysisContext context) => IsIgnorableTree(context.Node.SyntaxTree);
 
+        /// <summary>
+        ///     Whether this file is outside the analyzer's remit. Cached per file: the answer cannot change within a
+        ///     compilation, and the uncached version globs the path on every call, which the syntax node rules make many
+        ///     thousands of times per file.
+        /// </summary>
         bool IsIgnorableTree(SyntaxTree syntaxTree)
+        {
+            var cache = _ignorableTrees;
+            if (cache == null)
+                return IsIgnorableTreeUncached(syntaxTree);
+
+            bool ignorable;
+            if (cache.TryGetValue(syntaxTree, out ignorable))
+                return ignorable;
+
+            ignorable = IsIgnorableTreeUncached(syntaxTree);
+            cache[syntaxTree] = ignorable;
+            return ignorable;
+        }
+
+        bool IsIgnorableTreeUncached(SyntaxTree syntaxTree)
         {
             if (!_whitelist.IsEnabled || _whitelist.IsEmpty())
                 return true;

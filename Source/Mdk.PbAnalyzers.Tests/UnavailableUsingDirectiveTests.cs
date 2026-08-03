@@ -337,6 +337,51 @@ public class UnavailableUsingDirectiveTests
     }
 
     [Test]
+    public void ImportKeptBesideFullyQualifiedUse_DoesNotWarn()
+    {
+        // Writing the type out in full is the correct way to use an unimported namespace, and people often leave the
+        // now-pointless using behind. The member call through ?. must not be mistaken for needing the import.
+        var result = PbAnalyzerRunner.Run("""
+                                          using System.Text.RegularExpressions;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper
+                                              {
+                                                  readonly System.Text.RegularExpressions.Regex _regex = null;
+                                                  public bool IsMatch(string input) { return _regex.IsMatch(input); }
+                                              }
+                                          }
+                                          """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05"), Is.Empty, $"the qualified code does not need the import:\n{result.Describe()}");
+    }
+
+    [Test]
+    public void ImportUsedOnlyThroughANamedArgument_DoesNotWarn()
+    {
+        // A parameter name is not a type reference, so it cannot be what makes an import necessary.
+        var result = PbAnalyzerRunner.Run("""
+                                          using System.Globalization;
+
+                                          namespace IngameScript
+                                          {
+                                              public class Helper
+                                              {
+                                                  public string Format(double value)
+                                                  {
+                                                      return value.ToString(provider: System.Globalization.CultureInfo.InvariantCulture);
+                                                  }
+                                              }
+                                          }
+                                          """);
+
+        Assert.That(result.CompilerErrors, Is.Empty, result.Describe());
+        Assert.That(result.OfRule("MDK05"), Is.Empty, result.Describe());
+    }
+
+    [Test]
     public void UnusedImport_DoesNotWarn()
     {
         // Old templates and stock Visual Studio file headers seed imports nothing uses. Nothing depends on them, so
