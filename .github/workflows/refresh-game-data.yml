@@ -1,7 +1,8 @@
-name: Refresh Game Data
+name: Propose Game Data Update
 
 # Extracts the current game data and, if the analyzer whitelists have moved, opens a pull request that updates
-# them and bumps the patch version of whichever analyzer packages are affected.
+# them and bumps the patch version of whichever analyzer packages are affected. Merging that pull request
+# releases those packages, so this proposes a release rather than merely refreshing data.
 #
 # Manual only, and deliberately so: it costs an 8 GB download, and deciding that a game update is worth a release
 # is a judgement call rather than something to leave to a timer.
