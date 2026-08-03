@@ -1,3 +1,7 @@
+v.2.2.0
+    - Importing a namespace the programmable block does not provide is now a warning. Mixing up the mod API namespaces with the ingame ones is the usual cause, so where an ingame version of the namespace exists, the warning points at it.
+    - Referring to one of your own namespaces by name, such as MyHelpers.Utils, is now an error. Namespaces are removed when your script is packed, so the game would reject the packed script.
+
 v.2.1.17
     - Added MDK04 warnings for runtime references to source-defined attribute types trimmed during packing.
 

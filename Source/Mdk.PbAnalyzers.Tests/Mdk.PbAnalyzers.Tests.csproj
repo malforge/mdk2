@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Mdk2.PbAnalyzers.Tests</RootNamespace>
+        <Configurations>Release;Debug</Configurations>
+        <Platforms>x64</Platforms>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
+        <!-- The analyzer marks this PrivateAssets="All" for packaging reasons, so it has to be pulled in explicitly here. -->
+        <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="9.0.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+        <PackageReference Include="NUnit" Version="4.3.2" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- ReferenceOutputAssembly is needed because the analyzer project sets IncludeBuildOutput=false for packing. -->
+        <ProjectReference Include="..\Mdk.PbAnalyzers\Mdk.PbAnalyzers.csproj" ReferenceOutputAssembly="true" />
+    </ItemGroup>
+
+</Project>

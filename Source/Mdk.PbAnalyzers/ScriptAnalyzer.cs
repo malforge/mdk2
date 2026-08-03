@@ -36,6 +36,45 @@ namespace Mdk2.PbAnalyzers
         internal static readonly DiagnosticDescriptor RuntimeUseOfTrimmedAttributeRule
             = new DiagnosticDescriptor("MDK04", "Runtime Use Of Trimmed Attribute", "Tooling-only attribute type '{0}' is used by runtime code. Attribute trimming removes this type from packed source.", "Attribute Trimming", DiagnosticSeverity.Error, true);
 
+        internal static readonly DiagnosticDescriptor UnavailableNamespaceImportRule
+            = new DiagnosticDescriptor("MDK05", "Namespace Not Imported By The Programmable Block",
+                "The programmable block does not import '{0}', and packing removes this using directive.{1}", "Whitelist", DiagnosticSeverity.Warning, true,
+                "The programmable block compiles scripts with a fixed set of imported namespaces, and packing strips all using directives from the final script. "
+                + "Types from any other namespace must be written fully qualified, assuming they are whitelisted at all.");
+
+        internal static readonly DiagnosticDescriptor ScriptNamespaceReferenceRule
+            = new DiagnosticDescriptor("MDK06", "Reference To A Script Namespace",
+                "The namespace '{0}' only exists in your project and is removed during packing, so this reference will not compile ingame", "Whitelist", DiagnosticSeverity.Error, true,
+                "The programmable block does not support namespaces, so packing unwraps every namespace your script declares. "
+                + "Names qualified through one of those namespaces have nothing left to resolve against ingame. Refer to the type directly instead.");
+
+        /// <summary>
+        ///     The namespaces the programmable block imports on the script's behalf. Kept in sync with the using directives of
+        ///     the script template (Source/ScriptTemplates/content/0_Script/Program.cs).
+        /// </summary>
+        static readonly HashSet<string> PbImplicitNamespaces = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Sandbox.Game.EntityComponents",
+            "Sandbox.ModAPI.Ingame",
+            "Sandbox.ModAPI.Interfaces",
+            "SpaceEngineers.Game.ModAPI.Ingame",
+            "System",
+            "System.Collections",
+            "System.Collections.Generic",
+            "System.Collections.Immutable",
+            "System.Linq",
+            "System.Text",
+            "VRage",
+            "VRage.Collections",
+            "VRage.Game",
+            "VRage.Game.Components",
+            "VRage.Game.GUI.TextPanel",
+            "VRage.Game.ModAPI.Ingame",
+            "VRage.Game.ModAPI.Ingame.Utilities",
+            "VRage.Game.ObjectBuilders.Definitions",
+            "VRageMath"
+        };
+
         readonly Whitelist _whitelist = new Whitelist();
 
         // readonly List<Uri> _ignoredFolders = new List<Uri>();
@@ -50,7 +89,9 @@ namespace Mdk2.PbAnalyzers
                 ProhibitedMemberRule,
                 ProhibitedLanguageElementRule,
                 InconsistentNamespaceDeclarationRule,
-                RuntimeUseOfTrimmedAttributeRule);
+                RuntimeUseOfTrimmedAttributeRule,
+                UnavailableNamespaceImportRule,
+                ScriptNamespaceReferenceRule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -151,6 +192,14 @@ namespace Mdk2.PbAnalyzers
                 SyntaxKind.Parameter);
             context.RegisterSyntaxNodeAction(AnalyzeNamespace,
                 SyntaxKind.ClassDeclaration);
+            context.RegisterSyntaxNodeAction(AnalyzeUsingDirective,
+                SyntaxKind.UsingDirective);
+            // Member access is only visited for the sake of namespace references. In expression position a namespace of
+            // more than one segment, such as A.B in A.B.SomeType.Method(), is a member access rather than a qualified
+            // name, so without this it would go unnoticed. The whitelist rules deliberately do not run here; they have
+            // never looked at member access and this is not the place to change that.
+            context.RegisterSyntaxNodeAction(AnalyzeMemberAccessNamespace,
+                SyntaxKind.SimpleMemberAccessExpression);
         }
         
         void LoadSettingsFromIni(ImmutableArray<AdditionalText> additionalFiles, CancellationToken cancellationToken,
@@ -244,6 +293,42 @@ namespace Mdk2.PbAnalyzers
             context.ReportDiagnostic(diagnostic);
         }
 
+        void AnalyzeUsingDirective(SyntaxNodeAnalysisContext context)
+        {
+            if (IsIgnorableNode(context))
+                return;
+
+            var usingDirective = (UsingDirectiveSyntax)context.Node;
+
+            // Aliases and static imports do not survive packing either, but that is a different problem with different
+            // advice attached, so this rule stays out of it.
+            if (usingDirective.Alias != null || usingDirective.StaticKeyword.IsKind(SyntaxKind.StaticKeyword))
+                return;
+
+            var name = usingDirective.Name;
+            if (name == null)
+                return;
+
+            var namespaceSymbol = context.SemanticModel.GetSymbolInfo(name, context.CancellationToken).Symbol as INamespaceSymbol;
+            if (namespaceSymbol == null)
+                return;
+
+            // Packing unwraps the script's own namespaces, so importing one of them is harmless.
+            if (namespaceSymbol.IsInSource())
+                return;
+
+            var namespaceName = namespaceSymbol.ToDisplayString();
+            if (PbImplicitNamespaces.Contains(namespaceName))
+                return;
+
+            // The mod API namespaces mirror the ingame ones, and picking the wrong one is the usual reason to end up here.
+            var hint = PbImplicitNamespaces.Contains(namespaceName + ".Ingame")
+                ? " Did you mean '" + namespaceName + ".Ingame'?"
+                : "";
+
+            context.ReportDiagnostic(Diagnostic.Create(UnavailableNamespaceImportRule, name.GetLocation(), namespaceName, hint));
+        }
+
         void AnalyzeDeclaration(SyntaxNodeAnalysisContext context)
         {
             var node = context.Node;
@@ -293,6 +378,11 @@ namespace Mdk2.PbAnalyzers
                 return;
             }
 
+            // Namespace references have to be handled before the qualified name shortcut below, because that shortcut
+            // deliberately skips the namespace part of a qualified name.
+            if (AnalyzeNamespaceReference(context))
+                return;
+
             // We'll check the qualified names on their own.
             if (IsQualifiedName(node.Parent))
                 return;
@@ -326,6 +416,86 @@ namespace Mdk2.PbAnalyzers
                 return;
             diagnostic = Diagnostic.Create(ProhibitedMemberRule, node.GetLocation(), info.Symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
             context.ReportDiagnostic(diagnostic);
+        }
+
+        void AnalyzeMemberAccessNamespace(SyntaxNodeAnalysisContext context)
+        {
+            if (IsIgnorableNode(context))
+                return;
+            AnalyzeNamespaceReference(context);
+        }
+
+        /// <summary>
+        ///     Reports names qualified through a namespace the script itself declares, since packing unwraps those
+        ///     namespaces and leaves the qualification dangling.
+        /// </summary>
+        /// <returns>
+        ///     <c>true</c> if the node resolved to a namespace, in which case it needs no further analysis.
+        /// </returns>
+        bool AnalyzeNamespaceReference(SyntaxNodeAnalysisContext context)
+        {
+            var node = context.Node;
+
+            // Purely syntactic, and deliberately so: without it every identifier in the file would cost a symbol lookup,
+            // including the ones the whitelist rules below skip outright. Anything ruled out here either cannot qualify a
+            // namespace or is a segment whose enclosing node gets checked instead.
+            if (!CouldQualifyANamespace(node))
+                return false;
+
+            var namespaceSymbol = context.SemanticModel.GetSymbolInfo(node, context.CancellationToken).Symbol as INamespaceSymbol;
+            if (namespaceSymbol == null || namespaceSymbol.IsGlobalNamespace)
+                return false;
+
+            // Report only the outermost segment, so that A.B.C.SomeType reports once, against "A.B.C".
+            if (node.Parent != null && context.SemanticModel.GetSymbolInfo(node.Parent, context.CancellationToken).Symbol is INamespaceSymbol)
+                return true;
+
+            // A namespace declaration names its namespace rather than referencing it, and using directives are MDK05's business.
+            if (IsNamespaceDeclarationOrUsingDirectiveName(node))
+                return true;
+
+            // A namespace that also exists outside the project survives packing, so only purely script-declared ones break.
+            if (!namespaceSymbol.IsInSource())
+                return true;
+
+            context.ReportDiagnostic(Diagnostic.Create(ScriptNamespaceReferenceRule, node.GetLocation(), namespaceSymbol.ToDisplayString()));
+            return true;
+        }
+
+        /// <summary>
+        ///     Whether a node sits where the leading, namespace-carrying part of a qualified name would sit.
+        /// </summary>
+        static bool CouldQualifyANamespace(SyntaxNode node)
+        {
+            switch (node.Parent)
+            {
+                case QualifiedNameSyntax qualified:
+                    return qualified.Left == node;
+                case MemberAccessExpressionSyntax memberAccess:
+                    return memberAccess.Expression == node;
+                // The alias and name halves say nothing on their own; the alias-qualified name as a whole is checked instead.
+                case AliasQualifiedNameSyntax _:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        static bool IsNamespaceDeclarationOrUsingDirectiveName(SyntaxNode node)
+        {
+            var current = node;
+            while (current.Parent is NameSyntax)
+                current = current.Parent;
+
+            switch (current.Parent)
+            {
+                case BaseNamespaceDeclarationSyntax namespaceDeclaration:
+                    return namespaceDeclaration.Name == current;
+                case UsingDirectiveSyntax usingDirective:
+                    return usingDirective.Name == current;
+                default:
+                    return false;
+            }
         }
 
         bool IsIgnorableNode(SyntaxNodeAnalysisContext context)
