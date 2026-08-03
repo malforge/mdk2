@@ -1,0 +1,150 @@
+name: Extract Game Data
+
+# Manual only. This pulls the Space Engineers dedicated server (~8 GB) from Steam, so it is meant to be run
+# when Keen ships an update, not on every push.
+#
+# The dedicated server is a separate free Steam application (298740) which installs anonymously, so nothing here
+# requires an account, a licence, or a copy of the game. No game content is published: the only things that leave
+# the runner are the small data files MDK ships with.
+on:
+  workflow_dispatch:
+    inputs:
+      steamBranch:
+        description: 'Steam branch of the dedicated server to install (public = live)'
+        required: true
+        default: 'public'
+
+jobs:
+  extract:
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    env:
+      SE_INSTALL_DIR: C:\se-dedicated
+      OUTPUT_DIR: ${{ github.workspace }}\extracted
+
+    steps:
+      - name: Report runner disk space
+        shell: pwsh
+        run: |
+          # The dedicated server needs roughly 8 GB. This step exists so a failure here is obvious rather than
+          # showing up as a confusing steamcmd error halfway through.
+          $drives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null }
+          $drives | ForEach-Object {
+            "{0}: {1} GB free of {2} GB" -f $_.Name,
+              [math]::Round($_.Free / 1GB, 1),
+              [math]::Round(($_.Used + $_.Free) / 1GB, 1)
+          }
+          $system = Get-PSDrive -Name C
+          "::notice::C: has $([math]::Round($system.Free / 1GB, 1)) GB free before install"
+          if ($system.Free -lt 12GB) {
+            "::warning::Less than 12 GB free on C:. The dedicated server install may not fit."
+          }
+
+      - uses: actions/checkout@v5
+
+      - name: Install steamcmd
+        shell: pwsh
+        run: |
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          New-Item -ItemType Directory -Force -Path C:\steamcmd | Out-Null
+          Invoke-WebRequest -Uri 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip' -OutFile C:\steamcmd\steamcmd.zip
+          Expand-Archive -Path C:\steamcmd\steamcmd.zip -DestinationPath C:\steamcmd -Force
+          "steamcmd installed in $([math]::Round($sw.Elapsed.TotalSeconds, 1))s"
+
+      - name: Download the Space Engineers dedicated server
+        shell: pwsh
+        run: |
+          # This is the expensive step and the whole reason this workflow is manual. It is timed so we know what
+          # it actually costs rather than guessing.
+          $branch = '${{ inputs.steamBranch }}'
+          if ($branch -ne 'public') {
+            "::warning::Installing the '$branch' branch. Data extracted from a pre-release build must not be committed as if it were live."
+          }
+
+          # "public" is the default branch and is selected by leaving -beta off entirely.
+          $update = @('+app_update', '298740')
+          if ($branch -and $branch -ne 'public') { $update += @('-beta', $branch) }
+
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          & C:\steamcmd\steamcmd.exe +force_install_dir $env:SE_INSTALL_DIR +login anonymous @update +quit
+          $code = $LASTEXITCODE
+          $elapsed = [math]::Round($sw.Elapsed.TotalMinutes, 1)
+          "::notice::steamcmd finished in $elapsed minutes with exit code $code"
+          if ($code -ne 0) { throw "steamcmd failed with exit code $code" }
+
+          $bin = Join-Path $env:SE_INSTALL_DIR 'DedicatedServer64'
+          if (-not (Test-Path (Join-Path $bin 'SpaceEngineersDedicated.exe'))) {
+            throw "The dedicated server was not installed to $bin"
+          }
+
+          $size = (Get-ChildItem $env:SE_INSTALL_DIR -Recurse -File -ErrorAction SilentlyContinue |
+                   Measure-Object -Property Length -Sum).Sum
+          $free = (Get-PSDrive -Name C).Free
+          "::notice::Installed size $([math]::Round($size / 1GB, 2)) GB, C: now has $([math]::Round($free / 1GB, 1)) GB free"
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build the extractor
+        shell: pwsh
+        env:
+          MDK_SE_DEDICATED_BIN: C:\se-dedicated\DedicatedServer64
+        run: |
+          msbuild Source\Mdk.Extractor\Mdk.Extractor.csproj -t:Restore -v:quiet -nologo
+          msbuild Source\Mdk.Extractor\Mdk.Extractor.csproj -t:Build -p:Configuration=Release -p:Platform=x64 -v:minimal -nologo
+
+      - name: Extract
+        shell: pwsh
+        env:
+          MDK_SE_DEDICATED_BIN: C:\se-dedicated\DedicatedServer64
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:OUTPUT_DIR | Out-Null
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          & Source\Mdk.Extractor\bin\x64\Release\net48\mdkx.exe `
+              -modwhitelist "$env:OUTPUT_DIR\modwhitelist.dat" `
+              -pbwhitelist  "$env:OUTPUT_DIR\pbwhitelist.dat" `
+              -pbprologue   "$env:OUTPUT_DIR\pbprologue.dat" `
+              -terminal     "$env:OUTPUT_DIR\terminal.dat" `
+              -instance     "${{ runner.temp }}\se-instance" `
+              -timeout      600
+          $code = $LASTEXITCODE
+          "::notice::Extraction finished in $([math]::Round($sw.Elapsed.TotalSeconds, 1))s with exit code $code"
+          if ($code -ne 0) { throw "The extractor failed with exit code $code" }
+
+      - name: Compare against what is committed
+        shell: pwsh
+        run: |
+          # Reports differences rather than failing on them: a game update is supposed to change these files.
+          $pairs = @(
+            @('pbwhitelist.dat',  'Source\Mdk.PbAnalyzers\pbwhitelist.dat'),
+            @('modwhitelist.dat', 'Source\Mdk.ModAnalyzers\modwhitelist.dat'),
+            @('pbprologue.dat',   'Source\Mdk.PbAnalyzers\pbprologue.dat')
+          )
+          $lines = @('| File | Committed | Extracted | Changed |', '| --- | --- | --- | --- |')
+          foreach ($pair in $pairs) {
+            $new = Join-Path $env:OUTPUT_DIR $pair[0]
+            $old = $pair[1]
+            $newLines = @(Get-Content $new)
+            $oldLines = if (Test-Path $old) { @(Get-Content $old) } else { @() }
+            $changed = [bool](Compare-Object $oldLines $newLines -SyncWindow 0)
+            $lines += "| $($pair[0]) | $($oldLines.Count) | $($newLines.Count) | $(if ($changed) { 'yes' } else { 'no' }) |"
+          }
+          $terminal = [xml](Get-Content (Join-Path $env:OUTPUT_DIR 'terminal.dat') -Raw)
+          $lines += "| terminal.dat | | $($terminal.terminals.block.Count) blocks | |"
+          $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Upload the extracted data
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-data
+          path: ${{ env.OUTPUT_DIR }}/*.dat
+          if-no-files-found: error
+
+      - name: Upload the dedicated server log
+        # The server's own log is the only thing that explains a failed run.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dedicated-server-log
+          path: ${{ runner.temp }}/se-instance/*.log
+          if-no-files-found: ignore
