@@ -57,6 +57,12 @@ jobs:
           New-Item -ItemType Directory -Force -Path C:\steamcmd | Out-Null
           Invoke-WebRequest -Uri 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip' -OutFile C:\steamcmd\steamcmd.zip
           Expand-Archive -Path C:\steamcmd\steamcmd.zip -DestinationPath C:\steamcmd -Force
+
+          # The archive contains a bootstrapper, not steamcmd itself. Its first run downloads the real client and
+          # then exits with code 7 without doing anything it was asked to, so it is got out of the way here rather
+          # than being mistaken for a failed download later.
+          & C:\steamcmd\steamcmd.exe +quit
+          "bootstrap exited with code $LASTEXITCODE"
           "steamcmd installed in $([math]::Round($sw.Elapsed.TotalSeconds, 1))s"
 
       - name: Download the Space Engineers dedicated server
@@ -76,8 +82,17 @@ jobs:
           if ($branch -and $branch -ne 'public') { $update += @('-beta', $branch) }
 
           $sw = [Diagnostics.Stopwatch]::StartNew()
-          & C:\steamcmd\steamcmd.exe +force_install_dir $env:SE_INSTALL_DIR +login anonymous @update +quit
-          $code = $LASTEXITCODE
+          $code = -1
+          foreach ($attempt in 1..3) {
+            & C:\steamcmd\steamcmd.exe +force_install_dir $env:SE_INSTALL_DIR +login anonymous @update +quit
+            $code = $LASTEXITCODE
+            if ($code -eq 0) { break }
+
+            # 7 means it restarted itself instead of running the command, which is not a real failure. Anything
+            # else here is usually a transient CDN problem, and both are worth one more go before giving up on an
+            # 8 GB download.
+            "::warning::steamcmd attempt $attempt exited with code $code"
+          }
           $elapsed = [math]::Round($sw.Elapsed.TotalMinutes, 1)
           "::notice::steamcmd finished in $elapsed minutes with exit code $code"
           if ($code -ne 0) { throw "steamcmd failed with exit code $code" }
