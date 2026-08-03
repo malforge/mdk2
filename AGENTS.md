@@ -21,6 +21,26 @@
 ❌ "Update code" (what code?)
 ❌ "Made some changes to the packager" (what changes?)
 
+## Pull Request Descriptions (Reviewer-Focused)
+
+**Just the facts of what is added or changed.**
+
+### Rules
+- Open with one short paragraph of what and why, written for a reviewer who was not part of any
+  discussion around the change and has no context beyond the diff
+- Then bulleted lists grouped by area, one line per change
+- Verification results get one line, not a table
+- 25 lines or fewer
+- Call out anything untested, or that needs follow-up elsewhere
+- No narrative of how the work went, no justification of individual design choices, no restating the diff
+
+### Examples
+✅ "Extractor now runs the Space Engineers dedicated server instead of launching the retail game in-process, which makes it runnable in CI."
+✅ "Blocks keyed by `typedefinition` instead of a single interface; `type` retained so DocGen keeps working"
+✅ "Verified against previous output: whitelists identical, 0 blocks lost, 12 recovered"
+❌ "Two behaviours had to change: ..." (narrative)
+❌ "I kept X committed because otherwise Y would happen" (reasoning belongs in the conversation)
+
 # MDK2 Development Guide
 
 MDK² (Malware's Development Kit for Space Engineers) is a toolkit for developing programmable block scripts and mods for Space Engineers — NuGet packages, Roslyn analyzers, a CLI tool, and MSBuild integration.
