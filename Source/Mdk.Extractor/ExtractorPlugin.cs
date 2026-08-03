@@ -39,6 +39,8 @@ public class ExtractorPlugin : IPlugin
 {
     const string ObjectBuilderPrefix = "MyObjectBuilder_";
 
+    readonly Dictionary<MyObjectBuilderType, List<string>> _subtypesByTypeId = new();
+
     string _modWhitelist;
     string _pbWhitelist;
     string _pbPrologue;
@@ -222,6 +224,7 @@ public class ExtractorPlugin : IPlugin
         try
         {
             var byTypeId = new Dictionary<MyObjectBuilderType, MyCubeBlockDefinition>();
+            _subtypesByTypeId.Clear();
             foreach (var definition in MyDefinitionManager.Static.GetAllDefinitions())
             {
                 if (definition is not MyCubeBlockDefinition cbd)
@@ -232,6 +235,17 @@ public class ExtractorPlugin : IPlugin
                 // documenting a block from one of those would describe something nobody can place.
                 if (!cbd.Public)
                     continue;
+
+                // Every subtype sharing a type id, because only one of them is spawned and the actions and
+                // properties read off it apply to all of them. Without this a consumer cannot tell which blocks
+                // an entry actually covers.
+                if (!_subtypesByTypeId.TryGetValue(cbd.Id.TypeId, out var subtypes))
+                {
+                    subtypes = new List<string>();
+                    _subtypesByTypeId[cbd.Id.TypeId] = subtypes;
+                }
+                if (!string.IsNullOrEmpty(cbd.Id.SubtypeName))
+                    subtypes.Add(cbd.Id.SubtypeName);
 
                 if (byTypeId.TryGetValue(cbd.Id.TypeId, out var existing) && existing.CubeSize == MyCubeSize.Large)
                     continue;
@@ -315,9 +329,11 @@ public class ExtractorPlugin : IPlugin
 
                 MyLog.Default.Info($"Got {actions.Count} actions and {properties.Count} properties from {cbd.Id}");
 
+                _subtypesByTypeId.TryGetValue(cbd.Id.TypeId, out var subtypes);
                 blockInfos.Add(new BlockInfo(
                     typeDefinition,
                     cbd.Id.SubtypeName,
+                    subtypes ?? new List<string>(),
                     block.GetType(),
                     FindDeclaredInterface(block.GetType()),
                     FindIngameInterfaces(block.GetType()),
@@ -381,6 +397,7 @@ public class ExtractorPlugin : IPlugin
 public class BlockInfo(
     string typeDefinition,
     string subtypeName,
+    List<string> subtypes,
     Type blockType,
     Type declaredInterfaceType,
     List<Type> ingameInterfaces,
@@ -405,6 +422,12 @@ public class BlockInfo(
     /// </summary>
     public string SubtypeName { get; } = subtypeName;
 
+    /// <summary>
+    ///     Every subtype sharing this type definition. The actions and properties apply to all of them, not only
+    ///     to <see cref="SubtypeName" />.
+    /// </summary>
+    public ReadOnlyCollection<string> Subtypes { get; } = new(subtypes.Distinct().OrderBy(s => s, StringComparer.Ordinal).ToList());
+
     public Type BlockType { get; } = blockType;
 
     /// <summary>
@@ -422,10 +445,12 @@ public class BlockInfo(
     {
         var root = new XElement("block",
             new XAttribute("typedefinition", TypeDefinition ?? ""),
-            new XAttribute("subtype", SubtypeName ?? ""),
+            new XAttribute("sampledsubtype", SubtypeName ?? ""),
             new XAttribute("class", BlockType.FullName ?? ""),
             new XAttribute("type", DeclaredInterfaceType?.FullName ?? ""));
 
+        foreach (var subtype in Subtypes)
+            root.Add(new XElement("subtype", new XAttribute("name", subtype)));
         foreach (var ingameInterface in IngameInterfaces)
             root.Add(new XElement("interface",
                 new XAttribute("name", ingameInterface.FullName ?? ""),
