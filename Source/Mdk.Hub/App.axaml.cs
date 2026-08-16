@@ -12,6 +12,7 @@ using Mdk.Hub.Features.Interop;
 using Mdk.Hub.Features.Projects;
 using Mdk.Hub.Features.Shell;
 using Mdk.Hub.Features.Snackbars;
+using Mdk.Hub.Features.Updates;
 
 namespace Mdk.Hub;
 
@@ -110,6 +111,19 @@ public class App : Application
 
             var shell = _container.Resolve<IShell>();
             shell.Start(args);
+
+            // An update the user already asked for installs itself here, once the Hub is out of its own way
+            desktop.Exit += (_, _) =>
+            {
+                try
+                {
+                    _container.Resolve<IUpdateManager>().ApplyHubUpdateOnExit();
+                }
+                catch (Exception e)
+                {
+                    logger.Error("Failed to install the downloaded Hub update on exit", e);
+                }
+            };
 
             logger.Info("MDK Hub application started successfully");
         }

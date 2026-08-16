@@ -45,17 +45,10 @@
                         Classes="success"
                         Padding="12,6" />
 
-                <!-- Update Hub button (downloads only) -->
+                <!-- The only step: once downloaded, the update installs itself when the Hub is closed -->
                 <Button Content="{Binding UpdateHubButtonText}"
                         Command="{Binding UpdateHubCommand}"
                         IsVisible="{Binding IsHubUpdateAvailable}"
-                        Classes="success"
-                        Padding="12,6" />
-
-                <!-- Install Now button (explicit user action) -->
-                <Button Content="Install Now"
-                        Command="{Binding InstallHubUpdateCommand}"
-                        IsVisible="{Binding IsReadyToInstall}"
                         Classes="success"
                         Padding="12,6" />
             </StackPanel>

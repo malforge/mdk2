@@ -52,12 +52,27 @@ public interface IUpdateManager
     // Update execution methods
 
     /// <summary>
-    ///     Updates the Hub application to the latest version using Velopack.
+    ///     Whether this Hub can update itself. False for development and portable builds.
+    /// </summary>
+    bool IsHubUpdateSupported { get; }
+
+    /// <summary>
+    ///     Whether a Hub update has been downloaded and is waiting to be installed when the Hub closes.
+    /// </summary>
+    bool IsHubUpdatePendingInstall { get; }
+
+    /// <summary>
+    ///     Downloads the latest Hub version, which then installs itself the next time the Hub is closed.
     /// </summary>
     /// <param name="progress">Optional progress reporter.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Update result indicating success/failure.</returns>
-    Task<UpdateResult> UpdateHubAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default);
+    Task<UpdateResult> DownloadHubUpdateAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Installs a downloaded Hub update once the Hub has exited. Called while shutting down.
+    /// </summary>
+    void ApplyHubUpdateOnExit();
 
     /// <summary>
     ///     Updates the MDK script templates to the latest version.
