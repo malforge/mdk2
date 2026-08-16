@@ -1,3 +1,7 @@
+v.2.2.9
+   - Updating the Hub is now a single step. Press "Update Hub" and that's it - the update installs itself the next time you close the Hub, so nothing interrupts what you were doing. The separate "Install Now" button is gone.
+   - Fixed: installing a Hub update downloaded the whole package a second time.
+
 v.2.2.8
    - Added option to open project directory instead of the project definition
 

@@ -534,21 +534,24 @@ public class UpdateManager : IUpdateManager
     // IUpdateManager update execution methods
 
     /// <summary>
-    ///     Executes a Hub update using the latest version information from the last successful check.
+    ///     Whether this Hub can update itself. False for development and portable builds.
     /// </summary>
-    public Task<UpdateResult> UpdateHubAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default)
-    {
-        if (LastKnownVersions?.HubVersion == null)
-        {
-            return Task.FromResult(new UpdateResult
-            {
-                Success = false,
-                ErrorMessage = "No Hub update information available. Run CheckForUpdatesAsync first."
-            });
-        }
+    public bool IsHubUpdateSupported => _hubUpdater.IsSupported;
 
-        return _hubUpdater.UpdateAsync(LastKnownVersions.HubVersion, progress, cancellationToken);
-    }
+    /// <summary>
+    ///     Whether a Hub update has been downloaded and is waiting to be installed when the Hub closes.
+    /// </summary>
+    public bool IsHubUpdatePendingInstall => _hubUpdater.IsUpdatePendingInstall;
+
+    /// <summary>
+    ///     Downloads the latest Hub version, which then installs itself the next time the Hub is closed.
+    /// </summary>
+    public Task<UpdateResult> DownloadHubUpdateAsync(IProgress<UpdateProgress>? progress = null, CancellationToken cancellationToken = default) => _hubUpdater.DownloadAsync(progress, cancellationToken);
+
+    /// <summary>
+    ///     Installs a downloaded Hub update once the Hub has exited.
+    /// </summary>
+    public void ApplyHubUpdateOnExit() => _hubUpdater.ApplyOnExit();
 
     /// <summary>
     ///     Executes a template package update using the latest version information from the last successful check.
