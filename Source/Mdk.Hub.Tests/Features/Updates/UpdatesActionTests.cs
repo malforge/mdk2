@@ -84,7 +84,28 @@ public class UpdatesActionTests
             Assert.That(action.IsDownloading, Is.False);
             Assert.That(action.IsHubUpdateAvailable, Is.False, "there is no second button to press");
             Assert.That(action.StatusMessage, Does.Contain("close the Hub"), "the user is told when it lands");
+            Assert.That(action.Title, Is.EqualTo("Update Ready"), "nothing is 'available' any more");
         });
+    }
+
+    [Test]
+    public void TheHeading_FollowsTheState()
+    {
+        var action = CreateAction(CreateUpdateManager(), A.Fake<IShell>(), out var reportVersionCheck);
+
+        reportVersionCheck(HubUpdateFound());
+        Assert.That(action.Title, Is.EqualTo("Updates Available"));
+
+        action.IsDownloading = true;
+        Assert.That(action.Title, Is.EqualTo("Downloading Update"));
+
+        action.IsDownloading = false;
+        action.IsPendingInstall = true;
+        Assert.That(action.Title, Is.EqualTo("Update Ready"));
+
+        // A templates update is still something the user has to act on, so the heading goes back
+        action.IsTemplateUpdateAvailable = true;
+        Assert.That(action.Title, Is.EqualTo("Updates Available"));
     }
 
     [Test]

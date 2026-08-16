@@ -33,6 +33,8 @@ public class UpdatesAction : ActionItem
 
     string _statusMessage = "Checking for updates...";
 
+    string _title = "Updates Available";
+
     string _updateHubButtonText = "Update Hub";
 
     /// <summary>
@@ -165,6 +167,16 @@ public class UpdatesAction : ActionItem
     }
 
     /// <summary>
+    ///     Gets the card heading. Nothing is "available" once the update has been downloaded, so the heading follows the
+    ///     state rather than standing still.
+    /// </summary>
+    public string Title
+    {
+        get => _title;
+        private set => SetProperty(ref _title, value);
+    }
+
+    /// <summary>
     ///     Gets or sets the status message displayed to the user.
     /// </summary>
     public string StatusMessage
@@ -221,6 +233,12 @@ public class UpdatesAction : ActionItem
     {
         var hubVersion = HubVersionInfo?.LatestVersion ?? "unknown";
         var hubSuffix = HubVersionInfo?.IsPrerelease == true ? " (prerelease)" : "";
+
+        Title = IsDownloading
+            ? "Downloading Update"
+            : IsPendingInstall && !IsTemplateUpdateAvailable
+                ? "Update Ready"
+                : "Updates Available";
 
         if (IsDownloading)
             StatusMessage = $"Downloading Hub {hubVersion}{hubSuffix}... {DownloadProgress:P0}";
