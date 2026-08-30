@@ -1,4 +1,4 @@
-// Mdk.Extractor
+﻿// Mdk.Extractor
 //
 // Copyright 2023-2026 The MDK² Authors
 
@@ -225,17 +225,32 @@ public class ExtractorPlugin : IPlugin
         {
             var byTypeId = new Dictionary<MyObjectBuilderType, MyCubeBlockDefinition>();
             _subtypesByTypeId.Clear();
-            foreach (var definition in MyDefinitionManager.Static.GetAllDefinitions())
-            {
-                if (definition is not MyCubeBlockDefinition cbd)
-                    continue;
 
+            // The definition manager hands definitions back in the order they finished loading, which is not
+            // stable between runs. Sampling straight from it meant the subtype chosen for a type id - and so
+            // the actions and properties recorded for every block sharing that id - could differ from one
+            // extraction to the next with nothing having changed in the game. Ordering the candidates first
+            // makes a given game build always produce the same sample, and keeps a re-extraction free of diffs
+            // that mean nothing.
+            //
+            // Large sorts ahead of small so the existing preference is kept, then subtype name ordinally so
+            // the choice never depends on culture or load order.
+            var candidates = MyDefinitionManager.Static.GetAllDefinitions()
+                .OfType<MyCubeBlockDefinition>()
                 // Blocks the game hides from the build menu. Debug spheres are the obvious case, but this also
                 // keeps the sampled subtype of a mixed type honest: most wheel definitions are hidden, and
                 // documenting a block from one of those would describe something nobody can place.
-                if (!cbd.Public)
-                    continue;
+                .Where(cbd => cbd.Public)
+                .OrderBy(cbd => cbd.CubeSize == MyCubeSize.Large ? 0 : 1)
+                // A definition with no subtype name would otherwise sort to the front and be sampled, which
+                // records an empty sampledsubtype and tells a reader nothing. Take a named one when there is
+                // one, and fall back to the unnamed definition only when it is all a type id has.
+                .ThenBy(cbd => string.IsNullOrEmpty(cbd.Id.SubtypeName) ? 1 : 0)
+                .ThenBy(cbd => cbd.Id.SubtypeName ?? string.Empty, StringComparer.Ordinal)
+                .ToList();
 
+            foreach (var cbd in candidates)
+            {
                 // Every subtype sharing a type id, because only one of them is spawned and the actions and
                 // properties read off it apply to all of them. Without this a consumer cannot tell which blocks
                 // an entry actually covers.
@@ -247,9 +262,9 @@ public class ExtractorPlugin : IPlugin
                 if (!string.IsNullOrEmpty(cbd.Id.SubtypeName))
                     subtypes.Add(cbd.Id.SubtypeName);
 
-                if (byTypeId.TryGetValue(cbd.Id.TypeId, out var existing) && existing.CubeSize == MyCubeSize.Large)
-                    continue;
-                byTypeId[cbd.Id.TypeId] = cbd;
+                // First one wins: the ordering above already put the preferred candidate in front.
+                if (!byTypeId.ContainsKey(cbd.Id.TypeId))
+                    byTypeId[cbd.Id.TypeId] = cbd;
             }
 
             var largeDefs = new List<MyCubeBlockDefinition>();
