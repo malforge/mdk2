@@ -1,16 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
     <PropertyGroup>
-        <MdkBuildConfiguration>all</MdkBuildConfiguration>
-        <MdkArguments/>
-        <MdkInteractive>auto</MdkInteractive>
-        
-        <!-- Convert MdkInteractive property to CLI flag -->
+        <MdkBuildConfiguration Condition="'$(MdkBuildConfiguration)' == ''">all</MdkBuildConfiguration>
+        <MdkArguments Condition="'$(MdkArguments)' == ''"/>
         <!-- 'auto' = don't override, let INI/CLI defaults decide -->
         <!-- Empty or 'no' = explicitly disable interactive mode -->
-        <MdkInteractiveFlag Condition="'$(MdkInteractive)' == '' Or '$(MdkInteractive)' == 'no'">-interactive DoNothing</MdkInteractiveFlag>
-        <MdkInteractiveFlag Condition="'$(MdkInteractive)' != '' And '$(MdkInteractive)' != 'no' And '$(MdkInteractive)' != 'auto'">-interactive $(MdkInteractive)</MdkInteractiveFlag>
-        <!-- 'auto' = MdkInteractiveFlag stays empty = no flag passed -->
+        <!-- These defaults only apply if nothing else has set them: this file is imported before
+             the project body, so a project or Directory.Build.props value must win over them. -->
+        <MdkInteractive Condition="'$(MdkInteractive)' == ''">auto</MdkInteractive>
         
         <!-- Detect CLI binary based on OS -->
         <MdkRuntimeIdentifier Condition="'$(OS)' == 'Windows_NT'">win-x64</MdkRuntimeIdentifier>
@@ -25,6 +22,12 @@
     </ItemGroup>
 
     <Target Name="MdkPack" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == '$(MdkBuildConfiguration)' Or '$(MdkBuildConfiguration)' == 'all'">
+        <!-- Computed here, not during evaluation: the project body assigns MdkInteractive after
+             this file has already been imported. -->
+        <PropertyGroup>
+            <MdkInteractiveFlag Condition="'$(MdkInteractive)' == '' Or '$(MdkInteractive)' == 'no'">-interactive DoNothing</MdkInteractiveFlag>
+            <MdkInteractiveFlag Condition="'$(MdkInteractive)' != '' And '$(MdkInteractive)' != 'no' And '$(MdkInteractive)' != 'auto'">-interactive $(MdkInteractive)</MdkInteractiveFlag>
+        </PropertyGroup>
         <Exec Command="&quot;$(MdkCliPath)&quot; pack &quot;$(MSBuildProjectFullPath)&quot; $(MdkArguments) -configuration $(Configuration) $(MdkInteractiveFlag)" ContinueOnError="true">
             <Output TaskParameter="ExitCode" PropertyName="MdkExitCode"/>
         </Exec>

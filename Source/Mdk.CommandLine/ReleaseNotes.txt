@@ -1,3 +1,7 @@
+﻿v.2.2.11
+    - The <MdkInteractive> project property now takes effect again. Setting it to `no` in your project file or in Directory.Build.props disables Hub interaction, so building without the Hub installed no longer opens the "MDK Hub Not Found" page on every build. (#173)
+    - MDK properties set in Directory.Build.props (build configuration, extra arguments, interactive mode) are no longer overwritten by the packager's own defaults, so they can be configured once for a whole solution. (#173)
+
 v.2.2.10
     - Minification now strips redundant `readonly` and `private` modifiers from fields and members that have other non-accessibility modifiers (such as `static`, `const`, or `virtual`), producing smaller output.
 
