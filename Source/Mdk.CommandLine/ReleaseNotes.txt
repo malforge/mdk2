@@ -1,5 +1,6 @@
 ﻿v.2.2.12
     - Mod packing no longer copies MDK's own configuration files (mdk.ini, mdk.local.ini) into the deployed mod. Publishing a mod no longer exposes the local paths kept in your mdk.local.ini.
+    - Minification now removes the `public` modifier wherever the packed script does not need it: from types, which the rest of the script can still reach, and from members that are only used inside the type that declares them. Members the language or the game requires to be public - interface implementations, virtual, abstract and overriding members, and the Program constructor, Main and Save - keep it.
 
 v.2.2.11
     - The <MdkInteractive> project property now takes effect again. Setting it to `no` in your project file or in Directory.Build.props disables Hub interaction, so building without the Hub installed no longer opens the "MDK Hub Not Found" page on every build. (#173)
