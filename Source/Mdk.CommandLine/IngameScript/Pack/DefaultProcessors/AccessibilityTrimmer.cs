@@ -32,6 +32,14 @@ namespace Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 ///         A type is also kept public when it is exposed by a signature which stays public, because a type may not be
 ///         less accessible than a declaration that exposes it.
 ///     </para>
+///     <para>
+///         A <c>private</c>, <c>protected</c>, <c>internal</c> or <c>protected internal</c> modifier on a property,
+///         indexer or event accessor (<c>get</c>, <c>set</c>, <c>init</c>, <c>add</c>, <c>remove</c>) is removed as
+///         well, whether or not the declaration it belongs to keeps its own <c>public</c>. The packed script has no
+///         outside consumer that such a restriction protects, and a public property with a public setter compiles and
+///         behaves the same as one with a restricted setter, so a restricted accessor on a property that stays public
+///         is the only kind of accessor modifier this processor left untouched before this rule was added.
+///     </para>
 /// </remarks>
 [RunAfter<PartialMerger>]
 [RunAfter<RegionAnnotator>]
@@ -56,26 +64,36 @@ public class AccessibilityTrimmer : IDocumentProcessor
         if (semanticModel == null)
             return document;
 
-        var declarations = await new Analysis(document, root, semanticModel).FindTrimmableDeclarationsAsync();
-        if (declarations.Count == 0)
+        var analysis = new Analysis(document, root, semanticModel);
+        var declarations = await analysis.FindTrimmableDeclarationsAsync();
+        var accessorOnlyDeclarations = analysis.AccessorOnlyDeclarations;
+        if (declarations.Count == 0 && accessorOnlyDeclarations.Count == 0)
         {
             context.Console.Trace("No public modifiers could be removed.");
             return document;
         }
 
         context.Console.Trace($"Removing the public modifier from {declarations.Count} declaration(s).");
-        var newRoot = root.ReplaceNodes(declarations, (_, rewritten) => Trim(rewritten));
+        if (accessorOnlyDeclarations.Count > 0)
+            context.Console.Trace($"Removing a restricted accessor modifier from {accessorOnlyDeclarations.Count} declaration(s) that keep their public modifier.");
+
+        var fullyTrimmed = new HashSet<MemberDeclarationSyntax>(declarations);
+        var newRoot = root.ReplaceNodes(declarations.Concat(accessorOnlyDeclarations),
+            (original, rewritten) => Trim(rewritten, removePublic: fullyTrimmed.Contains(original)));
         return document.WithSyntaxRoot(newRoot);
     }
 
     /// <summary>
-    ///     Removes the <c>public</c> modifier from the declaration, and with it any accessibility modifier on its
-    ///     accessors: an accessor may only be more restrictive than the property or event it belongs to (CS0273), and
-    ///     once the declaration itself is private there is nothing left to restrict.
+    ///     Removes any accessibility modifier from the declaration's accessors -- an accessor may only be more
+    ///     restrictive than the property, indexer or event it belongs to (CS0273), and the packed script has no
+    ///     outside consumer left for that restriction to protect once the declaration is private, and none to begin
+    ///     with when it stays public. Also removes the declaration's own <c>public</c> modifier when
+    ///     <paramref name="removePublic" /> is <c>true</c>.
     /// </summary>
     /// <param name="declaration"></param>
+    /// <param name="removePublic"></param>
     /// <returns></returns>
-    static MemberDeclarationSyntax Trim(MemberDeclarationSyntax declaration)
+    static MemberDeclarationSyntax Trim(MemberDeclarationSyntax declaration, bool removePublic)
     {
         if (declaration is BasePropertyDeclarationSyntax { AccessorList: not null } property)
         {
@@ -84,7 +102,7 @@ public class AccessibilityTrimmer : IDocumentProcessor
                 SyntaxFactory.List(accessors.Select(accessor => accessor.WithoutAccessibilityModifiers()))));
         }
 
-        return declaration.WithoutModifier(SyntaxKind.PublicKeyword);
+        return removePublic ? declaration.WithoutModifier(SyntaxKind.PublicKeyword) : declaration;
     }
 
     /// <summary>
@@ -101,6 +119,15 @@ public class AccessibilityTrimmer : IDocumentProcessor
         readonly HashSet<MemberDeclarationSyntax> _trimmableMembers = new();
         readonly List<TypeCandidate> _typeCandidates = new();
         readonly Dictionary<MemberDeclarationSyntax, TypeCandidate> _typeCandidatesByDeclaration = new();
+        readonly List<MemberDeclarationSyntax> _accessorOnlyDeclarations = new();
+
+        /// <summary>
+        ///     The property, indexer and event declarations which keep their own <c>public</c> modifier, but have a
+        ///     restricted accessor modifier (<c>private</c>, <c>protected</c>, <c>internal</c> or
+        ///     <c>protected internal</c>) that has to go regardless. Populated once
+        ///     <see cref="FindTrimmableDeclarationsAsync" /> has run.
+        /// </summary>
+        public IReadOnlyList<MemberDeclarationSyntax> AccessorOnlyDeclarations => _accessorOnlyDeclarations;
 
         public Analysis(Document document, SyntaxNode root, SemanticModel semanticModel)
         {
@@ -137,6 +164,8 @@ public class AccessibilityTrimmer : IDocumentProcessor
 
                 if (await CanTrimMemberAsync(declaration))
                     _trimmableMembers.Add(declaration);
+                else if (declaration is BasePropertyDeclarationSyntax { AccessorList: not null } property && HasRestrictedAccessor(property.AccessorList))
+                    _accessorOnlyDeclarations.Add(declaration);
             }
 
             KeepExposedTypesPublic();
@@ -436,6 +465,15 @@ public class AccessibilityTrimmer : IDocumentProcessor
 
             return false;
         }
+
+        /// <summary>
+        ///     Determines whether any accessor in the list carries an accessibility modifier that a property, indexer
+        ///     or event which keeps its own <c>public</c> modifier would otherwise still leave in place.
+        /// </summary>
+        /// <param name="accessorList"></param>
+        /// <returns></returns>
+        static bool HasRestrictedAccessor(AccessorListSyntax accessorList) =>
+            accessorList.Accessors.Any(accessor => accessor.HasAccessibilityModifier());
 
         /// <summary>
         ///     Determines whether the declaration is marked as a protected symbol, either because it is a Program entry

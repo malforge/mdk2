@@ -40,8 +40,20 @@ public static class ModifierExtensions
     }
 
     /// <summary>
+    ///     Determines whether the accessor carries an accessibility modifier (<c>public</c>, <c>private</c>,
+    ///     <c>protected</c> or <c>internal</c>, alone or as <c>protected internal</c>).
+    /// </summary>
+    /// <param name="accessor"></param>
+    /// <returns></returns>
+    public static bool HasAccessibilityModifier(this AccessorDeclarationSyntax accessor) => IndexOfAccessibilityModifier(accessor.Modifiers) >= 0;
+
+    /// <summary>
     ///     Removes every accessibility modifier from the accessor. An accessor may only be more restrictive than the
-    ///     property it belongs to, so its modifier has to go when the property loses its own.
+    ///     property it belongs to, so its modifier has to go when the property loses its own. The packed script has no
+    ///     consumer that a more restrictive accessor protects, so the same is true of an accessor on a property that
+    ///     stays public: a public property with a public setter compiles and behaves the same as one with a private
+    ///     setter, so <see cref="AccessibilityTrimmer" /> calls this whether or not the property keeps its own
+    ///     <c>public</c>.
     /// </summary>
     /// <param name="accessor"></param>
     /// <returns></returns>

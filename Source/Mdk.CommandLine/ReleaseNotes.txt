@@ -1,5 +1,6 @@
 ﻿v.2.2.13
     - Minification now writes a member whose body is a single expression as an expression bodied member: a method or operator that only returns a value, a void method that only makes one call, and a property or indexer whose only accessor is a getter. Bodies holding a comment, a preprocessor directive or a preserved region are left as they are.
+    - Minification now removes a restricted accessor modifier (`private set`, `protected set`, and the like) from every property and indexer, including one that keeps its own `public`: the packed script has no outside consumer for that restriction to protect.
 
 v.2.2.12
     - Mod packing no longer copies MDK's own configuration files (mdk.ini, mdk.local.ini) into the deployed mod. Publishing a mod no longer exposes the local paths kept in your mdk.local.ini.

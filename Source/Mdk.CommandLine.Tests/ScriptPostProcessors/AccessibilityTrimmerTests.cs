@@ -287,6 +287,161 @@ public class AccessibilityTrimmerTests : DocumentProcessorTests<AccessibilityTri
     }
 
     [Test]
+    public async Task ProcessAsync_WhenPublicPropertyIsUsedFromASiblingType_RemovesTheAccessorModifierButKeepsPublic()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                public class Reader
+                {
+                    public double Value { get; private set; }
+                }
+
+                class Writer
+                {
+                    void Copy(Reader reader)
+                    {
+                        var value = reader.Value;
+                    }
+                }
+            }
+            """;
+
+        var actual = await TrimAsync(testCode);
+
+        // Value is read from Writer, a sibling of Reader, so it has to stay public. There is no
+        // outside consumer left for the private setter to protect against, and a public property
+        // with a public setter compiles and behaves the same, so the accessor modifier goes even
+        // though the property itself stays public.
+        const string expected =
+            """
+            class Program
+            {
+                class Reader
+                {
+                    public double Value { get; set; }
+                }
+
+                class Writer
+                {
+                    void Copy(Reader reader)
+                    {
+                        var value = reader.Value;
+                    }
+                }
+            }
+            """;
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenPublicIndexerIsUsedFromASiblingType_RemovesTheAccessorModifierButKeepsPublic()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                public class Reader
+                {
+                    double[] _values = new double[4];
+
+                    public double this[int i]
+                    {
+                        get { return _values[i]; }
+                        private set { _values[i] = value; }
+                    }
+                }
+
+                class Writer
+                {
+                    void Copy(Reader reader)
+                    {
+                        var value = reader[0];
+                    }
+                }
+            }
+            """;
+
+        var actual = await TrimAsync(testCode);
+
+        // The indexer is read from Writer, a sibling of Reader, so it has to stay public, and the
+        // private setter loses its modifier for the same reason a property's does.
+        const string expected =
+            """
+            class Program
+            {
+                class Reader
+                {
+                    double[] _values = new double[4];
+
+                    public double this[int i]
+                    {
+                        get { return _values[i]; }
+                        set { _values[i] = value; }
+                    }
+                }
+
+                class Writer
+                {
+                    void Copy(Reader reader)
+                    {
+                        var value = reader[0];
+                    }
+                }
+            }
+            """;
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenPublicPropertyAccessorsAlreadyHaveNoModifiers_LeavesThemUnchanged()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                public class Reader
+                {
+                    public double Value { get; set; }
+                }
+
+                class Writer
+                {
+                    void Copy(Reader reader)
+                    {
+                        var value = reader.Value;
+                    }
+                }
+            }
+            """;
+
+        var actual = await TrimAsync(testCode);
+
+        // Nothing to remove on Value's accessors, so the property is left exactly as written; only
+        // Reader loses its public modifier.
+        const string expected =
+            """
+            class Program
+            {
+                class Reader
+                {
+                    public double Value { get; set; }
+                }
+
+                class Writer
+                {
+                    void Copy(Reader reader)
+                    {
+                        var value = reader.Value;
+                    }
+                }
+            }
+            """;
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
     public async Task ProcessAsync_WhenMemberIsUsedFromASiblingType_KeepsPublic()
     {
         const string testCode =
