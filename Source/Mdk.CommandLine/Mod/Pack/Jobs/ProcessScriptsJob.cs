@@ -21,7 +21,8 @@ internal class ProcessScriptsJob : ModJob
         var projectDirectory = new DirectoryInfo(context.FileSystem.ProjectPath);
         var outputDirectory = new DirectoryInfo(context.FileSystem.OutputDirectory);
         outputDirectory = new DirectoryInfo(Path.Combine(outputDirectory.FullName, "Data", "Scripts", outputDirectory.Name));
-        foreach (var doc in context.ScriptDocuments)
+        // Documents are processed and written independently of each other, so they run in parallel.
+        await Parallel.ForEachAsync(context.ScriptDocuments, async (doc, _) =>
         {
             var document = doc;
             var relativePath = new FileInfo(document.FilePath!).GetPathRelativeTo(projectDirectory);
@@ -30,7 +31,7 @@ internal class ProcessScriptsJob : ModJob
 
             var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
             if (syntaxTree == null)
-                continue;
+                return;
             var root = await syntaxTree.GetRootAsync();
             var wasEmptiedByAttributeTrimming = root.HasAnnotations(AttributeTrimmingProcessor.EmptiedDocumentAnnotationKind);
             document = document.WithSyntaxRoot(root);
@@ -46,13 +47,13 @@ internal class ProcessScriptsJob : ModJob
                 && IsStructurallyEmpty(compilationUnit))
             {
                 context.Console.Trace($"Skipping empty script document {relativePath}");
-                continue;
+                return;
             }
 
             var outputPath = PathEx.CombineInside(outputDirectory.FullName, relativePath);
             context.Console.Trace($"Writing {relativePath} to {outputDirectory.FullName}");
             await context.FileSystem.WriteAsync(outputPath, (await document.GetTextAsync()).ToString());
-        }
+        });
 
         return context;
     }

@@ -16,7 +16,9 @@ internal class PrevalidateAndLoadFromProjectJob : ModJob
     {
         context.Console.Trace("Validating project");
         var project = context.Project;
-        foreach (var document in project.Documents)
+        // Reparsing under C# 6 only changes anything when the project is not already parsed as C# 6.
+        var alreadyCSharp6 = project.ParseOptions is CSharpParseOptions { LanguageVersion: LanguageVersion.CSharp6 };
+        foreach (var document in alreadyCSharp6 ? Enumerable.Empty<Document>() : project.Documents)
         {
             var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
             if (syntaxTree == null)
