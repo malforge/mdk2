@@ -1,15 +1,15 @@
 ---
 name: mdk-architecture
-description: Use when working on MDK internals — the CLI tool (Mdk.CommandLine), packagers (Mdk.PbPackager / Mdk.ModPackager), analyzers (Mdk.PbAnalyzers / Mdk.ModAnalyzers), reference resolution (Mdk.References), or the script minification pipeline. Covers MSBuild integration flow (MdkRestore / MdkPack), CLI entry-point and project-type detection, analyzer integration with whitelists and AdditionalFiles, the 5-tier minification pipeline (none/trim/stripcomments/lite/full) and its processor stages, and how Space Engineers references are auto-detected. Trigger on edits to Source/Mdk.CommandLine/, Source/Mdk.PbAnalyzers/, Source/Mdk.ModAnalyzers/, Source/Mdk.References/, packager .props/.targets files, or questions about how mdk.exe processes scripts.
+description: Use when working on MDK internals — the CLI tool (Mdk.CommandLine), packagers (Mdk.PbPackager / Mdk.ModPackager), analyzers (Mdk.PbAnalyzers / Mdk.ModAnalyzers), reference resolution (Mdk.References), or the script minification pipeline. Covers MSBuild integration flow (MdkPack and the SpaceEngineers reference target), CLI entry-point and project-type detection, analyzer integration with whitelists and AdditionalFiles, the 5-tier minification pipeline (none/trim/stripcomments/lite/full) and its processor stages, and how Space Engineers references are auto-detected. Trigger on edits to Source/Mdk.CommandLine/, Source/Mdk.PbAnalyzers/, Source/Mdk.ModAnalyzers/, Source/Mdk.References/, packager .props/.targets files, or questions about how mdk.exe processes scripts.
 ---
 
 # MDK Architecture
 
 ## MSBuild Integration
 
-User projects reference `Mal.Mdk2.PbPackager` or `Mal.Mdk2.ModPackager`. Their `.props` files hook the build:
+User projects reference `Mal.Mdk2.PbPackager` or `Mal.Mdk2.ModPackager`, plus `Mal.Mdk2.References`. Together they hook the build:
 
-- **Before build** — `MdkRestore`: runs `checkdotnet.exe`, then `mdk.exe restore <project>` to set up references and configuration.
+- **Before build** — `SpaceEngineers` target (from `Mal.Mdk2.References`, runs before `PrepareForBuild`): the `SpaceEngineersFinder` task locates the game install and the target adds the game DLLs as references. There is no separate restore step; the old `mdk restore` command was removed in Mdk.CommandLine 2.2.0-pre.5.
 - **After build** — `MdkPack`: runs only if `Configuration` matches `MdkBuildConfiguration` (default `all`); runs `mdk.exe pack <project>`. PB scripts are combined + minified into the Workshop folder; mods are copied into the game's Mods directory.
 
 Set `<MdkBuildConfiguration>Release</MdkBuildConfiguration>` in a project to only pack on Release builds.
@@ -22,7 +22,6 @@ Set `<MdkBuildConfiguration>Release</MdkBuildConfiguration>` in a project to onl
 - `Parameters` — CLI parser with verb-specific sub-parameters
 
 **Commands**:
-- `mdk restore <project>` — initialize, detect Space Engineers, set up references
 - `mdk pack <project>` — package script/mod based on project type
 
 **Project type detection** (`MdkProject.LoadAsync()`) inspects `.csproj`/`.sln` and resolves to:
@@ -68,7 +67,7 @@ All PB script code lives in `IngameScript`. The game strips namespaces from the 
 
 `Mdk.References`:
 - Auto-detects Space Engineers via registry, Steam library, or custom paths
-- Generates MSBuild `.props`/`.targets` dynamically at restore time
+- Ships a static `build/Mal.Mdk2.References.targets`; its `SpaceEngineers` target runs on every build and adds `HintPath` references to the game DLLs (pass `-p:SpaceEngineersFinderVerbose=true` to see how the install was found)
 - References game DLLs directly from the install (no redistribution)
 
 For unit testing, set `<SpaceEngineersBinCopyLocal>true</SpaceEngineersBinCopyLocal>` to copy DLLs locally. **Never redistribute** — Keen Software House copyright.

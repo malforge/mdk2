@@ -49,8 +49,8 @@ MDK² (Malware's Development Kit for Space Engineers) is a toolkit for developin
 
 ### Building
 ```bash
-dotnet build Source\MDK-Complete.slnx                           # all projects + tests + generators
-dotnet build Source\MDK-Packages.slnx                           # packages only (no tests/generators/Hub)
+dotnet build Source\MDK-Complete.slnx                           # all projects + tests
+dotnet build Source\MDK-Packages.slnx                           # packages only (no tests/Hub)
 dotnet build Source\Mdk.CommandLine\Mdk.CommandLine.csproj      # one project
 dotnet build Source\MDK-Packages.slnx -c Release                # release packages (auto-generates NuGet packages)
 ```
@@ -69,7 +69,7 @@ None configured — relies on built-in Roslyn analyzers and IDE warnings.
 ## Project Structure
 
 **Core packages (NuGet)**
-- `Mdk.CommandLine` — main CLI tool (`mdk.exe`) with restore/pack commands
+- `Mdk.CommandLine` — main CLI tool (`mdk.exe`) with the pack command
 - `Mdk.PbPackager` / `Mdk.ModPackager` — MSBuild integration for PB scripts / mods
 - `Mdk.PbAnalyzers` / `Mdk.ModAnalyzers` — Roslyn analyzers for whitelist validation (netstandard2.0)
 - `Mdk.References` — auto-detects Space Engineers install, sets up assembly references
@@ -93,7 +93,7 @@ None configured — relies on built-in Roslyn analyzers and IDE warnings.
 These skills auto-load when their topic comes up — you don't need to invoke them manually:
 
 - **`debugging-mdk`** — reproducing/debugging MDK CLI bugs, NuGet-vs-source comparison, debugger setup, capturing trace output
-- **`mdk-architecture`** — MSBuild integration (MdkRestore/MdkPack), CLI internals, analyzers, minification pipeline, reference resolution
+- **`mdk-architecture`** — MSBuild integration (MdkPack), CLI internals, analyzers, minification pipeline, reference resolution
 - **`mdk-config-ini`** — authoring `mdk.ini` / `mdk.local.ini` configuration files
 - **`releasing-mdk-package`** — bumping `PackageVersion.txt`, writing user-facing release notes, CI/CD workflows
 - **`mdk-templates`** — working on `.NET` project templates in `Source/ScriptTemplates/`
