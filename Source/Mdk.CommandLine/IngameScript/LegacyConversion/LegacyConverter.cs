@@ -39,7 +39,7 @@ public class LegacyConverter
         // var gameBinPath = "auto";
         var outputPath = "auto";
         bool trimTypes;
-        List<string> ignores = ["obj/**/*", "MDK/**/*", "**/*.debug.cs"];
+        List<string> ignores = ["obj/**/*", "bin/**/*", "MDK/**/*", "**/*.debug.cs"];
         var minify = LegacyMinifierLevel.None;
 
         console.Trace("Loading legacy property file...");

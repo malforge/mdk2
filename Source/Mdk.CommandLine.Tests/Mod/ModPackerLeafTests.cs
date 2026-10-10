@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Mdk.CommandLine.CommandLine;
 using Mdk.CommandLine.Mod.Pack;
+using Mdk.CommandLine.Mod.Pack.Jobs;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using NUnit.Framework;
@@ -70,5 +71,41 @@ public class ModPackerLeafTests
         var result = MacroReplacer.Replace("$MDK_PROJECT$ on $MDK_BRANCH$", Macros("Mal.Logistics", "alpha"));
 
         Assert.That(result, Is.EqualTo("Mal.Logistics on alpha"));
+    }
+
+    const string ModProjectFile = @"C:\Mods\Mal.Logistics\Mal.Logistics.csproj";
+
+    [TestCase(@"C:\Mods\Mal.Logistics\mdk.ini")]
+    [TestCase(@"C:\Mods\Mal.Logistics\mdk.local.ini")]
+    [TestCase(@"C:\Mods\Mal.Logistics\Mal.Logistics.mdk.ini")]
+    [TestCase(@"C:\Mods\Mal.Logistics\Mal.Logistics.mdk.local.ini")]
+    [TestCase(@"C:\Mods\Mal.Logistics\MDK.INI")]
+    [TestCase(@"C:\Mods\Mal.Logistics\.\Content\..\mdk.ini")]
+    public void IsMdkConfiguration_ForAConfigurationFile_IsExcluded(string path)
+    {
+        Assert.That(FindAndFilterDocumentsJob.IsMdkConfiguration(path, FindAndFilterDocumentsJob.MdkConfigurationPaths(ModProjectFile)), Is.True);
+    }
+
+    [TestCase(@"C:\Mods\Mal.Logistics\Content\Data\Blocks.sbc")]
+    [TestCase(@"C:\Mods\Mal.Logistics\Content\Data\settings.ini")]
+    [TestCase(@"C:\Mods\Mal.Logistics\Content\mdk.ini")]
+    [TestCase(@"C:\Mods\Mal.Logistics\thumb.png")]
+    public void IsMdkConfiguration_ForModContent_IsKept(string path)
+    {
+        Assert.That(FindAndFilterDocumentsJob.IsMdkConfiguration(path, FindAndFilterDocumentsJob.MdkConfigurationPaths(ModProjectFile)), Is.False);
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("Mal.Logistics.csproj")]
+    public void MdkConfigurationPaths_WithoutAResolvableProjectDirectory_IsEmpty(string? projectFile)
+    {
+        Assert.That(FindAndFilterDocumentsJob.MdkConfigurationPaths(projectFile), Is.Empty);
+    }
+
+    [Test]
+    public void IsMdkConfiguration_WithNoConfigurationPaths_KeepsEverything()
+    {
+        Assert.That(FindAndFilterDocumentsJob.IsMdkConfiguration(@"C:\Mods\Mal.Logistics\mdk.ini", FindAndFilterDocumentsJob.MdkConfigurationPaths(null)), Is.False);
     }
 }
