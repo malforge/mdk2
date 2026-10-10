@@ -37,5 +37,5 @@ Each package directory with `PackageVersion.txt` has a sibling `ReleaseNotes.txt
 
 ## CI/CD Workflows
 
-- **`buildwithartefacts.yml`** — builds tools (win-x64) then packages; triggers on push to `main` when any `PackageVersion.txt` changes; auto-publishes to NuGet. Artifacts: `mdk.exe`, `mdknotify-win.exe`, `checkdotnet.exe`.
+- **`buildwithartefacts.yml`** — publishes `Mdk.CommandLine` for win-x64 and linux-x64, drops the win-x64 build into `Mdk.PbPackager/tools` and `Mdk.ModPackager/tools`, then builds the packages; triggers on push to `main` when any `PackageVersion.txt` changes; auto-publishes to NuGet. Also builds the Hub installers for Windows and Linux.
 - **`version-guard.yml`** — PR validation: ensures `PackageVersion.txt` is updated when code changes, `ReleaseNotes.txt` includes the new version, and template package references are up to date.

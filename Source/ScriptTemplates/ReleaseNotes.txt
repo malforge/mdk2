@@ -1,3 +1,7 @@
+v.2.2.67
+ - Updated the package versions in the template.
+ - New projects now ignore the bin folder alongside obj. A mod no longer deploys a copy of its own build output alongside its content.
+
 v.2.2.66
  - Updated the package versions in the template.
 

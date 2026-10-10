@@ -400,24 +400,6 @@ public class Parameters : TracksPropertyChanges, IParameters
         }
     }
 
-    void ShowHelpAboutRestore(IConsole console) =>
-        console.Print("Usage: mdk restore <project-file> [options]")
-            .Print()
-            .Print("Checks the script in the specified project file for compatibility with the current version of MDK, "
-                   + "checks nuget packages for updates, etcetera.")
-            .Print()
-            .Print("Options:")
-            .Print("  -interactive <mode>  Control Hub interaction behavior.")
-            .Print("                        - OpenHub: Opens and brings Hub to front")
-            .Print("                        - ShowNotification: Shows notification without opening Hub")
-            .Print("                        - DoNothing: Disables all Hub interaction")
-            .Print("  -log <file>          Log to the specified file.")
-            .Print("  -trace               Enable trace logging.")
-            .Print("  -dry-run             Don't actually restore the script, just print what would be done.")
-            .Print()
-            .Print("Example:")
-            .Print("  mdk restore MyProject.csproj -interactive ShowNotification");
-
     void ShowHelpAboutPack(IConsole console) =>
         console.Print("Usage: mdk pack <project-file> [options]")
             .Print("Packs a script or mod project into a workshop-ready package.")
