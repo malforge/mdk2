@@ -164,7 +164,8 @@ public class AccessibilityTrimmer : IDocumentProcessor
 
                 if (await CanTrimMemberAsync(declaration))
                     _trimmableMembers.Add(declaration);
-                else if (declaration is BasePropertyDeclarationSyntax { AccessorList: not null } property && HasRestrictedAccessor(property.AccessorList))
+                else if (declaration is BasePropertyDeclarationSyntax { AccessorList: not null } property && HasRestrictedAccessor(property.AccessorList)
+                    && CanStripAccessorsOf(declaration))
                     _accessorOnlyDeclarations.Add(declaration);
             }
 
@@ -199,7 +200,7 @@ public class AccessibilityTrimmer : IDocumentProcessor
                 // overrides, and an implicit interface implementation has to be public.
                 if (symbol.IsAbstract || symbol.IsVirtual || symbol.IsOverride || symbol.IsExtern)
                     return false;
-                if (symbol.IsInterfaceImplementation())
+                if (symbol.IsInterfaceImplementation() || IsInheritedInterfaceImplementation(symbol))
                     return false;
                 if (symbol is IMethodSymbol method)
                 {
@@ -315,6 +316,10 @@ public class AccessibilityTrimmer : IDocumentProcessor
                 return Accessibility.Private;
             if (_typeCandidatesByDeclaration.TryGetValue(declaration, out var candidate) && candidate.Trim)
                 return candidate.IsNested ? Accessibility.Private : Accessibility.Internal;
+            // The packed script becomes the body of the game's public Program class, so a public member of Program
+            // exposes its types as public even though Program has no accessibility modifier in the source.
+            if (IsEntryClass(declaration))
+                return Accessibility.Public;
             var symbols = GetDeclaredSymbols(declaration);
             return symbols is { Count: > 0 } ? symbols[0].DeclaredAccessibility : Accessibility.Public;
         }
@@ -496,6 +501,140 @@ public class AccessibilityTrimmer : IDocumentProcessor
                 BaseFieldDeclarationSyntax field => field.Declaration.Variables.Any(variable => variable.Identifier.ShouldBePreserved()),
                 _ => false
             };
+        }
+
+        /// <summary>
+        ///     Determines whether the declaration is the game's entry class. In the source it is declared without an
+        ///     accessibility modifier (internal), but the packed script becomes the body of the game's
+        ///     <c>public sealed class Program</c>, so for accessibility analysis it is public.
+        /// </summary>
+        /// <param name="declaration"></param>
+        /// <returns></returns>
+        bool IsEntryClass(MemberDeclarationSyntax declaration)
+        {
+            if (declaration is not BaseTypeDeclarationSyntax)
+                return false;
+            var symbol = _semanticModel.GetDeclaredSymbol(declaration);
+            return symbol is INamedTypeSymbol { ContainingType: null } && symbol.Name == "Program";
+        }
+
+        /// <summary>
+        ///     Determines whether the restricted accessor modifiers of a property or indexer may be removed. They may
+        ///     be removed only when the whole override chain (what the property overrides, what overrides it, and
+        ///     itself) can be reduced the same way: a preserved or out-of-document link keeps its restricted accessor,
+        ///     and an override must match the accessibility of its base accessors exactly (CS0507).
+        /// </summary>
+        /// <param name="declaration"></param>
+        /// <returns></returns>
+        bool CanStripAccessorsOf(MemberDeclarationSyntax declaration)
+        {
+            if (_semanticModel.GetDeclaredSymbol(declaration) is not IPropertySymbol property)
+                return true;
+            return !IsAccessorChainLocked(property);
+        }
+
+        /// <summary>
+        ///     Determines whether any link in the property's override chain keeps its restricted accessor, which locks
+        ///     the whole chain into keeping theirs as well.
+        /// </summary>
+        /// <param name="property"></param>
+        /// <returns></returns>
+        bool IsAccessorChainLocked(IPropertySymbol property)
+        {
+            for (var ancestor = property; ancestor != null; ancestor = ancestor.OverriddenProperty)
+            {
+                if (IsAccessorLinkLocked(ancestor))
+                    return true;
+            }
+
+            foreach (var other in GetDocumentPropertySymbols())
+            {
+                if (Overrides(other, property) && IsAccessorLinkLocked(other))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        ///     Determines whether the link keeps its restricted accessor because it is preserved or declared outside
+        ///     this document (a game assembly or another file), where its accessors are not rewritten.
+        /// </summary>
+        /// <param name="link"></param>
+        /// <returns></returns>
+        bool IsAccessorLinkLocked(IPropertySymbol link)
+        {
+            foreach (var reference in link.DeclaringSyntaxReferences)
+            {
+                if (reference.SyntaxTree == _root.SyntaxTree && reference.GetSyntax() is MemberDeclarationSyntax member)
+                    return IsPreserved(member);
+            }
+
+            return true;
+        }
+
+        static bool Overrides(IPropertySymbol candidate, IPropertySymbol property)
+        {
+            for (var link = candidate; link != null; link = link.OverriddenProperty)
+            {
+                if (SymbolEqualityComparer.Default.Equals(link, property))
+                    return true;
+            }
+
+            return false;
+        }
+
+        IEnumerable<IPropertySymbol> GetDocumentPropertySymbols()
+        {
+            foreach (var node in _root.DescendantNodes().OfType<BasePropertyDeclarationSyntax>())
+            {
+                if (_semanticModel.GetDeclaredSymbol(node) is IPropertySymbol symbol)
+                    yield return symbol;
+            }
+        }
+
+        /// <summary>
+        ///     Determines whether the symbol is the implementation of an interface member for a derived type declared in
+        ///     this document. <see cref="ISymbol.IsInterfaceImplementation()" /> only inspects the symbol's own
+        ///     containing type, so an inherited implementation (a derived type satisfying an interface through a base
+        ///     type's member) would otherwise be trimmed and break the derived type (CS0535).
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        bool IsInheritedInterfaceImplementation(ISymbol symbol)
+        {
+            var containingType = symbol.ContainingType;
+            if (containingType == null)
+                return false;
+            foreach (var typeDeclaration in _root.DescendantNodes().OfType<BaseTypeDeclarationSyntax>())
+            {
+                if (_semanticModel.GetDeclaredSymbol(typeDeclaration) is not INamedTypeSymbol derived)
+                    continue;
+                if (!DerivesFrom(derived, containingType))
+                    continue;
+                foreach (var @interface in derived.AllInterfaces)
+                {
+                    foreach (var member in @interface.GetMembers())
+                    {
+                        var implementation = derived.FindImplementationForInterfaceMember(member);
+                        if (implementation != null && SymbolEqualityComparer.Default.Equals(implementation, symbol))
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        static bool DerivesFrom(INamedTypeSymbol derived, INamedTypeSymbol baseType)
+        {
+            for (var ancestor = derived.BaseType; ancestor != null; ancestor = ancestor.BaseType)
+            {
+                if (SymbolEqualityComparer.Default.Equals(ancestor, baseType))
+                    return true;
+            }
+
+            return false;
         }
 
         class TypeCandidate(MemberDeclarationSyntax declaration, bool isNested, ImmutableArray<TextSpan> containerSpans)
