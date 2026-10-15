@@ -185,30 +185,9 @@ public class CodeSmallifier : IDocumentProcessor
                 }
             }
 
-            int readonlyIndex = -1;
-            for (var i = 0; i < newNode.Modifiers.Count; i++)
-            {
-                if (newNode.Modifiers[i].IsKind(SyntaxKind.ReadOnlyKeyword))
-                {
-                    readonlyIndex = i;
-                    break;
-                }
-            }
+            var readonlyIndex = newNode.Modifiers.IndexOf(SyntaxKind.ReadOnlyKeyword);
             if (readonlyIndex >= 0 && shouldStripReadonly)
-            {
-                var readonlyModifier = newNode.Modifiers[readonlyIndex];
-                var remaining = newNode.Modifiers.RemoveAt(readonlyIndex);
-                if (remaining.Count > 0)
-                {
-                    // Move the removed modifier's leading trivia onto the first remaining
-                    // modifier so subsequent compaction can pick it up.
-                    remaining = remaining.Replace(remaining[0], remaining[0].WithLeadingTrivia(
-                        readonlyModifier.LeadingTrivia.Concat(remaining[0].LeadingTrivia)));
-                }
-                newNode = newNode.WithModifiers(remaining);
-                if (remaining.Count == 0)
-                    newNode = newNode.WithLeadingTrivia(readonlyModifier.LeadingTrivia);
-            }
+                newNode = newNode.WithoutModifierAt(readonlyIndex);
 
             return StripPrivate(newNode);
         }
@@ -251,42 +230,21 @@ public class CodeSmallifier : IDocumentProcessor
         /// </summary>
         static T StripPrivate<T>(T node) where T : MemberDeclarationSyntax
         {
-            var modifiers = node.Modifiers;
             // If any explicit accessibility modifier is present, private (or not) is intentional.
-            var hasAccessibility = modifiers.Any(m =>
+            var hasAccessibility = node.Modifiers.Any(m =>
                 m.IsKind(SyntaxKind.PublicKeyword) ||
                 m.IsKind(SyntaxKind.ProtectedKeyword) ||
                 m.IsKind(SyntaxKind.InternalKeyword));
             if (hasAccessibility)
                 return node;
 
-            // Collect private modifier indices from the end so removal doesn't shift earlier ones.
-            var privateIndices = new List<int>();
-            for (var i = modifiers.Count - 1; i >= 0; i--)
+            while (true)
             {
-                if (modifiers[i].IsKind(SyntaxKind.PrivateKeyword))
-                    privateIndices.Add(i);
+                var index = node.Modifiers.IndexOf(SyntaxKind.PrivateKeyword);
+                if (index < 0)
+                    return node;
+                node = node.WithoutModifierAt(index);
             }
-            if (privateIndices.Count == 0)
-                return node;
-
-            var remaining = modifiers;
-            foreach (var idx in privateIndices)
-            {
-                var trivia = remaining[idx].LeadingTrivia;
-                remaining = remaining.RemoveAt(idx);
-                // Attach the removed keyword's leading trivia to the first remaining modifier,
-                // or to the node itself when nothing is left.
-                if (remaining.Count > 0)
-                    remaining = remaining.Replace(remaining[0],
-                        remaining[0].WithLeadingTrivia(trivia.Concat(remaining[0].LeadingTrivia)));
-            }
-
-            var result = (T)node.WithModifiers(remaining);
-            if (remaining.Count == 0)
-                result = (T)(SyntaxNode)result.WithLeadingTrivia(
-                    privateIndices.Select(i => modifiers[i].LeadingTrivia).SelectMany(t => t));
-            return result;
         }
 
         static T CompactFieldDeclarations<T>(T node) where T : TypeDeclarationSyntax
