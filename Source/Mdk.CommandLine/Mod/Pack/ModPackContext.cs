@@ -26,6 +26,7 @@ internal class ModPackContext(IParameters parameters, IConsole console, IInterac
     public ImmutableArray<TextDocument> ContentDocuments => _contentDocuments.IsDefault ? ImmutableArray<TextDocument>.Empty : _contentDocuments;
     public ProcessorSet<IDocumentProcessor> Processors => _processors ?? throw new InvalidOperationException("The processors have not been set.");
 
+    public ModPackContext WithConsole(IConsole console) => new ModPackContext(Parameters, console, Interaction, FileFilter, OutputCleanFilter, FileSystem, PreprocessorSymbols, _project, _scriptDocuments, _contentDocuments, _processors);
     public ModPackContext WithProject(Project project) => new ModPackContext(Parameters, Console, Interaction, FileFilter, OutputCleanFilter, FileSystem, PreprocessorSymbols, project, _scriptDocuments, _contentDocuments, _processors);
     public ModPackContext WithScriptDocuments(ImmutableArray<Document> scriptDocuments) => new ModPackContext(Parameters, Console, Interaction, FileFilter, OutputCleanFilter, FileSystem, PreprocessorSymbols, _project, scriptDocuments, _contentDocuments, _processors);
     public ModPackContext WithContentDocuments(ImmutableArray<TextDocument> contentDocuments) => new ModPackContext(Parameters, Console, Interaction, FileFilter, OutputCleanFilter, FileSystem, PreprocessorSymbols, _project, _scriptDocuments, contentDocuments, _processors);

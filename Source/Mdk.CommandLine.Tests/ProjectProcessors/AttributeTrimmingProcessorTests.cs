@@ -467,6 +467,91 @@ public class AttributeTrimmingProcessorTests
         Assert.That(result.Diagnostics.Select(diagnostic => diagnostic.Id), Does.Contain("MDK04"));
     }
 
+    [Test]
+    public async Task ProcessWithResultAsync_DiagnosesRuntimeUseThroughAlias()
+    {
+        var project = CreateProject("""
+            using System;
+            using Tag = MarkerAttribute;
+
+            public class Settings
+            {
+                public Type AttributeType => typeof(Tag);
+            }
+
+            internal sealed class MarkerAttribute : Attribute
+            {
+            }
+            """);
+
+        var result = await ProcessAsync(project);
+
+        Assert.That(GetDiagnosedNames(result), Is.EquivalentTo(new[] { "Tag" }));
+    }
+
+    [Test]
+    public async Task ProcessWithResultAsync_DiagnosesRuntimeUseThroughVarAndInstanceMember()
+    {
+        var project = CreateProject(("Settings.cs", """
+            public class Settings
+            {
+                public int Read()
+                {
+                    var marker = Factory.Create();
+                    return marker.Level;
+                }
+            }
+            """), ("Marker.cs", """
+            using System;
+
+            internal sealed class MarkerAttribute : Attribute
+            {
+                public int Level { get; set; }
+            }
+
+            internal static class Factory
+            {
+                public static MarkerAttribute Create() { return null; }
+            }
+            """));
+
+        var result = await ProcessAsync(project);
+
+        Assert.That(GetDiagnosedNames(result), Is.EquivalentTo(new[] { "var", "Level", "MarkerAttribute" }));
+    }
+
+    [Test]
+    public async Task ProcessWithResultAsync_DiagnosesRuntimeUseThroughStaticImportMember()
+    {
+        var project = CreateProject("""
+            using System;
+            using static MarkerAttribute;
+
+            public class Settings
+            {
+                public string Read() { return Describe(); }
+            }
+
+            internal sealed class MarkerAttribute : Attribute
+            {
+                public static string Describe() { return "marker"; }
+            }
+            """);
+
+        var result = await ProcessAsync(project);
+
+        Assert.That(GetDiagnosedNames(result), Is.EquivalentTo(new[] { "Describe" }));
+    }
+
+    static IEnumerable<string> GetDiagnosedNames(AttributeTrimmingResult result)
+    {
+        return result.Diagnostics
+            .Where(diagnostic => diagnostic.Id == "MDK04"
+                                 && diagnostic.Message.Contains("is used by runtime code")
+                                 && diagnostic.Location is { IsInSource: true })
+            .Select(diagnostic => diagnostic.Location!.SourceTree!.GetText().ToString(diagnostic.Location.SourceSpan));
+    }
+
     static async Task<AttributeTrimmingResult> ProcessAsync(Project project)
     {
         var processor = new AttributeTrimmingProcessor();

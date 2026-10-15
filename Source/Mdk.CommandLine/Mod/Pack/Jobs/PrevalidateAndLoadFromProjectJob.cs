@@ -16,16 +16,6 @@ internal class PrevalidateAndLoadFromProjectJob : ModJob
     {
         context.Console.Trace("Validating project");
         var project = context.Project;
-        foreach (var document in project.Documents)
-        {
-            var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
-            if (syntaxTree == null)
-                continue;
-            var newOptions = syntaxTree.Options.WithLanguageVersion(LanguageVersion.CSharp6);
-            syntaxTree = (CSharpSyntaxTree)CSharpSyntaxTree.ParseText(syntaxTree.GetTextAsync().Result, newOptions);
-            var root = await syntaxTree.GetRootAsync();
-            project = document.WithSyntaxRoot(root).Project;
-        }
 
         var compilation = await project.GetCompilationAsync() as CSharpCompilation ?? throw new CommandLineException(-1, "Failed to compile the project.");
         
