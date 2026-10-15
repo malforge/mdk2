@@ -21,7 +21,7 @@ public class ProjectConfig
         Trace = false,
         Minify = MinifierLevel.None,
         MinifyExtraOptions = MinifierExtraOptions.None,
-        Ignores = ImmutableArray.Create("obj/**/*", "MDK/**/*", "**/*.debug.cs"),
+        Ignores = ImmutableArray.Create("obj/**/*", "bin/**/*", "MDK/**/*", "**/*.debug.cs"),
         Namespaces = ImmutableArray.Create("IngameScript"),
         Output = null,
         BinaryPath = null,

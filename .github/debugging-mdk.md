@@ -24,7 +24,6 @@ The executable lands in `Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe`.
 
 ```bash
 Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe pack "path/to/project.csproj"
-Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe restore "path/to/project.csproj"
 ```
 
 Always pass the full path to the `.csproj` file, not the directory containing it.

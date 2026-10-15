@@ -35,7 +35,6 @@ Built executable:
 
 ```bash
 & "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "path\to\project.csproj"
-& "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" restore "path\to\project.csproj"
 ```
 
 Alternative — `dotnet run` (slower, but skips the build/run split):
@@ -176,7 +175,7 @@ Signs of an infinite loop: process never exits, repeating output, sustained CPU,
 
 **Compilation errors in test projects**
 - Confirm Space Engineers is installed (references resolve from the game install).
-- Run `mdk restore` first to set up references.
+- References are added at build time by `Mal.Mdk2.References`; build with `-p:SpaceEngineersFinderVerbose=true` to see where it looked for the game.
 - Check the package references in the `.csproj`.
 
 **Behavior differs between manual and MSBuild execution**
@@ -222,7 +221,7 @@ $proc.HasExited
 2. Copy a working `.csproj` from `Source\Mdk.CommandLine.Tests\TestData\`.
 3. Add a minimal `Program.cs`.
 4. Add `mdk.ini` and `mdk.local.ini`.
-5. Run `mdk restore` to set up references.
+5. Run `dotnet build` so the game references resolve.
 6. Run `mdk pack` to verify.
 
 ## Documenting issues

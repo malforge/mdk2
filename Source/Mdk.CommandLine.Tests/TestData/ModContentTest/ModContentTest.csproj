@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <RootNamespace>ModContentTest</RootNamespace>
+        <LangVersion>6</LangVersion>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Mal.Mdk2.References" Version="2.2.9"/>
+    </ItemGroup>
+
+    <!--
+        The content items a real mod project declares, copied from the shipped mod template.
+    -->
+    <ItemGroup>
+        <AdditionalFiles Include="Content\*\**\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </AdditionalFiles>
+        <AdditionalFiles Include="thumb.png" Condition="Exists('thumb.png')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </AdditionalFiles>
+        <AdditionalFiles Remove="Content\*\**\*.cs"/>
+        <None Remove="thumb.png"/>
+    </ItemGroup>
+
+    <!--
+        Declared here rather than taken from Mal.Mdk2.ModPackager, which is what puts this glob in a real
+        project (build/Mal.Mdk2.ModPackager.props) so the analyzers can read the configuration. Owning it
+        keeps the fixture reproducing the condition under test even if the packager props change, and keeps
+        the test off a published package. Referencing the packager would also fire MdkPack on every build.
+    -->
+    <ItemGroup>
+        <AdditionalFiles Include="**\*.ini"/>
+    </ItemGroup>
+
+</Project>
