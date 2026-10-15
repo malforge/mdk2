@@ -7,6 +7,7 @@ using Mdk.CommandLine.IngameScript.Pack.DefaultProcessors;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
@@ -313,6 +314,473 @@ public class SymbolRenamerTests : DocumentProcessorTests<SymbolRenamer>
             Assert.That(enumReferences, Is.EqualTo(new[] { "Alpha" }));
         });
     }
+
+    [Test]
+    public async Task ProcessAsync_WhenPreservedTypeOverridesUnpreservedBase_OverrideStillMatchesTheBase()
+    {
+        // Issue #182: the preserved override keeps its name, so the base member it overrides has to keep
+        // that name too, or the override resolves against nothing (CS0115).
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    var middle = new Middle();
+                    var value = middle.X;
+                }
+
+                class Root
+                {
+                    public virtual int X { get; }
+                }
+
+                #region mdk preserve
+                class Middle : Root
+                {
+                    public override int X { get; }
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var classes = resultRoot.DescendantNodes().OfType<ClassDeclarationSyntax>().ToArray();
+        var middle = classes.Single(c => c.Identifier.ValueText == "Middle");
+        var baseTypeName = middle.BaseList!.Types.Single().Type.ToString();
+        var root = classes.Single(c => c.Identifier.ValueText == baseTypeName);
+
+        var overrideName = middle.Members.OfType<PropertyDeclarationSyntax>().Single().Identifier.ValueText;
+        var baseName = root.Members.OfType<PropertyDeclarationSyntax>().Single().Identifier.ValueText;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(overrideName, Is.EqualTo("X"), "The preserved override keeps its name.");
+            Assert.That(baseName, Is.EqualTo(overrideName), "The base member must keep the name the preserved override still uses.");
+        });
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenPreservedTypeIsAtTheEndOfAnOverrideChain_WholeChainKeepsTheName()
+    {
+        // Only the leaf is preserved, so every member it overrides up the chain has to keep the name too.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    var leaf = new Leaf();
+                    var value = leaf.X;
+                }
+
+                class Root
+                {
+                    public virtual int X { get; }
+                }
+
+                class Middle : Root
+                {
+                    public override int X { get; }
+                }
+
+                #region mdk preserve
+                class Leaf : Middle
+                {
+                    public override int X { get; }
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "X", "X", "X" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenPreservedTypeImplementsUnpreservedInterface_MemberNamesStillMatch()
+    {
+        // The preserved implementation cannot be renamed, so the interface member it implements cannot be either.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    IShape shape = new Box();
+                    var value = shape.Area;
+                }
+
+                interface IShape
+                {
+                    int Area { get; }
+                }
+
+                #region mdk preserve
+                class Box : IShape
+                {
+                    public int Area { get { return 1; } }
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "Area", "Area" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedOverrideHasAnUnpreservedSibling_BothKeepTheName()
+    {
+        // Pinning the base member is not enough: every other override of it shares the same name, so renaming
+        // one of those leaves it overriding a member which is no longer called that.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    Root root = new Other();
+                    var value = root.X + new Box().X;
+                }
+
+                class Root
+                {
+                    public virtual int X { get { return 0; } }
+                }
+
+                class Other : Root
+                {
+                    public override int X { get { return 1; } }
+                }
+
+                #region mdk preserve
+                class Box : Root
+                {
+                    public override int X { get { return 2; } }
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "X", "X", "X" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedImplementationHasAnUnpreservedSibling_BothKeepTheName()
+    {
+        // The same for interfaces: the other implementor would stop implementing the member it still declares.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    IShape shape = new Circle();
+                    var value = shape.Area + new Box().Area;
+                }
+
+                interface IShape
+                {
+                    int Area { get; }
+                }
+
+                class Circle : IShape
+                {
+                    public int Area { get { return 1; } }
+                }
+
+                #region mdk preserve
+                class Box : IShape
+                {
+                    public int Area { get { return 2; } }
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "Area", "Area", "Area" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedMemberBothOverridesAndImplements_AllThreeKeepTheName()
+    {
+        // A member can be an override and an interface implementation at once; both ends have to be pinned.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    IShape shape = new Box();
+                    var value = shape.X;
+                }
+
+                interface IShape
+                {
+                    int X { get; }
+                }
+
+                class Root
+                {
+                    public virtual int X { get { return 0; } }
+                }
+
+                #region mdk preserve
+                class Box : Root, IShape
+                {
+                    public override int X { get { return 1; } }
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "X", "X", "X" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedMemberImplementsTwoInterfaces_BothInterfacesKeepTheName()
+    {
+        // One member can implement same-named members of several interfaces, and every one of them is pinned.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    IA a = new Box();
+                    IB b = new Box();
+                    var value = a.X + b.X;
+                }
+
+                interface IA
+                {
+                    int X { get; }
+                }
+
+                interface IB
+                {
+                    int X { get; }
+                }
+
+                #region mdk preserve
+                class Box : IA, IB
+                {
+                    public int X { get { return 1; } }
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "X", "X", "X" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedEventImplementsAnInterfaceEvent_BothKeepTheName()
+    {
+        // Event fields declare their symbols on the variable declarators, so they are easily missed when walking
+        // member declarations.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    IBus bus = new Bus();
+                    bus.Ping += () => { };
+                }
+
+                interface IBus
+                {
+                    event System.Action Ping;
+                }
+
+                #region mdk preserve
+                class Bus : IBus
+                {
+                    public event System.Action Ping;
+                }
+                #endregion
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<EventFieldDeclarationSyntax>()
+            .SelectMany(e => e.Declaration.Variables)
+            .Select(v => v.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "Ping", "Ping" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedBaseMemberImplementsAnInterfaceForADerivedType_BothKeepTheName()
+    {
+        // The implementing member can sit in a base class which knows nothing about the interface, so the pair can
+        // only be resolved from the type which declares the interface.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    IShape shape = new Derived();
+                    var value = shape.Area;
+                }
+
+                interface IShape
+                {
+                    int Area { get; }
+                }
+
+                class Base
+                {
+                    #region mdk preserve
+                    public int Area { get { return 1; } }
+                    #endregion
+                }
+
+                class Derived : Base, IShape
+                {
+                }
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "Area", "Area" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedInterfaceIsImplementedByABaseMember_BothKeepTheName()
+    {
+        // The same relation from the other end: this time the interface member is the preserved one.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    IShape shape = new Derived();
+                    var value = shape.Area;
+                }
+
+                #region mdk preserve
+                interface IShape
+                {
+                    int Area { get; }
+                }
+                #endregion
+
+                class Base
+                {
+                    public int Area { get { return 1; } }
+                }
+
+                class Derived : Base, IShape
+                {
+                }
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var names = resultRoot.DescendantNodes().OfType<PropertyDeclarationSyntax>()
+            .Select(p => p.Identifier.ValueText).ToArray();
+
+        Assert.That(names, Is.EqualTo(new[] { "Area", "Area" }));
+    }
+
+    [Test]
+    public async Task ProcessAsync_WhenAPreservedNameLooksLikeAGeneratedName_TheGeneratorDoesNotReuseIt()
+    {
+        // The generator starts at "A", and a name kept by a preserved declaration is still taken.
+        const string testCode =
+            """
+            class Program
+            {
+                void Test()
+                {
+                    var box = new Box();
+                    var value = box.Value;
+                }
+
+                #region mdk preserve
+                class A
+                {
+                }
+                #endregion
+
+                class Box
+                {
+                    public int Value { get { return 1; } }
+                }
+            }
+            """;
+
+        var resultRoot = await RenameAsync(testCode);
+        var classNames = resultRoot.DescendantNodes().OfType<ClassDeclarationSyntax>()
+            .Select(c => c.Identifier.ValueText).ToArray();
+
+        Assert.That(classNames, Is.Unique);
+    }
+
+    static async Task<SyntaxNode> RenameAsync(string testCode)
+    {
+        var workspace = new AdhocWorkspace();
+        // Without references the semantic model cannot bind anything from the framework, which quietly changes
+        // what the renamer sees.
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp).AddMetadataReferences(PlatformReferences());
+        var document = project.AddDocument("TestDocument", testCode);
+        var context = CreateContext();
+        var annotated = await new RegionAnnotator().ProcessAsync(document, context);
+        annotated = await new SymbolProtectionAnnotator().ProcessAsync(annotated, context);
+        var result = await new SymbolRenamer().ProcessAsync(annotated, context);
+        var resultRoot = (await result.GetSyntaxRootAsync())!;
+        AssertCompiles(resultRoot);
+        return resultRoot;
+    }
+
+    /// <summary>
+    ///     Matching names are only a proxy for what actually matters: the renamed script still has to compile.
+    /// </summary>
+    /// <param name="root"></param>
+    static void AssertCompiles(SyntaxNode root)
+    {
+        var compilation = CSharpCompilation.Create("RenamedScript",
+            [CSharpSyntaxTree.Create((CSharpSyntaxNode)root)],
+            PlatformReferences(),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var errors = compilation.GetDiagnostics().Where(d => d.Severity == DiagnosticSeverity.Error).ToArray();
+        Assert.That(errors, Is.Empty, () => string.Join(Environment.NewLine, errors.Select(e => e.ToString())) + Environment.NewLine + root.ToFullString());
+    }
+
+    static IEnumerable<MetadataReference> PlatformReferences() =>
+        ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
+        .Split(Path.PathSeparator)
+        .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path));
 
     static PackContext CreateContext()
     {

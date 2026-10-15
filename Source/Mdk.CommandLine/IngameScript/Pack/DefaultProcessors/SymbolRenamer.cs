@@ -44,7 +44,7 @@ public partial class SymbolRenamer : IDocumentProcessor
         var scanPhase2 = new UsageScanWalker(semanticModel, idMap);
         scanPhase2.Visit(syntaxRoot);
 
-        var renamer = new SymbolRenamingRewriter(idMap, semanticModel);
+        var renamer = new SymbolRenamingRewriter(idMap, semanticModel, CollectExistingNames(syntaxRoot));
         syntaxRoot = renamer.Visit(syntaxRoot) ?? throw new InvalidOperationException("Failed to rename symbols.");
 
         document = document.WithSyntaxRoot(syntaxRoot);
@@ -62,6 +62,27 @@ public partial class SymbolRenamer : IDocumentProcessor
         // if (!context.Parameters.PackVerb.NoSymbolMap)
         //     context.FileSystem.Write("symbol.map", string.Join("\n", idMap.Select(kvp => $"{kvp.Value}={kvp.Key}")));
         return document;
+    }
+
+    /// <summary>
+    ///     Collects every identifier name the script already uses. A generated name must not be one of them: some
+    ///     identifiers survive the renaming - preserved declarations, members pinned because a preserved member
+    ///     overrides or implements them, and everything declared outside the script - and handing one of those out
+    ///     again creates a duplicate or shadowing declaration. There is no shortage of generated names, so this is
+    ///     deliberately blunt rather than trying to predict which identifiers survive.
+    /// </summary>
+    /// <param name="root"></param>
+    /// <returns></returns>
+    static HashSet<string> CollectExistingNames(SyntaxNode root)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var token in root.DescendantTokens())
+        {
+            if (token.IsKind(SyntaxKind.IdentifierToken))
+                names.Add(token.ValueText);
+        }
+
+        return names;
     }
 
     /// <summary>
@@ -101,9 +122,9 @@ public partial class SymbolRenamer : IDocumentProcessor
         }
     }
 
-    class SymbolRenamingRewriter(Dictionary<string, ISymbol> symbolMap, SemanticModel semanticModel) : CSharpSyntaxRewriter
+    class SymbolRenamingRewriter(Dictionary<string, ISymbol> symbolMap, SemanticModel semanticModel, HashSet<string> existingNames) : CSharpSyntaxRewriter
     {
-        readonly HashSet<string> _distinctSymbolNames = new();
+        readonly HashSet<string> _distinctSymbolNames = existingNames;
         readonly Dictionary<string, string> _nameMap = new(StringComparer.Ordinal);
         readonly Dictionary<string, ISymbol> _symbolMap = symbolMap;
         readonly SemanticModel _semanticModel = semanticModel;
@@ -742,6 +763,133 @@ public partial class SymbolRenamer : IDocumentProcessor
                 return false;
             return references.All(r => r.GetSyntax().ShouldBePreserved());
         }
+
+        SemanticModel? _pinnedModel;
+        HashSet<ISymbol>? _pinnedByPreservedOverride;
+
+        /// <summary>
+        ///     Determines whether the given symbol belongs to an override or interface implementation family which
+        ///     contains a preserved member. Every member of such a family carries the same name, and the preserved
+        ///     one cannot change, so none of them can be renamed: an override would override nothing (CS0115) and an
+        ///     implementation would no longer implement its interface member (CS0535).
+        /// </summary>
+        /// <remarks>
+        ///     <see cref="IsOverriddenSymbolPreserved{T}" /> only looks from a symbol up to what it overrides.
+        ///     Nothing on <see cref="ISymbol" /> answers "who overrides me", so the declarations in the script are
+        ///     walked once and the result cached.
+        /// </remarks>
+        /// <param name="symbol"></param>
+        /// <param name="semanticModel"></param>
+        /// <returns></returns>
+        protected bool IsOverridingSymbolPreserved(ISymbol symbol, SemanticModel semanticModel)
+        {
+            if (!ReferenceEquals(_pinnedModel, semanticModel))
+            {
+                _pinnedByPreservedOverride = CollectPinnedByPreservedOverride(semanticModel);
+                _pinnedModel = semanticModel;
+            }
+
+            return _pinnedByPreservedOverride!.Contains(symbol.OriginalDefinition);
+        }
+
+        /// <summary>
+        ///     Collects every member which has to keep its name because a preserved member shares its override or
+        ///     interface implementation family.
+        /// </summary>
+        /// <param name="semanticModel"></param>
+        /// <returns></returns>
+        static HashSet<ISymbol> CollectPinnedByPreservedOverride(SemanticModel semanticModel)
+        {
+            var pinned = new HashSet<ISymbol>(SymbolEqualityComparer.Default);
+            var root = semanticModel.SyntaxTree.GetRoot();
+            // Without a single preserved declaration nothing can be pinned, and resolving the interfaces below is
+            // not free.
+            if (!root.DescendantNodes().Any(node => node.ShouldBePreserved()))
+                return pinned;
+
+            var family = new Dictionary<ISymbol, List<ISymbol>>(SymbolEqualityComparer.Default);
+            var queue = new Queue<ISymbol>();
+
+            foreach (var node in root.DescendantNodes())
+            {
+                switch (node)
+                {
+                    // Fields and event fields declare their symbols on the variable declarators, not on the
+                    // declaration itself. An event field can implement an interface event.
+                    case BaseFieldDeclarationSyntax fieldDeclaration:
+                        foreach (var declarator in fieldDeclaration.Declaration.Variables)
+                            Collect(declarator, fieldDeclaration.ShouldBePreserved() || declarator.ShouldBePreserved());
+                        break;
+                    case MemberDeclarationSyntax memberDeclaration:
+                        Collect(memberDeclaration, memberDeclaration.ShouldBePreserved());
+                        break;
+                }
+            }
+
+            while (queue.Count > 0)
+            {
+                if (!family.TryGetValue(queue.Dequeue(), out var relatives))
+                    continue;
+                foreach (var relative in relatives)
+                {
+                    if (pinned.Add(relative))
+                        queue.Enqueue(relative);
+                }
+            }
+
+            return pinned;
+
+            void Collect(SyntaxNode declaration, bool isPreserved)
+            {
+                if (semanticModel.GetDeclaredSymbol(declaration) is not { } declared)
+                    return;
+                var symbol = declared.OriginalDefinition;
+                if (isPreserved && pinned.Add(symbol))
+                    queue.Enqueue(symbol);
+
+                if (symbol is INamedTypeSymbol type)
+                {
+                    // The member implementing an interface member can be inherited from a base type, so the pair has
+                    // to be resolved from the implementing type rather than from the member's own containing type.
+                    foreach (var interfaceMember in type.AllInterfaces.SelectMany(i => i.GetMembers()))
+                    {
+                        if (type.FindImplementationForInterfaceMember(interfaceMember) is { } implementation)
+                            Relate(family, implementation.OriginalDefinition, interfaceMember.OriginalDefinition);
+                    }
+
+                    return;
+                }
+
+                if (GetOverriddenMember(symbol) is { } overridden)
+                    Relate(family, symbol, overridden.OriginalDefinition);
+            }
+
+            static void Relate(Dictionary<ISymbol, List<ISymbol>> family, ISymbol first, ISymbol second)
+            {
+                Add(family, first, second);
+                Add(family, second, first);
+
+                static void Add(Dictionary<ISymbol, List<ISymbol>> family, ISymbol key, ISymbol value)
+                {
+                    if (!family.TryGetValue(key, out var relatives))
+                        family[key] = relatives = new List<ISymbol>();
+                    relatives.Add(value);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Returns the member the given symbol overrides, if it is an override.
+        /// </summary>
+        /// <param name="symbol"></param>
+        /// <returns></returns>
+        static ISymbol? GetOverriddenMember(ISymbol symbol) => symbol switch
+        {
+            IMethodSymbol { OverriddenMethod: { } overriddenMethod } => overriddenMethod,
+            IPropertySymbol { OverriddenProperty: { } overriddenProperty } => overriddenProperty,
+            IEventSymbol { OverriddenEvent: { } overriddenEvent } => overriddenEvent,
+            _ => null
+        };
     }
 
     class DefinitionScanWalker(SemanticModel semanticModel, Dictionary<string, ISymbol> symbolMap, IPackContext context) : BaseWalker
@@ -775,6 +923,8 @@ public partial class SymbolRenamer : IDocumentProcessor
                 if (PreservedDeclarationRegistry.Contains(symbol, _context))
                     return;
                 if (IsOverriddenSymbolPreserved(symbol))
+                    return;
+                if (IsOverridingSymbolPreserved(symbol, _semanticModel))
                     return;
                 if (IsReferencedSymbolPreserved(symbol))
                     return;
