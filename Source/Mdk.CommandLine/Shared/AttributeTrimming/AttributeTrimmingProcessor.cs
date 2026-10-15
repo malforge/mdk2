@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Collections.Generic;
 using System.Globalization;
@@ -63,17 +63,17 @@ public sealed class AttributeTrimmingProcessor
         var trimmedDeclarations = ImmutableArray.CreateBuilder<AttributeTrimmingReportEntry>();
         var preservedApplications = ImmutableArray.CreateBuilder<AttributeTrimmingReportEntry>();
 
-        var declarationsByDocument = await ForEachDocumentAsync(project, async document =>
+        var declarationsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
             var found = new List<(INamedTypeSymbol Symbol, ClassDeclarationSyntax Declaration)>();
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var model = await document.GetSemanticModelAsync(cancellationToken);
+            var root = await document.GetSyntaxRootAsync(documentToken);
+            var model = await document.GetSemanticModelAsync(documentToken);
             if (root == null || model == null)
                 return found;
 
             foreach (var classDeclaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                var symbol = model.GetDeclaredSymbol(classDeclaration, cancellationToken);
+                var symbol = model.GetDeclaredSymbol(classDeclaration, documentToken);
                 if (symbol != null && IsAttributeType(symbol, systemAttribute))
                     found.Add((symbol, classDeclaration));
             }
@@ -92,17 +92,17 @@ public sealed class AttributeTrimmingProcessor
         }
 
         var sourceDefinedTypes = sourceAttributeTypes.ToImmutable();
-        var applicationsByDocument = await ForEachDocumentAsync(project, async document =>
+        var applicationsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
             var found = new List<(INamedTypeSymbol Type, AttributeSyntax Attribute)>();
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var model = await document.GetSemanticModelAsync(cancellationToken);
+            var root = await document.GetSyntaxRootAsync(documentToken);
+            var model = await document.GetSemanticModelAsync(documentToken);
             if (root == null || model == null)
                 return found;
 
             foreach (var attribute in root.DescendantNodes().OfType<AttributeSyntax>())
             {
-                var attributeType = ResolveAttributeType(model, attribute, cancellationToken);
+                var attributeType = ResolveAttributeType(model, attribute, documentToken);
                 if (attributeType != null)
                     found.Add((attributeType, attribute));
             }
@@ -179,18 +179,18 @@ public sealed class AttributeTrimmingProcessor
         if (sourceAttributeTypes.Count == 0)
             return usingSpans.ToImmutable();
 
-        var usingsByDocument = await ForEachDocumentAsync(project, async document =>
+        var usingsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
             var found = new List<TextSpan>();
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var model = await document.GetSemanticModelAsync(cancellationToken);
+            var root = await document.GetSyntaxRootAsync(documentToken);
+            var model = await document.GetSemanticModelAsync(documentToken);
             if (root == null || model == null)
                 return found;
 
             foreach (var usingDirective in root.DescendantNodes().OfType<UsingDirectiveSyntax>())
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                var target = ResolveUsingTarget(model, usingDirective, cancellationToken);
+                documentToken.ThrowIfCancellationRequested();
+                var target = ResolveUsingTarget(model, usingDirective, documentToken);
                 if (target is INamedTypeSymbol namedType && sourceAttributeTypes.Contains(namedType))
                     found.Add(usingDirective.Span);
             }
@@ -229,11 +229,11 @@ public sealed class AttributeTrimmingProcessor
 
         var candidateNames = await CollectCandidateNamesAsync(project, sourceAttributeTypes, cancellationToken);
 
-        var diagnosticsByDocument = await ForEachDocumentAsync(project, async document =>
+        var diagnosticsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
             var diagnostics = new List<AttributeTrimmingDiagnostic>();
             var reportedSpans = new HashSet<TextSpan>();
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
+            var root = await document.GetSyntaxRootAsync(documentToken);
             if (root == null)
                 return diagnostics;
 
@@ -243,16 +243,16 @@ public sealed class AttributeTrimmingProcessor
 
             foreach (var name in root.DescendantNodes().OfType<NameSyntax>())
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                documentToken.ThrowIfCancellationRequested();
                 var identifier = GetRightmostIdentifier(name);
                 if (identifier != null && !candidateNames.Contains(identifier))
                     continue;
 
-                model ??= await document.GetSemanticModelAsync(cancellationToken);
+                model ??= await document.GetSemanticModelAsync(documentToken);
                 if (model == null)
                     break;
 
-                var referencedType = ResolveReferencedAttributeType(model, name, cancellationToken);
+                var referencedType = ResolveReferencedAttributeType(model, name, documentToken);
                 if (referencedType == null || !sourceAttributeTypes.Contains(referencedType))
                     continue;
 
@@ -276,17 +276,21 @@ public sealed class AttributeTrimmingProcessor
 
     /// <summary>
     /// Runs <paramref name="body"/> for every document in parallel and returns the results in document order,
-    /// so merging them keeps the same order as a sequential pass.
+    /// so merging them keeps the same order as a sequential pass. The body receives the loop's token, which is
+    /// also cancelled when another document fails, so in-flight documents stop early.
     /// </summary>
     static async Task<(Document Document, T Result)[]> ForEachDocumentAsync<T>(
         Project project,
-        Func<Document, Task<T>> body,
+        Func<Document, CancellationToken, Task<T>> body,
         CancellationToken cancellationToken)
     {
         var documents = project.Documents.ToArray();
         var results = new T[documents.Length];
-        await Parallel.ForEachAsync(Enumerable.Range(0, documents.Length), cancellationToken,
-            async (index, _) => results[index] = await body(documents[index]));
+        await Parallel.ForEachAsync(Enumerable.Range(0, documents.Length), cancellationToken, async (index, documentToken) =>
+        {
+            documentToken.ThrowIfCancellationRequested();
+            results[index] = await body(documents[index], documentToken);
+        });
         return documents.Select((document, index) => (document, results[index])).ToArray();
     }
 
