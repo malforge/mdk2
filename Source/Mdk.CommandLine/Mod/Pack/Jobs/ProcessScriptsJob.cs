@@ -54,7 +54,7 @@ internal class ProcessScriptsJob : ModJob
 
     static async Task ProcessDocumentAsync(Document document, ModPackContext context, DirectoryInfo projectDirectory, DirectoryInfo outputDirectory)
     {
-        var relativePath = new FileInfo(document.FilePath!).GetPathRelativeTo(projectDirectory);
+        var relativePath = ResolveScriptRelativePath(document.FilePath!, projectDirectory);
 
         var syntaxTree = (CSharpSyntaxTree?)await document.GetSyntaxTreeAsync();
         if (syntaxTree == null)
@@ -80,6 +80,35 @@ internal class ProcessScriptsJob : ModJob
         var outputPath = PathEx.CombineInside(outputDirectory.FullName, relativePath);
         context.Console.Trace($"Writing {relativePath} to {outputDirectory.FullName}");
         await context.FileSystem.WriteAsync(outputPath, (await document.GetTextAsync()).ToString());
+    }
+
+    /// <summary>
+    ///     Resolves where a script document is written, relative to the mod's script folder.
+    /// </summary>
+    /// <param name="filePath">The full path of the script document.</param>
+    /// <param name="projectDirectory">The directory of the project being packed.</param>
+    /// <remarks>
+    ///     A script from outside the project is placed under a folder named for the shared project (<c>.projitems</c>)
+    ///     that holds it. Without one, a script on the same drive keeps its relative path and a script on another
+    ///     drive goes under its own folder's name.
+    /// </remarks>
+    internal static string ResolveScriptRelativePath(string filePath, DirectoryInfo projectDirectory)
+    {
+        var file = new FileInfo(filePath);
+        var relativePath = file.GetPathRelativeTo(projectDirectory);
+        if (!PathEx.LeavesBase(relativePath))
+            return relativePath;
+
+        var sharedProject = SharedProjectFile.FindFor(file, projectDirectory);
+        if (sharedProject != null)
+            return Path.Combine(".", Path.GetFileNameWithoutExtension(sharedProject.Name), Path.GetRelativePath(sharedProject.DirectoryName!, file.FullName));
+
+        if (!Path.IsPathRooted(relativePath))
+            return relativePath;
+
+        return file.Directory?.Parent == null
+            ? Path.Combine(".", file.Name)
+            : Path.Combine(".", file.Directory.Name, file.Name);
     }
 
     static bool IsStructurallyEmpty(CompilationUnitSyntax root)
