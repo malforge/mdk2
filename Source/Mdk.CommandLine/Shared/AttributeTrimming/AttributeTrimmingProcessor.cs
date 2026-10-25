@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Collections.Generic;
 using System.Globalization;
@@ -27,7 +27,6 @@ public sealed class AttributeTrimmingProcessor
 
         var systemAttribute = compilation.GetTypeByMetadataName("System.Attribute")
                               ?? throw new CommandLineException(-1, "Failed to resolve System.Attribute for attribute trimming.");
-        var baselineErrorCounts = GetErrorCounts(compilation, cancellationToken);
 
         var plan = await AnalyzeAsync(project, compilation, systemAttribute, cancellationToken);
         if (plan.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
@@ -40,7 +39,7 @@ public sealed class AttributeTrimmingProcessor
         var usingDirectives = await FindUsingDirectivesToRemoveAsync(project, plan.SourceDefinedAttributeTypes, cancellationToken);
         project = await RewriteAsync(project, plan, usingDirectives, cancellationToken);
 
-        var validationDiagnostics = await ValidateAsync(project, baselineErrorCounts, cancellationToken);
+        var validationDiagnostics = await ValidateAsync(project, compilation, cancellationToken);
         if (validationDiagnostics.Length > 0)
             plan = plan with { Diagnostics = plan.Diagnostics.AddRange(validationDiagnostics) };
 
@@ -64,41 +63,58 @@ public sealed class AttributeTrimmingProcessor
         var trimmedDeclarations = ImmutableArray.CreateBuilder<AttributeTrimmingReportEntry>();
         var preservedApplications = ImmutableArray.CreateBuilder<AttributeTrimmingReportEntry>();
 
-        foreach (var document in project.Documents)
+        var declarationsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var model = await document.GetSemanticModelAsync(cancellationToken);
+            var found = new List<(INamedTypeSymbol Symbol, ClassDeclarationSyntax Declaration)>();
+            var root = await document.GetSyntaxRootAsync(documentToken);
+            var model = await document.GetSemanticModelAsync(documentToken);
             if (root == null || model == null)
-                continue;
+                return found;
 
             foreach (var classDeclaration in root.DescendantNodes().OfType<ClassDeclarationSyntax>())
             {
-                var symbol = model.GetDeclaredSymbol(classDeclaration, cancellationToken);
-                if (symbol == null || !IsAttributeType(symbol, systemAttribute))
-                    continue;
+                var symbol = model.GetDeclaredSymbol(classDeclaration, documentToken);
+                if (symbol != null && IsAttributeType(symbol, systemAttribute))
+                    found.Add((symbol, classDeclaration));
+            }
 
+            return found;
+        }, cancellationToken);
+
+        foreach (var (document, found) in declarationsByDocument)
+        {
+            foreach (var (symbol, classDeclaration) in found)
+            {
                 sourceAttributeTypes.Add(symbol);
                 AddSpan(declarationSpans, document.Id, classDeclaration.Span);
                 trimmedDeclarations.Add(CreateEntry(symbol, document, classDeclaration.Identifier.GetLocation(), "SourceDefined"));
             }
         }
 
-        foreach (var document in project.Documents)
+        var sourceDefinedTypes = sourceAttributeTypes.ToImmutable();
+        var applicationsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var model = await document.GetSemanticModelAsync(cancellationToken);
+            var found = new List<(INamedTypeSymbol Type, AttributeSyntax Attribute)>();
+            var root = await document.GetSyntaxRootAsync(documentToken);
+            var model = await document.GetSemanticModelAsync(documentToken);
             if (root == null || model == null)
-                continue;
+                return found;
 
             foreach (var attribute in root.DescendantNodes().OfType<AttributeSyntax>())
             {
-                var attributeType = ResolveAttributeType(model, attribute, cancellationToken);
-                if (attributeType == null)
-                    continue;
+                var attributeType = ResolveAttributeType(model, attribute, documentToken);
+                if (attributeType != null)
+                    found.Add((attributeType, attribute));
+            }
 
-                if (sourceAttributeTypes.Contains(attributeType))
+            return found;
+        }, cancellationToken);
+
+        foreach (var (document, found) in applicationsByDocument)
+        {
+            foreach (var (attributeType, attribute) in found)
+            {
+                if (sourceDefinedTypes.Contains(attributeType))
                 {
                     AddSpan(applicationSpans, document.Id, attribute.Span);
                     trimmedApplications.Add(CreateEntry(attributeType, document, attribute.GetLocation(), "SourceDefined"));
@@ -109,7 +125,7 @@ public sealed class AttributeTrimmingProcessor
             }
         }
 
-        diagnostics.AddRange(await FindRuntimeReferenceDiagnosticsAsync(project, sourceAttributeTypes.ToImmutable(), applicationSpans.ToImmutableDictionary(), declarationSpans.ToImmutableDictionary(), cancellationToken));
+        diagnostics.AddRange(await FindRuntimeReferenceDiagnosticsAsync(project, sourceDefinedTypes, applicationSpans.ToImmutableDictionary(), declarationSpans.ToImmutableDictionary(), cancellationToken));
 
         return new AttributeTrimmingPlan(
             applicationSpans.ToImmutableDictionary(),
@@ -163,24 +179,29 @@ public sealed class AttributeTrimmingProcessor
         if (sourceAttributeTypes.Count == 0)
             return usingSpans.ToImmutable();
 
-        foreach (var document in project.Documents)
+        var usingsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var model = await document.GetSemanticModelAsync(cancellationToken);
+            var found = new List<TextSpan>();
+            var root = await document.GetSyntaxRootAsync(documentToken);
+            var model = await document.GetSemanticModelAsync(documentToken);
             if (root == null || model == null)
-                continue;
+                return found;
 
             foreach (var usingDirective in root.DescendantNodes().OfType<UsingDirectiveSyntax>())
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                var target = ResolveUsingTarget(model, usingDirective, cancellationToken);
-                var shouldRemove = target is INamedTypeSymbol namedType
-                                   && sourceAttributeTypes.Contains(namedType);
-
-                if (shouldRemove)
-                    AddSpan(usingSpans, document.Id, usingDirective.Span);
+                documentToken.ThrowIfCancellationRequested();
+                var target = ResolveUsingTarget(model, usingDirective, documentToken);
+                if (target is INamedTypeSymbol namedType && sourceAttributeTypes.Contains(namedType))
+                    found.Add(usingDirective.Span);
             }
+
+            return found;
+        }, cancellationToken);
+
+        foreach (var (document, found) in usingsByDocument)
+        {
+            foreach (var span in found)
+                AddSpan(usingSpans, document.Id, span);
         }
 
         return usingSpans.ToImmutable();
@@ -206,30 +227,39 @@ public sealed class AttributeTrimmingProcessor
         if (sourceAttributeTypes.Count == 0)
             return ImmutableArray<AttributeTrimmingDiagnostic>.Empty;
 
-        var diagnostics = ImmutableArray.CreateBuilder<AttributeTrimmingDiagnostic>();
-        var reportedSpans = new HashSet<(DocumentId DocumentId, TextSpan Span)>();
+        var candidateNames = await CollectCandidateNamesAsync(project, sourceAttributeTypes, cancellationToken);
 
-        foreach (var document in project.Documents)
+        var diagnosticsByDocument = await ForEachDocumentAsync(project, async (document, documentToken) =>
         {
-            var root = await document.GetSyntaxRootAsync(cancellationToken);
-            var model = await document.GetSemanticModelAsync(cancellationToken);
-            if (root == null || model == null)
-                continue;
+            var diagnostics = new List<AttributeTrimmingDiagnostic>();
+            var reportedSpans = new HashSet<TextSpan>();
+            var root = await document.GetSyntaxRootAsync(documentToken);
+            if (root == null)
+                return diagnostics;
 
+            SemanticModel? model = null;
             var trimmedApplications = applicationSpans.TryGetValue(document.Id, out var applications) ? applications : ImmutableHashSet<TextSpan>.Empty;
             var trimmedDeclarations = declarationSpans.TryGetValue(document.Id, out var declarations) ? declarations : ImmutableHashSet<TextSpan>.Empty;
 
             foreach (var name in root.DescendantNodes().OfType<NameSyntax>())
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                var referencedType = ResolveReferencedAttributeType(model, name, cancellationToken);
+                documentToken.ThrowIfCancellationRequested();
+                var identifier = GetRightmostIdentifier(name);
+                if (identifier != null && !candidateNames.Contains(identifier))
+                    continue;
+
+                model ??= await document.GetSemanticModelAsync(documentToken);
+                if (model == null)
+                    break;
+
+                var referencedType = ResolveReferencedAttributeType(model, name, documentToken);
                 if (referencedType == null || !sourceAttributeTypes.Contains(referencedType))
                     continue;
 
                 if (IsAllowedToolingReference(name, trimmedApplications, trimmedDeclarations))
                     continue;
 
-                if (!reportedSpans.Add((document.Id, name.Span)))
+                if (!reportedSpans.Add(name.Span))
                     continue;
 
                 diagnostics.Add(new AttributeTrimmingDiagnostic(
@@ -237,23 +267,100 @@ public sealed class AttributeTrimmingProcessor
                     $"Tooling-only attribute type '{referencedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)}' is used by runtime code. Attribute trimming removes this type from packed source.",
                     name.GetLocation()));
             }
+
+            return diagnostics;
+        }, cancellationToken);
+
+        return diagnosticsByDocument.SelectMany(entry => entry.Result).ToImmutableArray();
+    }
+
+    /// <summary>
+    /// Runs <paramref name="body"/> for every document in parallel and returns the results in document order,
+    /// so merging them keeps the same order as a sequential pass. The body receives the loop's token, which is
+    /// also cancelled when another document fails, so in-flight documents stop early.
+    /// </summary>
+    static async Task<(Document Document, T Result)[]> ForEachDocumentAsync<T>(
+        Project project,
+        Func<Document, CancellationToken, Task<T>> body,
+        CancellationToken cancellationToken)
+    {
+        var documents = project.Documents.ToArray();
+        var results = new T[documents.Length];
+        await Parallel.ForEachAsync(Enumerable.Range(0, documents.Length), cancellationToken, async (index, documentToken) =>
+        {
+            documentToken.ThrowIfCancellationRequested();
+            results[index] = await body(documents[index], documentToken);
+        });
+        return documents.Select((document, index) => (document, results[index])).ToArray();
+    }
+
+    /// <summary>
+    /// Collects every identifier that can bind to a source-defined attribute type or one of its members, so that
+    /// only names spelled like one of them need a semantic lookup. A name binds through its rightmost identifier:
+    /// the type's name, its short attribute name, one of its own members, a using alias, or <c>var</c>.
+    /// </summary>
+    static async Task<HashSet<string>> CollectCandidateNamesAsync(
+        Project project,
+        ImmutableHashSet<INamedTypeSymbol> sourceAttributeTypes,
+        CancellationToken cancellationToken)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal) { "var" };
+        foreach (var type in sourceAttributeTypes)
+        {
+            names.Add(type.Name);
+            if (type.Name.Length > "Attribute".Length && type.Name.EndsWith("Attribute", StringComparison.Ordinal))
+                names.Add(type.Name.Substring(0, type.Name.Length - "Attribute".Length));
+            foreach (var member in type.GetMembers())
+            {
+                if (member.CanBeReferencedByName)
+                    names.Add(member.Name);
+            }
         }
 
-        return diagnostics.ToImmutable();
+        foreach (var document in project.Documents)
+        {
+            var root = await document.GetSyntaxRootAsync(cancellationToken);
+            if (root == null)
+                continue;
+
+            foreach (var usingDirective in root.DescendantNodes().OfType<UsingDirectiveSyntax>())
+            {
+                if (usingDirective.Alias != null)
+                    names.Add(usingDirective.Alias.Name.Identifier.ValueText);
+            }
+        }
+
+        return names;
+    }
+
+    static string? GetRightmostIdentifier(NameSyntax name)
+    {
+        return name switch
+        {
+            SimpleNameSyntax simpleName => simpleName.Identifier.ValueText,
+            QualifiedNameSyntax qualifiedName => qualifiedName.Right.Identifier.ValueText,
+            AliasQualifiedNameSyntax aliasQualifiedName => aliasQualifiedName.Name.Identifier.ValueText,
+            _ => null
+        };
     }
 
     static async Task<ImmutableArray<AttributeTrimmingDiagnostic>> ValidateAsync(
         Project project,
-        IReadOnlyDictionary<CompilerDiagnosticKey, int> baselineErrorCounts,
+        Compilation baselineCompilation,
         CancellationToken cancellationToken)
     {
         var compilation = await project.GetCompilationAsync(cancellationToken);
         if (compilation == null)
             return [new AttributeTrimmingDiagnostic("MDK04", "Attribute trimming could not validate the transformed project.", null)];
 
-        var remainingBaselineErrors = new Dictionary<CompilerDiagnosticKey, int>(baselineErrorCounts);
+        var errors = compilation.GetDiagnostics(cancellationToken).Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToArray();
+        if (errors.Length == 0)
+            return ImmutableArray<AttributeTrimmingDiagnostic>.Empty;
+
+        // The untrimmed project is only compiled again when there are errors to attribute to it.
+        var remainingBaselineErrors = GetErrorCounts(baselineCompilation, cancellationToken);
         var diagnostics = ImmutableArray.CreateBuilder<AttributeTrimmingDiagnostic>();
-        foreach (var diagnostic in compilation.GetDiagnostics(cancellationToken).Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+        foreach (var diagnostic in errors)
         {
             var key = CreateCompilerDiagnosticKey(diagnostic);
             if (remainingBaselineErrors.TryGetValue(key, out var count) && count > 0)
