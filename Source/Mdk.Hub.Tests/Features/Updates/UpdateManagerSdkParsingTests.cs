@@ -6,71 +6,94 @@ namespace Mdk.Hub.Tests.Features.Updates;
 public class UpdateManagerSdkParsingTests
 {
     [Test]
-    public void ParseBestSdk9Version_EmptyOutput_ReturnsNull()
+    public void ParseBestSdkVersion_EmptyOutput_ReturnsNull()
     {
-        var result = UpdateManager.ParseBestSdk9Version("");
+        var result = UpdateManager.ParseBestSdkVersion("");
 
         Assert.That(result, Is.Null);
     }
 
     [Test]
-    public void ParseBestSdk9Version_OnlyDotNet10_ReturnsNull()
+    public void ParseBestSdkVersion_OnlyDotNet10_ReturnsThatVersion()
     {
         var output = "10.0.100 [/usr/share/dotnet/sdk]";
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
-        Assert.That(result, Is.Null);
+        Assert.That(result, Is.EqualTo("10.0.100"));
     }
 
     [Test]
-    public void ParseBestSdk9Version_MultipleDotNet10Versions_ReturnsNull()
+    public void ParseBestSdkVersion_MultipleDotNet10Versions_ReturnsHighest()
     {
         var output = """
             10.0.100 [/usr/share/dotnet/sdk]
             10.0.103 [/usr/share/dotnet/sdk]
             """;
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
-        Assert.That(result, Is.Null);
+        Assert.That(result, Is.EqualTo("10.0.103"));
     }
 
     [Test]
-    public void ParseBestSdk9Version_OnlyDotNet8_ReturnsNull()
+    public void ParseBestSdkVersion_OnlyDotNet8_ReturnsNull()
     {
         var output = "8.0.404 [/usr/share/dotnet/sdk]";
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
         Assert.That(result, Is.Null);
     }
 
     [Test]
-    public void ParseBestSdk9Version_SingleDotNet9_ReturnsThatVersion()
+    public void ParseBestSdkVersion_SingleDotNet9_ReturnsThatVersion()
     {
         var output = "9.0.101 [/usr/share/dotnet/sdk]";
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
         Assert.That(result, Is.EqualTo("9.0.101"));
     }
 
     [Test]
-    public void ParseBestSdk9Version_DotNet9AndDotNet10_ReturnsDotNet9Version()
+    public void ParseBestSdkVersion_DotNet9AndDotNet10_ReturnsDotNet10Version()
     {
         var output = """
             9.0.101 [/usr/share/dotnet/sdk]
             10.0.100 [/usr/share/dotnet/sdk]
             """;
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
-        Assert.That(result, Is.EqualTo("9.0.101"));
+        Assert.That(result, Is.EqualTo("10.0.100"));
     }
 
     [Test]
-    public void ParseBestSdk9Version_MultipleDotNet9Versions_ReturnsHighest()
+    public void ParseBestSdkVersion_OnlyNewerMajorThanDotNet10_ReturnsNull()
+    {
+        var output = "11.0.100 [/usr/share/dotnet/sdk]";
+
+        var result = UpdateManager.ParseBestSdkVersion(output);
+
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public void ParseBestSdkVersion_DotNet10AndNewerMajor_ReturnsDotNet10Version()
+    {
+        var output = """
+            10.0.100 [/usr/share/dotnet/sdk]
+            11.0.100 [/usr/share/dotnet/sdk]
+            """;
+
+        var result = UpdateManager.ParseBestSdkVersion(output);
+
+        Assert.That(result, Is.EqualTo("10.0.100"));
+    }
+
+    [Test]
+    public void ParseBestSdkVersion_MultipleDotNet9Versions_ReturnsHighest()
     {
         var output = """
             9.0.100 [/usr/share/dotnet/sdk]
@@ -78,24 +101,24 @@ public class UpdateManagerSdkParsingTests
             9.0.103 [/usr/share/dotnet/sdk]
             """;
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
         Assert.That(result, Is.EqualTo("9.0.103"));
     }
 
     [Test]
-    public void ParseBestSdk9Version_WindowsStyleLineEndings_ParsesCorrectly()
+    public void ParseBestSdkVersion_WindowsStyleLineEndings_ParsesCorrectly()
     {
         // Windows uses \r\n line endings
         var output = "9.0.101 [C:\\Program Files\\dotnet\\sdk]\r\n10.0.100 [C:\\Program Files\\dotnet\\sdk]\r\n";
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
-        Assert.That(result, Is.EqualTo("9.0.101"));
+        Assert.That(result, Is.EqualTo("10.0.100"));
     }
 
     [Test]
-    public void ParseBestSdk9Version_MixedVersions_ReturnsHighestDotNet9()
+    public void ParseBestSdkVersion_MixedVersions_ReturnsHighestSupported()
     {
         var output = """
             8.0.404 [/usr/share/dotnet/sdk]
@@ -104,15 +127,15 @@ public class UpdateManagerSdkParsingTests
             10.0.103 [/usr/share/dotnet/sdk]
             """;
 
-        var result = UpdateManager.ParseBestSdk9Version(output);
+        var result = UpdateManager.ParseBestSdkVersion(output);
 
-        Assert.That(result, Is.EqualTo("9.0.103"));
+        Assert.That(result, Is.EqualTo("10.0.103"));
     }
 
     [Test]
-    public void ParseBestSdk9Version_WhitespaceOnly_ReturnsNull()
+    public void ParseBestSdkVersion_WhitespaceOnly_ReturnsNull()
     {
-        var result = UpdateManager.ParseBestSdk9Version("   \n   \r\n   ");
+        var result = UpdateManager.ParseBestSdkVersion("   \n   \r\n   ");
 
         Assert.That(result, Is.Null);
     }

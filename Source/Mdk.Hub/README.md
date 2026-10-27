@@ -51,7 +51,7 @@ The Hub will automatically find and import your existing MDK2 projects on first 
 
 The Hub is built with:
 - **Avalonia UI** - Cross-platform .NET UI framework
-- **.NET 9** - Modern C# and runtime features
+- **.NET 10** - Modern C# and runtime features
 - **Velopack** - Modern update/installation system
 - **Mal.SourceGeneratedDI** - Compile-time dependency injection
 

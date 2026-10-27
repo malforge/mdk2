@@ -56,7 +56,7 @@ public class DirectConsole : IConsole
                 PopNextLine(ref source, out var nextLine, lineMaxWidth);
                 if (!isFirst && indent > 0)
                     Console.Write(new string(' ', indent));
-                Console.WriteLine(nextLine);
+                Console.WriteLine(nextLine.ToString());
                 isFirst = false;
             }
         }

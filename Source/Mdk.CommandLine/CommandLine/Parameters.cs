@@ -404,13 +404,11 @@ public class Parameters : TracksPropertyChanges, IParameters
         console.Print("Usage: mdk pack <project-file> [options]")
             .Print("Packs a script or mod project into a workshop-ready package.")
             .Print()
-            .Print("Options (for script projects):")
-            .Print("  -minifier <level>    Set the minifier level.")
-            .Print("                        - none (default), trim, strip-comments, lite, full.")
-            .Print("  -gamebin <path>      Path to the game's bin folder.")
-            .Print("                        \"auto\" to auto-detect the bin folder from Steam (default).")
+            .Print("Options:")
+            .Print("  -dryrun              Pack without writing any output.")
             .Print("  -output <path>       Write the output to the specified folder.")
             .Print("                        \"auto\" to auto-detect the output folder from Steam (default).")
+            .Print("  -configuration <cfg> The build configuration to pack (default: Release).")
             .Print("  -ignore <paths>      A semi-colon separated list of paths to ignore when packing (globbing "
                    + "format, eg. 'obj/**/*' ignores all files and folders in the `obj` folder.).")
             .Print("  -macro <name=value>  Define a macro to be replaced in the script. Can be used multiple times.")
@@ -421,11 +419,20 @@ public class Parameters : TracksPropertyChanges, IParameters
             .Print("  -log <file>          Log to the specified file.")
             .Print("  -trace               Enable trace logging.")
             .Print()
-            .Print("Options (for mod projects):")
-            .Print("  To be determined: Mod packing is pending implementation.")
+            .Print("Options for script projects:")
+            .Print("  -minify <level>      Set the minifier level.")
+            .Print("                        - none (default), trim, stripcomments, lite, full.")
+            .Print("  -minifyextraoptions <options>")
+            .Print("                       Extra minifier options.")
+            .Print("                        - none (default)")
+            .Print("                        - nomembertrimming: Keep unused fields, properties, methods and constructors.")
+            .Print()
+            .Print("Options for mod projects:")
+            .Print("  -donotclean <paths>  A semi-colon separated list of paths in the output folder to keep when "
+                   + "it is cleared before packing (globbing format).")
             .Print()
             .Print("Example:")
-            .Print("  mdk pack /path/to/project.csproj -minifier full -interactive OpenHub");
+            .Print("  mdk pack /path/to/project.csproj -minify full -interactive OpenHub");
 
     void ShowGeneralHelp(IConsole console) =>
         console.Print("Usage: mdk [options] <verb> [verb-options]")
@@ -440,7 +447,7 @@ public class Parameters : TracksPropertyChanges, IParameters
             .Print()
             .Print("Verbs:")
             .Print("  help [verb]  Display help for a verb.")
-            .Print("  pack         Pack a project into a single script.")
+            .Print("  pack         Pack a script or mod project.")
             .Print("  version      Display the version of MDK.")
             .Print()
             .Print("Use 'mdk help <verb>' for more information on a verb.");

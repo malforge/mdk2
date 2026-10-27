@@ -98,7 +98,7 @@ You'll almost always be targeting `main` with your pull requests. The CI/CD pipe
 
 ## Development Setup
 
-You'll need .NET 9.0 SDK, an IDE (Visual Studio 2022 works well), and Space Engineers installed.
+You'll need .NET 10.0 SDK, an IDE (Visual Studio 2026 works well), and Space Engineers installed.
 
 Clone the repo and build it:
 ```bash
@@ -112,7 +112,7 @@ dotnet test MDK-Complete.slnx
 ```
 
 We use NUnit for tests. Building the whole solution requires Windows, because MDK Hub also
-targets `net9.0-windows` and that framework can't be built elsewhere. Individual projects
+targets `net10.0-windows` and that framework can't be built elsewhere. Individual projects
 build fine on Linux - see the debugging guide below. CI runs the full suite on Windows for
 every pull request.
 

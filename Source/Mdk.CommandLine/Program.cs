@@ -103,6 +103,8 @@ public static class Program
 
         if (parameters.PackVerb.DryRun)
             console.Print("Currently performing a dry run. No changes will be made.");
+        if (parameters.PackVerb.GameBin != null)
+            console.Print("The -gamebin option and the game-bin setting are no longer used and are ignored. To choose the game's bin folder, set binarypath in mdk.local.ini.");
 
         var result = ImmutableArray.CreateBuilder<PackedProject>();
 

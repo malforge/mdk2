@@ -233,7 +233,7 @@
                                     <TextBlock TextWrapping="Wrap"
                                                Classes="caption muted"
                                                Margin="0,0,0,4">
-                                        Check if .NET SDK 9.0 and MDK² template package are installed.
+                                        Check if a .NET SDK and the MDK² template package are installed.
                                     </TextBlock>
 
                                     <controls:ValidatedControl>

@@ -61,8 +61,11 @@ public interface IParameters
         string? ProjectFile { get; }
 
         /// <summary>
-        ///     An optional path to the game's bin directory.
+        ///     The path given with the retired <c>-gamebin</c> option or <c>game-bin</c> setting, which packing ignores.
         /// </summary>
+        /// <remarks>
+        ///     The game's bin folder is chosen with <c>binarypath</c> in <c>mdk.ini</c> or <c>mdk.local.ini</c>.
+        /// </remarks>
         string? GameBin { get; }
 
         /// <summary>

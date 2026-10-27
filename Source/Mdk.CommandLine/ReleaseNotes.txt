@@ -1,4 +1,14 @@
-﻿v.2.2.14
+﻿v.2.3.0
+    - MDK now works with the .NET 10 SDK. Projects build and pack on a machine that only has .NET 10 installed, including in Visual Studio 2026, and the .NET 9 SDK keeps working too. To use the .NET 10 SDK with an existing project, update its MDK packages to this version. (#185)
+    - MDK no longer carries its own copy of the MSBuild libraries, which had known security vulnerabilities. It uses the ones that come with your installed .NET SDK instead.
+    - On Linux, MDK now needs glibc 2.27 or newer (Ubuntu 18.04, Debian 10, RHEL 8 or later).
+    - The help for `mdk pack` now gives the minifier option as `-minify` and the comment-stripping level as `stripcomments`, which is what MDK accepts. It listed `-minifier` and `strip-comments`, which were rejected. The help now also lists every pack option, and which ones apply to scripts or to mods.
+    - An unknown minifier level on the command line now gives a clear error. It could crash, or quietly take the argument after it as the level.
+    - A dry run of a mod (`-dryrun`) no longer changes anything. It deleted stale files from the mod's output folder and rewrote the mod. A dry run of a script no longer creates an empty output folder, and neither one reports a deployment or notifies the Hub.
+    - The `-gamebin` option and the `game-bin` setting are retired. They never had any effect; MDK now says so when one is used. Set `binarypath` in mdk.local.ini to choose the game's bin folder.
+    - Packing a solution with several MDK projects now reports how many were packed, instead of a garbled message.
+
+v.2.2.14
     - Packing is much faster on larger projects. Attribute trimming now finishes in a fraction of the time, and mod packing processes files parallel on all available CPU cores.
     - Mod packing now includes scripts from a mixin installed as a NuGet package on a different drive from the project. They were left out of the mod while the pack still reported success. Scripts from a mixin's shared project outside the project, including one in the NuGet cache on the same drive, now pack under a folder named for the mixin.
     - Mod packing now places content files from a mixin outside the project inside the mod. A file without a Link goes where it sits inside its mixin, a mixin on a different drive no longer fails the pack, and no content is copied outside the mod folder.

@@ -215,6 +215,86 @@ public class ParametersTests
     }
 
     [Test]
+    public void PackVerb_MinifierLevel_StripCommentsParsesFromCommandLine()
+    {
+        var parameters = new Parameters();
+
+        parameters.Parse(new[] { "pack", "test.csproj", "-minify", "stripcomments" });
+
+        Assert.That(parameters.PackVerb.MinifierLevel, Is.EqualTo(MinifierLevel.StripComments));
+    }
+
+    [Test]
+    public void PackVerb_MinifierLevel_UnknownLastValue_ThrowsCommandLineException()
+    {
+        var parameters = new Parameters();
+
+        var exception = Assert.Throws<CommandLineException>(() => parameters.Parse(new[] { "pack", "test.csproj", "-minify", "strip-comments" }));
+
+        Assert.That(exception!.Message, Does.Contain("unknown minifier"));
+    }
+
+    [Test]
+    public void PackVerb_MinifierLevel_UndefinedNumber_ThrowsCommandLineException()
+    {
+        var parameters = new Parameters();
+
+        Assert.Throws<CommandLineException>(() => parameters.Parse(new[] { "pack", "test.csproj", "-minify", "7" }));
+    }
+
+    [Test]
+    public void PackVerb_MinifierLevel_CommaSeparatedValues_ThrowsCommandLineException()
+    {
+        var parameters = new Parameters();
+
+        Assert.Throws<CommandLineException>(() => parameters.Parse(new[] { "pack", "test.csproj", "-minify", "trim,stripcomments" }));
+    }
+
+    [Test]
+    public void PackVerb_MinifierExtraOptions_UndefinedFlags_ThrowsCommandLineException()
+    {
+        var parameters = new Parameters();
+
+        Assert.Throws<CommandLineException>(() => parameters.Parse(new[] { "pack", "test.csproj", "-minifyextraoptions", "12345" }));
+    }
+
+    [Test]
+    public void PackVerb_MinifierExtraOptions_NegativeNumber_ThrowsCommandLineException()
+    {
+        var parameters = new Parameters();
+
+        Assert.Throws<CommandLineException>(() => parameters.Parse(new[] { "pack", "test.csproj", "-minifyextraoptions", "-1" }));
+    }
+
+    [Test]
+    public void PackVerb_MinifierExtraOptions_NamedFlag_Parses()
+    {
+        var parameters = new Parameters();
+
+        parameters.Parse(new[] { "pack", "test.csproj", "-minifyextraoptions", "nomembertrimming" });
+
+        Assert.That(parameters.PackVerb.MinifierExtraOptions, Is.EqualTo(MinifierExtraOptions.NoMemberTrimming));
+    }
+
+    [Test]
+    public void PackVerb_MinifierLevel_DefinedNumber_Parses()
+    {
+        var parameters = new Parameters();
+
+        parameters.Parse(new[] { "pack", "test.csproj", "-minify", "4" });
+
+        Assert.That(parameters.PackVerb.MinifierLevel, Is.EqualTo(MinifierLevel.Full));
+    }
+
+    [Test]
+    public void PackVerb_MinifierLevel_UnknownValue_DoesNotConsumeNextNumber()
+    {
+        var parameters = new Parameters();
+
+        Assert.Throws<CommandLineException>(() => parameters.Parse(new[] { "pack", "test.csproj", "-minify", "bogus", "4" }));
+    }
+
+    [Test]
     public void BranchOutputs_LoadFromIniBranchSections()
     {
         // Arrange

@@ -10,7 +10,7 @@ This skill walks through reproducing, debugging, and fixing issues in MDK itself
 ## Prerequisites
 
 - MDK source repo checked out
-- .NET 9.0 SDK installed
+- .NET 10.0 SDK installed
 - A test project to work with (a working baseline AND, ideally, a failing repro)
 
 ## Building MDK from source
@@ -26,15 +26,15 @@ dotnet build Mdk.CommandLine\Mdk.CommandLine.csproj -c Release
 ```
 
 Built executable:
-- Debug: `Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe`
-- Release: `Source\Mdk.CommandLine\bin\Release\net9.0\win-x64\mdk.exe`
+- Debug: `Source\Mdk.CommandLine\bin\Debug\net10.0\win-x64\mdk.exe`
+- Release: `Source\Mdk.CommandLine\bin\Release\net10.0\win-x64\mdk.exe`
 
 ## Running MDK commands
 
 **Preferred** — invoke the built exe directly so behavior matches what users see:
 
 ```bash
-& "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "path\to\project.csproj"
+& "Source\Mdk.CommandLine\bin\Debug\net10.0\win-x64\mdk.exe" pack "path\to\project.csproj"
 ```
 
 Alternative — `dotnet run` (slower, but skips the build/run split):
@@ -68,7 +68,7 @@ $packageMdk = "C:\Users\$env:USERNAME\.nuget\packages\mal.mdk2.pbpackager\<VERSI
 & $packageMdk pack "path\to\project.csproj" -configuration Debug -interactive
 
 # Current source mdk.exe
-& "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "path\to\project.csproj" -configuration Debug -interactive
+& "Source\Mdk.CommandLine\bin\Debug\net10.0\win-x64\mdk.exe" pack "path\to\project.csproj" -configuration Debug -interactive
 ```
 
 Interpret the matrix:
@@ -89,7 +89,7 @@ Always verify normal operation before investigating failures.
 4. Note what success looks like (exit code, output shape, files written).
 
 ```bash
-& "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "Source\Mdk.CommandLine.Tests\TestData\NewNamingTest\NewNamingTest.csproj" -trace
+& "Source\Mdk.CommandLine\bin\Debug\net10.0\win-x64\mdk.exe" pack "Source\Mdk.CommandLine.Tests\TestData\NewNamingTest\NewNamingTest.csproj" -trace
 ```
 
 ### Step 2 — Reproduce the issue
@@ -100,7 +100,7 @@ Always verify normal operation before investigating failures.
 4. Note the exact command + parameters used.
 
 ```bash
-$output = & "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "path\to\failing\project.csproj" 2>&1
+$output = & "Source\Mdk.CommandLine\bin\Debug\net10.0\win-x64\mdk.exe" pack "path\to\failing\project.csproj" 2>&1
 $output | Out-File ".issues\error-output.txt"
 ```
 
@@ -147,7 +147,7 @@ Create `.vscode/launch.json`:
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Source/Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe",
+            "program": "${workspaceFolder}/Source/Mdk.CommandLine/bin/Debug/net10.0/win-x64/mdk.exe",
             "args": ["pack", "D:\\path\\to\\project.csproj"],
             "cwd": "${workspaceFolder}/Source",
             "console": "internalConsole",
@@ -201,7 +201,7 @@ Signs of an infinite loop: process never exits, repeating output, sustained CPU,
 dotnet build Source\Mdk.CommandLine\Mdk.CommandLine.csproj -c Debug
 
 # Run with capture, take first 20 lines
-$output = & "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" pack "project.csproj" 2>&1 | Select-Object -First 20
+$output = & "Source\Mdk.CommandLine\bin\Debug\net10.0\win-x64\mdk.exe" pack "project.csproj" 2>&1 | Select-Object -First 20
 
 # Find all MDK test projects
 Get-ChildItem -Recurse -Filter "mdk.ini" | Select-Object Directory
@@ -210,7 +210,7 @@ Get-ChildItem -Recurse -Filter "mdk.ini" | Select-Object Directory
 Get-Process mdk | Stop-Process -Force
 
 # Launch + check whether it exited within 5s
-$proc = Start-Process "Source\Mdk.CommandLine\bin\Debug\net9.0\win-x64\mdk.exe" -ArgumentList "pack","project.csproj" -PassThru -NoNewWindow
+$proc = Start-Process "Source\Mdk.CommandLine\bin\Debug\net10.0\win-x64\mdk.exe" -ArgumentList "pack","project.csproj" -PassThru -NoNewWindow
 Start-Sleep -Seconds 5
 $proc.HasExited
 ```
