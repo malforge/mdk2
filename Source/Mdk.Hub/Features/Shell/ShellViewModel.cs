@@ -623,7 +623,7 @@ public class ShellViewModel : ViewModel, IShell
                     {
                         _logger.Error($"Failed to install .NET SDK", ex);
                         messages.Add($"✗ Failed to install .NET SDK:\n  {ex.Message}");
-                        messages.Add("  Please visit https://dotnet.microsoft.com/download/dotnet/9.0 to install manually.");
+                        messages.Add($"  Please visit https://dotnet.microsoft.com/download/dotnet/{UpdateManager.InstalledSdkChannel} to install manually.");
                     }
                 }
                 else

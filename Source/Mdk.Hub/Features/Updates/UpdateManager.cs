@@ -24,6 +24,24 @@ namespace Mdk.Hub.Features.Updates;
 [Singleton<IUpdateManager>]
 public class UpdateManager : IUpdateManager
 {
+    /// <summary>
+    ///     The lowest .NET SDK major version MDK can build with.
+    /// </summary>
+    public const int MinimumSdkMajorVersion = 9;
+
+    /// <summary>
+    ///     The highest .NET SDK major version MDK can build with.
+    /// </summary>
+    /// <remarks>
+    ///     Matches the .NET runtime MDK's command line tool runs on; MSBuildLocator ignores SDKs newer than that runtime.
+    /// </remarks>
+    public const int MaximumSdkMajorVersion = 10;
+
+    /// <summary>
+    ///     The .NET release channel the Hub installs when no usable SDK is found.
+    /// </summary>
+    public static string InstalledSdkChannel => $"{MaximumSdkMajorVersion}.0";
+
     readonly List<Action<VersionCheckCompletedEventArgs>> _completionCallbacks = new();
     readonly IFileStorageService _fileStorage;
     readonly IGitHubService _gitHubService;
@@ -232,8 +250,7 @@ public class UpdateManager : IUpdateManager
     }
 
     /// <summary>
-    ///     Checks whether a .NET 9 SDK is installed and returns its version.
-    ///     MDK requires .NET SDK 9.x specifically; versions 10 and above are not compatible.
+    ///     Checks whether a .NET SDK MDK can build with is installed and returns the newest such version.
     /// </summary>
     public async Task<(bool IsInstalled, string? Version)> CheckDotNetSdkAsync()
     {
@@ -267,17 +284,15 @@ public class UpdateManager : IUpdateManager
                 return (false, null);
             }
 
-            // Each line is of the form: "9.0.101 [/path/to/sdk]"
-            // Find the highest 9.x version installed
-            var bestVersion = ParseBestSdk9Version(output);
+            var bestVersion = ParseBestSdkVersion(output);
 
             if (bestVersion != null)
             {
-                _logger.Info($".NET SDK 9.x found: {bestVersion}");
+                _logger.Info($".NET SDK found: {bestVersion}");
                 return (true, bestVersion);
             }
 
-            _logger.Info(".NET 9 SDK not found");
+            _logger.Info($".NET SDK {MinimumSdkMajorVersion} to {MaximumSdkMajorVersion} not found");
             return (false, null);
         }
         catch (Exception ex)
@@ -288,17 +303,17 @@ public class UpdateManager : IUpdateManager
     }
 
     /// <summary>
-    ///     Fetches the latest .NET 9 SDK download URL for Windows x64 from Microsoft's official releases API.
+    ///     Fetches the latest SDK download URL in <see cref="InstalledSdkChannel" /> for Windows x64 from Microsoft's official releases API.
     /// </summary>
-    private async Task<string?> GetLatestDotNet9SdkDownloadUrlAsync()
+    private async Task<string?> GetLatestDotNetSdkDownloadUrlAsync()
     {
         try
         {
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(10);
 
-            var releasesUrl = "https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/9.0/releases.json";
-            _logger.Info($"Fetching .NET 9 releases metadata from {releasesUrl}");
+            var releasesUrl = $"https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/{InstalledSdkChannel}/releases.json";
+            _logger.Info($"Fetching .NET {InstalledSdkChannel} releases metadata from {releasesUrl}");
 
             var releasesJson = await httpClient.GetStringAsync(releasesUrl);
             using var doc = JsonDocument.Parse(releasesJson);
@@ -306,16 +321,16 @@ public class UpdateManager : IUpdateManager
             var downloadUrl = SelectWindowsX64InstallerUrl(doc.RootElement);
             if (downloadUrl != null)
             {
-                _logger.Info("Found .NET 9 SDK installer URL");
+                _logger.Info($"Found .NET {InstalledSdkChannel} SDK installer URL");
                 return downloadUrl;
             }
 
-            _logger.Error("Could not find .NET 9 SDK download URL in releases metadata");
+            _logger.Error($"Could not find .NET {InstalledSdkChannel} SDK download URL in releases metadata");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.Error("Failed to fetch .NET 9 SDK download URL", ex);
+            _logger.Error($"Failed to fetch .NET {InstalledSdkChannel} SDK download URL", ex);
             return null;
         }
     }
@@ -370,10 +385,10 @@ public class UpdateManager : IUpdateManager
     }
 
     /// <summary>
-    ///     Parses the output of <c>dotnet --list-sdks</c> and returns the highest .NET 9.x version string found,
-    ///     or <c>null</c> if no 9.x SDK is listed.
+    ///     Parses the output of <c>dotnet --list-sdks</c> and returns the highest SDK version string between
+    ///     <see cref="MinimumSdkMajorVersion" /> and <see cref="MaximumSdkMajorVersion" />, or <c>null</c> if none is listed.
     /// </summary>
-    internal static string? ParseBestSdk9Version(string output)
+    internal static string? ParseBestSdkVersion(string output)
     {
         string? bestVersion = null;
         Version? bestParsedVersion = null;
@@ -386,7 +401,7 @@ public class UpdateManager : IUpdateManager
             var spaceIndex = trimmed.IndexOf(' ');
             var versionStr = spaceIndex >= 0 ? trimmed[..spaceIndex] : trimmed;
 
-            if (!Version.TryParse(versionStr, out var parsedVersion) || parsedVersion.Major != 9)
+            if (!Version.TryParse(versionStr, out var parsedVersion) || parsedVersion.Major < MinimumSdkMajorVersion || parsedVersion.Major > MaximumSdkMajorVersion)
                 continue;
 
             if (bestParsedVersion == null || parsedVersion > bestParsedVersion)
@@ -399,7 +414,7 @@ public class UpdateManager : IUpdateManager
     }
 
     /// <summary>
-    ///     Installs the .NET 9 SDK for the current platform (Windows or Linux).
+    ///     Installs the .NET SDK from <see cref="InstalledSdkChannel" /> for the current platform (Windows or Linux).
     /// </summary>
     public async Task InstallDotNetSdkAsync()
     {
@@ -409,17 +424,17 @@ public class UpdateManager : IUpdateManager
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // Windows: Fetch the latest .NET 9 SDK download URL and run the installer
-                _logger.Info("Fetching latest .NET 9 SDK download URL");
-                var installerUrl = await GetLatestDotNet9SdkDownloadUrlAsync();
+                // Windows: Fetch the latest SDK download URL and run the installer
+                _logger.Info($"Fetching latest .NET {InstalledSdkChannel} SDK download URL");
+                var installerUrl = await GetLatestDotNetSdkDownloadUrlAsync();
                 if (string.IsNullOrEmpty(installerUrl))
-                    throw new InvalidOperationException("Could not determine .NET 9 SDK download URL");
+                    throw new InvalidOperationException($"Could not determine .NET {InstalledSdkChannel} SDK download URL");
 
                 if (!IsValidMicrosoftDownloadUrl(installerUrl))
                     throw new InvalidOperationException($"Resolved SDK download URL is not a trusted Microsoft HTTPS URL: {installerUrl}");
 
-                var installerPath = Path.Combine(_fileStorage.GetTempPath(), "dotnet-sdk-9-installer.exe");
-                _logger.Info("Downloading .NET 9 SDK installer");
+                var installerPath = Path.Combine(_fileStorage.GetTempPath(), "dotnet-sdk-installer.exe");
+                _logger.Info($"Downloading .NET {InstalledSdkChannel} SDK installer");
 
                 using var httpClient = new HttpClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(300); // 5 minutes for large file
@@ -483,10 +498,11 @@ public class UpdateManager : IUpdateManager
 
                 _logger.Info("Running install script");
 
+                var installDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".dotnet");
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = scriptPath,
-                    Arguments = "--channel 9.0 --install-dir $HOME/.dotnet",
+                    ArgumentList = { "--channel", InstalledSdkChannel, "--install-dir", installDirectory },
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
@@ -508,8 +524,8 @@ public class UpdateManager : IUpdateManager
                     throw new InvalidOperationException($"Installer failed with exit code {process.ExitCode}");
                 }
 
-                _logger.Info(".NET SDK installed successfully to $HOME/.dotnet");
-                _logger.Info("Note: User may need to add $HOME/.dotnet to PATH");
+                _logger.Info($".NET SDK installed successfully to {installDirectory}");
+                _logger.Info($"Note: User may need to add {installDirectory} to PATH");
 
                 // Clean up script
                 try

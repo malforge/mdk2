@@ -1,3 +1,7 @@
+v.2.3.0
+   - The prerequisites check now accepts the .NET 9 or .NET 10 SDK, and installs the .NET 10 SDK when neither is found. A project only builds with the .NET 10 SDK once its MDK packages are updated, which "Update Packages" does for you.
+   - On Linux, the Hub now needs glibc 2.27 or newer (Ubuntu 18.04, Debian 10, RHEL 8 or later).
+
 v.2.2.10
    - The default list of ignored files now covers the bin folder as well as obj, matching the project templates. A mod no longer deploys a copy of its own build output alongside its content.
 

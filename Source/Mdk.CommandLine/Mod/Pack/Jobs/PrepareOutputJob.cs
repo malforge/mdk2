@@ -15,21 +15,27 @@ namespace Mdk.CommandLine.Mod.Pack.Jobs;
 /// </summary>
 /// <remarks>
 ///     Cleaning involves deleting all files and directories in the output directory. Only files that match the output
-///     clean filter will be deleted, any other files will be left in place.
+///     clean filter will be deleted, any other files will be left in place. On a dry run nothing is created or deleted.
 /// </remarks>
 internal class PrepareOutputJob : ModJob
 {
     public override async Task<ModPackContext> ExecuteAsync(ModPackContext context)
     {
         var outputDirectory = new DirectoryInfo(context.FileSystem.OutputDirectory);
+        var isDryRun = context.Parameters.PackVerb.DryRun;
         context.Console.Trace($"Preparing output directory {outputDirectory.FullName}");
         if (outputDirectory.FullName.Length <= 4)
             throw new CommandLineException(-1, "The output directory is the root of the drive.");
 
         if (!outputDirectory.Exists)
         {
-            context.Console.Trace("Output directory does not exist, creating it.");
-            outputDirectory.Create();
+            if (isDryRun)
+                context.Console.Trace("Dry run: output directory does not exist, would create it.");
+            else
+            {
+                context.Console.Trace("Output directory does not exist, creating it.");
+                outputDirectory.Create();
+            }
             await MetaFile.WriteAsync(context.FileSystem, MdkProjectType.Mod);
             return context;
         }
@@ -43,6 +49,7 @@ internal class PrepareOutputJob : ModJob
         foreach (var info in outputDirectory.EnumerateFileSystemInfos())
             stack.Push(info);
         var folders = new List<DirectoryInfo>();
+        var keptFiles = new List<string>();
         var pathToMetaFile = Path.Combine(outputDirectory.FullName, "mdk.meta");
         while (stack.Count > 0)
         {
@@ -59,6 +66,13 @@ internal class PrepareOutputJob : ModJob
             if (string.Equals(current.FullName, pathToMetaFile, StringComparison.OrdinalIgnoreCase) || !context.OutputCleanFilter.IsMatch(current.FullName))
             {
                 context.Console.Trace($"Leaving {relativePath} in place.");
+                keptFiles.Add(current.FullName);
+                continue;
+            }
+
+            if (isDryRun)
+            {
+                context.Console.Trace($"Dry run: would delete {relativePath}");
                 continue;
             }
 
@@ -77,6 +91,16 @@ internal class PrepareOutputJob : ModJob
         {
             var folder = folders[i];
             var relativePath = folder.GetPathRelativeTo(outputDirectory);
+            if (isDryRun)
+            {
+                var folderPrefix = folder.FullName + Path.DirectorySeparatorChar;
+                if (keptFiles.Any(file => file.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase)))
+                    context.Console.Trace($"Leaving {relativePath} in place because it's not empty.");
+                else
+                    context.Console.Trace($"Dry run: would delete {relativePath}");
+                continue;
+            }
+
             if (folder.EnumerateFileSystemInfos().Any())
             {
                 context.Console.Trace($"Leaving {relativePath} in place because it's not empty.");

@@ -76,7 +76,8 @@ On Linux you'll need to point the Hub at your Space Engineers binaries yourself,
 ## System Requirements
 
 - **Operating System:** Windows 10/11 (64-bit) or Linux
-- **.NET SDK:** .NET 9.0 or later
+- **.NET SDK:** .NET 9.0 or .NET 10.0
+- **Linux:** glibc 2.27 or newer (Ubuntu 18.04, Debian 10, RHEL 8 or later)
 - **Space Engineers:** Access to Space Engineers binaries (easiest via game installation, but any legal source works)
 - **IDE/Editor:** Any C# development environment (Visual Studio, Rider, VS Code, or command line)
 

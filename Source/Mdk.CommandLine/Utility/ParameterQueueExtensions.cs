@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Linq;
 
 namespace Mdk.CommandLine.Utility;
 
@@ -34,14 +35,10 @@ public static class ParameterQueueExtensions
             case TypeCode.Int32:
                 if (!typeof(T).IsEnum)
                     throw new NotSupportedException($"Type {typeof(T).Name} is not supported.");
-                if (Enum.TryParse(typeof(T), queue.Dequeue(), true, out var result))
+                var token = queue.Dequeue();
+                if (Enum.TryParse(typeof(T), token, true, out var result) && IsKnownEnumValue(typeof(T), token, result))
                 {
                     value = (T)result;
-                    return true;
-                }
-                if (int.TryParse(queue.Dequeue(), NumberStyles.Any, CultureInfo.InvariantCulture, out var intValue))
-                {
-                    value = (T)(object)intValue;
                     return true;
                 }
                 value = default;
@@ -74,5 +71,19 @@ public static class ParameterQueueExtensions
                 value = default;
                 return false;
         }
+    }
+
+    /// <summary>
+    ///     Determines whether a parsed enum value is one the enum defines: a single named value, or for a
+    ///     <see cref="FlagsAttribute" /> enum, a combination of its named flags.
+    /// </summary>
+    static bool IsKnownEnumValue(Type enumType, string token, object value)
+    {
+        if (!enumType.IsDefined(typeof(FlagsAttribute), false))
+            return !token.Contains(',') && Enum.IsDefined(enumType, value);
+
+        var definedBits = Enum.GetValues(enumType).Cast<object>().Aggregate(0L, (combined, flag) => combined | Convert.ToInt64(flag));
+        var bits = Convert.ToInt64(value);
+        return bits >= 0 && (bits & ~definedBits) == 0;
     }
 }

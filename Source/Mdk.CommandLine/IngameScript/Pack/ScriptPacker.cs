@@ -83,7 +83,7 @@ public class ScriptPacker: ProjectJob
                     console.Print("Successfully packed 1 project.");
                     break;
                 default:
-                    console.Print($"Successfully packed {packedProjects} projects.");
+                    console.Print($"Successfully packed {packedProjects.Length} projects.");
                     break;
             }
             return packedProjects;
@@ -155,7 +155,8 @@ public class ScriptPacker: ProjectJob
         var outputPath = Path.Combine(parameters.PackVerb.Output!, project.Name);
         var projectPath= Path.GetDirectoryName(project.FilePath)!;
         var tracePath = Path.Combine(projectPath, "obj");
-        var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
+        var packFileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
+        IFileSystem fileSystem = parameters.PackVerb.DryRun ? new DryRunFileSystem(packFileSystem, console) : packFileSystem;
         var context = new PackContext(parameters, console, interaction, filter, null, fileSystem, PackContext.ResolvePreprocessorSymbols(project));
 
         return await PackProjectAsync(project, context);
@@ -272,7 +273,9 @@ public class ScriptPacker: ProjectJob
         if (final.Length > MaxScriptLength)
             context.Interaction.Custom($"NOTE: The final script has {final.Length} characters, which exceeds the maximum of {MaxScriptLength}. The programmable block will not be able to run it.");
         
-        if (!string.IsNullOrEmpty(project.FilePath))
+        if (context.Parameters.PackVerb.DryRun)
+            context.Console.Print($"Dry run of script \"{project.Name}\" finished. Nothing was written.");
+        else if (!string.IsNullOrEmpty(project.FilePath))
             context.Interaction.Script(project.Name, project.FilePath);
 
         return result;
@@ -435,7 +438,8 @@ public class ScriptPacker: ProjectJob
     {
         context.Console.Trace($"Running producer {producer.GetType().Name}");
         context.Console.Trace($"Producing into {outputDirectory.FullName}");
-        outputDirectory.Create();
+        if (!context.Parameters.PackVerb.DryRun)
+            outputDirectory.Create();
         var result = await producer.ProduceAsync(outputDirectory, final, readmeDocument, thumbnailDocument, context);
         // get path relative to the project
         var displayPath = Path.GetRelativePath(projectDirectory, outputDirectory.FullName);

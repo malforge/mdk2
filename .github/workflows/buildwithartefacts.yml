@@ -143,7 +143,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.x
+          dotnet-version: 10.x
 
       - name: Build tool project for Windows
         run: |
@@ -201,11 +201,11 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.x
+          dotnet-version: 10.x
 
       # Runs on Windows because building MDK-Complete.slnx as a whole includes Mdk.Hub's
-      # net9.0-windows framework, which only builds on Windows. The Hub itself is
-      # cross-platform - see build-hub-linux. The test projects themselves are net9.0.
+      # net10.0-windows framework, which only builds on Windows. The Hub itself is
+      # cross-platform - see build-hub-linux. The test projects themselves are net10.0.
       - name: Run tests
         run: dotnet test MDK-Complete.slnx -c Debug --nologo
 
@@ -230,7 +230,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.x
+          dotnet-version: 10.x
 
       - name: Download tool artifacts for PbPackager
         uses: actions/download-artifact@v5
@@ -282,7 +282,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.x
+          dotnet-version: 10.x
 
       - name: Install Velopack
         run: dotnet tool install -g vpk
@@ -296,7 +296,7 @@ jobs:
 
       - name: Publish Mdk.Hub for Windows
         run: |
-          dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net9.0-windows -r win-x64 --self-contained -o publish/win
+          dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net10.0-windows -r win-x64 --self-contained -o publish/win
 
       - name: Build Velopack installer
         run: |
@@ -325,7 +325,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.x
+          dotnet-version: 10.x
 
       - name: Install Velopack
         run: dotnet tool install -g vpk
@@ -339,7 +339,7 @@ jobs:
 
       - name: Publish Mdk.Hub for Linux
         run: |
-          dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net9.0 -r linux-x64 --self-contained -o publish/linux
+          dotnet publish Mdk.Hub/Mdk.Hub.csproj -c Release -f net10.0 -r linux-x64 --self-contained -o publish/linux
 
       - name: Build Velopack AppImage
         run: |

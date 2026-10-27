@@ -72,7 +72,7 @@ public class ModPacker : ProjectJob
                     console.Print("Successfully packed 1 project.");
                     break;
                 default:
-                    console.Print($"Successfully packed {packedProjects} projects.");
+                    console.Print($"Successfully packed {packedProjects.Length} projects.");
                     break;
             }
 
@@ -157,7 +157,8 @@ public class ModPacker : ProjectJob
         var outputPath = Path.Combine(parameters.PackVerb.Output!, outputLeaf);
         var outputCleanFilter = new FileFilter(parameters.PackVerb.DoNotClean, outputPath);
         var tracePath = Path.Combine(projectPath, "obj");
-        var fileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
+        var packFileSystem = new PackFileSystem(projectPath, outputPath, tracePath, console);
+        IFileSystem fileSystem = parameters.PackVerb.DryRun ? new DryRunFileSystem(packFileSystem, console) : packFileSystem;
         var context = new ModPackContext(parameters, console, interaction, filter, outputCleanFilter, fileSystem, PackContext.ResolvePreprocessorSymbols(project), project, default, default, default);
 
         return await PackProjectAsync(context);
@@ -237,7 +238,10 @@ public class ModPacker : ProjectJob
             var deployedName = Path.GetFileName(context.FileSystem.OutputDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             if (string.IsNullOrEmpty(deployedName))
                 deployedName = project.Name;
-            context.Interaction.Mod(deployedName, project.FilePath);
+            if (context.Parameters.PackVerb.DryRun)
+                context.Console.Print($"Dry run of mod \"{deployedName}\" finished. Nothing was written.");
+            else
+                context.Interaction.Mod(deployedName, project.FilePath);
         }
 
         return ImmutableArray<ProducedFile>.Empty.Add(new ProducedFile());

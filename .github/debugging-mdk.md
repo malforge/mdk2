@@ -7,7 +7,7 @@ analyzers. For issues in your own scripts, see the
 ## Prerequisites
 
 - This repository checked out
-- .NET 9.0 SDK
+- .NET 10.0 SDK
 - A project to test against, ideally both a working one and a failing one
 
 ## Building the CLI
@@ -18,12 +18,12 @@ From the `Source` directory:
 dotnet build Mdk.CommandLine/Mdk.CommandLine.csproj -c Debug
 ```
 
-The executable lands in `Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe`.
+The executable lands in `Mdk.CommandLine/bin/Debug/net10.0/win-x64/mdk.exe`.
 
 ## Running it against a project
 
 ```bash
-Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe pack "path/to/project.csproj"
+Mdk.CommandLine/bin/Debug/net10.0/win-x64/mdk.exe pack "path/to/project.csproj"
 ```
 
 Always pass the full path to the `.csproj` file, not the directory containing it.
@@ -32,7 +32,7 @@ Add `-trace` for verbose output showing the execution flow. Note the single dash
 argument is matched exactly, so `--trace` is silently ignored.
 
 ```bash
-Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe pack "path/to/project.csproj" -trace
+Mdk.CommandLine/bin/Debug/net10.0/win-x64/mdk.exe pack "path/to/project.csproj" -trace
 ```
 
 ## Test projects
@@ -54,7 +54,7 @@ command through both the released package and your build:
 ~/.nuget/packages/mal.mdk2.pbpackager/<version>/tools/win-x64/mdk.exe pack "project.csproj"
 
 # your build
-Mdk.CommandLine/bin/Debug/net9.0/win-x64/mdk.exe pack "project.csproj"
+Mdk.CommandLine/bin/Debug/net10.0/win-x64/mdk.exe pack "project.csproj"
 ```
 
 - Fails in the package, works in source: already fixed, needs a release
@@ -83,8 +83,8 @@ dotnet test MDK-Complete.slnx
 
 We use NUnit.
 
-**That whole-solution command needs Windows.** Mdk.Hub multi-targets `net9.0` and
-`net9.0-windows`, and the latter can only be built on Windows, so building the solution
+**That whole-solution command needs Windows.** Mdk.Hub multi-targets `net10.0` and
+`net10.0-windows`, and the latter can only be built on Windows, so building the solution
 elsewhere fails on that framework. The Hub itself is cross-platform - CI publishes a Linux
 build of it on every run - so this is a quirk of building everything at once, not a
 limitation of the application.

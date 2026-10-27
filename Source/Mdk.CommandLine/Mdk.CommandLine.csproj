@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <AssemblyName>mdk</AssemblyName>
         <Version>$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/PackageVersion.txt"))</Version>
@@ -28,12 +28,17 @@
         <PackageReference Include="Microsoft.Build.Locator" Version="1.7.8" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
         <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.12.0" />
+        <!-- Workspaces.MSBuild pulls in MSBuild 17.7.2, which is affected by CVE-2025-26646 and CVE-2025-55247.
+             17.8.43 is the lowest release that fixes both (GHSA-h4j7-5rxr-p4wc, GHSA-w3q9-fxm7-j8fq). MSBuild
+             assemblies come from the SDK registered by MSBuildLocator, so none are shipped. -->
+        <PackageReference Include="Microsoft.Build" Version="17.8.43" ExcludeAssets="runtime" />
+        <PackageReference Include="Microsoft.Build.Framework" Version="17.8.43" ExcludeAssets="runtime" />
+        <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.8.43" ExcludeAssets="runtime" />
+        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.8.43" ExcludeAssets="runtime" />
+        <PackageReference Include="Microsoft.NET.StringTools" Version="17.8.43" ExcludeAssets="runtime" />
         <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="9.0.0" />
         <PackageReference Include="Microsoft.Extensions.Primitives" Version="9.0.0" />
-        <PackageReference Include="System.Formats.Asn1" Version="9.0.0" />
         <PackageReference Include="System.IO.Hashing" Version="9.0.0" />
-        <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-        <PackageReference Include="System.Text.Json" Version="9.0.0" />
         <!-- Thumbnail watermarking. Base SkiaSharp carries the Windows natives; NativeAssets.Linux adds the
              fontconfig-backed Linux natives so watermarking works on Linux (MDK's two supported platforms). -->
         <PackageReference Include="SkiaSharp" Version="2.88.9" />

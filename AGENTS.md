@@ -83,9 +83,9 @@ None configured — relies on built-in Roslyn analyzers and IDE warnings.
 
 ## Development Environment
 
-- **Target framework**: .NET 9.0 (CLI + tests), netstandard2.0 (analyzers)
+- **Target framework**: .NET 10.0 (CLI + tests), netstandard2.0 (analyzers)
 - **IDE**: any C# environment — Visual Studio, Rider, VS Code
-- **Platform**: Windows and Linux. The game itself is Windows-only, but the tooling runs on both; the Hub ships a Linux AppImage and the CLI and packagers work there. Building the full solution needs Windows because Mdk.Hub also targets `net9.0-windows`.
+- **Platform**: Windows and Linux. The game itself is Windows-only, but the tooling runs on both; the Hub ships a Linux AppImage and the CLI and packagers work there. Building the full solution needs Windows because Mdk.Hub also targets `net10.0-windows`.
 - **Roslyn**: Microsoft.CodeAnalysis.CSharp.Workspaces 4.12.0
 
 ## Specialized topics — see skills
