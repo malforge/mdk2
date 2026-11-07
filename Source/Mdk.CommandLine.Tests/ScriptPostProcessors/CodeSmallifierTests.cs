@@ -384,4 +384,64 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
 
         Assert.That(actual.ToString(), Is.EqualTo(expected));
     }
+
+    [Test]
+    public async Task ProcessAsync_WhenSameTypeFieldsAreOnSeparateLines_CompactsAcrossCommentsAndBlankLines()
+    {
+        // Regression: field compaction must group same-type fields even when the declarations sit on
+        // separate lines with comments or blank lines between them. The type comparison was
+        // trivia-sensitive, so a comment or blank line between two same-type fields prevented them
+        // from being merged.
+        const string testCode =
+            """
+            class Program
+            {
+                byte A;
+
+                // full-line comment between same-type fields
+                byte B;
+
+                bool C;
+                bool D;
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new CodeSmallifier();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Lite,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var actual = await result.GetTextAsync();
+        var expected =
+            """
+            class Program
+            {
+                byte A,B;
+
+                bool C,D;
+            }
+            """;
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
+    }
 }

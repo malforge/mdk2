@@ -294,7 +294,7 @@ public class CodeSmallifier : IDocumentProcessor
                     // Group by modifiers and type so "string" and "string[]" stay separate.
                     var matchIndex = groups.FindIndex(g =>
                         ModifiersEqual(g.field, current) &&
-                        g.field.Declaration.Type.IsEquivalentTo(current.Declaration.Type));
+                        g.field.Declaration.Type.IsEquivalentTo(current.Declaration.Type, topLevel: true));
 
                     if (matchIndex < 0)
                         groups.Add((current, current.Declaration.Variables.ToList()));

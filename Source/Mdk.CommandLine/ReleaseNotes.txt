@@ -1,4 +1,7 @@
-﻿v.2.3.0
+﻿v.2.3.1
+    - Minification now merges multiple fields of the same type into a single declaration even when the fields are declared on separate lines, such as when they are separated by comments or blank lines. Packed scripts come out a little smaller.
+
+v.2.3.0
     - MDK now works with the .NET 10 SDK. Projects build and pack on a machine that only has .NET 10 installed, including in Visual Studio 2026, and the .NET 9 SDK keeps working too. To use the .NET 10 SDK with an existing project, update its MDK packages to this version. (#185)
     - MDK no longer carries its own copy of the MSBuild libraries, which had known security vulnerabilities. It uses the ones that come with your installed .NET SDK instead.
     - On Linux, MDK now needs glibc 2.27 or newer (Ubuntu 18.04, Debian 10, RHEL 8 or later).
