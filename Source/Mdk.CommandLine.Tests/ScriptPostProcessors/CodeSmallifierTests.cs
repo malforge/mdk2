@@ -197,6 +197,233 @@ public class CodeSmallifierTests : DocumentProcessorTests<CodeSmallifier>
     }
 
     [Test]
+    public async Task ProcessAsync_DropsBracesAroundSingleStatementBlocks()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                public void M()
+                {
+                    if (A > 0)
+                    {
+                        F(A);
+                    }
+                    else
+                    {
+                        F(-A);
+                    }
+                    for (int i = 0; i < 3; i++)
+                    {
+                        F(i);
+                    }
+                    while (A > 0)
+                    {
+                        F(A--);
+                    }
+                    switch (A)
+                    {
+                        case 1:
+                        {
+                            F(1);
+                        }
+                        case 2:
+                        {
+                            F(2);
+                            F(3);
+                        }
+                    }
+                    if (A > 4)
+                    {
+                        if (A > 5)
+                        {
+                            F(5);
+                        }
+                    }
+                    if (A > 6)
+                    {
+                        if (A > 7)
+                        {
+                            F(7);
+                        }
+                    }
+                    else
+                    {
+                        F(8);
+                    }
+                    void F(int x)
+                    {
+                        if (x > 0)
+                        {
+                            return;
+                        }
+                    }
+
+                    int A;
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new CodeSmallifier();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Lite,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var actual = await result.GetTextAsync();
+        // Braces are dropped where a single statement that is a valid embedded statement is the only
+        // content: after if, else, for, while, a single-statement switch section, nested ifs, and inside
+        // the local function's if. The statement keeps its own line and indent. The "if (A > 6)" block
+        // keeps its braces: dropping them would rebind the else to the inner if (dangling else). The
+        // two-statement switch section keeps its braces, and the method bodies (M and F) always keep
+        // theirs: a method body without braces is not valid C#.
+        var expected =
+            """
+            class Program
+            {
+                public void M()
+                {
+                    if (A > 0)
+                        F(A);
+                    else
+                        F(-A);
+                    for (int i = 0; i < 3; i++)
+                        F(i);
+                    while (A > 0)
+                        F(A--);
+                    switch (A)
+                    {
+                        case 1:
+                            F(1);
+                        case 2:
+                        {
+                            F(2);
+                            F(3);
+                        }
+                    }
+                    if (A > 4)
+                        if (A > 5)
+                            F(5);
+                    if (A > 6)
+                    {
+                        if (A > 7)
+                            F(7);
+                    }
+                    else
+                        F(8);
+                    void F(int x)
+                    {
+                        if (x > 0)
+                            return;
+                    }
+
+                    int A;
+                }
+            }
+            """;
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public async Task ProcessAsync_DroppingBracesKeepsCommentsOnTheBraceLines()
+    {
+        const string testCode =
+            """
+            class Program
+            {
+                public void M()
+                {
+                    if (A > 0)
+                    {
+                        // after open brace
+                        F(A); // at end of stmt
+                        // before close brace
+                    }
+                    if (A < 0) // comment before brace, own line
+                    {
+                        F(-A);
+                    }
+                    if (A == 0) // comment before brace, one line
+                    { F(0); }
+                    if (A == 1) { F(1); } // comment after brace
+                }
+            }
+            """;
+
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", testCode);
+        var processor = new CodeSmallifier();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.Lite,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        var result = await processor.ProcessAsync(document, context);
+        var actual = await result.GetTextAsync();
+        // Every comment survives the unwrap. A comment is never left without a newline after it, so no
+        // statement can end up inside one.
+        // Every comment survives the unwrap. A comment is never left without a newline after it, so no
+        // statement can end up inside one (which is why the one-line "if (A == 0)" case breaks after its
+        // comment rather than landing F(0) inside it).
+        var expected =
+            """
+            class Program
+            {
+                public void M()
+                {
+                    if (A > 0)
+                        // after open brace
+                        F(A); // at end of stmt
+                        // before close brace
+                    if (A < 0) // comment before brace, own line
+                        F(-A);
+                    if (A == 0) // comment before brace, one line
+                    F(0);
+                    if (A == 1) F(1); // comment after brace
+                }
+            }
+            """;
+
+        Assert.That(actual.ToString(), Is.EqualTo(expected));
+    }
+
+    [Test]
     public async Task ProcessAsync_StripsReadonlyFromFields()
     {
         // readonly is stripped for reference types (string), but preserved for value types (int, float).
