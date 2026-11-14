@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Mdk.CommandLine.Mod.Pack.Api;
 using Mdk.CommandLine.Shared;
 using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Shared.DefaultProcessors;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
