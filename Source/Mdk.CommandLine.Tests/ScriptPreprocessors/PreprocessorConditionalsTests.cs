@@ -436,4 +436,49 @@ public class PreprocessorConditionalsTests : DocumentProcessorTests<Preprocessor
             }
             """.Replace("\r\n", "\n")));
     }
+
+    [TestCase("#if DEBUG // comment\nvar x = 1;\n#endif\nvar y = 2;\n#if DEBUG\nvar z = 3;\n#endif\n", "var y = 2;\n", TestName = "Comment after #if")]
+    [TestCase("#if DEBUG\nvar x = 1;\n#endif // DEBUG\nvar y = 2;\n", "var y = 2;\n", TestName = "Comment after #endif")]
+    [TestCase("#if DEBUG\nvar x = 1;\n#else // release\nvar y = 2;\n#endif\n", "var y = 2;\n", TestName = "Comment after #else")]
+    [TestCase("#if true\nvar x = 1;\n#endif\n", "var x = 1;\n", TestName = "Literal true")]
+    [TestCase("#if false\nvar x = 1;\n#endif\nvar y = 2;\n", "var y = 2;\n", TestName = "Literal false")]
+    [TestCase("#if TEST == true\nvar x = 1;\n#endif\n#if TEST != true\nvar y = 2;\n#endif\n", "var x = 1;\n", TestName = "Equality operators")]
+    [TestCase("#if DEBUG\nvar x = 1;\n#elif TEST\nvar y = 2;\n#else\nvar z = 3;\n#endif\n", "var y = 2;\n", TestName = "Elif branch")]
+    [TestCase("#if TEST\n#if DEBUG\nvar x = 1;\n#else\nvar y = 2;\n#endif\n#endif\n", "var y = 2;\n", TestName = "Nested blocks")]
+    [TestCase("#define LABEL\n#undef TEST\n#if LABEL && !TEST\nvar x = 1;\n#endif\n", "var x = 1;\n", TestName = "Define and undef")]
+    [TestCase("var s = @\"\n#endif\n\";\n#if DEBUG\nvar x = 1;\n#endif\n", "var s = @\"\n#endif\n\";\n", TestName = "Directive text inside a string")]
+    [TestCase("#region Things\nvar x = 1;\n#endregion\n", "#region Things\nvar x = 1;\n#endregion\n", TestName = "Regions kept")]
+    [TestCase("#if DEBUG\n#region Things\nvar x = 1;\n#endregion\n#endif\nvar y = 2;\n", "var y = 2;\n", TestName = "Region in excluded branch")]
+    [TestCase("#if DEBUG\n#pragma warning disable CS0168\n#endif\nvar y = 2;\n", "var y = 2;\n", TestName = "Pragma in excluded branch")]
+    [TestCase("#if DEBUG\n#error Not for debug builds\n#endif\nvar y = 2;\n", "var y = 2;\n", TestName = "Error in excluded branch")]
+    [TestCase("#if TEST\n#pragma warning disable CS0168\n#endif\n", "#pragma warning disable CS0168\n", TestName = "Pragma in included branch kept")]
+    public async Task ProcessAsync_WithDirective_KeepsCompiledCodeOnly(string code, string expected)
+    {
+        var workspace = new AdhocWorkspace();
+        var document = workspace.AddProject("TestProject", LanguageNames.CSharp).AddDocument("TestDocument", code);
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output"
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            ImmutableHashSet.Create("TEST")
+        );
+
+        var result = await new PreprocessorConditionals().ProcessAsync(document, context);
+
+        var text = await result.GetTextAsync();
+        Assert.That(text.ToString(), Is.EqualTo(expected));
+    }
 }

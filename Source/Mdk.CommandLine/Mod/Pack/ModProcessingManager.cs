@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using Mdk.CommandLine.Mod.Pack.Api;
 using Mdk.CommandLine.Mod.Pack.DefaultProcessors;
 using Mdk.CommandLine.Shared.Api;
+using Mdk.CommandLine.Shared.DefaultProcessors;
 
 namespace Mdk.CommandLine.Mod.Pack;
 
