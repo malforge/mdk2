@@ -370,6 +370,12 @@ jobs:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'Deploy' || 'Prerelease' }}
+    # Trusted publishing: nuget.org exchanges this job's GitHub OIDC token for a temporary API key, so no key is
+    # stored. It needs a nuget.org Trusted Publishing policy for this repo and workflow file for each environment
+    # above, Deploy and Prerelease.
+    permissions:
+      contents: read
+      id-token: write
     needs:
       - build-primary
       - test
@@ -385,11 +391,25 @@ jobs:
         with:
           name: nuget
           path: ./nuget
+      # The temporary key lasts one hour, so it is requested right before the push. Pinned to the commit behind v1.2.0,
+      # because this step can publish every package.
+      - name: Log in to nuget.org
+        id: nuget-login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: maldev
       - name: Publish NuGet packages
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        # A pwsh step only fails on the exit code of its last native command, so each push is checked. Every package is
+        # still attempted, so one failure does not leave the rest unpublished.
         run: |
+          $failed = @()
           foreach($file in (Get-ChildItem "./nuget" -Recurse -Include *.nupkg)) {
-            dotnet nuget push $file --api-key "${{ secrets.NUGET_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+            dotnet nuget push $file --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { $failed += $file.Name }
           }
+          if ($failed.Count -gt 0) { throw "Failed to push: $($failed -join ', ')" }
 
   deploy-hub:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prerelease')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.deployRelease == 'y')
