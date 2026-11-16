@@ -11,6 +11,7 @@ System.Collections.Concurrent.*, System
 System.Collections.Concurrent.*, mscorlib
 System.Timers.*, System
 System.Diagnostics.TraceEventType+*, System
+System.TypeCode+*, mscorlib
 System.Reflection.AssemblyProductAttribute+*, mscorlib
 System.Reflection.AssemblyDescriptionAttribute+*, mscorlib
 System.Reflection.AssemblyConfigurationAttribute+*, mscorlib
