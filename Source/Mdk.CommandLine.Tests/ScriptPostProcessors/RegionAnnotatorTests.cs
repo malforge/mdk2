@@ -192,6 +192,58 @@ public class RegionAnnotatorTests : DocumentProcessorTests<RegionAnnotator>
     }
 
     [Test]
+    public async Task ProcessAsync_WithMacros_KeepsWhitespaceAroundStringLiterals()
+    {
+        // Arrange
+        const string source =
+            """
+            class Program
+            {
+                string[] items =
+                {
+                    "First", "Second",
+                    "Third $TEST$",
+                    @"C:\Verbatim"
+                };
+            }
+            """;
+        var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("TestProject", LanguageNames.CSharp);
+        var document = project.AddDocument("TestDocument", source);
+        var processor = new RegionAnnotator();
+        var parameters = new Parameters
+        {
+            Verb = Verb.Pack,
+            PackVerb =
+            {
+                MinifierLevel = MinifierLevel.None,
+                ProjectFile = @"A:\Fake\Path\Project.csproj",
+                Output = @"A:\Fake\Path\Output",
+                Macros =
+                {
+                    ["$TEST$"] = "REPLACED"
+                }
+            }
+        };
+        var context = new PackContext(
+            parameters,
+            A.Fake<IConsole>(o => o.Strict()),
+            A.Fake<IInteraction>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileFilter>(o => o.Strict()),
+            A.Fake<IFileSystem>(),
+            A.Fake<IImmutableSet<string>>(o => o.Strict())
+        );
+
+        // Act
+        var result = await processor.ProcessAsync(document, context);
+        var text = (await result.GetTextAsync()).ToString();
+
+        // Assert
+        Assert.That(text, Is.EqualTo(source.Replace("$TEST$", "REPLACED")));
+    }
+
+    [Test]
     public async Task ProcessAsync_WithPreservedEnum_AnnotatesEnumAndMembers()
     {
         var workspace = new AdhocWorkspace();
