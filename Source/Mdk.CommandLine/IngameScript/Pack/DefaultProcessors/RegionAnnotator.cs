@@ -62,7 +62,7 @@ public partial class RegionAnnotator : IDocumentProcessor
             token = base.VisitToken(token);
             var region = _stack.Peek();
             if (_hasMacros && token.IsKind(SyntaxKind.StringLiteralToken))
-                token = SyntaxFactory.Literal(ReplaceMacros(token.ValueText));
+                token = ReplaceMacrosInLiteral(token);
 
             if (region.Annotation != null)
                 token = token.WithAdditionalAnnotations(region.Annotation);
@@ -85,6 +85,14 @@ public partial class RegionAnnotator : IDocumentProcessor
             }
 
             return token;
+        }
+
+        SyntaxToken ReplaceMacrosInLiteral(SyntaxToken token)
+        {
+            var replaced = ReplaceMacros(token.ValueText);
+            if (replaced == token.ValueText)
+                return token;
+            return token.CopyAnnotationsTo(SyntaxFactory.Literal(replaced).WithTriviaFrom(token));
         }
 
         static SyntaxTriviaList TrimTrivia(SyntaxTriviaList source)

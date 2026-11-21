@@ -150,25 +150,26 @@ public static class StringBuilderExtensions
     /// <param name="indentation"></param>
     public static StringBuilder ConvertTabsToSpaces(this StringBuilder buffer, int indentation)
     {
-        var chIndex = 0;
+        var column = 0;
         for (var i = 0; i < buffer.Length; i++)
         {
-            if (buffer[i] == '\r' && buffer.At(i + 1) == '\n')
+            var ch = buffer[i];
+            if (ch is '\r' or '\n')
             {
-                i++;
-                chIndex = 0;
+                column = 0;
                 continue;
             }
 
-            if (buffer[0] == '\n')
+            if (ch != '\t')
             {
-                chIndex = 0;
+                column++;
                 continue;
             }
 
-            if (buffer[i] != '\t') continue;
-            var charsToNextTabStop = indentation - chIndex % indentation;
+            var charsToNextTabStop = indentation - column % indentation;
             buffer.Remove(i, 1).Insert(i, new string(' ', charsToNextTabStop));
+            i += charsToNextTabStop - 1;
+            column += charsToNextTabStop;
         }
         return buffer;
     }

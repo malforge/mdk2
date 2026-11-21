@@ -1,4 +1,7 @@
-﻿v.2.3.1
+﻿v.2.3.2
+    - Scripts packed without minification no longer keep an extra level of indentation on every line. This happened when a line in the script started with a text string, such as a list of item names written one or more per line. (#198)
+
+v.2.3.1
     - Packing no longer fails with "Stack empty", or quietly drops code, when an #if, #else or #endif line has a comment after it. Conditions using == or !=, true or false now work too, and #if true no longer removes its code.
 
 v.2.3.0
